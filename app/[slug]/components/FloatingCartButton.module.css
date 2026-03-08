@@ -1,0 +1,61 @@
+.container {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 1000;
+  animation: slideIn 0.4s cubic-bezier(0.05, 0.7, 0.1, 1);
+}
+
+.cartBtn {
+  --md-elevated-button-container-color: var(--md-sys-color-surface-container-highest);
+  --md-elevated-button-label-text-color: var(--md-sys-color-primary);
+  border-radius: 16px;
+  height: 48px;
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  box-shadow: var(--md-sys-elevation-2);
+  transition:
+    box-shadow 0.2s,
+    transform 0.2s;
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.cartBtn:hover {
+  box-shadow: var(--md-sys-elevation-4);
+  transform: translateY(-2px);
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.iconWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-primary);
+}
+
+/* Badge styles are now handled by the global component */
+
+.label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.1px;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

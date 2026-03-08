@@ -1,0 +1,116 @@
+/* Menu Demo Styles */
+.menu-demo-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+/* Simple Menu Styles - Material Design 3 compliant */
+#simple-menu-demo {
+  --md-menu-container-color: var(--md-sys-color-surface-container);
+  --md-menu-container-elevation: var(--md-sys-level2);
+  --md-menu-container-shape: var(--md-sys-shape-corner-medium);
+  min-width: 224px;
+  max-width: 280px;
+  z-index: 1000;
+}
+
+/* Complex Menu Styles - with overflow for submenus */
+#complex-menu-demo {
+  --md-menu-container-color: var(--md-sys-color-surface-container);
+  --md-menu-container-elevation: var(--md-sys-level2);
+  --md-menu-container-shape: var(--md-sys-shape-corner-medium);
+  min-width: 280px;
+  max-width: 320px;
+  z-index: 1000;
+}
+
+/* All menus with proper Material Design 3 styling */
+md-menu {
+  z-index: 1000;
+  border-radius: var(--md-sys-shape-corner-medium);
+  overflow: visible;
+}
+
+/* Submenu containers with proper positioning */
+md-sub-menu {
+  position: relative;
+  z-index: 1001;
+}
+
+/* Nested menus (submenus) - positioned to the right */
+md-sub-menu > md-menu {
+  z-index: 1002;
+  min-width: 200px;
+  max-width: 240px;
+  --md-menu-container-color: var(--md-sys-color-surface-container-high);
+  --md-menu-container-elevation: var(--md-sys-level3);
+}
+
+/* Menu items with Material Design 3 spacing */
+
+md-menu-item:has(md-switch) > * {
+  pointer-events: auto !important;
+}
+
+md-menu-item:has(md-switch) md-switch {
+  cursor: pointer !important;
+}
+
+/* Icon spacing with Material Design 3 metrics */
+md-menu-item md-icon[slot='start'] {
+  margin-right: 16px;
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+md-menu-item md-icon[slot='end'] {
+  margin-left: auto;
+  padding-left: 16px;
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+/* Headline text styling */
+md-menu-item div[slot='headline'] {
+  font-family: 'Google Sans Text', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Ensure catalog cards don't clip menus */
+.catalog-card {
+  overflow: visible !important;
+}
+
+/* Menu demo card content positioning */
+.menu-demo-card-content,
+.complex-menu-demo-card-content {
+  position: relative;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+/* Fix menu positioning issues */
+md-menu[open] {
+  position: fixed;
+  z-index: 9999;
+}
+
+/* Submenu positioning fixes */
+md-sub-menu > md-menu[open] {
+  position: fixed;
+  z-index: 10000;
+}

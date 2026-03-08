@@ -1,0 +1,61 @@
+/* Reuse core sheet animations and layout */
+@import './Sheet.css';
+
+.md-stepped-sheet {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--md-sys-color-surface-container-low);
+}
+
+.md-stepped-sheet__header {
+  display: grid;
+  grid-template-columns: 48px 1fr 48px;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  min-height: 64px;
+}
+
+.md-stepped-sheet__title {
+  margin: 0;
+  text-align: center;
+  font-family: var(--md-sys-typescale-title-large-font);
+  font-size: var(--md-sys-typescale-title-large-size);
+  font-weight: var(--md-sys-typescale-title-large-weight);
+}
+
+.md-stepped-sheet__content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.md-stepped-sheet__footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--md-sys-color-surface-container-low);
+}
+
+.md-stepped-sheet__progress {
+  font-family: var(--md-sys-typescale-label-medium-font);
+  font-size: var(--md-sys-typescale-label-medium-size);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.md-stepped-sheet__actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* Scrim modification to prevent closing */
+.md-stepped-sheet-scrim {
+  pointer-events: none; /* User cannot interact with it */
+}
+
+/* Ensure the sheet itself is clickable though */
+.md-stepped-sheet.open {
+  pointer-events: auto;
+}

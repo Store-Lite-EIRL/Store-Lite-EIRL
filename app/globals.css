@@ -1,0 +1,256 @@
+@import '../src/styles/theme-fonts.css';
+@import '../src/styles/responsive-layout.css';
+@import '../src/styles/material-design/light.css';
+@import '../src/styles/material-design/light-mc.css';
+@import '../src/styles/material-design/light-hc.css';
+@import '../src/styles/material-design/dark.css';
+@import '../src/styles/material-design/dark-mc.css';
+@import '../src/styles/material-design/dark-hc.css';
+@import '../src/styles/components/buttons.css';
+@import '../src/styles/components/buttons-extra.css';
+@import '../src/styles/components/inputs.css';
+@import '../src/styles/components/feedback.css';
+@import '../src/styles/components/surfaces.css';
+@import '../src/styles/components/navigation.css';
+@import '../src/styles/components/navbar.css';
+@import '../src/styles/components/data-display.css';
+@import '../src/styles/components/catalog.css';
+@import '../src/styles/components/pickers.css';
+@import '../src/styles/utilities.css';
+
+/* Tipografía: texto principal usa --mio-theme-text-font-family (Google Sans Text) */
+body {
+  font-family: var(--mio-theme-text-font-family), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-background);
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Iconos: Standardizing Material Symbols loading */
+md-icon {
+  font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif !important;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga';
+}
+
+.page-container {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mobile-spacing-lg);
+  max-width: 100%;
+}
+
+@media (max-width: 380px) {
+  .page-container {
+    padding: 4px;
+    gap: 0.75rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .page-container {
+    padding: 1.5rem;
+    gap: 1.5rem;
+  }
+}
+
+.section {
+  display: block;
+}
+
+.section-title {
+  margin-bottom: 0.75rem;
+  font-size: 2rem;
+  font-family: var(--mio-theme-display-font-family), sans-serif;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.row--vertical {
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.row--align-center {
+  align-items: center;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Campos (Field): altura mínima para que se vea el cuadro completo (label + borde + input).
+   Sin esto el host colapsa y solo se ven las líneas del borde solapadas. */
+.form-row--fields {
+  gap: 1.5rem;
+}
+
+.form-row--fields md-outlined-field,
+.form-row--fields md-filled-field {
+  min-height: 56px;
+  width: 100%;
+  align-self: stretch;
+}
+
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.progress-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.circular-progress-wrap {
+  width: 3rem;
+  height: 3rem;
+}
+
+.select-wrap {
+  min-width: 12.5rem;
+}
+
+.theme-settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background-color: var(--md-sys-color-surface-container);
+  border-radius: 1rem;
+}
+
+.theme-settings-header {
+  font-size: 1rem;
+  margin: 0 0 0.5rem 0;
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-weight: 500;
+}
+
+/* Beta Page Styles */
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+  width: 100%;
+}
+
+.catalog-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  background: var(--md-sys-color-surface);
+}
+
+.card-example {
+  width: 100px;
+  height: 100px;
+  padding: 1rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+.card-elevated {
+  background: var(--md-sys-color-surface-container-low);
+  box-shadow:
+    0px 1px 3px 1px rgba(0, 0, 0, 0.15),
+    0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+}
+
+.card-filled {
+  background: var(--md-sys-color-surface-variant);
+}
+
+.card-outlined {
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline);
+}
+
+.badge-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--md-sys-color-error);
+}
+
+.badge-num {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  height: 16px;
+  border-radius: 8px;
+  background: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error);
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Import Preview Dialog: enlarged size ── */
+md-dialog.import-xl-dialog {
+  --md-dialog-container-max-block-size: 92vh;
+  --md-dialog-container-max-inline-size: min(1280px, 92vw);
+  --md-dialog-container-min-inline-size: min(1280px, 92vw);
+}
+/* ── Global Scrollbar Styling ── */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--md-sys-color-outline-variant);
+  border-radius: 5px;
+  border: 2px solid var(--md-sys-color-surface-container-low);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--md-sys-color-outline);
+}
+
+/* Firefox support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--md-sys-color-outline-variant) var(--md-sys-color-surface-container-low);
+}

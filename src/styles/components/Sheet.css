@@ -1,0 +1,107 @@
+.md-sheet-scrim {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--md-sys-color-scrim);
+  opacity: 0.32;
+  z-index: 1000;
+  transition: opacity 0.3s cubic-bezier(0.2, 0, 0, 1);
+  display: flex;
+  visibility: hidden;
+  opacity: 0;
+}
+
+.md-sheet-scrim.open {
+  visibility: visible;
+  opacity: 0.32;
+}
+
+.md-sheet {
+  position: fixed;
+  background-color: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface);
+  box-shadow: var(--md-sys-elevation-level3);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+  overflow: hidden;
+}
+
+/* Directions */
+.md-sheet--right {
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 28px 0 0 28px;
+  transform: translateX(100%);
+}
+
+.md-sheet--left {
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 0 28px 28px 0;
+  transform: translateX(-100%);
+}
+
+.md-sheet--bottom {
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  max-height: 90vh;
+  border-radius: 28px 28px 0 0;
+  transform: translateY(100%);
+}
+
+.md-sheet--top {
+  top: 0;
+  left: 0;
+  width: 100vw;
+  max-height: 90vh;
+  border-radius: 0 0 28px 28px;
+  transform: translateY(-100%);
+}
+
+/* Open State */
+.md-sheet.open {
+  transform: translate(0, 0);
+}
+
+/* Inner Content */
+.md-sheet__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md-sheet__title {
+  margin: 0;
+  font-family: var(--md-sys-typescale-title-large-font);
+  font-size: var(--md-sys-typescale-title-large-size);
+  font-weight: var(--md-sys-typescale-title-large-weight);
+  line-height: var(--md-sys-typescale-title-large-line-height);
+}
+
+.md-sheet__content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .md-sheet--right,
+  .md-sheet--left {
+    max-width: 100%;
+    border-radius: 0;
+  }
+}

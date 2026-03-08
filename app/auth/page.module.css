@@ -1,0 +1,429 @@
+/* Base Container & Typography */
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background-color: #080c14; /* bg-background-dark */
+  color: #ffffff;
+  overflow: hidden;
+  /* font-family inherited from global (Google Sans) */
+}
+
+/* Background Elements Wrapper */
+.backgroundWrapper {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Glow Orbs */
+.glowOrb {
+  position: absolute;
+  border-radius: 9999px; /* rounded-full */
+  filter: blur(80px);
+  opacity: 0.4;
+}
+
+.orb1 {
+  top: -10%;
+  left: -5%;
+  width: 500px;
+  height: 500px;
+  background-color: #135bec; /* primary */
+}
+
+.orb2 {
+  bottom: -10%;
+  right: -5%;
+  width: 600px;
+  height: 600px;
+  background-color: #9333ea; /* purple-600 */
+}
+
+.orb3 {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 800px;
+  height: 800px;
+  background-color: rgba(219, 39, 119, 0.2); /* pink-600/20 */
+}
+
+/* Glass Shards */
+.glassShard {
+  position: absolute;
+  display: none; /* hidden by default */
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Media queries for shards visibility */
+@media (min-width: 768px) {
+  .shard1,
+  .shard2 {
+    display: flex;
+  }
+}
+@media (min-width: 1024px) {
+  .shard3 {
+    display: flex;
+  }
+}
+@media (min-width: 1280px) {
+  .shard4 {
+    display: flex;
+  }
+}
+
+.shard1 {
+  top: 18%;
+  left: 8%;
+  width: 10rem; /* 40 */
+  height: 13rem; /* 52 */
+  border-radius: 1rem; /* rounded-2xl */
+  transform: rotate(12deg);
+}
+
+.shard2 {
+  bottom: 15%;
+  right: 10%;
+  width: 14rem; /* 56 */
+  height: 10rem; /* 40 */
+  border-radius: 1.5rem; /* rounded-3xl */
+  transform: rotate(-18deg);
+}
+
+.shard3 {
+  top: 35%;
+  right: 6%;
+  width: 7rem; /* 28 */
+  height: 7rem;
+  border-radius: 9999px;
+  transform: rotate(10deg);
+}
+
+.shard4 {
+  bottom: 40%;
+  left: 4%;
+  width: 8rem; /* 32 */
+  height: 8rem;
+  border-radius: 1.5rem;
+  transform: rotate(-10deg);
+}
+
+.shardIcon {
+  color: rgba(255, 255, 255, 0.2);
+  user-select: none;
+}
+
+/* UPDATED ICON SIZES - FORCED LARGE */
+.iconXl {
+  font-size: 8rem !important;
+}
+.icon2Xl {
+  font-size: 10rem !important;
+}
+.iconLg {
+  font-size: 5rem !important;
+}
+.iconMd {
+  font-size: 6rem !important;
+}
+
+/* Grid Pattern */
+.gridPattern {
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: radial-gradient(#fff 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Main Content */
+.main {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 1200px;
+  padding: 0 1.5rem; /* px-6 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Branding */
+.branding {
+  margin-bottom: 3rem; /* mb-12 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem; /* gap-4 */
+}
+
+.logoBox {
+  width: 4rem; /* size-16 */
+  height: 4rem;
+  background-color: rgba(19, 91, 236, 0.2); /* bg-primary/20 */
+  border-radius: 1rem; /* rounded-2xl */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(19, 91, 236, 0.3);
+  box-shadow: 0 0 20px rgba(19, 91, 236, 0.3);
+}
+
+.logoSvg {
+  width: 2.5rem; /* size-10 */
+  height: 2.5rem;
+  color: #135bec; /* text-primary */
+}
+
+.brandText {
+  font-size: 2.375rem; /* text-3xl */
+  font-weight: 700;
+  letter-spacing: -0.0025em;
+}
+
+.brandAccent {
+  color: #135bec;
+}
+
+/* Glass Card */
+.card {
+  width: 100%;
+  max-width: 28rem; /* max-w-md */
+  border-radius: 1rem; /* rounded-2xl */
+  padding: 2rem; /* p-8 */
+  position: relative;
+
+  /* .glass-card styles */
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+}
+
+@media (min-width: 768px) {
+  .card {
+    padding: 3rem; /* md:p-12 */
+  }
+}
+
+.cardHighlight {
+  position: absolute;
+  top: 0;
+  left: 25%;
+  right: 25%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(19, 91, 236, 0.5), transparent);
+}
+
+.cardHeader {
+  text-align: center;
+  margin-bottom: 2.5rem; /* mb-10 */
+  /* space-y-4 equivalent */
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cardTitle {
+  font-size: 2.25rem; /* text-4xl */
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: white;
+  margin: 0;
+  line-height: 1.1;
+}
+
+@media (min-width: 768px) {
+  .cardTitle {
+    font-size: 3rem; /* md:text-5xl */
+  }
+}
+
+.cardSubtitle {
+  color: #94a3b8; /* text-slate-400 */
+  font-size: 1.125rem; /* text-lg */
+  margin: 0;
+}
+
+/* Form Area */
+.formArea {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* space-y-6 */
+}
+
+/* CUSTOM GOOGLE BUTTON STYLES */
+.googleButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem; /* gap-3 */
+  background-color: white;
+  color: #0f172a; /* text-slate-900 */
+  font-family: inherit;
+  font-weight: 700;
+  padding: 1rem 1.5rem; /* py-4 px-6 */
+  border-radius: 0.75rem; /* rounded-xl */
+  transition: all 300ms;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04); /* shadow-xl */
+  border: none;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.googleButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.googleButton:hover:not(:disabled) {
+  background-color: #f1f5f9; /* hover:bg-slate-100 */
+  transform: scale(1.02);
+}
+
+.googleIcon {
+  width: 24px;
+  height: 24px;
+}
+
+.googleButtonText {
+  font-size: 1rem; /* text-base */
+  letter-spacing: 0.025em; /* tracking-wide */
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* gap-4 */
+  padding: 0.5rem 0; /* py-2 */
+}
+
+.dividerLine {
+  height: 1px;
+  flex: 1;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dividerText {
+  font-size: 0.75rem; /* text-xs */
+  text-transform: uppercase;
+  letter-spacing: 0.1em; /* tracking-widest */
+  color: #64748b; /* text-slate-500 */
+  font-weight: 600;
+}
+
+.termsText {
+  color: #64748b; /* text-slate-500 */
+  font-size: 0.75rem; /* text-xs */
+  text-align: center;
+  line-height: 1.625; /* leading-relaxed */
+  margin: 0;
+}
+
+.link {
+  color: #94a3b8; /* text-slate-400 */
+  text-decoration-line: underline;
+  text-decoration-color: #334155; /* decoration-slate-700 */
+  transition: color 150ms;
+  cursor: pointer;
+}
+
+.link:hover {
+  color: #135bec; /* hover:text-primary */
+}
+
+/* Footer Links */
+.footer {
+  margin-top: 3rem; /* mt-12 */
+  display: flex;
+  gap: 2rem; /* gap-8 */
+  color: #64748b; /* text-slate-500 */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500;
+}
+
+.footerLink {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* gap-2 */
+  transition: color 150ms;
+  text-decoration: none;
+  color: inherit;
+}
+
+.footerLink:hover {
+  color: white;
+}
+
+.footerIcon {
+  font-size: 1.125rem; /* text-lg */
+}
+
+/* Floating Clean Layout Particles (bottom of body in template) */
+.particleWrapper {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  border-radius: 9999px;
+}
+
+.p1 {
+  top: 20%;
+  left: 30%;
+  width: 0.25rem;
+  height: 0.25rem;
+  background-color: white;
+  opacity: 0.2;
+}
+.p2 {
+  top: 60%;
+  left: 15%;
+  width: 0.5rem;
+  height: 0.5rem;
+  background-color: #135bec;
+  opacity: 0.3;
+}
+.p3 {
+  top: 40%;
+  right: 25%;
+  width: 0.375rem;
+  height: 0.375rem;
+  background-color: #c084fc;
+  opacity: 0.2;
+}
+.p4 {
+  bottom: 15%;
+  left: 45%;
+  width: 0.25rem;
+  height: 0.25rem;
+  background-color: white;
+  opacity: 0.1;
+}
+.p5 {
+  top: 80%;
+  right: 10%;
+  width: 0.5rem;
+  height: 0.5rem;
+  background-color: #ec4899;
+  opacity: 0.3;
+}

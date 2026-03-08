@@ -1,0 +1,34 @@
+/**
+ * Variables de tipografía alineadas con m3.material.io
+ * Display/headline/title → Google Sans
+ * Body/label → Google Sans Text (fallback: Google Sans)
+ * Mono → Google Sans Mono (fallback: Google Sans Code)
+ * Iconos → Google Symbols (fallback: Material Symbols Outlined en layout)
+ */
+:root {
+  --mio-theme-display-font-family: 'Google Sans', sans-serif;
+  --mio-theme-text-font-family: 'Google Sans', sans-serif;
+  --mio-theme-mono-font-family: var(--font-roboto-mono), 'ID Mono', monospace;
+  --mio-theme-google-symbol-font-family: 'Google Symbols';
+
+  /* Mapeo a tokens de Material Web (@material/web) */
+  --md-ref-typeface-brand: var(--mio-theme-display-font-family);
+  --md-ref-typeface-plain: var(--mio-theme-text-font-family);
+
+  /* Typescale: display/headline/title usan brand, body/label usan plain */
+  --md-sys-typescale-display-large-font: var(--mio-theme-display-font-family);
+  --md-sys-typescale-display-medium-font: var(--mio-theme-display-font-family);
+  --md-sys-typescale-display-small-font: var(--mio-theme-display-font-family);
+  --md-sys-typescale-headline-large-font: var(--mio-theme-display-font-family);
+  --md-sys-typescale-headline-medium-font: var(--mio-theme-display-font-family);
+  --md-sys-typescale-headline-small-font: var(--mio-theme-display-font-family);
+  --md-sys-typescale-title-large-font: var(--mio-theme-display-font-family);
+  --md-sys-typescale-title-medium-font: var(--mio-theme-display-font-family);
+  --md-sys-typescale-title-small-font: var(--mio-theme-display-font-family);
+  --md-sys-typescale-body-large-font: var(--mio-theme-text-font-family);
+  --md-sys-typescale-body-medium-font: var(--mio-theme-text-font-family);
+  --md-sys-typescale-body-small-font: var(--mio-theme-text-font-family);
+  --md-sys-typescale-label-large-font: var(--mio-theme-text-font-family);
+  --md-sys-typescale-label-medium-font: var(--mio-theme-text-font-family);
+  --md-sys-typescale-label-small-font: var(--mio-theme-text-font-family);
+}

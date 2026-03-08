@@ -1,0 +1,35 @@
+/* src/styles/components/layout.css */
+
+/* Mobile Breakpoint: 425px and below */
+@media (max-width: 425px) {
+  .main-content {
+    margin-left: 0 !important;
+    margin-bottom: 80px; /* Space for bottom navbar */
+    width: 100% !important;
+    padding: 0.6rem;
+  }
+}
+
+/* Global Loading Overlay */
+.loadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+  color: white;
+  gap: 1.5rem;
+}
+
+.loadingText {
+  font-family: var(--md-sys-typescale-headline-small-font);
+  font-size: var(--md-sys-typescale-headline-small-size);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}

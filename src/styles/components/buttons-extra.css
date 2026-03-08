@@ -1,0 +1,124 @@
+/* Split Button Styles */
+.split-button {
+  display: inline-flex;
+  align-items: stretch;
+  border-radius: 9999px; /* Full pill shape */
+  vertical-align: middle;
+}
+
+.split-button md-filled-button,
+.split-button md-outlined-button,
+.split-button md-elevated-button,
+.split-button md-filled-tonal-button,
+.split-button md-text-button {
+  --md-sys-shape-corner-medium: 0;
+  --md-sys-shape-corner-large: 0;
+  --md-sys-shape-corner-small: 0;
+  --md-sys-shape-corner-full: 0;
+  margin: 0;
+}
+
+.split-button-main {
+  border-top-left-radius: 9999px;
+  border-bottom-left-radius: 9999px;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+  padding-right: 8px; /* Adjust padding if needed to bring divider closer */
+}
+
+.split-button-arrow {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+  border-top-right-radius: 9999px;
+  border-bottom-right-radius: 9999px;
+  min-width: 48px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.split-button-divider {
+  width: 1px;
+  background-color: var(--md-sys-color-outline-variant); /* Fallback or specific color */
+  opacity: 0.5;
+  z-index: 1;
+}
+
+/* Button Group Styles */
+.button-group {
+  display: inline-flex;
+  border-radius: 9999px;
+}
+
+.button-group > * {
+  margin: 0;
+  --md-sys-shape-corner-full: 0; /* Reset radius */
+}
+
+.button-group > *:first-child {
+  border-top-left-radius: 9999px;
+  border-bottom-left-radius: 9999px;
+}
+
+.button-group > *:last-child {
+  border-top-right-radius: 9999px;
+  border-bottom-right-radius: 9999px;
+}
+
+/* FAB Menu Styles */
+.fab-menu-container {
+  position: relative;
+  display: flex;
+  flex-direction: column-reverse; /* FAB at bottom */
+  align-items: center;
+  gap: 1rem;
+  z-index: 100;
+}
+
+.fab-menu-container.open {
+  z-index: 1000;
+}
+
+.fab-menu-items {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 1rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  position: absolute;
+  bottom: 100%;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.fab-menu-items.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.fab-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.fab-menu-item-label {
+  background-color: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.fab-icon-transition {
+  transition: transform 0.3s ease;
+}

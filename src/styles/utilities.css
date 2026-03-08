@@ -1,0 +1,96 @@
+/* src/styles/utilities.css */
+
+/* Responsive Gap Utilities */
+
+/* Small Gap */
+.gap-sm {
+  gap: var(--mobile-spacing-sm);
+}
+
+@media (min-width: 480px) {
+  .gap-sm {
+    gap: var(--tablet-spacing-sm);
+  }
+}
+
+@media (min-width: 1024px) {
+  .gap-sm {
+    gap: var(--desktop-spacing-sm);
+  }
+}
+
+/* Medium Gap (Default mostly) */
+.gap-md {
+  gap: var(--mobile-spacing-md);
+}
+
+@media (min-width: 480px) {
+  .gap-md {
+    gap: var(--tablet-spacing-md);
+  }
+}
+
+@media (min-width: 1024px) {
+  .gap-md {
+    gap: var(--desktop-spacing-md);
+  }
+}
+
+/* Large Gap */
+.gap-lg {
+  gap: var(--mobile-spacing-lg);
+}
+
+@media (min-width: 480px) {
+  .gap-lg {
+    gap: var(--tablet-spacing-lg);
+  }
+}
+
+@media (min-width: 1024px) {
+  .gap-lg {
+    gap: var(--desktop-spacing-lg);
+  }
+}
+
+/* Extra Large Gap */
+.gap-xl {
+  gap: var(--mobile-spacing-xl);
+}
+
+@media (min-width: 480px) {
+  .gap-xl {
+    gap: var(--tablet-spacing-xl);
+  }
+}
+
+@media (min-width: 1024px) {
+  .gap-xl {
+    gap: var(--desktop-spacing-xl);
+  }
+}
+
+/* Animation Utilities */
+.slide-container {
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+}
+
+.slide-track {
+  display: flex;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); /* Material Design Standard Easing */
+  width: 100%;
+}
+
+.slide-step {
+  width: 100%;
+  flex-shrink: 0;
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.slide-step.inactive {
+  opacity: 0;
+  pointer-events: none;
+}

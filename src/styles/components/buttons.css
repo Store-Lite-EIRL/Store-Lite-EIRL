@@ -1,0 +1,28 @@
+/* Buttons */
+md-filled-button,
+md-outlined-button,
+md-text-button,
+md-elevated-button,
+md-filled-tonal-button {
+  --md-sys-typescale-label-large-font: var(--mio-theme-text-font-family);
+}
+
+/* Icon Buttons */
+md-icon-button,
+md-filled-icon-button,
+md-outlined-icon-button,
+md-filled-tonal-icon-button {
+  /* Custom styles if needed */
+}
+
+/* FABs */
+md-fab,
+md-branded-fab {
+  /* Custom styles if needed */
+}
+
+.button-group {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}

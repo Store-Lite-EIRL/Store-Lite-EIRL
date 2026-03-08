@@ -1,0 +1,10 @@
+/* Surfaces */
+.card-wrapper {
+  /* Base styles for card wrapper if needed */
+}
+
+/* Dialog - ensure it appears above navbar (z-index: 1000) and other layout elements */
+md-dialog {
+  --md-dialog-container-z-index: 10000;
+  z-index: 10000;
+}

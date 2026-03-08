@@ -1,0 +1,384 @@
+.card {
+  position: relative;
+  width: 100%;
+  height: 100%; /* Occupation full height of grid item */
+  background-color: var(--md-sys-color-surface-container-lowest);
+  border-radius: 1.5rem;
+  padding: 0.75rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.card:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  border-color: var(--md-sys-color-primary);
+}
+
+/* ── Badge & Action Containers in Image ── */
+.topBadges {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 10;
+}
+
+.newArrivalBadge,
+.topSellerBadge {
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.topSellerBadge {
+  background-color: var(--md-sys-color-tertiary);
+  color: var(--md-sys-color-on-tertiary);
+}
+
+.imageActions {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 10;
+}
+
+.wishlistBtn {
+  background-color: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  z-index: 20; /* Above overlay */
+}
+
+.wishlistBtn:hover {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  transform: scale(1.1);
+}
+
+.editBtn {
+  background-color: var(--md-sys-color-tertiary-container);
+  --md-icon-button-icon-color: var(--md-sys-color-on-tertiary-container);
+}
+
+.deleteBtn {
+  background-color: var(--md-sys-color-error-container);
+  --md-icon-button-icon-color: var(--md-sys-color-on-error-container);
+}
+
+/* ── Product Image ── */
+.imageContainer {
+  width: 100%;
+  flex-shrink: 0;
+  background-color: var(--md-sys-color-surface-container-low);
+  border-radius: 1rem;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  position: relative;
+}
+
+.image {
+  width: 85% !important;
+  height: 85% !important;
+  object-fit: contain;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+.clickableOverlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 5; /* Between image and dots/actions */
+  text-decoration: none;
+  display: block;
+}
+
+.card:hover .image {
+  transform: scale(1.1);
+}
+
+/* ── Info Section ── */
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 0.5rem;
+  flex-grow: 1; /* Pushes footer to bottom */
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.category {
+  color: var(--md-sys-color-primary);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.divider {
+  width: 1px;
+  height: 12px;
+  background-color: var(--md-sys-color-outline-variant);
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.rating i {
+  color: #ffb400;
+  font-size: 0.875rem;
+}
+
+.title {
+  color: var(--md-sys-color-on-surface);
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 2.9rem;
+}
+
+.features {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.75rem;
+  min-height: 1.25rem; /* Reserve space even if empty */
+}
+
+.featureDot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background-color: var(--md-sys-color-outline-variant);
+}
+
+.stockInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #10b981; /* Success Green */
+}
+
+.stockDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.shippingInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+  min-height: 1.25rem; /* Reserve space even if empty */
+}
+
+.shippingInfo i {
+  font-size: 1rem;
+}
+
+.imageLink {
+  width: 100%;
+  display: contents; /* Ensure it doesn't wrap the whole thing if used as a child */
+}
+
+/* ── Pricing & CTA ── */
+.pricingFooter {
+  margin-top: auto; /* Solidify position at bottom */
+  padding: 0 0.5rem 0.5rem;
+}
+
+.priceContainer {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  min-height: 3.5rem; /* Reserve space for original/strike price row */
+}
+
+.priceWrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.originalPrice {
+  color: var(--md-sys-color-outline);
+  text-decoration: line-through;
+  font-size: 0.95rem;
+  margin-bottom: -0.25rem;
+}
+
+.currentPrice {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface);
+  letter-spacing: -0.02em;
+}
+
+.discountBadge {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+}
+
+.actionsRow {
+  display: flex;
+  gap: 0.5rem;
+  height: 48px;
+}
+
+.buyBtn {
+  flex: 1;
+  --md-filled-button-container-color: var(--md-sys-color-tertiary);
+  --md-filled-button-label-text-color: var(--md-sys-color-on-tertiary);
+}
+
+.cartBtn {
+  width: 48px;
+  --md-filled-button-container-color: var(--md-sys-color-primary);
+  --md-filled-button-label-text-color: var(--md-sys-color-on-primary);
+  padding: 0;
+}
+
+.shareBtn {
+  width: 48px;
+  background-color: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.shareBtn:hover {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.statusBtn {
+  flex: 1;
+  width: 100%;
+  height: 48px;
+}
+
+/* ── Owner Specific Actions ── */
+.ownerActions {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 20;
+}
+
+.statusOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.5rem;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+  z-index: 15;
+}
+
+/* ── Carousel Dots ── */
+.carouselDots {
+  position: absolute;
+  bottom: 0.75rem;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 0.375rem;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--md-sys-color-outline-variant);
+  border: none;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.activeDot {
+  background-color: var(--md-sys-color-primary);
+  transform: scale(1.2);
+}
+
+.carouselDots button {
+  position: relative;
+  z-index: 20; /* Above overlay */
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .card {
+    padding: 0.5rem;
+  }
+
+  .currentPrice {
+    font-size: 1.5rem;
+  }
+
+  .title {
+    font-size: 1rem;
+    height: 2.6rem;
+  }
+}

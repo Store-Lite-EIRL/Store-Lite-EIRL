@@ -1,0 +1,191 @@
+import js from '@eslint/js';
+import nextVitals from 'eslint-config-next/core-web-vitals';
+import nextTs from 'eslint-config-next/typescript';
+import prettierConfig from 'eslint-config-prettier';
+import importPlugin from 'eslint-plugin-import';
+import prettierPlugin from 'eslint-plugin-prettier';
+import promisePlugin from 'eslint-plugin-promise';
+import reactPlugin from 'eslint-plugin-react';
+import reactHooksPlugin from 'eslint-plugin-react-hooks';
+import securityPlugin from 'eslint-plugin-security';
+import sonarjsPlugin from 'eslint-plugin-sonarjs';
+import unicornPlugin from 'eslint-plugin-unicorn';
+import { defineConfig, globalIgnores } from 'eslint/config';
+import tseslint from 'typescript-eslint';
+
+const eslintConfig = defineConfig([
+  // Base configs
+  js.configs.recommended,
+  ...tseslint.configs.strict,
+  ...tseslint.configs.stylistic,
+  ...nextVitals,
+  ...nextTs,
+
+  // Plugin configs
+  sonarjsPlugin.configs.recommended,
+  promisePlugin.configs['flat/recommended'],
+  securityPlugin.configs.recommended,
+
+  // Global ignores
+  globalIgnores([
+    '.next/**',
+    'out/**',
+    'build/**',
+    'dist/**',
+    'node_modules/**',
+    'next-env.d.ts',
+    'public/**',
+    'coverage/**',
+  ]),
+
+  // Main Configuration
+  {
+    plugins: {
+      react: reactPlugin,
+      'react-hooks': reactHooksPlugin,
+      // 'jsx-a11y': jsxA11yPlugin, // Included in nextVitals
+      unicorn: unicornPlugin,
+      import: importPlugin,
+      prettier: prettierPlugin,
+    },
+    settings: {
+      react: {
+        version: 'detect',
+      },
+    },
+    rules: {
+      // Prettier Integration
+      'prettier/prettier': 'error',
+      ...prettierConfig.rules,
+
+      // TypeScript - Strictness
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/explicit-function-return-type': 'off', // Too verbose for React components
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
+      '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/naming-convention': [
+        'error',
+        {
+          selector: 'interface',
+          format: ['PascalCase'],
+        },
+        {
+          selector: 'typeLike',
+          format: ['PascalCase'],
+        },
+      ],
+
+      // React / Next.js
+      'react/react-in-jsx-scope': 'off', // Not needed in Next.js
+      'react/prop-types': 'off', // TS handles this
+      'react/jsx-no-target-blank': 'error',
+      'react/self-closing-comp': 'error',
+      'react/no-unknown-property': ['error', { ignore: ['class', 'for'] }], // Material Design web compatibility might need more specific ignores here if using strictly custom elements
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+
+      // Accessibility
+      'jsx-a11y/alt-text': 'error',
+      'jsx-a11y/aria-props': 'error',
+      'jsx-a11y/aria-proptypes': 'error',
+      'jsx-a11y/aria-unsupported-elements': 'error',
+      'jsx-a11y/role-has-required-aria-props': 'error',
+      'jsx-a11y/role-supports-aria-props': 'error',
+
+      // Clean Code & Best Practices (Unicorn)
+      'unicorn/filename-case': [
+        'error',
+        {
+          cases: {
+            camelCase: true,
+            pascalCase: true,
+          },
+          ignore: [
+            'next-env.d.ts',
+            'not-found.tsx',
+            'loading.tsx',
+            'error.tsx',
+            'layout.tsx',
+            'page.tsx',
+            'route.ts',
+            'middleware.ts',
+          ],
+        },
+      ],
+      'unicorn/prevent-abbreviations': 'off', // Too annoying usually
+      'unicorn/no-null': 'off', // React uses null frequently
+      'unicorn/prefer-module': 'error',
+      'unicorn/prefer-node-protocol': 'error',
+
+      // Code Complexity (Strict)
+      complexity: ['error', 15],
+      'max-depth': ['error', 4],
+      'max-params': ['error', 4],
+      'max-lines': ['error', { max: 400, skipBlankLines: true, skipComments: true }],
+      'max-lines-per-function': ['error', { max: 200, skipBlankLines: true, skipComments: true }],
+
+      // Imports
+      'import/no-duplicates': 'error',
+      'import/no-unresolved': 'off', // Handled by TS
+      'import/order': 'off', // Handled by Prettier plugin
+
+      // General
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-debugger': 'error',
+      eqeqeq: ['error', 'always'],
+    },
+  },
+
+  // Specific overrides for Material Web components if needed
+  {
+    files: ['**/*.tsx'],
+    rules: {
+      // Allow custom elements for Material Web
+      'react/no-unknown-property': [
+        'error',
+        {
+          ignore: [
+            'on',
+            'class',
+            'for',
+            'md-elevated-button',
+            'md-filled-button',
+            'md-outlined-button',
+            'md-text-button',
+            'md-fab',
+            'md-icon-button',
+            'md-icon',
+            'md-list',
+            'md-list-item',
+            'md-divider',
+            'md-filled-text-field',
+            'md-outlined-text-field',
+            'md-checkbox',
+            'md-radio',
+            'md-switch',
+            'md-slider',
+            'md-tabs',
+            'md-primary-tab',
+            'md-secondary-tab',
+            'md-dialog',
+            'md-circular-progress',
+            'md-linear-progress',
+            'md-chip-set',
+            'md-filter-chip',
+            'md-assist-chip',
+            'md-suggestion-chip',
+            'md-input-chip',
+            'md-menu',
+            'md-menu-item',
+            'md-select',
+            'md-select-option',
+          ],
+        },
+      ],
+    },
+  },
+]);
+
+export default eslintConfig;

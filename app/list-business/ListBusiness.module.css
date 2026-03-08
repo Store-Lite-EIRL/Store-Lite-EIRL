@@ -1,0 +1,167 @@
+.listingContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.title {
+  font-family: var(--md-sys-typescale-display-small-font);
+  font-size: 3rem;
+  color: var(--md-sys-on-surface);
+  margin: 0;
+  font-weight: 500;
+}
+
+.businessGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+.businessCard {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.businessCard:hover {
+  transform: translateY(-4px);
+  background: var(--md-sys-color-surface-container-high);
+  border-color: var(--md-sys-color-outline-variant);
+  box-shadow: var(--md-sys-elevation-level-2);
+}
+
+.businessCard.isSelecting {
+  opacity: 0.7;
+  pointer-events: none;
+  background: var(--md-sys-color-surface-container-highest);
+  transform: none;
+  box-shadow: none;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+  position: relative;
+}
+
+.deleteButton {
+  background-color: var(--md-sys-color-on-secondary-container);
+  padding: 10px 30px;
+  --md-text-button-label-text-color: var(--md-sys-color-outline-variant);
+  --md-text-button-hover-label-text-color: var(--md-sys-color-outline-variant);
+  --md-text-button-pressed-label-text-color: var(--md-sys-color-outline-variant);
+  --md-text-button-focus-label-text-color: var(--md-sys-color-outline-variant);
+  --md-text-button-icon-color: var(--md-sys-color-error);
+  --md-text-button-hover-icon-color: var(--md-sys-color-error);
+  --md-text-button-pressed-icon-color: var(--md-sys-color-error);
+  --md-text-button-focus-icon-color: var(--md-sys-color-error);
+}
+
+.manageButton {
+  --md-filled-tonal-button-container-color: var(--md-sys-color-secondary-container);
+  --md-filled-tonal-button-label-text-color: var(--md-sys-color-on-secondary-container);
+  --md-filled-tonal-button-icon-color: var(--md-sys-color-on-secondary-container);
+}
+
+.iconWrapper {
+  width: 64px;
+  height: 64px;
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-primary-container);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.businessLogo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.businessName {
+  font-family: var(--md-sys-typescale-title-large-font);
+  font-size: var(--md-sys-typescale-title-large-size);
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.businessType {
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  color: var(--md-sys-color-secondary);
+  text-transform: capitalize;
+}
+
+.cardBody {
+  flex: 1;
+}
+
+.description {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0.5rem 0;
+}
+
+.cardFooter {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 5rem 2rem;
+  background: var(--md-sys-color-surface-container-lowest);
+  border-radius: 2rem;
+  border: 2px dashed var(--md-sys-color-outline-variant);
+}
+
+.emptyTitle {
+  font-family: var(--md-sys-typescale-headline-small-font);
+  color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 600px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .businessGrid {
+    grid-template-columns: 1fr;
+  }
+}

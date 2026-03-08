@@ -1,0 +1,51 @@
+.md-loading-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.md-loading-indicator--small {
+  width: 24px;
+  height: 24px;
+}
+
+.md-loading-indicator--medium {
+  width: 48px;
+  height: 48px;
+}
+
+.md-loading-indicator--large {
+  width: 64px;
+  height: 64px;
+}
+
+.md-loading-indicator svg {
+  width: 100%;
+  height: 100%;
+  fill: var(--md-sys-color-primary, #6750a4);
+  animation: md-loading-rotate 4s cubic-bezier(0.2, 0, 0, 1) infinite;
+}
+
+.md-loading-indicator path {
+  transition: d 0.3s ease-in-out;
+}
+
+@keyframes md-loading-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Secondary variant color */
+.md-loading-indicator--secondary svg {
+  fill: var(--md-sys-color-secondary, #625b71);
+}
+
+/* Tertiary variant color */
+.md-loading-indicator--tertiary svg {
+  fill: var(--md-sys-color-tertiary, #7d5260);
+}

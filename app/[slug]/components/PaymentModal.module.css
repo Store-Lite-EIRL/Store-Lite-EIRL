@@ -1,0 +1,160 @@
+.modal {
+  --md-dialog-container-max-block-size: 90vh;
+  --md-dialog-container-max-inline-size: 600px;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0.5rem;
+}
+
+/* Tabs Styling */
+.tabs {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  margin-bottom: 0.5rem;
+}
+
+.tab {
+  flex: 1;
+  padding: 0.75rem;
+  text-align: center;
+  cursor: pointer;
+  font-weight: 600;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.activeTab {
+  color: var(--md-sys-color-primary);
+  border-bottom-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
+  border-radius: 8px 8px 0 0;
+}
+
+/* Glassmorphic Card Preview */
+.cardPreview {
+  width: 100%;
+  aspect-ratio: 1.6 / 1;
+  background: linear-gradient(135deg, #6200ee, #bb86fc);
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.cardPreview::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  transform: rotate(30deg);
+}
+
+.chip {
+  width: 45px;
+  height: 35px;
+  background: linear-gradient(135deg, #ffd700, #b8860b);
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.cardNumber {
+  font-size: 1.5rem;
+  letter-spacing: 0.15em;
+  font-family: 'Courier New', Courier, monospace;
+  margin-top: auto;
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 1.5rem;
+}
+
+.cardHolder {
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.cardExpiry {
+  font-size: 1rem;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* Pay Methods */
+.methodContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.yapeContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: 1.25rem;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.yapeLogo {
+  width: 100px;
+  height: auto;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.fullWidth {
+  grid-column: span 2;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.summary {
+  background: var(--md-sys-color-surface-container-high);
+  padding: 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.amount {
+  color: var(--md-sys-color-primary);
+  font-weight: 700;
+  font-size: 1.1rem;
+}

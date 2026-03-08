@@ -1,0 +1,292 @@
+/* Date & Time Pickers - Material Design 3 */
+
+.picker-dialog {
+  --md-dialog-container-color: var(--md-sys-color-surface-container-high);
+  border-radius: 28px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: 328px; /* Mobile portrait width standard */
+  max-width: 100%;
+  /* Fix for stacking context issues: ensure dialog is above everything */
+  z-index: 9999;
+  position: relative;
+}
+
+/* Ensure backdrop covers everything if supported by the web component via variables */
+md-dialog {
+  --md-dialog-z-index: 9999;
+}
+
+.picker-header {
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.picker-header-label {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-ref-typeface-plain);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  text-transform: uppercase;
+}
+
+.picker-header-display {
+  font-family: var(--md-ref-typeface-plain);
+  font-size: 32px; /* MD3 Headline Large-ish */
+  line-height: 40px;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+}
+
+.picker-header-display.active {
+  color: var(--md-sys-color-on-surface);
+}
+
+.picker-header-display-large {
+  font-size: 57px; /* Display Large for Time */
+  line-height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.time-display-unit {
+  background: var(--md-sys-color-surface-container-highest);
+  border-radius: 8px;
+  padding: 0 4px;
+  color: var(--md-sys-color-on-surface);
+}
+
+.time-display-unit.active {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.time-display-separator {
+  color: var(--md-sys-color-on-surface);
+}
+
+.am-pm-selector {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-left: 12px;
+}
+
+.am-pm-option {
+  padding: 8px 10px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.am-pm-option.active {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.am-pm-option:first-child {
+  border-bottom: 1px solid var(--md-sys-color-outline);
+}
+
+/* Calendar */
+.picker-body {
+  padding: 10px 12px;
+}
+
+.calendar-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  margin-bottom: 10px;
+}
+
+.calendar-month-year {
+  font-family: var(--md-ref-typeface-plain);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 4px;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: 2px;
+  /* Fixed height to prevent layout shift between months with 5 vs 6 weeks */
+  min-height: 252px; /* 6 rows * 40px + 5 gaps * 2px approx */
+}
+
+.calendar-day {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.calendar-day:hover {
+  background-color: var(--md-sys-color-surface-variant);
+}
+
+.calendar-day.today {
+  border: 1px solid var(--md-sys-color-primary);
+  color: var(--md-sys-color-primary);
+}
+
+.calendar-day.selected {
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.calendar-day.outside-month {
+  color: var(--md-sys-color-on-surface-variant);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Clock Face */
+.clock-face-container {
+  width: 256px;
+  height: 256px;
+  background: var(--md-sys-color-surface-container-highest);
+  border-radius: 50%;
+  position: relative;
+  margin: 20px auto;
+}
+
+.clock-number {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 16px;
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  /* Centering logic will be handled via inline styles or transform */
+  top: 50%;
+  left: 50%;
+  margin-top: -16px;
+  margin-left: -16px;
+}
+
+.clock-number.active {
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.clock-hand {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  background-color: var(--md-sys-color-primary);
+  transform-origin: bottom center; /* Pivot at the bottom of the hand (center of clock) */
+  pointer-events: none;
+  /* Adjust margin to align the pivot point (bottom center) with the clock center */
+  /* If height is 100px, top should be 50% - 100px (to place bottom at center) */
+  margin-top: -100px; /* Moves the hand up so its bottom is at the center */
+  margin-left: -1px; /* Centers the 2px width */
+}
+
+.clock-hand::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  width: 10px;
+  height: 10px;
+  background-color: var(--md-sys-color-primary);
+  border-radius: 50%;
+}
+
+.clock-center-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background-color: var(--md-sys-color-primary);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.picker-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 24px;
+  gap: 8px;
+}
+
+/* Year Selector */
+.year-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+  height: 292px; /* Matches calendar height approx */
+  padding: 8px 0;
+}
+
+.year-option {
+  padding: 12px 24px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 16px;
+  color: var(--md-sys-color-on-surface);
+  transition: background-color 0.2s;
+}
+
+.year-option:hover {
+  background-color: var(--md-sys-color-surface-variant);
+}
+
+.year-option.selected {
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-size: 20px;
+  font-weight: 500;
+}

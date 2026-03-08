@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1770338198735,
+      "tag": "0000_superb_master_mold",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771112838327,
+      "tag": "0001_puzzling_hairball",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772741448507,
+      "tag": "0002_add_product_fields",
+      "breakpoints": true
+    }
+  ]
+}

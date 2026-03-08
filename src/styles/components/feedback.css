@@ -1,0 +1,10 @@
+/* Feedback */
+md-linear-progress {
+  --md-linear-progress-active-indicator-shape: 8px;
+  --md-linear-progress-track-shape: 8px;
+}
+
+md-circular-progress {
+  /* Ensure rounding of the stroke ends */
+  stroke-linecap: round;
+}

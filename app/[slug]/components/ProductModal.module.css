@@ -1,0 +1,42 @@
+.productSheet {
+  max-height: 96vh;
+}
+
+.content {
+  padding: 0.25rem 0 0;
+}
+
+.productSheet :global(.md-sheet__content) {
+  padding: 1rem 1.25rem 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .productSheet {
+    max-height: 100vh;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .productSheet :global(.md-sheet__content) {
+    padding: 0.75rem 0.875rem 1.25rem;
+  }
+}
+
+.skeletonBox {
+  background: linear-gradient(
+    90deg,
+    var(--md-sys-color-surface-container) 25%,
+    var(--md-sys-color-surface-container-high) 50%,
+    var(--md-sys-color-surface-container) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite ease-in-out;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

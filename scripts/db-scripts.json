@@ -1,0 +1,9 @@
+{
+  "name": "virtual-stores-db",
+  "scripts": {
+    "db:migrate": "node scripts/migrate.js",
+    "db:update": "drizzle-kit generate && node scripts/migrate.js",
+    "db:studio": "drizzle-kit studio",
+    "db:push": "drizzle-kit push"
+  }
+}

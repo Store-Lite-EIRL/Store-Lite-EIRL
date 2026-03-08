@@ -1,0 +1,201 @@
+.filterBarWrapper {
+  width: 100%;
+  margin: 1.5rem 0;
+}
+
+.filterContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Custom Segmented Bar ── */
+.segmentedGroup {
+  display: flex;
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: 999px;
+  overflow: hidden;
+  height: 40px;
+}
+
+.segmentedButton {
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--md-sys-color-outline-variant);
+  padding: 0 1.5rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.segmentedButton:last-child {
+  border-right: none;
+}
+
+.segmentedButton:hover {
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface);
+}
+
+.segmentedButton--active {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+/* ── Expanding Search Input ── */
+.searchInputWrapper {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 140px; /* collapsed state holding icon and 'Buscar' */
+  background: transparent;
+  border-right: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.searchInputWrapper--expanded {
+  width: 250px;
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.searchInput {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--md-sys-color-on-surface);
+  padding: 0 1rem 0 0;
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.875rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.searchInputWrapper--expanded .searchInput {
+  opacity: 1;
+}
+
+.searchIconBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0 1.5rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 600;
+  font-family: inherit;
+  font-size: 0.875rem;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.searchIconBtn:hover {
+  color: var(--md-sys-color-on-surface);
+}
+
+.searchInputWrapper--expanded .searchIconBtn {
+  padding: 0 0.5rem 0 1rem;
+  color: var(--md-sys-color-primary);
+}
+
+.aboutContent {
+  animation: fadeIn 0.3s ease-out;
+  padding: 0 1rem;
+}
+
+.infoCard {
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-radius: 1.5rem;
+  padding: 2.5rem;
+  box-shadow: var(--md-sys-elevation-level-1);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+@media (max-width: 600px) {
+  .filterBarWrapper {
+    margin: 1rem 0;
+  }
+  .filterContainer {
+    margin-bottom: 1rem;
+  }
+  .infoCard {
+    padding: 1.25rem;
+    border-radius: 1rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .filterBarWrapper {
+    margin: 0.5rem 0;
+  }
+  .segmentedButton {
+    padding: 0 1rem;
+  }
+  .searchIconBtn {
+    padding: 0 1rem;
+  }
+}
+
+.infoTitle {
+  color: var(--md-sys-color-primary);
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-family: var(--md-sys-typescale-headline-small-font);
+  font-size: var(--md-sys-typescale-headline-small-size);
+}
+
+.description {
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.6;
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  white-space: pre-wrap;
+}
+
+.detailsGrid {
+  display: grid;
+  gap: 1rem;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  padding-top: 1.5rem;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detailItem strong {
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detailItem span {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 1.1rem;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

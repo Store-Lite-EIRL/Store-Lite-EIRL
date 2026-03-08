@@ -1,0 +1,415 @@
+/* ============================================
+   Navbar Component - Material Design 3 Tokenized
+   Floating, Centered, with MD3 Colors
+   Updated: Pill Interactions, Rounded Icons
+   ============================================ */
+
+:root {
+  /* Using standard MD3 sizing */
+  --navbar-width: 80px;
+  --navbar-expanded-width: 250px;
+
+  --navbar-float-margin: 12px;
+  --navbar-radius: 20px;
+}
+
+/* Container setup */
+.navbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  /* Floating dimensions */
+  height: calc(100vh - (var(--navbar-float-margin) * 2));
+  width: var(--navbar-width);
+  margin: var(--navbar-float-margin);
+  border-radius: var(--navbar-radius);
+
+  /* Layout Internals */
+  padding: 1rem 0;
+  gap: 1rem;
+
+  /* Theme - Strict Tokens */
+  background-color: var(--md-sys-color-surface-container); /* Standard sidebar bg */
+  color: var(--md-sys-color-on-surface-variant);
+
+  /* Transitions */
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Position */
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+  box-sizing: border-box;
+
+  /* Depth */
+  box-shadow: var(--md-sys-elevation-level2, 0 4px 8px rgba(0, 0, 0, 0.1));
+}
+
+.navbar--expanded {
+  width: var(--navbar-expanded-width);
+  align-items: stretch;
+}
+
+/* ============================================
+   Header Section
+   ============================================ */
+.navbar__header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 90%;
+  min-height: 3.5rem;
+  margin-bottom: 0;
+  position: relative;
+  padding: 0 1.1rem;
+  flex-shrink: 0;
+}
+
+.navbar--expanded .navbar__header {
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1.1rem;
+}
+
+.navbar__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.2rem; /* Slightly larger for better detail */
+  height: 3.2rem;
+  border-radius: 12px; /* Slightly rounded borders instead of circular */
+
+  /* Logo Colors - using Primary for brand identity */
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+
+  font-weight: bold;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  overflow: hidden; /* Ensures images are clipped to circle */
+  border: 2px solid var(--md-sys-color-surface-container-highest); /* Subtle "printed" border */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Slight elevation */
+}
+
+/* Ensure Logo Image fills the circle perfectly */
+.navbar__logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* When logo contains an icon (md-icon) */
+.navbar__logo md-icon {
+  font-size: 1.6rem;
+  color: var(--md-sys-color-on-primary);
+}
+
+.navbar__label-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0; /* Allow flex item to shrink below content size */
+  flex: 1; /* Take remaining space */
+  text-align: left;
+  /* Animation */
+  opacity: 0;
+  max-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  transform: translateX(-10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navbar--expanded .navbar__label-container {
+  opacity: 1;
+  max-width: 160px;
+  transform: translateX(0);
+}
+
+.navbar__label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  line-height: 1.2;
+  white-space: normal; /* Allow text to wrap */
+  word-wrap: break-word;
+  overflow-wrap: break-word; /* Modern break-word */
+  width: 100%;
+}
+
+.navbar__powered-by {
+  font-size: 0.6rem;
+  font-weight: 300;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+/* ============================================
+   Center Navigation Section
+   ============================================ */
+.navbar__center {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 85%;
+  gap: 1rem; /* Increased gap for cleaner pill separation */
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+}
+
+.navbar--expanded .navbar__center {
+  align-items: center; /* Centered in the panel */
+  margin-left: 1.3rem;
+}
+
+/* ============================================
+   Navbar Items (Buttons)
+   ============================================ */
+.navbar__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem; /* Fixed width when collapsed (pill circle) */
+  height: 3.5rem;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--md-sys-color-on-surface-variant);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+  margin: 0;
+  border-radius: 999px; /* Always pill/circle */
+  overflow: hidden; /* Ensure hover/active fills shape */
+}
+
+.navbar--expanded .navbar__item {
+  width: calc(100% - 2rem); /* Floating pill: 1rem margin on each side */
+  justify-content: flex-start;
+  padding-left: 1rem;
+  padding-right: 1.5rem;
+  gap: 1rem;
+}
+
+/* Icons */
+.navbar__item-icon {
+  font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
+  font-size: 2rem; /* Larger icons (32px) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  z-index: 2;
+  flex-shrink: 0;
+  /* Font variations for filled/rounded look if needed, usually managed by font-family */
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 200,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+.navbar__item--active .navbar__item-icon {
+  font-variation-settings:
+    'FILL' 1,
+    'wght' 200,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+/* Labels */
+.navbar__item-label {
+  /* Animation */
+  opacity: 0;
+  max-width: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navbar--expanded .navbar__item-label {
+  opacity: 1;
+  max-width: 140px;
+  transform: translateX(0);
+  margin-left: 0.5rem;
+}
+
+/* ============================================
+   Interactions: Hover & Active
+   ============================================ */
+
+/* Hover: Applies to the WHOLE button now */
+.navbar__item:hover:not(.navbar__item--active) {
+  background-color: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Active State: The PILL */
+.navbar__item--active {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font-weight: 600;
+}
+
+/* ============================================
+   Toggle Button
+   ============================================ */
+.navbar__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 4px solid var(--md-sys-color-background);
+  border-radius: 50%;
+
+  /* High contrast toggle */
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  right: -0.3rem;
+  transform: translateY(-50%);
+  z-index: 1001;
+}
+
+.navbar__toggle:hover {
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.navbar__toggle-icon {
+  font-family: 'Material Symbols Rounded';
+  width: 1.2rem;
+  height: 1.2rem;
+  font-size: 1.2rem;
+}
+
+/* ============================================
+   Bottom Actions
+   ============================================ */
+.navbar__bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-top: auto;
+  padding-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+
+.navbar--expanded .navbar__bottom {
+  align-items: center;
+}
+
+/* ============================================
+   Responsive: Mobile (<= 425px)
+   ============================================ */
+/* Default state (Hidden on desktop) */
+.navbar__mobile {
+  display: none;
+  padding-top: 0.5rem;
+}
+
+@media (max-width: 425px) {
+  .navbar {
+    width: 100%;
+    height: auto;
+    margin: 0;
+    border-radius: 0;
+    bottom: 0;
+    top: auto;
+    left: 0;
+
+    flex-direction: row;
+    padding: 0;
+    justify-content: space-around;
+
+    /* Using Surface for mobile bottom bar standard */
+    background-color: var(--md-sys-color-surface);
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+  }
+
+  .navbar__header,
+  .navbar__toggle,
+  .navbar__center,
+  .navbar__bottom {
+    display: none;
+  }
+
+  .navbar__mobile {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 4.3rem;
+    justify-content: space-evenly;
+    align-items: center;
+  }
+
+  .navbar__menu-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    height: 100%;
+  }
+
+  /* Shared item styles for mobile */
+  .navbar__item {
+    height: 100%;
+    width: auto;
+    flex: 1;
+    margin: 0;
+    border-radius: 0;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0; /* Removed padding for perfect centering */
+    gap: 0; /* Removed gap */
+    background-color: transparent !important;
+  }
+
+  /* Labels - Strictly removed */
+  .navbar__item-label {
+    display: none !important;
+    font-size: 0.75rem; /* Keep for potential future use, but overridden */
+    margin-top: 0.2rem; /* Keep for potential future use, but overridden */
+  }
+
+  /* Icons - Larger on mobile */
+  .navbar__item-icon {
+    font-size: 2.2rem;
+    transition: all 0.3s cubic-bezier(0.2, 0, 0, 1); /* Fluid transition */
+  }
+
+  /* Active State on Mobile: Icon Highlight Pill */
+  .navbar__item--active {
+    color: var(--md-sys-color-on-surface);
+    background-color: transparent;
+  }
+
+  /* Create the pill AROUND THE ICON ONLY for mobile active state */
+  .navbar__item--active .navbar__item-icon {
+    background-color: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    width: 4.5rem; /* Wider pill */
+    height: 2.8rem; /* Taller pill */
+    border-radius: 999px;
+    font-variation-settings: 'FILL' 1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle depth */
+  }
+
+  /* Reset hover for touch */
+  .navbar__item:hover {
+    background-color: transparent;
+  }
+}

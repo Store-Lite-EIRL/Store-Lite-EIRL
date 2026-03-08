@@ -1,0 +1,84 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2f9);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 280px;
+}
+
+@media (max-width: 480px) {
+  .container {
+    min-width: unset;
+    padding: 12px;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  margin: 0;
+}
+
+.sliderContainer {
+  padding: 0 8px; /* Room for thumb overhang */
+}
+
+/*
+  Material Design 3 web components range slider.
+  It handles dual thumbs automatically.
+*/
+.slider {
+  width: 100%;
+  --md-slider-inactive-track-color: var(--md-sys-color-surface-variant);
+  --md-slider-active-track-color: var(--md-sys-color-primary);
+  --md-slider-handle-color: var(--md-sys-color-primary);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.priceLabel {
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.priceValue {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.filterBtn {
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 100px;
+  padding: 7px 7px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.filterBtn:hover {
+  background-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
+}

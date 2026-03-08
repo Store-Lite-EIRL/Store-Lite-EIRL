@@ -1,0 +1,5 @@
+/* Data Display */
+md-list {
+  border-radius: 8px; /* Example */
+  background: var(--md-sys-color-surface);
+}
