@@ -1,53 +1,67 @@
-# Template Frontend Next.js - Material Design 3
+# 🛒 Store Lite
 
-Un template técnico avanzado utilizando Next.js 16+, React 19 y Material Design 3 (Material Web), diseñado para escalabilidad mediante una arquitectura modular basada en características (`features`).
+Store Lite es una solución de comercio electrónico ligera y escalable construida con **Next.js 16 (App Router)** y **React 19**. Implementa el sistema de diseño **Material Design 3** mediante Web Components nativos para una experiencia de usuario fluida y de alto rendimiento.
 
-## 🛠️ Stack Tecnológico
+## 🚀 Tecnologías Core (Stack Técnico)
 
-- **Core:** [Next.js 16.1 (App Router)](https://nextjs.org/) + [React 19](https://react.dev/)
-- **UI System:** [Material Web Components (@material/web)](https://github.com/material-components/material-web) + Google Sans
-- **Database / ORM:** [Drizzle ORM](https://orm.drizzle.team/) + [PostgreSQL](https://www.postgresql.org/)
-- **Backend-as-a-Service:** [Supabase](https://supabase.com/) (Auth, Storage, Realtime)
-- **Gestión de Estado & Lógica:** Server Actions para mutaciones, Context API para estado UI global.
-- **Utilidades:** [dnd-kit](https://dndkit.com/) (Drag & Drop), [Day.js](https://day.js.org/), [xlsx](https://sheetjs.com/) (Data Export).
-- **Tooling:** pnpm, TypeScript, ESLint, Prettier.
+- **Frontend Framework:** [Next.js 16.1+](https://nextjs.org/) (App Router, Server Components).
+- **Runtime UI:** [React 19](https://react.dev/) (Hooks avanzados, Server Actions).
+- **Design System:** [Material Web Components (@material/web)](https://github.com/material-components/material-web) + Material Design 3 tokens.
+- **Base de Datos & ORM:** [Drizzle ORM](https://orm.drizzle.team/) + [PostgreSQL](https://www.postgresql.org/).
+- **Infraestructura (BaaS):** [Supabase](https://supabase.com/) (Autenticación, Almacenamiento de archivos, Realtime).
+- **Gestión de Estados:** Server-side state con Next.js Cache y Client-side global con React Context.
+- **Tipado:** [TypeScript 5+](https://www.typescriptlang.org/).
 
-## 📂 Arquitectura y Estructura
+## 📂 Arquitectura del Proyecto
 
-El proyecto utiliza una arquitectura orientada a dominios (`features`) para desacoplar la lógica de negocio de la infraestructura.
+El proyecto sigue una arquitectura **basada en características (Feature-driven)** dentro de un directorio `src`, facilitando el mantenimiento y la escalabilidad horizontal.
 
 ```text
-├── app/                  # Orquestación de rutas, páginas y Server Actions
-│   ├── actions/          # Acciones del servidor centralizadas
-│   ├── api/              # Route Handlers (REST)
-│   └── (main)/           # Layout principal y rutas protegidas
+├── app/                  # Rutas (App Router), Server Actions y Composición
+│   ├── (main)/           # Layouts y vistas protegidas
+│   ├── actions/          # Lógica de mutación de datos (Server Actions)
+│   ├── api/              # Endpoints API (Node.js/Edge Runtime)
+│   └── auth/             # Flujos de autenticación e inicio de sesión
 ├── src/
-│   ├── features/         # Lógica de dominio encapsulada (Auth, Products, etc.)
-│   ├── core/             # Proveedores globales, esquemas de DB y configuración core
-│   ├── lib/              # Inicialización de SDKs externos (Supabase, material)
-│   ├── shared/           # Componentes UI atómicos, hooks y utilidades reusables
-│   ├── styles/           # Tokens de diseño y CSS modular
-│   └── types/            # Definiciones de tipos TypeScript globales
-├── database/             # Scripts SQL y definiciones Drizzle
-└── migrations/           # Historial de migraciones de base de datos
+│   ├── features/         # Módulos de dominio encapsulados (Products, Cart, Auth)
+│   ├── core/             # Proveedores globales, esquemas de DB y configuración base
+│   ├── lib/              # Adaptadores e inicialización de SDKs (Supabase, MD3)
+│   ├── shared/           # UI Kit atómico, hooks transversales y utilidades
+│   ├── styles/           # Design Tokens, temas Dark/Light y utilidades CSS
+│   └── types/            # Definiciones globales de TypeScript
+├── database/             # Modelado de datos y scripts Drizzle
+└── migrations/           # Control de versiones del esquema de base de datos
 ```
 
-## 🧠 Lógica de Operación
+## 🧠 Lógica de Operación y Patrones
 
-1. **Rendering:** Prioriza Server Components (RSC) para despacho de datos y SEO. Los Client Components se limitan a interactividad granular (Material Components).
-2. **Data Flow:**
-   - **Lectura:** Next.js Fetch + Drizzle directamente en RSC.
-   - **Escritura:** React Server Actions con revalidación de caché mediante `revalidatePath`.
-3. **Autenticación:** Gestión mediante Middleware de Supabase para protección de rutas a nivel de edge.
-4. **Diseño:** Implementación estricta de Material Design 3 utilizando Web Components nativos para máxima performance y fidelidad visual.
+### 1. Estrategia de Renderizado
+Se priorizan los **React Server Components (RSC)** para la recuperación inicial de datos (Data Fetching), reduciendo el bundle de JavaScript en el cliente y optimizando el Core Web Vitals (LCP, CLS).
 
-## 🚀 Inicio Rápido
+### 2. Flujo de Datos
+- **Lectura:** Acceso directo a la base de datos mediante Drizzle dentro de Server Components para latencia mínima.
+- **Escritura:** Mutaciones mediante **Server Actions**, asegurando validación en el servidor y revalidación de caché instantánea con `revalidatePath`.
+
+### 3. Sistema de Diseño (Material 3)
+Utiliza **Material Web (@material/web)**, lo que permite componentes con fidelidad visual de Google sin las dependencias pesadas de librerías tipo CSS-in-JS. El tema es dinámico y soporta esquemas de color avanzados (Dark, Light, High Contrast).
+
+### 4. Seguridad y Autenticación
+Protección de rutas mediante **Supabase Middleware** en el Edge, permitiendo verificaciones de sesión antes de que el servidor Next.js procese la petición.
+
+## 🛠️ Configuración de Desarrollo
 
 ```bash
+# Instalación de dependencias
 pnpm install
+
+# Iniciar servidor de desarrollo
 pnpm dev
+
+# Generar migraciones de base de datos
+pnpm drizzle-kit generate
 ```
 
 ---
-*Este proyecto está en migración activa hacia la estructura completa de `features`.*
+*Store Lite v1.0 - Enfocado en robustez técnica y agilidad.*
+
 
