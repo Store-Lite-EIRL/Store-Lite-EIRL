@@ -106,8 +106,9 @@ export default function ProductPreviewSheet({
               Stock: <strong>{product.stock}</strong>
             </span>
             <span
-              className={`${styles.chip} ${product.isAvailable ? styles.availableChip : styles.unavailableChip
-                }`}
+              className={`${styles.chip} ${
+                product.isAvailable ? styles.availableChip : styles.unavailableChip
+              }`}
             >
               {product.isAvailable ? 'Disponible' : 'No disponible'}
             </span>

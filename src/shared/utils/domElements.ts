@@ -1,7 +1,8 @@
 type ClosableElement = HTMLElement & { close: () => void };
 type ShowableElement = HTMLElement & { show: () => void };
 
-const getElementByIdAs = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null;
+const getElementByIdAs = <T extends HTMLElement>(id: string) =>
+  document.getElementById(id) as T | null;
 
 export const closeElementById = (id: string) => {
   const element = getElementByIdAs<ClosableElement>(id);

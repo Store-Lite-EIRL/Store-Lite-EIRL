@@ -26,133 +26,133 @@ export const Step1General = ({
   return (
     <>
       <div className="flex-responsive-row gap-md">
-      <Select
-        label="Tipo de Persona"
-        outlined
-        style={{ flex: 1 }}
-        value={formData.personType}
-        onChange={(e: MaterialSelectEvent) => {
-          onChange('personType', getMaterialSelectValue(e) as 'natural' | 'juridica');
-        }}
-      >
-        <SelectOption value="natural" selected={formData.personType === 'natural'}>
-          Persona Natural
-        </SelectOption>
-        <SelectOption value="juridica" selected={formData.personType === 'juridica'}>
-          Persona Jurídica
-        </SelectOption>
-      </Select>
-
-      <Select
-        label="País"
-        outlined
-        style={{ flex: 1 }}
-        value={formData.country}
-        onChange={(e: MaterialSelectEvent) => {
-          onChange('country', getMaterialSelectValue(e));
-        }}
-      >
-        {SOUTH_AMERICAN_COUNTRIES.map((c) => (
-          <SelectOption key={c.name} value={c.name} selected={formData.country === c.name}>
-            {c.name}
+        <Select
+          label="Tipo de Persona"
+          outlined
+          style={{ flex: 1 }}
+          value={formData.personType}
+          onChange={(e: MaterialSelectEvent) => {
+            onChange('personType', getMaterialSelectValue(e) as 'natural' | 'juridica');
+          }}
+        >
+          <SelectOption value="natural" selected={formData.personType === 'natural'}>
+            Persona Natural
           </SelectOption>
-        ))}
-      </Select>
-    </div>
+          <SelectOption value="juridica" selected={formData.personType === 'juridica'}>
+            Persona Jurídica
+          </SelectOption>
+        </Select>
 
-    <TextField
-      label="RUC / NIT"
-      placeholder="12345678901"
-      variant="outlined"
-      style={{ width: '100%' }}
-      value={formData.taxId}
-      maxLength={formData.personType === 'natural' ? 11 : 20}
-      onInput={(e: React.FormEvent<HTMLElement>) => {
-        const value = getFieldValue(e).replace(/\D/g, ''); // Ensure only numbers
-        onChange('taxId', value);
-      }}
-      error={!!errors.taxId}
-      errorText={errors.taxId}
-    />
+        <Select
+          label="País"
+          outlined
+          style={{ flex: 1 }}
+          value={formData.country}
+          onChange={(e: MaterialSelectEvent) => {
+            onChange('country', getMaterialSelectValue(e));
+          }}
+        >
+          {SOUTH_AMERICAN_COUNTRIES.map((c) => (
+            <SelectOption key={c.name} value={c.name} selected={formData.country === c.name}>
+              {c.name}
+            </SelectOption>
+          ))}
+        </Select>
+      </div>
 
-    <TextField
-      label="Nombre Comercial"
-      placeholder="Mi Empresa S.A.C."
-      variant="outlined"
-      style={{ width: '100%' }}
-      value={formData.commercialName}
-      onInput={(e: React.FormEvent<HTMLElement>) => {
-        onChange('commercialName', getFieldValue(e));
-      }}
-      error={!!errors.commercialName}
-      errorText={errors.commercialName}
-    />
+      <TextField
+        label="RUC / NIT"
+        placeholder="12345678901"
+        variant="outlined"
+        style={{ width: '100%' }}
+        value={formData.taxId}
+        maxLength={formData.personType === 'natural' ? 11 : 20}
+        onInput={(e: React.FormEvent<HTMLElement>) => {
+          const value = getFieldValue(e).replace(/\D/g, ''); // Ensure only numbers
+          onChange('taxId', value);
+        }}
+        error={!!errors.taxId}
+        errorText={errors.taxId}
+      />
 
-    <div className="flex-column gap-sm">
-      <label className="body-medium" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
-        Logo de la Empresa (Opcional)
-      </label>
-      <div className="flex-row flex-align-center gap-md">
-        <div style={{ position: 'relative' }}>
-          <Button
-            variant="tonal"
-            style={{
-              borderRadius: '12px',
-              backgroundColor: 'var(--md-sys-color-primary)',
-              color: 'var(--md-sys-color-on-primary)',
-              padding: '10px 20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 10,
-              cursor: 'pointer',
-            }}
-            onClick={() => logoUploadRef.current?.click()}
-          >
-            Subir Logo
-            <Icon slot="icon">upload</Icon>
-          </Button>
-          <input
-            id="logo-upload"
-            ref={logoUploadRef}
-            type="file"
-            accept="image/*"
-            title="Subir logo de la empresa"
-            placeholder="Seleccionar archivo"
-            style={{ display: 'none' }}
-            onChange={(e) => {
-              onFileChange?.(e.target.files?.[0] || null);
-            }}
-          />
-        </div>
+      <TextField
+        label="Nombre Comercial"
+        placeholder="Mi Empresa S.A.C."
+        variant="outlined"
+        style={{ width: '100%' }}
+        value={formData.commercialName}
+        onInput={(e: React.FormEvent<HTMLElement>) => {
+          onChange('commercialName', getFieldValue(e));
+        }}
+        error={!!errors.commercialName}
+        errorText={errors.commercialName}
+      />
 
-        {formData.logo && (
-          <div
-            className="flex-row flex-align-center gap-sm surface-container-low"
-            style={{
-              paddingLeft: 20,
-              borderRadius: '20px',
-              border: '1px solid var(--md-sys-color-outline-variant)',
-            }}
-          >
-            <span
-              className="label-medium"
+      <div className="flex-column gap-sm">
+        <label className="body-medium" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
+          Logo de la Empresa (Opcional)
+        </label>
+        <div className="flex-row flex-align-center gap-md">
+          <div style={{ position: 'relative' }}>
+            <Button
+              variant="tonal"
               style={{
-                maxWidth: '150px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
+                borderRadius: '12px',
+                backgroundColor: 'var(--md-sys-color-primary)',
+                color: 'var(--md-sys-color-on-primary)',
+                padding: '10px 20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+                cursor: 'pointer',
+              }}
+              onClick={() => logoUploadRef.current?.click()}
+            >
+              Subir Logo
+              <Icon slot="icon">upload</Icon>
+            </Button>
+            <input
+              id="logo-upload"
+              ref={logoUploadRef}
+              type="file"
+              accept="image/*"
+              title="Subir logo de la empresa"
+              placeholder="Seleccionar archivo"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                onFileChange?.(e.target.files?.[0] || null);
+              }}
+            />
+          </div>
+
+          {formData.logo && (
+            <div
+              className="flex-row flex-align-center gap-sm surface-container-low"
+              style={{
+                paddingLeft: 20,
+                borderRadius: '20px',
+                border: '1px solid var(--md-sys-color-outline-variant)',
               }}
             >
-              {formData.logo.name}
-            </span>
-            <IconButton onClick={() => onFileChange?.(null)} style={{ padding: '4px' }}>
-              <Icon size={18}>close</Icon>
-            </IconButton>
-          </div>
-        )}
+              <span
+                className="label-medium"
+                style={{
+                  maxWidth: '150px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {formData.logo.name}
+              </span>
+              <IconButton onClick={() => onFileChange?.(null)} style={{ padding: '4px' }}>
+                <Icon size={18}>close</Icon>
+              </IconButton>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
     </>
   );
 };

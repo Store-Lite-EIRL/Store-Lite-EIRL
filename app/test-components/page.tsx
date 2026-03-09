@@ -175,27 +175,13 @@ export default function TestComponents() {
           <div slot="headline">TÃ­tulo del diÃ¡logo</div>
           <div slot="content">Contenido del diÃ¡logo. Cierra con Cancelar u Ok.</div>
           <div slot="actions">
-            <md-text-button
-              onClick={() =>
-                closeElementById('demo-dialog')
-              }
-            >
+            <md-text-button onClick={() => closeElementById('demo-dialog')}>
               Cancelar
             </md-text-button>
-            <md-filled-button
-              onClick={() =>
-                closeElementById('demo-dialog')
-              }
-            >
-              Ok
-            </md-filled-button>
+            <md-filled-button onClick={() => closeElementById('demo-dialog')}>Ok</md-filled-button>
           </div>
         </md-dialog>
-        <md-filled-button
-          onClick={() =>
-            showElementById('demo-dialog')
-          }
-        >
+        <md-filled-button onClick={() => showElementById('demo-dialog')}>
           Abrir diÃ¡logo
         </md-filled-button>
       </section>
@@ -205,9 +191,7 @@ export default function TestComponents() {
         <div className="row">
           <md-filled-button
             id="menu-anchor"
-            onClick={(e: React.MouseEvent<HTMLElement>) =>
-              showNextSiblingElement(e.currentTarget)
-            }
+            onClick={(e: React.MouseEvent<HTMLElement>) => showNextSiblingElement(e.currentTarget)}
           >
             Abrir menÃº
           </md-filled-button>
@@ -312,4 +296,3 @@ export default function TestComponents() {
     </div>
   );
 }
-

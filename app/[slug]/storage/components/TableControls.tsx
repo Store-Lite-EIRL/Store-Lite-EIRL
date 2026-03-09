@@ -73,4 +73,3 @@ export const TableControls = () => {
     </div>
   );
 };
-

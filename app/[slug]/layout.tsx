@@ -33,7 +33,7 @@ export default async function BusinessLayout({ children, modal, params }: Busine
   // We might want to fetch products here too if they are needed by global components,
   // but for now let's keep it minimal or pass empty if not strictly required globally.
   // Actually, StorageProvider usually needs them.
-  
+
   const productsList = await db.query.products.findMany({
     where: eq(businesses.id, business.id),
     with: {

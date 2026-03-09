@@ -3,8 +3,8 @@
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businesses, productMedia, products } from '@/core/database/schema';
-import { createServerClient } from '@supabase/ssr';
 import type { CookieOptions } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { eq, inArray } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';

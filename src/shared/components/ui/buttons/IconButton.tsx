@@ -23,11 +23,7 @@ export const IconButton = ({
 }: IconButtonProps) => {
   if (variant === 'filled') {
     return (
-      <md-filled-icon-button
-        className={className}
-        suppressHydrationWarning
-        {...props}
-      >
+      <md-filled-icon-button className={className} suppressHydrationWarning {...props}>
         {children}
       </md-filled-icon-button>
     );
@@ -35,11 +31,7 @@ export const IconButton = ({
 
   if (variant === 'outlined') {
     return (
-      <md-outlined-icon-button
-        className={className}
-        suppressHydrationWarning
-        {...props}
-      >
+      <md-outlined-icon-button className={className} suppressHydrationWarning {...props}>
         {children}
       </md-outlined-icon-button>
     );
@@ -47,22 +39,14 @@ export const IconButton = ({
 
   if (variant === 'filled-tonal') {
     return (
-      <md-filled-tonal-icon-button
-        className={className}
-        suppressHydrationWarning
-        {...props}
-      >
+      <md-filled-tonal-icon-button className={className} suppressHydrationWarning {...props}>
         {children}
       </md-filled-tonal-icon-button>
     );
   }
 
   return (
-    <md-icon-button
-      className={className}
-      suppressHydrationWarning
-      {...props}
-    >
+    <md-icon-button className={className} suppressHydrationWarning {...props}>
       {children}
     </md-icon-button>
   );

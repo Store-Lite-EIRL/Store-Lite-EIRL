@@ -17,9 +17,9 @@
 import { db } from '@/core/database/client';
 import { businesses, payments, products } from '@/core/database/schema';
 import { createClient } from '@/lib/supabase/server';
-import { createHash, randomBytes } from 'crypto';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { createHash, randomBytes } from 'node:crypto';
 
 const CULQI_CHARGE_URL = 'https://api.culqi.com/v2/charges';
 
@@ -209,7 +209,9 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
     return {
       success: true,
       culqiChargeId: chargeData.id,
-      error: 'Pago procesado pero hubo un error al crear el registro. Guarda tu ID de cargo: ' + chargeData.id,
+      error:
+        'Pago procesado pero hubo un error al crear el registro. Guarda tu ID de cargo: ' +
+        chargeData.id,
     };
   }
 
@@ -234,7 +236,9 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
  */
 export async function getPaymentById(paymentId: string) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const payment = await db.query.payments.findFirst({
     where: eq(payments.id, paymentId),

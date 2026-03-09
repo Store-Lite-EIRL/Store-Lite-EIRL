@@ -66,7 +66,7 @@ export interface CardTokenPayload {
 
 export interface YapeTokenPayload {
   number: string; // Phone number
-  otp: string;    // 6-digit approval code
+  otp: string; // 6-digit approval code
 }
 
 export interface CulqiToken {
@@ -102,7 +102,10 @@ export async function tokenizeCard(payload: CardTokenPayload): Promise<CulqiToke
 
   if (!response.ok || data.object === 'error') {
     const message =
-      data.user_message || data.merchant_message || data.error?.user_message || 'Error al tokenizar la tarjeta.';
+      data.user_message ||
+      data.merchant_message ||
+      data.error?.user_message ||
+      'Error al tokenizar la tarjeta.';
     throw new Error(message);
   }
 
@@ -138,7 +141,10 @@ export async function tokenizeYape(payload: YapeTokenPayload): Promise<CulqiToke
 
   if (!response.ok || data.object === 'error') {
     const message =
-      data.user_message || data.merchant_message || data.error?.user_message || 'Error al tokenizar con Yape.';
+      data.user_message ||
+      data.merchant_message ||
+      data.error?.user_message ||
+      'Error al tokenizar con Yape.';
     throw new Error(message);
   }
 

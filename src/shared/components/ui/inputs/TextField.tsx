@@ -63,24 +63,14 @@ export const TextField = ({
 }: TextFieldProps) => {
   if (variant === 'filled') {
     return (
-      <md-filled-text-field
-        type={type}
-        className={className}
-        suppressHydrationWarning
-        {...props}
-      >
+      <md-filled-text-field type={type} className={className} suppressHydrationWarning {...props}>
         {children}
       </md-filled-text-field>
     );
   }
 
   return (
-    <md-outlined-text-field
-      type={type}
-      className={className}
-      suppressHydrationWarning
-      {...props}
-    >
+    <md-outlined-text-field type={type} className={className} suppressHydrationWarning {...props}>
       {children}
     </md-outlined-text-field>
   );

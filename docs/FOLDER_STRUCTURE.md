@@ -67,6 +67,7 @@ app/
 ## Practical rule
 
 Use this rule when deciding placement:
+
 - Route/page orchestration: `app/`
 - Domain/business logic: `src/features/`
 - Shared UI primitives: `src/shared/components/ui`
