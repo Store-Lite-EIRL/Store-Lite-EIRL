@@ -52,10 +52,23 @@ export function DropZone({ dragOver, onDrop, onDragOver, onDragLeave, onClick }:
         <p style={{ margin: 0, fontWeight: 600, color: 'var(--md-sys-color-on-surface)' }}>
           Arrastra tu archivo aquí
         </p>
-        <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
+        <p
+          style={{
+            margin: '0.25rem 0 0',
+            fontSize: '0.8rem',
+            color: 'var(--md-sys-color-on-surface-variant)',
+          }}
+        >
           o haz clic para seleccionar
         </p>
-        <p style={{ margin: '0.35rem 0 0', fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)', opacity: 0.8 }}>
+        <p
+          style={{
+            margin: '0.35rem 0 0',
+            fontSize: '0.75rem',
+            color: 'var(--md-sys-color-on-surface-variant)',
+            opacity: 0.8,
+          }}
+        >
           Máximo 5 categorías (hojas) y 20 productos por categoría
         </p>
       </div>

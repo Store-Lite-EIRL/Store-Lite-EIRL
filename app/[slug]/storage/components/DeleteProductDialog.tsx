@@ -34,11 +34,7 @@ export const DeleteProductDialog = ({
         <Button variant="text" onClick={onClose}>
           Cancelar
         </Button>
-        <Button
-          variant="filled"
-          onClick={() => onConfirm(product.id)}
-          style={deleteButtonStyle}
-        >
+        <Button variant="filled" onClick={() => onConfirm(product.id)} style={deleteButtonStyle}>
           Eliminar
         </Button>
       </div>

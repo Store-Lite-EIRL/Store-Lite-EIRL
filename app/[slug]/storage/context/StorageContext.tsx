@@ -39,7 +39,7 @@ interface StorageContextType {
   saveCategories: (categories: string[]) => Promise<{ success: boolean; error?: string }>;
 }
 
-const StorageContext = createContext<StorageContextType | undefined>(undefined);
+export const StorageContext = createContext<StorageContextType | undefined>(undefined);
 
 export const StorageProvider = ({
   children,

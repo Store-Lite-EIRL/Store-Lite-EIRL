@@ -1,12 +1,14 @@
 /* src/styles/components/layout.css */
 
-/* Mobile Breakpoint: 425px and below */
-@media (max-width: 425px) {
+/* Mobile Breakpoint: 768px and below */
+@media (max-width: 768px) {
   .main-content {
     margin-left: 0 !important;
-    margin-bottom: 80px; /* Space for bottom navbar */
     width: 100% !important;
-    padding: 0.6rem;
+    padding: 0.8rem !important;
+    padding-bottom: calc(
+      6.5rem + env(safe-area-inset-bottom)
+    ) !important; /* Extra scroll space for floating navbar */
   }
 }
 

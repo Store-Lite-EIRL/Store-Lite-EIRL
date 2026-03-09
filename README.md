@@ -36,16 +36,20 @@ El proyecto sigue una arquitectura **basada en características (Feature-driven)
 ## 🧠 Lógica de Operación y Patrones
 
 ### 1. Estrategia de Renderizado
+
 Se priorizan los **React Server Components (RSC)** para la recuperación inicial de datos (Data Fetching), reduciendo el bundle de JavaScript en el cliente y optimizando el Core Web Vitals (LCP, CLS).
 
 ### 2. Flujo de Datos
+
 - **Lectura:** Acceso directo a la base de datos mediante Drizzle dentro de Server Components para latencia mínima.
 - **Escritura:** Mutaciones mediante **Server Actions**, asegurando validación en el servidor y revalidación de caché instantánea con `revalidatePath`.
 
 ### 3. Sistema de Diseño (Material 3)
+
 Utiliza **Material Web (@material/web)**, lo que permite componentes con fidelidad visual de Google sin las dependencias pesadas de librerías tipo CSS-in-JS. El tema es dinámico y soporta esquemas de color avanzados (Dark, Light, High Contrast).
 
 ### 4. Seguridad y Autenticación
+
 Protección de rutas mediante **Supabase Middleware** en el Edge, permitiendo verificaciones de sesión antes de que el servidor Next.js procese la petición.
 
 ## 🛠️ Configuración de Desarrollo
@@ -62,6 +66,5 @@ pnpm drizzle-kit generate
 ```
 
 ---
-*Store Lite v1.0 - Enfocado en robustez técnica y agilidad.*
 
-
+_Store Lite v1.0 - Enfocado en robustez técnica y agilidad._

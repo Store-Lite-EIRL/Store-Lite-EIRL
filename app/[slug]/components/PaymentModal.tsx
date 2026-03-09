@@ -5,7 +5,8 @@ import React, { useState } from 'react';
 import { AmountSection } from '../payment/components/AmountSection';
 import { CardPaymentForm } from '../payment/components/CardPaymentForm';
 import { OrderSummary } from '../payment/components/OrderSummary';
-import { PaymentMethodSelector, PaymentMethodId } from '../payment/components/PaymentMethodSelector';
+import type { PaymentMethodId } from '../payment/components/PaymentMethodSelector';
+import { PaymentMethodSelector } from '../payment/components/PaymentMethodSelector';
 import { YapePaymentForm } from '../payment/components/YapePaymentForm';
 
 interface PaymentModalProps {
@@ -18,16 +19,12 @@ interface PaymentModalProps {
   businessSlug?: string;
 }
 
-export function PaymentModal({
-  open,
-  onClose,
-  productName,
-  price,
-  currency,
-}: PaymentModalProps) {
+export function PaymentModal({ open, onClose, productName, price, currency }: PaymentModalProps) {
   const [activeTab, setActiveTab] = useState<PaymentMethodId>('card');
-  const [step, setStep] = useState<'selection' | 'form' | 'processing' | 'success' | 'error'>('selection');
-  
+  const [step, setStep] = useState<'selection' | 'form' | 'processing' | 'success' | 'error'>(
+    'selection',
+  );
+
   // Card Form State
   const [cardNumber, setCardNumber] = useState('');
   const [cardName, setCardName] = useState('');
@@ -98,10 +95,10 @@ export function PaymentModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStep('processing');
-    
+
     // Simulate payment API call
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       // Randomly fail for demo purposes
       if (Math.random() > 0.8) throw new Error('Fondos insuficientes');
       setStep('success');
@@ -111,7 +108,7 @@ export function PaymentModal({
     }
   };
 
-  const currentMethodLabel = paymentMethods.find(m => m.id === activeTab)?.label || activeTab;
+  const currentMethodLabel = paymentMethods.find((m) => m.id === activeTab)?.label || activeTab;
 
   return (
     <Dialog open={open} onClose={handleClose}>
@@ -127,13 +124,19 @@ export function PaymentModal({
               <div className="flex items-center justify-between p-8 pb-4">
                 <div className="flex items-center gap-4">
                   <div className="bg-[#135bec] p-2.5 rounded-2xl shadow-lg shadow-[#135bec]/20">
-                    <span className="material-symbols-outlined text-white text-2xl leading-none">lock</span>
+                    <span className="material-symbols-outlined text-white text-2xl leading-none">
+                      lock
+                    </span>
                   </div>
                   <div>
-                    <h2 className="text-xl font-black text-white tracking-tight">Checkout Seguro</h2>
+                    <h2 className="text-xl font-black text-white tracking-tight">
+                      Checkout Seguro
+                    </h2>
                     <div className="flex items-center gap-2 mt-1">
                       <div className="size-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                      <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Encriptación SSL 256 bits</span>
+                      <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">
+                        Encriptación SSL 256 bits
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -208,8 +211,12 @@ export function PaymentModal({
 
                     {!['card', 'yape'].includes(activeTab) && (
                       <div className="py-12 text-center text-slate-500 bg-white/5 rounded-3xl border border-dashed border-white/10">
-                        <span className="material-symbols-outlined text-4xl mb-2 opacity-20">hourglass_empty</span>
-                        <p className="text-sm font-medium">Este método de pago estará disponible pronto</p>
+                        <span className="material-symbols-outlined text-4xl mb-2 opacity-20">
+                          hourglass_empty
+                        </span>
+                        <p className="text-sm font-medium">
+                          Este método de pago estará disponible pronto
+                        </p>
                       </div>
                     )}
 
@@ -223,13 +230,21 @@ export function PaymentModal({
                       <div className="relative py-5 px-6 flex items-center justify-center gap-3 transition-all active:scale-[0.99] disabled:opacity-70 shadow-[0_20px_40px_rgba(19,91,236,0.25)]">
                         {step === 'processing' ? (
                           <span className="flex items-center gap-3">
-                            <span className="material-symbols-outlined animate-spin text-lg text-white">progress_activity</span>
-                            <span className="text-white font-black uppercase tracking-widest text-sm">Procesando...</span>
+                            <span className="material-symbols-outlined animate-spin text-lg text-white">
+                              progress_activity
+                            </span>
+                            <span className="text-white font-black uppercase tracking-widest text-sm">
+                              Procesando...
+                            </span>
                           </span>
                         ) : (
                           <>
-                            <span className="text-white font-black uppercase tracking-widest text-sm">Pagar {currency} {price.toFixed(2)}</span>
-                            <span className="material-symbols-outlined text-white text-xl">arrow_forward</span>
+                            <span className="text-white font-black uppercase tracking-widest text-sm">
+                              Pagar {currency} {price.toFixed(2)}
+                            </span>
+                            <span className="material-symbols-outlined text-white text-xl">
+                              arrow_forward
+                            </span>
                           </>
                         )}
                       </div>

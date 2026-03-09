@@ -115,4 +115,3 @@ export default function ProductFiltersTopBar({
     </div>
   );
 }
-

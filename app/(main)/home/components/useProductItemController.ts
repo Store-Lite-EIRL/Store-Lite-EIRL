@@ -3,9 +3,9 @@
 
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { useCart } from '../../../[slug]/storage/context/CartContext';
-import { useStorage } from '../../../[slug]/storage/context/StorageContext';
+import { useContext, useState } from 'react';
+import { CartContext } from '../../../[slug]/storage/context/CartContext';
+import { StorageContext } from '../../../[slug]/storage/context/StorageContext';
 import type { Product } from '../../../[slug]/storage/data';
 import {
   toggleLikeProductIsolated,
@@ -51,8 +51,14 @@ export function useProductItemController(product: ProductWithRelations, isOwner 
   const params = useParams();
   const router = useRouter();
   const businessSlug = params.slug as string;
-  const { deleteProduct } = useStorage();
-  const { isInCart, toggleCartItem } = useCart();
+  const storageContext = useContext(StorageContext);
+  const cartContext = useContext(CartContext);
+
+  const deleteProduct =
+    storageContext?.deleteProduct ??
+    (async () => ({ success: false, error: 'Acción no permitida' }));
+  const isInCart = cartContext?.isInCart ?? (() => false);
+  const toggleCartItem = cartContext?.toggleCartItem ?? (() => {});
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);

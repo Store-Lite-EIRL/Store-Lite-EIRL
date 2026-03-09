@@ -94,7 +94,8 @@ export function YapePaymentForm({
       <div className="bg-amber-400/10 border border-amber-400/20 rounded-xl p-4 flex items-start gap-3">
         <span className="material-symbols-outlined text-amber-400 text-lg">info</span>
         <p className="text-[11px] text-amber-100/70 leading-relaxed font-medium">
-          Obtén tu <strong>Código de aprobación</strong> desde el menú de la app Yape e ingrésalo para confirmar.
+          Obtén tu <strong>Código de aprobación</strong> desde el menú de la app Yape e ingrésalo
+          para confirmar.
         </p>
       </div>
 
