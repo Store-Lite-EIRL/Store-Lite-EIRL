@@ -30,12 +30,7 @@ export const Button = ({
 
   if (variant === 'outlined') {
     return (
-      <md-outlined-button
-        ref={ref}
-        className={className}
-        suppressHydrationWarning
-        {...props}
-      >
+      <md-outlined-button ref={ref} className={className} suppressHydrationWarning {...props}>
         {children}
       </md-outlined-button>
     );
@@ -43,12 +38,7 @@ export const Button = ({
 
   if (variant === 'text') {
     return (
-      <md-text-button
-        ref={ref}
-        className={className}
-        suppressHydrationWarning
-        {...props}
-      >
+      <md-text-button ref={ref} className={className} suppressHydrationWarning {...props}>
         {children}
       </md-text-button>
     );
@@ -56,12 +46,7 @@ export const Button = ({
 
   if (variant === 'elevated') {
     return (
-      <md-elevated-button
-        ref={ref}
-        className={className}
-        suppressHydrationWarning
-        {...props}
-      >
+      <md-elevated-button ref={ref} className={className} suppressHydrationWarning {...props}>
         {children}
       </md-elevated-button>
     );
@@ -69,24 +54,14 @@ export const Button = ({
 
   if (variant === 'tonal') {
     return (
-      <md-filled-tonal-button
-        ref={ref}
-        className={className}
-        suppressHydrationWarning
-        {...props}
-      >
+      <md-filled-tonal-button ref={ref} className={className} suppressHydrationWarning {...props}>
         {children}
       </md-filled-tonal-button>
     );
   }
 
   return (
-      <md-filled-button
-        ref={ref}
-        className={className}
-        suppressHydrationWarning
-        {...props}
-      >
+    <md-filled-button ref={ref} className={className} suppressHydrationWarning {...props}>
       {children}
     </md-filled-button>
   );

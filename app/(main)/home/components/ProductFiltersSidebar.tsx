@@ -52,7 +52,9 @@ export default function ProductFiltersSidebar({
           value={priceSort}
           onChange={(e: MaterialSelectEvent) => {
             const value = getMaterialSelectValue(e, 'none');
-            onPriceSortChange(value === 'asc' || value === 'desc' || value === 'none' ? value : 'none');
+            onPriceSortChange(
+              value === 'asc' || value === 'desc' || value === 'none' ? value : 'none',
+            );
           }}
           className={styles.select}
         >
@@ -112,4 +114,3 @@ export default function ProductFiltersSidebar({
     </aside>
   );
 }
-

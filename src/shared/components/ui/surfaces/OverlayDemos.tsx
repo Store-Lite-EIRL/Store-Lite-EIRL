@@ -1,5 +1,6 @@
 ﻿'use client';
 
+import { closeElementById } from '@/shared/utils';
 import { Button } from '../buttons/Button';
 import { Chips } from '../data-display/Chips';
 import { Divider } from '../data-display/Divider';
@@ -7,7 +8,6 @@ import { Icon } from '../data-display/Icon';
 import { Checkbox } from '../inputs/Checkbox';
 import { TextField } from '../inputs/TextField';
 import { Card } from './Card';
-import { closeElementById } from '@/shared/utils';
 import { Dialog } from './Dialog';
 import { Sheet } from './Sheet';
 import { SteppedSheet } from './SteppedSheet';
@@ -20,20 +20,10 @@ const DialogDemo = () => (
       and actions.
     </div>
     <div slot="actions">
-      <Button
-        variant="text"
-        onClick={() =>
-          closeElementById('catalog-dialog')
-        }
-      >
+      <Button variant="text" onClick={() => closeElementById('catalog-dialog')}>
         Cancel
       </Button>
-      <Button
-        variant="filled"
-        onClick={() =>
-          closeElementById('catalog-dialog')
-        }
-      >
+      <Button variant="filled" onClick={() => closeElementById('catalog-dialog')}>
         Accept
       </Button>
     </div>
@@ -130,5 +120,3 @@ export const OverlayDemos = () => {
     </>
   );
 };
-
-

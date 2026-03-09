@@ -7,10 +7,12 @@ This project uses Next.js App Router and a feature-oriented organization in `src
 The architecture is in transition from a broad template to an implemented product scope.
 
 Implemented feature modules:
+
 - `src/features/auth` (active)
 - `src/features/products` (types currently in use)
 
 Scaffolded but not implemented yet:
+
 - `src/features/analytics`
 - `src/features/dashboard`
 - `src/features/notifications`
@@ -51,12 +53,14 @@ app -> features -> shared -> core -> lib
 ```
 
 Notes:
+
 - `app/` still contains some business logic being migrated gradually to `src/features`.
 - During migration, imports between `app/` and `src/` coexist.
 
 ## Migration guideline
 
 When adding or refactoring functionality:
+
 1. Put domain logic in `src/features/<feature>`.
 2. Keep UI primitives in `src/shared/components/ui`.
 3. Keep infrastructure concerns in `src/core` and `src/lib`.

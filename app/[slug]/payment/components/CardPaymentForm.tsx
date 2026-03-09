@@ -35,21 +35,25 @@ export function CardPaymentForm({
         {/* Animated gradients for premium feel */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-[#135bec]/10 rounded-full -mr-20 -mt-20 blur-3xl group-hover:bg-[#135bec]/20 transition-all duration-700" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 rounded-full -ml-32 -mb-32 blur-3xl" />
-        
+
         {/* Card Noise Texture */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
 
         <div className="relative z-10 h-full flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#135bec]">Premium Card</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#135bec]">
+                Premium Card
+              </span>
               <div className="w-12 h-9 bg-white/10 backdrop-blur-xl rounded-lg flex items-center justify-center border border-white/20">
                 <div className="w-8 h-6 bg-linear-to-r from-amber-400 to-amber-200 rounded-sm opacity-80" />
               </div>
             </div>
             <div className="flex flex-col items-end gap-1">
               <div className="text-xl font-black italic tracking-tighter">VISA</div>
-              <span className="material-symbols-outlined text-white/40 text-2xl font-light">contactless</span>
+              <span className="material-symbols-outlined text-white/40 text-2xl font-light">
+                contactless
+              </span>
             </div>
           </div>
 

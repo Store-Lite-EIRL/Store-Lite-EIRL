@@ -20,296 +20,161 @@
   align-items: center;
 
   /* Floating dimensions */
-  height: calc(100vh - (var(--navbar-float-margin) * 2));
+  height: auto;
+  max-height: calc(100vh - (var(--navbar-float-margin) * 4));
   width: var(--navbar-width);
   margin: var(--navbar-float-margin);
   border-radius: var(--navbar-radius);
 
-  /* Layout Internals */
-  padding: 1rem 0;
-  gap: 1rem;
+  /* Placement */
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1000;
+  box-sizing: border-box;
 
-  /* Theme - Strict Tokens */
-  background-color: var(--md-sys-color-surface-container); /* Standard sidebar bg */
-  color: var(--md-sys-color-on-surface-variant);
+  /* Theme - Dark & Premium */
+  background-color: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface);
 
   /* Transitions */
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Position */
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: 1000;
-  box-sizing: border-box;
-
   /* Depth */
-  box-shadow: var(--md-sys-elevation-level2, 0 4px 8px rgba(0, 0, 0, 0.1));
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .navbar--expanded {
   width: var(--navbar-expanded-width);
-  align-items: stretch;
+}
+
+.navbar__content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 1rem 0;
+  gap: 0.5rem;
 }
 
 /* ============================================
    Header Section
    ============================================ */
-.navbar__header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 90%;
-  min-height: 3.5rem;
-  margin-bottom: 0;
-  position: relative;
-  padding: 0 1.1rem;
-  flex-shrink: 0;
+.navbar__business-header {
+  padding: 0.5rem 1.5rem;
+  opacity: 0.7;
 }
 
-.navbar--expanded .navbar__header {
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0 1.1rem;
+.navbar__business-name {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
 }
 
-.navbar__logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 3.2rem; /* Slightly larger for better detail */
-  height: 3.2rem;
-  border-radius: 12px; /* Slightly rounded borders instead of circular */
-
-  /* Logo Colors - using Primary for brand identity */
-  background-color: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
-
-  font-weight: bold;
-  font-size: 1.5rem;
-  flex-shrink: 0;
-  overflow: hidden; /* Ensures images are clipped to circle */
-  border: 2px solid var(--md-sys-color-surface-container-highest); /* Subtle "printed" border */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Slight elevation */
-}
-
-/* Ensure Logo Image fills the circle perfectly */
-.navbar__logo-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* When logo contains an icon (md-icon) */
-.navbar__logo md-icon {
-  font-size: 1.6rem;
-  color: var(--md-sys-color-on-primary);
-}
-
-.navbar__label-container {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  min-width: 0; /* Allow flex item to shrink below content size */
-  flex: 1; /* Take remaining space */
-  text-align: left;
-  /* Animation */
-  opacity: 0;
-  max-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  transform: translateX(-10px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.navbar--expanded .navbar__label-container {
-  opacity: 1;
-  max-width: 160px;
-  transform: translateX(0);
-}
-
-.navbar__label {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--md-sys-color-on-surface);
-  line-height: 1.2;
-  white-space: normal; /* Allow text to wrap */
-  word-wrap: break-word;
-  overflow-wrap: break-word; /* Modern break-word */
-  width: 100%;
-}
-
-.navbar__powered-by {
-  font-size: 0.6rem;
-  font-weight: 300;
-  color: var(--md-sys-color-on-surface-variant);
-  margin: 0;
+.navbar__divider {
+  width: 80%;
+  height: 1px;
+  background-color: var(--md-sys-color-outline-variant);
+  margin: 0.5rem auto;
 }
 
 /* ============================================
-   Center Navigation Section
+   Navigation Items
    ============================================ */
-.navbar__center {
-  position: relative;
+.navbar__items,
+.navbar__actions {
   display: flex;
   flex-direction: column;
-  width: 85%;
-  gap: 1rem; /* Increased gap for cleaner pill separation */
-  flex: 1;
-  justify-content: center;
-  align-items: center;
+  width: 100%;
+  gap: 0.25rem;
 }
 
-.navbar--expanded .navbar__center {
-  align-items: center; /* Centered in the panel */
-  margin-left: 1.3rem;
-}
-
-/* ============================================
-   Navbar Items (Buttons)
-   ============================================ */
 .navbar__item {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 3.5rem; /* Fixed width when collapsed (pill circle) */
+  width: calc(100% - 16px);
+  margin: 0 8px;
   height: 3.5rem;
   border: none;
   background-color: transparent;
   cursor: pointer;
   text-decoration: none;
   color: var(--md-sys-color-on-surface-variant);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 0;
-  margin: 0;
-  border-radius: 999px; /* Always pill/circle */
-  overflow: hidden; /* Ensure hover/active fills shape */
+  border-radius: 28px; /* High rounding for pills */
+  box-sizing: border-box;
 }
 
 .navbar--expanded .navbar__item {
-  width: calc(100% - 2rem); /* Floating pill: 1rem margin on each side */
   justify-content: flex-start;
-  padding-left: 1rem;
-  padding-right: 1.5rem;
-  gap: 1rem;
+  padding: 0 12px;
 }
 
-/* Icons */
 .navbar__item-icon {
-  font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif;
-  font-size: 2rem; /* Larger icons (32px) */
+  font-family: 'Material Symbols Rounded', sans-serif !important;
+  font-size: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
   z-index: 2;
-  flex-shrink: 0;
-  /* Font variations for filled/rounded look if needed, usually managed by font-family */
-  font-variation-settings:
-    'FILL' 0,
-    'wght' 200,
-    'GRAD' 0,
-    'opsz' 24;
+  transition: transform 0.2s ease;
 }
 
-.navbar__item--active .navbar__item-icon {
-  font-variation-settings:
-    'FILL' 1,
-    'wght' 200,
-    'GRAD' 0,
-    'opsz' 24;
-}
-
-/* Labels */
 .navbar__item-label {
-  /* Animation */
-  opacity: 0;
-  max-width: 0;
-  transform: translateX(-10px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.95rem;
+  margin-left: 0.75rem;
+  white-space: nowrap;
+  font-weight: 500;
 }
 
-.navbar--expanded .navbar__item-label {
-  opacity: 1;
-  max-width: 140px;
-  transform: translateX(0);
-  margin-left: 0.5rem;
-}
-
-/* ============================================
-   Interactions: Hover & Active
-   ============================================ */
-
-/* Hover: Applies to the WHOLE button now */
-.navbar__item:hover:not(.navbar__item--active) {
+/* Interactions */
+.navbar__item:hover {
   background-color: var(--md-sys-color-surface-container-highest);
   color: var(--md-sys-color-on-surface);
 }
 
-/* Active State: The PILL */
+/* Gradient Interaction */
 .navbar__item--active {
-  background-color: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
-  font-weight: 600;
-}
-
-/* ============================================
-   Toggle Button
-   ============================================ */
-.navbar__toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border: 4px solid var(--md-sys-color-background);
-  border-radius: 50%;
-
-  /* High contrast toggle */
-  background-color: var(--md-sys-color-primary-container);
+  background-image: linear-gradient(
+    45deg,
+    var(--md-sys-color-primary-container),
+    var(--md-sys-color-secondary-container)
+  );
   color: var(--md-sys-color-on-primary-container);
-
-  cursor: pointer;
-  position: absolute;
-  top: 50%;
-  right: -0.3rem;
-  transform: translateY(-50%);
-  z-index: 1001;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.navbar__toggle:hover {
-  background-color: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
+.navbar__item--active:hover {
+  /* Re-apply the same visually appealing active state */
+  background-image: linear-gradient(
+    45deg,
+    var(--md-sys-color-primary-container),
+    var(--md-sys-color-secondary-container)
+  );
+  filter: brightness(1.05); /* slightly brighten */
 }
 
-.navbar__toggle-icon {
-  font-family: 'Material Symbols Rounded';
-  width: 1.2rem;
-  height: 1.2rem;
-  font-size: 1.2rem;
+.navbar__item--active .navbar__item-icon {
+  /* No background here, the whole pill has the background */
+  background-color: transparent;
+  color: var(--md-sys-color-on-primary-container);
 }
 
-/* ============================================
-   Bottom Actions
-   ============================================ */
-.navbar__bottom {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  margin-top: auto;
-  padding-bottom: 0.5rem;
-  flex-shrink: 0;
+.navbar__item--toggle {
+  color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: 0.5rem;
 }
 
-.navbar--expanded .navbar__bottom {
-  align-items: center;
+.navbar__item--toggle:hover {
+  color: var(--md-sys-color-on-surface);
 }
 
 /* ============================================
@@ -318,50 +183,46 @@
 /* Default state (Hidden on desktop) */
 .navbar__mobile {
   display: none;
-  padding-top: 0.5rem;
 }
 
-@media (max-width: 425px) {
+@media (max-width: 768px) {
   .navbar {
-    width: 100%;
+    width: calc(100% - 2rem);
+    max-width: 450px;
     height: auto;
     margin: 0;
-    border-radius: 0;
-    bottom: 0;
+    border-radius: 2rem;
+    bottom: 1rem;
     top: auto;
-    left: 0;
-
-    flex-direction: row;
-    padding: 0;
-    justify-content: space-around;
-
-    /* Using Surface for mobile bottom bar standard */
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0 0.5rem;
     background-color: var(--md-sys-color-surface);
-    border-top: 1px solid var(--md-sys-color-outline-variant);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    z-index: 100;
   }
 
-  .navbar__header,
-  .navbar__toggle,
-  .navbar__center,
-  .navbar__bottom {
-    display: none;
-  }
-
-  .navbar__mobile {
-    display: flex;
+  .navbar__content {
     flex-direction: row;
-    width: 100%;
-    height: 4.3rem;
+    height: 4.5rem; /* Mobile bottom bar height */
     justify-content: space-evenly;
     align-items: center;
+    padding: 0;
+    gap: 0;
+    overflow: visible;
   }
 
-  .navbar__menu-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex: 1;
-    height: 100%;
+  /* Make items flow as direct children of navbar__content for even spacing */
+  .navbar__items,
+  .navbar__actions {
+    display: contents;
+  }
+
+  /* Hide Desktop-only elements */
+  .navbar__item--toggle,
+  .navbar__divider {
+    display: none;
   }
 
   /* Shared item styles for mobile */
@@ -373,42 +234,41 @@
     border-radius: 0;
     flex-direction: column;
     justify-content: center;
-    padding: 0; /* Removed padding for perfect centering */
-    gap: 0; /* Removed gap */
+    padding: 0;
+    gap: 0;
     background-color: transparent !important;
   }
 
-  /* Labels - Strictly removed */
+  /* Hide labels completely to save space for 6 icons */
   .navbar__item-label {
     display: none !important;
-    font-size: 0.75rem; /* Keep for potential future use, but overridden */
-    margin-top: 0.2rem; /* Keep for potential future use, but overridden */
   }
 
-  /* Icons - Larger on mobile */
+  /* Icons - Size optimized for bottom navigation */
   .navbar__item-icon {
-    font-size: 2.2rem;
-    transition: all 0.3s cubic-bezier(0.2, 0, 0, 1); /* Fluid transition */
+    font-size: 1.8rem;
+    transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
   }
 
-  /* Active State on Mobile: Icon Highlight Pill */
+  /* Active State on Mobile: Icon Highlight Pill AROUND the icon */
   .navbar__item--active {
     color: var(--md-sys-color-on-surface);
     background-color: transparent;
+    background-image: none;
+    box-shadow: none;
   }
 
-  /* Create the pill AROUND THE ICON ONLY for mobile active state */
   .navbar__item--active .navbar__item-icon {
     background-color: var(--md-sys-color-secondary-container);
     color: var(--md-sys-color-on-secondary-container);
-    width: 4.5rem; /* Wider pill */
-    height: 2.8rem; /* Taller pill */
+    width: 3.8rem;
+    height: 2.2rem;
     border-radius: 999px;
     font-variation-settings: 'FILL' 1;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle depth */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
-  /* Reset hover for touch */
+  /* Reset hover background for touch */
   .navbar__item:hover {
     background-color: transparent;
   }

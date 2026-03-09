@@ -22,11 +22,11 @@ export default function HomePage() {
       />
 
       {activeTab === 'products' && (
-        <Pagination totalPages={1} currentPage={1} onPageChange={() => { }} />
+        <Pagination totalPages={1} currentPage={1} onPageChange={() => {}} />
       )}
 
       {activeTab === 'bestsellers' && (
-        <Pagination totalPages={1} currentPage={1} onPageChange={() => { }} />
+        <Pagination totalPages={1} currentPage={1} onPageChange={() => {}} />
       )}
 
       {activeTab === 'about' && (

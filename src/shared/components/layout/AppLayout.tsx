@@ -106,12 +106,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     user &&
     params?.slug &&
     params.slug ===
-    (typeof document !== 'undefined'
-      ? document.cookie
-        .split('; ')
-        .find((row) => row.startsWith('selected_business_slug='))
-        ?.split('=')[1]
-      : undefined);
+      (typeof document !== 'undefined'
+        ? document.cookie
+            .split('; ')
+            .find((row) => row.startsWith('selected_business_slug='))
+            ?.split('=')[1]
+        : undefined);
 
   const showNavbar =
     !!user &&
@@ -122,9 +122,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   /* Logic for content margin */
   let contentMargin = '0';
   if (showNavbar) {
-    contentMargin = isCollapsed
+    const baseWidth = isCollapsed
       ? 'var(--navbar-width, 80px)'
       : 'var(--navbar-expanded-width, 250px)';
+
+    // Total margin = navbar width + float margin (left) + extra gap
+    contentMargin = `calc(${baseWidth} + var(--navbar-float-margin) * 1.5)`;
   }
 
   return (

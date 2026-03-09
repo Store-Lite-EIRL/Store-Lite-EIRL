@@ -4,8 +4,8 @@ import { Button, Dialog } from '@/shared/components/ui';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
 import { Select } from '@/shared/components/ui/inputs/Select';
 import { TextField } from '@/shared/components/ui/inputs/TextField';
-import React, { useEffect, useState } from 'react';
 import { getMaterialSelectValue, type MaterialSelectEvent } from '@/shared/utils';
+import React, { useEffect, useState } from 'react';
 import { useStorage } from '../../context/StorageContext';
 
 interface CategorySectionProps {
@@ -232,4 +232,3 @@ export const CategorySection = ({
     </div>
   );
 };
-

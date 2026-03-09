@@ -18,7 +18,9 @@ export function FilePreviewCard({ info, onReset }: FilePreviewCardProps) {
         marginInline: 10,
         borderRadius: 12,
         border: `1px solid ${isValid ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-error)'}`,
-        background: isValid ? 'var(--md-sys-color-primary-container)' : 'var(--md-sys-color-error-container)',
+        background: isValid
+          ? 'var(--md-sys-color-primary-container)'
+          : 'var(--md-sys-color-error-container)',
       }}
     >
       <Icon
@@ -40,7 +42,9 @@ export function FilePreviewCard({ info, onReset }: FilePreviewCardProps) {
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            color: isValid ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-error-container)',
+            color: isValid
+              ? 'var(--md-sys-color-on-primary-container)'
+              : 'var(--md-sys-color-on-error-container)',
           }}
         >
           {info.name}
@@ -49,7 +53,9 @@ export function FilePreviewCard({ info, onReset }: FilePreviewCardProps) {
           style={{
             margin: 0,
             fontSize: '0.75rem',
-            color: isValid ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-error-container)',
+            color: isValid
+              ? 'var(--md-sys-color-on-primary-container)'
+              : 'var(--md-sys-color-on-error-container)',
             opacity: 0.8,
           }}
         >
@@ -68,7 +74,9 @@ export function FilePreviewCard({ info, onReset }: FilePreviewCardProps) {
           padding: 4,
           borderRadius: 50,
           display: 'flex',
-          color: isValid ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-error-container)',
+          color: isValid
+            ? 'var(--md-sys-color-on-primary-container)'
+            : 'var(--md-sys-color-on-error-container)',
         }}
         aria-label="Eliminar archivo"
       >

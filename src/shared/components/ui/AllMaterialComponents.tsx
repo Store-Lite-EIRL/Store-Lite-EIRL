@@ -2,8 +2,8 @@
 /* eslint-disable max-lines */
 'use client';
 
-import { useState } from 'react';
 import { showElementById } from '@/shared/utils';
+import { useState } from 'react';
 
 import {
   Badge,
@@ -306,17 +306,11 @@ export default function AllMaterialComponents() {
 
         <CatalogCard title="Overlays & Triggers">
           <div className="flex-wrap-center" style={{ gap: '16px' }}>
-            <Button
-              variant="filled"
-              onClick={() => showElementById('catalog-dialog')}
-            >
+            <Button variant="filled" onClick={() => showElementById('catalog-dialog')}>
               Open Dialog
             </Button>
             <div style={{ position: 'relative' }}>
-              <IconButton
-                id="menu-trigger"
-                onClick={() => showElementById('catalog-menu')}
-              >
+              <IconButton id="menu-trigger" onClick={() => showElementById('catalog-menu')}>
                 <Icon>more_vert</Icon>
               </IconButton>
               <Menu anchor="menu-trigger" id="catalog-menu">
@@ -341,20 +335,14 @@ export default function AllMaterialComponents() {
       <Section title="Sheets">
         <CatalogCard title="Bottom sheets">
           <div className="flex-wrap-center" style={{ gap: '16px' }}>
-            <Button
-              variant="filled"
-              onClick={() => showElementById('catalog-sheet')}
-            >
+            <Button variant="filled" onClick={() => showElementById('catalog-sheet')}>
               Open Sheet
             </Button>
           </div>
         </CatalogCard>
         <CatalogCard title="Side sheets">
           <div className="flex-wrap-center" style={{ gap: '16px' }}>
-            <Button
-              variant="filled"
-              onClick={() => showElementById('stepped-sheet-demo')}
-            >
+            <Button variant="filled" onClick={() => showElementById('stepped-sheet-demo')}>
               Open Form
             </Button>
           </div>
