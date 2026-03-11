@@ -299,6 +299,30 @@ export const productLikes = pgTable(
 );
 
 // =====================================================
+// TABLE: chat_sessions
+// =====================================================
+
+export const chatSessions = pgTable(
+  'chat_sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    businessId: uuid('business_id')
+      .notNull()
+      .references(() => businesses.id, { onDelete: 'cascade' }),
+    guestId: text('guest_id').notNull(),
+    guestName: text('guest_name').notNull(),
+    guestGender: text('guest_gender').notNull(),
+    status: text('status', { enum: ['active', 'closed'] }).default('active'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => ({
+    guestIdIdx: index('idx_chat_sessions_guest_id').on(table.guestId),
+    businessIdIdx: index('idx_chat_sessions_business_id').on(table.businessId),
+  }),
+);
+
+// =====================================================
 // TABLE: messages
 // =====================================================
 
@@ -306,31 +330,17 @@ export const messages = pgTable(
   'messages',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    businessId: uuid('business_id')
+    sessionId: uuid('session_id')
       .notNull()
-      .references(() => businesses.id, { onDelete: 'cascade' }),
-    senderName: text('sender_name').notNull(),
-    senderEmail: text('sender_email').notNull(),
-    senderPhone: text('sender_phone'),
-    messageText: text('message_text').notNull(),
-    isRead: boolean('is_read').notNull().default(false),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+      .references(() => chatSessions.id, { onDelete: 'cascade' }),
+    isFromStore: boolean('is_from_store').default(false),
+    content: text('content').notNull(),
+    isRead: boolean('is_read').default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   },
   (table) => ({
-    senderNameCheck: check('sender_name_check', sql`char_length(${table.senderName}) >= 2`),
-    senderEmailCheck: check(
-      'sender_email_check',
-      sql`${table.senderEmail} ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$'`,
-    ),
-    messageTextCheck: check(
-      'message_text_check',
-      sql`char_length(${table.messageText}) >= 10 AND char_length(${table.messageText}) <= 1000`,
-    ),
-    businessIdIdx: index('idx_messages_business_id').on(table.businessId),
-    isReadIdx: index('idx_messages_is_read')
-      .on(table.businessId, table.isRead)
-      .where(sql`${table.isRead} = false`),
-    createdAtIdx: index('idx_messages_created_at').on(table.businessId, table.createdAt.desc()),
+    sessionIdIdx: index('idx_messages_session_id').on(table.sessionId),
+    createdAtIdx: index('idx_messages_created_at').on(table.createdAt),
   }),
 );
 
@@ -437,7 +447,7 @@ export const businessesRelations = relations(businesses, ({ one, many }) => ({
   }),
   categories: many(productCategories),
   products: many(products),
-  messages: many(messages),
+  chatSessions: many(chatSessions),
 }));
 
 export const businessSettingsRelations = relations(businessSettings, ({ one }) => ({
@@ -482,10 +492,18 @@ export const productLikesRelations = relations(productLikes, ({ one }) => ({
   }),
 }));
 
-export const messagesRelations = relations(messages, ({ one }) => ({
+export const chatSessionsRelations = relations(chatSessions, ({ one, many }) => ({
   business: one(businesses, {
-    fields: [messages.businessId],
+    fields: [chatSessions.businessId],
     references: [businesses.id],
+  }),
+  messages: many(messages),
+}));
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+  session: one(chatSessions, {
+    fields: [messages.sessionId],
+    references: [chatSessions.id],
   }),
 }));
 
@@ -532,6 +550,9 @@ export type NewProduct = typeof products.$inferInsert;
 
 export type ProductMedia = typeof productMedia.$inferSelect;
 export type NewProductMedia = typeof productMedia.$inferInsert;
+
+export type ChatSession = typeof chatSessions.$inferSelect;
+export type NewChatSession = typeof chatSessions.$inferInsert;
 
 export type Message = typeof messages.$inferSelect;
 export type NewMessage = typeof messages.$inferInsert;
