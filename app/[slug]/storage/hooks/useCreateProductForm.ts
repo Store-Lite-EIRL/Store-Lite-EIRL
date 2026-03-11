@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   EMPTY_FORM,
   PLACEHOLDER_IMAGE,
@@ -104,6 +104,7 @@ export const useCreateProductForm = ({
         category: form.category.trim(),
         stock: parseInt(form.stock, 10),
         price: formatPrice(priceNum, currencySymbol),
+        currency: initialProduct?.currency || 'USD',
         status: form.status,
         image: media[0]?.type === 'url' ? media[0].url : (media[0]?.preview ?? PLACEHOLDER_IMAGE),
         images: media.map((m) => (m.type === 'url' ? m.url : m.preview)),

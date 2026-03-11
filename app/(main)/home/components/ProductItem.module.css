@@ -50,6 +50,8 @@
   position: absolute;
   top: 0.75rem;
   right: 0.75rem;
+  display: flex;
+  gap: 10px;
   z-index: 10;
 }
 

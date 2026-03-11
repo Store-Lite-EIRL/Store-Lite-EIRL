@@ -113,6 +113,7 @@ export function useProductItemController(product: ProductWithRelations, isOwner 
     shippingInfo: product.shippingInfo,
     saleStatus: product.saleStatus || 'NORMAL',
     secondPrice: product.secondPrice ? String(product.secondPrice) : null,
+    currency: product.currency || 'USD',
   };
 
   const allImages = localImages ?? (product.media?.map((m) => m.mediaUrl) || []);
