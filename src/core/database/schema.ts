@@ -138,6 +138,42 @@ export const businesses = pgTable(
 );
 
 // =====================================================
+// TABLE: form_messages (Contact Form)
+// =====================================================
+
+export const formMessages = pgTable(
+  'form_messages',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    businessId: uuid('business_id')
+      .notNull()
+      .references(() => businesses.id, { onDelete: 'cascade' }),
+    senderName: text('sender_name').notNull(),
+    senderEmail: text('sender_email').notNull(),
+    senderPhone: text('sender_phone'),
+    messageText: text('message_text').notNull(),
+    isRead: boolean('is_read').default(false).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    senderNameCheck: check('sender_name_check', sql`char_length(${table.senderName}) >= 2`),
+    senderEmailCheck: check(
+      'sender_email_check',
+      sql`${table.senderEmail} ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$'`,
+    ),
+    messageTextCheck: check(
+      'message_text_check',
+      sql`char_length(${table.messageText}) >= 10 AND char_length(${table.messageText}) <= 1000`,
+    ),
+    businessIdIdx: index('idx_messages_business_id').on(table.businessId),
+    isReadIdx: index('idx_messages_is_read')
+      .on(table.businessId, table.isRead)
+      .where(sql`${table.isRead} = false`),
+    createdAtIdx: index('idx_messages_created_at').on(table.businessId, table.createdAt.desc()),
+  }),
+);
+
+// =====================================================
 // TABLE: business_settings
 // =====================================================
 
@@ -333,8 +369,8 @@ export const messages = pgTable(
     sessionId: uuid('session_id')
       .notNull()
       .references(() => chatSessions.id, { onDelete: 'cascade' }),
-    isFromStore: boolean('is_from_store').default(false),
     content: text('content').notNull(),
+    isFromStore: boolean('is_from_store').default(false),
     isRead: boolean('is_read').default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   },

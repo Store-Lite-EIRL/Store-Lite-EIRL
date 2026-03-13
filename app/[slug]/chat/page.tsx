@@ -42,6 +42,7 @@ export default async function ChatPage({ params }: Props) {
       slug={slug}
       storeName={business.name}
       storeDescription={business.description || ''}
+      businessId={business.id}
     />
   );
 }

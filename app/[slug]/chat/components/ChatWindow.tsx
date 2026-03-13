@@ -1,12 +1,12 @@
 /* eslint-disable max-lines-per-function */
-import { Icon } from '@/shared/components/ui';
+import { Icon, CircularProgress } from '@/shared/components/ui';
 import { IconButton } from '@/shared/components/ui/buttons';
 import React, { useEffect, useRef, useState } from 'react';
 import type { Chat, Message } from './ChatClient';
 import styles from './ChatWindow.module.css';
 
 interface ChatWindowProps {
-  chat: Chat | null;
+  session: Chat | null;
   messages: Message[];
   storeName: string;
   storeDescription: string;
@@ -19,10 +19,11 @@ interface ChatWindowProps {
   isShareConfirmed: boolean;
   onBack?: () => void;
   slug: string;
+  isLoading?: boolean;
 }
 
 export function ChatWindow({
-  chat,
+  session,
   messages,
   storeName,
   storeDescription,
@@ -35,6 +36,7 @@ export function ChatWindow({
   isShareConfirmed,
   onBack,
   slug,
+  isLoading = false,
 }: ChatWindowProps) {
   const [inputText, setInputText] = useState('');
   const [isSearchVisible, setIsSearchVisible] = useState(false);
@@ -88,7 +90,7 @@ export function ChatWindow({
   };
 
   // ─── Empty state ───
-  if (!chat) {
+  if (!session) {
     return (
       <main className={styles.chatWindow}>
         {/* Mobile Mini Header for empty state */}
@@ -111,6 +113,32 @@ export function ChatWindow({
             </div>
             <p className={styles.emptySubTitle}>Vende más, chatea mejor</p>
           </div>
+        </div>
+      </main>
+    );
+  }
+
+  // ─── Loading state ───
+  if (isLoading) {
+    return (
+      <main className={styles.chatWindow}>
+        <header className={styles.header}>
+          <div className={styles.userInfo}>
+            {onBack && (
+              <IconButton variant="standard" aria-label="Volver" onClick={onBack}>
+                <Icon>arrow_back</Icon>
+              </IconButton>
+            )}
+            <div className={styles.avatarContainer}>
+              <div className={styles.avatarPlaceholder} />
+            </div>
+            <div className={styles.userDetails}>
+              <h3 className={styles.userName}>Cargando...</h3>
+            </div>
+          </div>
+        </header>
+        <div className={styles.loadingArea}>
+          <CircularProgress indeterminate />
         </div>
       </main>
     );
@@ -139,17 +167,17 @@ export function ChatWindow({
           <div className={styles.avatarContainer}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={chat.avatarUrl}
-              alt={chat.name}
+              src={session.avatarUrl}
+              alt={session.name}
               width={40}
               height={40}
               className={styles.avatar}
             />
-            {chat.online && <span className={styles.onlineBadge} />}
+            {session.online && <span className={styles.onlineBadge} />}
           </div>
           <div className={styles.userDetails}>
-            <h3 className={styles.userName}>{chat.name}</h3>
-            <span className={styles.userStatus}>{chat.online ? 'En línea' : 'Desconectado'}</span>
+            <h3 className={styles.userName}>{session.name}</h3>
+            <span className={styles.userStatus}>{session.online ? 'En línea' : 'Desconectado'}</span>
           </div>
         </div>
 
@@ -214,7 +242,7 @@ export function ChatWindow({
             >
               {!isMe && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={chat.avatarUrl} alt={chat.name} className={styles.messageAvatar} />
+                <img src={session.avatarUrl} alt={session.name} className={styles.messageAvatar} />
               )}
 
               {isImage ? (

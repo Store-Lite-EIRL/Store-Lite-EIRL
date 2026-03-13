@@ -22,6 +22,13 @@
       "when": 1772741448507,
       "tag": "0002_add_product_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1773276633578,
+      "tag": "0003_condemned_avengers",
+      "breakpoints": true
     }
   ]
 }
