@@ -3,7 +3,12 @@
 import { createClient } from '@/lib/supabase/client';
 import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
 import { useEffect, useState } from 'react';
-import { deleteChatSession, fetchChatSessions, fetchMessages, sendMessage } from '../actions/chatActions';
+import {
+  deleteChatSession,
+  fetchChatSessions,
+  fetchMessages,
+  sendMessage,
+} from '../actions/chatActions';
 import styles from '../messages.module.css';
 import { ChatSidebar } from './ChatSidebar';
 import { ChatWindow } from './ChatWindow';
@@ -176,7 +181,7 @@ export function ChatClient({ slug, storeName, storeDescription, businessId }: Ch
           const mappedMsg: Message = {
             id: String(newMessage.id),
             text: String(newMessage.content ?? ''),
-            sender: Boolean(newMessage.is_from_store) ? 'me' : 'them',
+            sender: newMessage.is_from_store ? 'me' : 'them',
             time: new Date(String(newMessage.created_at)).toLocaleTimeString([], {
               hour: '2-digit',
               minute: '2-digit',
@@ -268,9 +273,9 @@ export function ChatClient({ slug, storeName, storeDescription, businessId }: Ch
 
   const handleConfirmDelete = async () => {
     if (!selectedSession) return;
-    
+
     const result = await deleteChatSession(selectedSession.id);
-    
+
     if (result.success) {
       setSessions((prev) => prev.filter((c) => c.id !== selectedSession.id));
       setMessages((prev) => prev.filter((m) => m.chatId !== selectedSession.id));
@@ -320,7 +325,7 @@ export function ChatClient({ slug, storeName, storeDescription, businessId }: Ch
         <ChatSidebar
           chats={filteredSessions}
           selectedChatId={selectedSession?.id || null}
-          onSelectChat={(id) => setSelectedSession(sessions.find(s => s.id === id) || null)}
+          onSelectChat={(id) => setSelectedSession(sessions.find((s) => s.id === id) || null)}
           searchQuery={chatSearchQuery}
           onSearchChange={setChatSearchQuery}
           isLoading={isSessionsLoading}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import styles from './Checkout.module.css';
 
 interface CheckoutProps {
@@ -26,10 +26,10 @@ export default function Checkout({ totalAmount, productName, onSuccess, onCancel
     try {
       // 1. Aquí iría la carga del SDK de la pasarela y la tokenización
       // Ejemplo: const token = await Culqi.createToken();
-      
+
       // Simulación de delay de tokenización y carga en backend
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       // 2. Aquí llamarías a tu Edge Function o Route Handler pasándole el token
       /*
       await fetch('/api/checkout', {
@@ -38,7 +38,7 @@ export default function Checkout({ totalAmount, productName, onSuccess, onCancel
         body: JSON.stringify({ token: 'mock_token', amount: totalAmount * 100, email })
       });
       */
-      
+
       onSuccess();
     } catch (error) {
       console.error('Error procesando pago:', error);
@@ -72,15 +72,29 @@ export default function Checkout({ totalAmount, productName, onSuccess, onCancel
           </div>
 
           <div className={styles.methods}>
-            <label className={`${styles.methodOption} ${paymentMethod === 'card' ? styles.methodSelected : ''}`}>
-              <input type="radio" value="card" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} />
+            <label
+              className={`${styles.methodOption} ${paymentMethod === 'card' ? styles.methodSelected : ''}`}
+            >
+              <input
+                type="radio"
+                value="card"
+                checked={paymentMethod === 'card'}
+                onChange={() => setPaymentMethod('card')}
+              />
               <div className={styles.methodInfo}>
                 <span className="material-symbols-outlined">credit_card</span>
                 <span>Tarjeta (Débito/Crédito)</span>
               </div>
             </label>
-            <label className={`${styles.methodOption} ${paymentMethod === 'yape' ? styles.methodSelected : ''}`}>
-              <input type="radio" value="yape" checked={paymentMethod === 'yape'} onChange={() => setPaymentMethod('yape')} />
+            <label
+              className={`${styles.methodOption} ${paymentMethod === 'yape' ? styles.methodSelected : ''}`}
+            >
+              <input
+                type="radio"
+                value="yape"
+                checked={paymentMethod === 'yape'}
+                onChange={() => setPaymentMethod('yape')}
+              />
               <div className={styles.methodInfo}>
                 <span className="material-symbols-outlined">qr_code_scanner</span>
                 <span>Yape / Plin</span>
@@ -90,31 +104,38 @@ export default function Checkout({ totalAmount, productName, onSuccess, onCancel
 
           <div className={styles.formGroup}>
             <label>Correo Electrónico</label>
-            <input 
-              type="email" 
-              placeholder="tu@correo.com" 
+            <input
+              type="email"
+              placeholder="tu@correo.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className={styles.input}
             />
           </div>
-          
+
           {paymentMethod === 'card' && (
             <div className={styles.mockCardForm}>
-              <p className={styles.mockNotice}>* Integración visual simulada. En prod, esto se reemplazará por Culqi Elements o Stripe Elements para cumplimiento PCI.</p>
-              <input type="text" placeholder="Número de tarjeta" className={styles.input} disabled />
+              <p className={styles.mockNotice}>
+                * Integración visual simulada. En prod, esto se reemplazará por Culqi Elements o
+                Stripe Elements para cumplimiento PCI.
+              </p>
+              <input
+                type="text"
+                placeholder="Número de tarjeta"
+                className={styles.input}
+                disabled
+              />
               <div className={styles.row}>
                 <input type="text" placeholder="MM/AA" className={styles.input} disabled />
                 <input type="text" placeholder="CVC" className={styles.input} disabled />
               </div>
             </div>
           )}
-
         </div>
 
         <div className={styles.footer}>
           <button className={styles.payBtn} onClick={handlePayment} disabled={loading}>
-            {loading ? <span className={styles.spinner}></span> : `Pagar S/ ${totalAmount.toFixed(2)}`}
+            {loading ? <span className={styles.spinner} /> : `Pagar S/ ${totalAmount.toFixed(2)}`}
           </button>
           <div className={styles.secureBadge}>
             <span className="material-symbols-outlined">lock</span>

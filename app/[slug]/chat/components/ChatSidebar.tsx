@@ -1,4 +1,4 @@
-import { Icon, CircularProgress } from '@/shared/components/ui';
+import { CircularProgress, Icon } from '@/shared/components/ui';
 import styles from './ChatSidebar.module.css';
 
 import type { Chat } from './ChatClient';
@@ -58,7 +58,11 @@ export function ChatSidebar({
                 onClick={() => onSelectChat(chat.id)}
               >
                 <div className={styles.avatarContainer}>
-                  <img src={chat.avatarUrl} alt={`Avatar de ${chat.name}`} className={styles.avatar} />
+                  <img
+                    src={chat.avatarUrl}
+                    alt={`Avatar de ${chat.name}`}
+                    className={styles.avatar}
+                  />
                   {chat.online && <span className={styles.onlineBadge} />}
                 </div>
 

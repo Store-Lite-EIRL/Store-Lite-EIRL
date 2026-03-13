@@ -230,13 +230,13 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
           prev.map((m) =>
             m.id === tempId
               ? {
-                id: result.message!.id,
-                text: result.message!.content,
-                isFromStore: !!result.message!.isFromStore,
-                createdAt: result.message!.createdAt
-                  ? new Date(result.message!.createdAt)
-                  : new Date(),
-              }
+                  id: result.message!.id,
+                  text: result.message!.content,
+                  isFromStore: !!result.message!.isFromStore,
+                  createdAt: result.message!.createdAt
+                    ? new Date(result.message!.createdAt)
+                    : new Date(),
+                }
               : m,
           ),
         );
@@ -258,11 +258,11 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
 
   const handlePaymentSuccess = useCallback(async () => {
     setIsCheckoutOpen(false);
-    
+
     if (!sessionId) return;
-    
-    const alertMsg = "✅ Pago completado con éxito. En breve un asesor confirmará tu pedido.";
-    
+
+    const alertMsg = '✅ Pago completado con éxito. En breve un asesor confirmará tu pedido.';
+
     // Optimistic message
     const tempId = `temp-pay-${Date.now()}`;
     const userMsg: Message = {
@@ -272,7 +272,7 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
       createdAt: new Date(),
     };
     setMessages((prev) => [...prev, userMsg]);
-    
+
     try {
       const result = await sendMessage({
         sessionId,
@@ -285,13 +285,13 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
           prev.map((m) =>
             m.id === tempId
               ? {
-                id: result.message!.id,
-                text: result.message!.content,
-                isFromStore: !!result.message!.isFromStore,
-                createdAt: result.message!.createdAt
-                  ? new Date(result.message!.createdAt)
-                  : new Date(),
-              }
+                  id: result.message!.id,
+                  text: result.message!.content,
+                  isFromStore: !!result.message!.isFromStore,
+                  createdAt: result.message!.createdAt
+                    ? new Date(result.message!.createdAt)
+                    : new Date(),
+                }
               : m,
           ),
         );
@@ -324,7 +324,11 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
           </p>
         </div>
         {step === 'chat' && (
-          <button className={styles.payHeaderBtn} onClick={() => setIsCheckoutOpen(true)} aria-label="Pagar">
+          <button
+            className={styles.payHeaderBtn}
+            onClick={() => setIsCheckoutOpen(true)}
+            aria-label="Pagar"
+          >
             <span className="material-symbols-outlined">credit_card</span>
             <span className={styles.payHeaderBtnText}>Pagar</span>
           </button>
@@ -353,8 +357,9 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
                 messages.map((msg) => (
                   <div key={msg.id}>
                     <div
-                      className={`${styles.bubble} ${msg.isFromStore ? styles.bubbleStore : styles.bubbleUser
-                        }`}
+                      className={`${styles.bubble} ${
+                        msg.isFromStore ? styles.bubbleStore : styles.bubbleUser
+                      }`}
                     >
                       {msg.text}
                     </div>
