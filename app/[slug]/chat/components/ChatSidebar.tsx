@@ -1,4 +1,4 @@
-import { Icon } from '@/shared/components/ui';
+import { Icon, CircularProgress } from '@/shared/components/ui';
 import styles from './ChatSidebar.module.css';
 
 import type { Chat } from './ChatClient';
@@ -9,6 +9,7 @@ interface ChatSidebarProps {
   onSelectChat: (id: string) => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
+  isLoading?: boolean;
 }
 
 export function ChatSidebar({
@@ -17,6 +18,7 @@ export function ChatSidebar({
   onSelectChat,
   searchQuery,
   onSearchChange,
+  isLoading = false,
 }: ChatSidebarProps) {
   return (
     <aside className={styles.sidebar}>
@@ -43,39 +45,47 @@ export function ChatSidebar({
 
       {/* Chat List */}
       <div className={styles.chatList}>
-        {chats.map((chat) => (
-          <div
-            key={chat.id}
-            className={`${styles.chatItem} ${chat.id === selectedChatId ? styles.active : ''}`}
-            onClick={() => onSelectChat(chat.id)}
-          >
-            <div className={styles.avatarContainer}>
-              <img src={chat.avatarUrl} alt={`Avatar de ${chat.name}`} className={styles.avatar} />
-              {chat.online && <span className={styles.onlineBadge} />}
-            </div>
+        {isLoading ? (
+          <div className={styles.loadingContainer}>
+            <CircularProgress indeterminate />
+          </div>
+        ) : (
+          <>
+            {chats.map((chat) => (
+              <div
+                key={chat.id}
+                className={`${styles.chatItem} ${chat.id === selectedChatId ? styles.active : ''}`}
+                onClick={() => onSelectChat(chat.id)}
+              >
+                <div className={styles.avatarContainer}>
+                  <img src={chat.avatarUrl} alt={`Avatar de ${chat.name}`} className={styles.avatar} />
+                  {chat.online && <span className={styles.onlineBadge} />}
+                </div>
 
-            <div className={styles.chatInfo}>
-              <div className={styles.chatTopLine}>
-                <span className={styles.chatName}>{chat.name}</span>
-                <span className={styles.chatTime}>{chat.time}</span>
+                <div className={styles.chatInfo}>
+                  <div className={styles.chatTopLine}>
+                    <span className={styles.chatName}>{chat.name}</span>
+                    <span className={styles.chatTime}>{chat.time}</span>
+                  </div>
+                  <div className={styles.chatBottomLine}>
+                    <span className={styles.chatPreview}>{chat.preview}</span>
+                    {chat.unread > 0 && <span className={styles.unreadBadge}>{chat.unread}</span>}
+                  </div>
+                </div>
               </div>
-              <div className={styles.chatBottomLine}>
-                <span className={styles.chatPreview}>{chat.preview}</span>
-                {chat.unread > 0 && <span className={styles.unreadBadge}>{chat.unread}</span>}
+            ))}
+            {chats.length === 0 && (
+              <div
+                style={{
+                  padding: '24px 16px',
+                  textAlign: 'center',
+                  color: 'var(--md-sys-color-on-surface-variant)',
+                }}
+              >
+                No se encontraron chats
               </div>
-            </div>
-          </div>
-        ))}
-        {chats.length === 0 && (
-          <div
-            style={{
-              padding: '24px 16px',
-              textAlign: 'center',
-              color: 'var(--md-sys-color-on-surface-variant)',
-            }}
-          >
-            No se encontraron chats
-          </div>
+            )}
+          </>
         )}
       </div>
     </aside>

@@ -1,5 +1,7 @@
+import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businesses, productCategories } from '@/core/database/schema';
+import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
@@ -47,6 +49,20 @@ export default async function BusinessPage({ params }: Props) {
   const selectedSlug = cookieStore.get('selected_business_slug')?.value;
   const isOwner = selectedSlug === slug;
 
+  const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
+    cookies: {
+      get(name: string) {
+        return cookieStore.get(name)?.value;
+      },
+    },
+  });
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const isLoggedIn = !!user;
+
   const allProducts = await db.query.products.findMany({
     where: (p, { and, eq }) => {
       const basicFilter = eq(p.businessId, business.id);
@@ -65,6 +81,7 @@ export default async function BusinessPage({ params }: Props) {
     <BusinessPageContent
       business={business}
       isOwner={isOwner}
+      isLoggedIn={isLoggedIn}
       categories={categories}
       products={allProducts}
     />

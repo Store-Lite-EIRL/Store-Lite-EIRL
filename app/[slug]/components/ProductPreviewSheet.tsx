@@ -69,6 +69,7 @@ export default function ProductPreviewSheet({
               width={360}
               height={360}
               className={styles.image}
+              priority
             />
           ) : (
             <div className={styles.noImage}>Sin imagen</div>
