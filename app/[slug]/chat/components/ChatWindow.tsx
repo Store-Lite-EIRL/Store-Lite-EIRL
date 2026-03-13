@@ -1,5 +1,5 @@
 /* eslint-disable max-lines-per-function */
-import { Icon, CircularProgress } from '@/shared/components/ui';
+import { CircularProgress, Icon } from '@/shared/components/ui';
 import { IconButton } from '@/shared/components/ui/buttons';
 import React, { useEffect, useRef, useState } from 'react';
 import type { Chat, Message } from './ChatClient';
@@ -177,7 +177,9 @@ export function ChatWindow({
           </div>
           <div className={styles.userDetails}>
             <h3 className={styles.userName}>{session.name}</h3>
-            <span className={styles.userStatus}>{session.online ? 'En línea' : 'Desconectado'}</span>
+            <span className={styles.userStatus}>
+              {session.online ? 'En línea' : 'Desconectado'}
+            </span>
           </div>
         </div>
 

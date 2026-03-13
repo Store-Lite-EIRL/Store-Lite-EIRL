@@ -15,9 +15,7 @@ export function FloatingChatFab({ businessName, businessId }: FloatingChatFabPro
   return (
     <>
       {/* Transparent close-on-outside-click layer */}
-      {isOpen && (
-        <div className={styles.backdrop} onClick={() => setIsOpen(false)} aria-hidden />
-      )}
+      {isOpen && <div className={styles.backdrop} onClick={() => setIsOpen(false)} aria-hidden />}
 
       {/* Chat dialog */}
       {isOpen && (

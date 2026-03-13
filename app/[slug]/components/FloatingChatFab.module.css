@@ -53,7 +53,11 @@
   font-family: 'Material Symbols Outlined';
   font-size: 24px;
   line-height: 1;
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-variation-settings:
+    'FILL' 1,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
   user-select: none;
   position: relative;
   z-index: 1;
@@ -83,7 +87,7 @@
   animation: badgeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
   z-index: 2;
   border: 2.5px solid var(--md-sys-color-surface);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 @keyframes fabIn {
@@ -98,6 +102,10 @@
 }
 
 @keyframes badgeIn {
-  from { transform: scale(0); }
-  to   { transform: scale(1); }
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
 }

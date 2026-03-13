@@ -1,5 +1,5 @@
 import { db } from '@/core/database/client';
-import { businesses, productCategories } from '@/core/database/schema';
+import { businesses, productCategories, products } from '@/core/database/schema';
 import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import AppLayout from '../../src/shared/components/layout/AppLayout';
@@ -35,7 +35,7 @@ export default async function BusinessLayout({ children, modal, params }: Busine
   // Actually, StorageProvider usually needs them.
 
   const productsList = await db.query.products.findMany({
-    where: eq(businesses.id, business.id),
+    where: eq(products.businessId, business.id),
     with: {
       category: true,
       media: {
