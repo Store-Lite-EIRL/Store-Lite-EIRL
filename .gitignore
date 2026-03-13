@@ -42,3 +42,16 @@ next-env.d.ts
 
 
 tasks.txt
+
+
+# AI & documents
+.agent-teams
+.ai-tools
+.engram
+.guardian
+.kilocode
+designInspo
+
+.aider.chat.history.md
+.aider.input.history
+clone.html

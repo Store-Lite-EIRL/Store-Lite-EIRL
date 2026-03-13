@@ -13,9 +13,7 @@ import { NextResponse, type NextRequest } from 'next/server';
  * Handles session refresh and cookie management
  */
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+  let supabaseResponse = NextResponse.next();
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -33,9 +31,7 @@ export async function updateSession(request: NextRequest) {
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        supabaseResponse = NextResponse.next({
-          request,
-        });
+        supabaseResponse = NextResponse.next();
         cookiesToSet.forEach(({ name, value, options }) =>
           supabaseResponse.cookies.set(name, value, options),
         );
@@ -109,7 +105,5 @@ async function handleBusinessRedirection(
   }
 
   // Fallback: if business lookup fails, continue with normal request flow.
-  return NextResponse.next({
-    request,
-  });
+  return NextResponse.next();
 }
