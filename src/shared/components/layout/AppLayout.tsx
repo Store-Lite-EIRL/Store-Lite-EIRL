@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/features/auth';
-import { Navbar } from '@/shared/components/navigation';
+import Navbar from '@/shared/components/navigation/Navbar';
 import { CircularProgress } from '@/shared/components/ui/feedback/Progress';
 import '@/styles/components/layout.css';
 import '@/styles/components/navbar.css';
@@ -12,16 +12,18 @@ const NAVBAR_COLLAPSED_KEY = 'navbarCollapsed';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isGlobalLoading, setIsGlobalLoading] = useState(false);
 
-  // Restore navbar state from localStorage (client-side only)
   useEffect(() => {
-    const stored = localStorage.getItem(NAVBAR_COLLAPSED_KEY);
-    if (stored !== null) {
-      setIsCollapsed(stored === 'true');
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(NAVBAR_COLLAPSED_KEY);
+      if (stored === 'true') {
+        setIsCollapsed(true);
+      }
     }
   }, []);
-  const { user, signOut } = useAuth();
+  const [isGlobalLoading, setIsGlobalLoading] = useState(false);
+
+  const { signOut, session } = useAuth();
   const pathname = usePathname();
   const [prevPath, setPrevPath] = useState(pathname);
 
@@ -29,12 +31,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setPrevPath(pathname);
     setIsGlobalLoading(false);
   }
+
   const router = useRouter();
   const params = useParams();
   const urlSlug = params?.slug as string;
 
+  const isChatPage = pathname?.includes('/chat') || pathname?.endsWith('/chat');
+
   useEffect(() => {
-    // Helper to get cookie value by name - Hardened against non-literal RegExp lint
     const getCookie = (name: string) => {
       if (typeof document === 'undefined') {
         return undefined;
@@ -51,7 +55,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const isPublicPath =
       pathname === '/list-business' || pathname === '/created' || pathname.startsWith('/auth');
 
-    // 1. If on /list-business but have an active session, force back to store
     if (pathname === '/list-business' && activeSessionSlug) {
       router.push(`/${activeSessionSlug}`);
       return;
@@ -61,14 +64,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // 2. Perspective Detection:
-    // If we are on a business route (urlSlug exists), we only restrict if user is trying to access ADMIN paths (storage, settings).
     const isOwner = activeSessionSlug === urlSlug;
     const isAdminPath = pathname.includes('/storage') || pathname.includes('/settings');
 
     if (urlSlug && isAdminPath) {
       if (!isOwner) {
-        // Trying to access admin area of a store they don't own: redirect to public view
         router.push(`/${urlSlug}`);
       }
     }
@@ -84,7 +84,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setIsGlobalLoading(true);
     try {
       await signOut();
-      // Clear business session on user logout
       document.cookie = 'selected_business_slug=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
       localStorage.removeItem('selectedBusinessSlug');
       router.push('/auth');
@@ -99,75 +98,33 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     document.cookie = 'selected_business_slug=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     localStorage.removeItem('selectedBusinessSlug');
     router.push('/list-business');
-    // We don't need to set isGlobalLoading(false) here because the navigation will unmount the layout or trigger a re-render
   };
 
-  const isOwner =
-    user &&
-    params?.slug &&
-    params.slug ===
-      (typeof document !== 'undefined'
-        ? document.cookie
-            .split('; ')
-            .find((row) => row.startsWith('selected_business_slug='))
-            ?.split('=')[1]
-        : undefined);
-
-  const showNavbar =
-    !!user &&
-    !pathname.startsWith('/auth') &&
-    pathname !== '/list-business' &&
-    pathname !== '/created';
-
-  /* Logic for content margin */
-  let contentMargin = '0';
-  if (showNavbar) {
-    const baseWidth = isCollapsed
-      ? 'var(--navbar-width, 80px)'
-      : 'var(--navbar-expanded-width, 250px)';
-
-    // Total margin = navbar width + float margin (left) + extra gap
-    contentMargin = `calc(${baseWidth} + var(--navbar-float-margin) * 1.5)`;
-  }
-
   return (
-    <div
-      style={{
-        display: 'flex',
-        height: '100vh',
-        width: '100vw',
-        overflow: 'hidden',
-        position: 'relative',
-      }}
-    >
-      {showNavbar && (
+    <div className={`layout ${isChatPage ? 'layout--chat' : ''}`}>
+      {/*
+        The "styles.xxx" was incorrect because it wasn't importing CSS modules.
+        Using global classes that we will define in layout.css or equivalent.
+      */}
+
+      {/* Sidebar - Desktop Only (Navbar component is actually the sidebar) */}
+      {session && (
         <Navbar
-          onLogout={handleLogout}
-          onCloseStore={handleCloseStore}
           isCollapsed={isCollapsed}
           onToggle={toggleNavbar}
+          onLogout={handleLogout}
+          onCloseStore={handleCloseStore}
         />
       )}
 
-      <main
-        className="main-content"
-        style={{
-          marginLeft: contentMargin,
-          flex: 1,
-          padding: '.8rem',
-          transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          overflowY: 'auto',
-          height: '100%',
-          width: '100%',
-        }}
-      >
-        {children}
-      </main>
+      <div className={`content-wrapper ${isCollapsed ? 'content-wrapper--collapsed' : ''}`}>
+        <main className={`main-area ${isChatPage ? 'main-area--chat' : ''}`}>{children}</main>
+      </div>
 
       {isGlobalLoading && (
         <div className="loadingOverlay">
-          <CircularProgress indeterminate fourColor />
-          <p className="loadingText">Cerrando tienda...</p>
+          <CircularProgress />
+          <p className="loadingText">Cargando...</p>
         </div>
       )}
     </div>
