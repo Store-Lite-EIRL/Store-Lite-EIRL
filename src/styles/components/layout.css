@@ -1,15 +1,103 @@
 /* src/styles/components/layout.css */
 
+.layout {
+  display: flex;
+  min-height: 100dvh;
+  background-color: var(--md-sys-color-surface);
+}
+
+.layout--chat {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-left: var(--navbar-width); /* Adjust based on navbar */
+  padding-left: 1rem; /* Gap between navbar and content */
+}
+
+.content-wrapper--collapsed {
+  margin-left: var(--navbar-width); /* If navbar doesn't shrink, or adjust if it does */
+}
+
+.app-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  background-color: var(--md-sys-color-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-left,
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.page-title {
+  margin: 0;
+  font-family: var(--md-sys-typescale-headline-small-font);
+  font-size: var(--md-sys-typescale-headline-small-size);
+  color: var(--md-sys-color-on-surface);
+}
+
+.main-area {
+  flex: 1;
+  padding: 1.5rem;
+  min-width: 0;
+}
+
+.main-area--chat {
+  padding: 0;
+  height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 /* Mobile Breakpoint: 768px and below */
 @media (max-width: 768px) {
-  .main-content {
+  .content-wrapper {
     margin-left: 0 !important;
-    width: 100% !important;
-    padding: 0.8rem !important;
+    padding-left: 0;
+  }
+
+  .app-header {
+    padding: 0 1rem;
+  }
+
+  .main-area {
+    padding: 1rem;
     padding-bottom: calc(
-      6.5rem + env(safe-area-inset-bottom)
+      4.5rem + env(safe-area-inset-bottom)
     ) !important; /* Extra scroll space for floating navbar */
   }
+
+  .main-area--chat {
+    padding: 0;
+    padding-bottom: 0 !important;
+  }
+
+  .menu-button {
+    display: flex !important;
+  }
+}
+
+.menu-button {
+  display: none;
 }
 
 /* Global Loading Overlay */

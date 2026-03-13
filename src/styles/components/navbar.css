@@ -272,4 +272,9 @@
   .navbar__item:hover {
     background-color: transparent;
   }
+
+  /* Hide navbar during active chat on mobile */
+  body.is-chat-active .navbar {
+    display: none;
+  }
 }

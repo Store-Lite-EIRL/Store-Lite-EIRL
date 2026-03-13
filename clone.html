@@ -1,10 +1,9 @@
 <!doctype html>
 
-<html class="dark" lang="es">
+<html class="dark" lang="en">
   <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
       rel="stylesheet"
@@ -17,6 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
       rel="stylesheet"
     />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script id="tailwind-config">
       tailwind.config = {
         darkMode: 'class',
@@ -24,450 +24,309 @@
           extend: {
             colors: {
               primary: '#135bec',
-              success: '#22c55e',
               'background-light': '#f6f6f8',
               'background-dark': '#101622',
             },
             fontFamily: {
-              display: ['Space Grotesk', 'sans-serif'],
+              display: ['Space Grotesk'],
             },
-            borderRadius: {
-              DEFAULT: '0.25rem',
-              lg: '0.5rem',
-              xl: '0.75rem',
-              full: '9999px',
-            },
+            borderRadius: { DEFAULT: '0.25rem', lg: '0.5rem', xl: '0.75rem', full: '9999px' },
           },
         },
       };
     </script>
+    <style>
+      body {
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(19, 91, 236, 0.2);
+        border-radius: 10px;
+      }
+    </style>
   </head>
   <body
-    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased"
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased overflow-hidden"
   >
-    <!-- Main Container -->
-    <div class="min-h-screen flex items-center justify-center p-6">
-      <!-- Grid Layout for Products -->
-      <div
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 max-w-7xl w-full"
+    <div class="flex h-screen w-full overflow-hidden">
+      <aside
+        class="w-80 flex-shrink-0 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-background-dark/50"
       >
-        <!-- Product Card 1 -->
         <div
-          class="group bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
+          class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3"
         >
-          <!-- Image Section -->
-          <div class="relative aspect-square w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-            <div class="absolute top-3 left-3 z-10">
-              <span
-                class="bg-primary text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider"
-                >New Arrival</span
-              >
-            </div>
-            <div class="absolute top-3 right-3 z-10">
-              <button
-                class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm p-1.5 rounded-full text-slate-400 hover:text-red-500 transition-colors"
-              >
-                <span class="material-symbols-outlined text-[20px] leading-none">favorite</span>
-              </button>
-            </div>
+          <div class="flex items-center gap-3">
             <div
-              class="w-full h-full flex items-center justify-center p-8 group-hover:scale-105 transition-transform duration-500"
+              class="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary overflow-hidden"
             >
               <img
-                alt="Teclado Mecánico Premium RGB"
-                class="object-contain w-full h-full"
-                data-alt="Black mechanical gaming keyboard with RGB lighting"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqJ7tTjW7e4RsH4Pr-StmG48Cnv2mktTCCgL_WyjkZQV5f8teTTTyepy109yKH_MAgbh-qFHn-AaXja0Fx8EVtoaRdoRURjR7Ls8k8EqfpQtV1oV7oenoIOnsvOgeFHurgMkHqNAvWYk11N7eF2odcwvDGfAR1f1sNZfGxgUMrx1Lq_EcSm0iy2XYlqeGEJYbDMa4vuH21r7Tkztta0iEr26iiitooiZ6Jx5El6V-guXrw2emxmal2yl72-PK-a-R1eCW3WVE0fO8"
+                class="h-full w-full object-cover"
+                data-alt="Female user profile avatar"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRmkfpTlLq8gCRedDro5p1qE5GhQmhT_WkenvVpbPfbb_uQASCzvMmoBW6gydBYZgdHVgrsmxKhLj2A3F5XQJwlLB3wobhfM0ONJG0C3Y1pud1C1QZqlF9iSnnuSgUB67l37KAt98Y3BzIkwIKKlGC38I1Tr5r_dgMgTV86-VXHBCiW5n5CaUtPnNsBrPr6jsBj3HD5FAFuckWAaJiv2DrkLd_vLEsd-ARJBZUsKmS5nESBKmY91jWcPUWsM2rx_Nty8QHJY0VtbM"
               />
             </div>
-            <!-- Pagination Dots -->
-            <div class="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
-              <div class="size-1.5 rounded-full bg-primary"></div>
-              <div class="size-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></div>
-              <div class="size-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></div>
+            <div>
+              <h1 class="text-sm font-bold leading-none">Emma Wilson</h1>
+              <span class="text-[10px] text-primary font-medium uppercase tracking-wider"
+                >Online</span
+              >
             </div>
           </div>
-          <!-- Content Section -->
-          <div class="p-5 flex flex-col flex-grow">
-            <div class="flex items-center gap-2 mb-2">
-              <span
-                class="text-[10px] font-bold text-primary dark:text-primary tracking-widest uppercase"
-                >PERIFÉRICOS</span
+        </div>
+        <div class="p-4">
+          <div class="relative">
+            <span
+              class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg"
+              >search</span
+            >
+            <input
+              class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/50 transition-all"
+              placeholder="Search conversations..."
+              type="text"
+            />
+          </div>
+        </div>
+        <nav class="flex-1 overflow-y-auto custom-scrollbar px-2 pb-4 space-y-1">
+          <div
+            class="flex items-center gap-3 p-3 rounded-xl bg-primary/10 border-l-4 border-primary cursor-pointer"
+          >
+            <div
+              class="h-12 w-12 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 overflow-hidden"
+            >
+              <img
+                class="h-full w-full object-cover"
+                data-alt="Male contact avatar Alex Johnson"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpS6wzfe8Hx7qT92cI12RHhy_xtDKgyLal015qMM-25D0pNUxzDbbBJ-nr1CLO5Ha3ZeCol8jRrzFndU0TaoJ-7y2PeCrPUYDk62QrKuV_ZIi4WiGmoeu2Jp3FDr4Dow_ngAW4BZ4vAgJU3xiYUwQEXXj6LY68VNDyX_wMHNT_hHkZB3ouaupMYDH6yujUOITL5e2IdnPmhDEFhSn0xsNKtfjM5NvibZ97p8vu1QgTocXCWWF0_sgirHpa-hOoQAYbBcnuudXaLT4"
+              />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between items-baseline">
+                <h2 class="text-sm font-semibold truncate">Alex Johnson</h2>
+                <span class="text-[10px] text-slate-500">10:45 AM</span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
+                Can we meet at 5? I have the drafts...
+              </p>
+            </div>
+          </div>
+          <div
+            class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
+          >
+            <div
+              class="h-12 w-12 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 overflow-hidden"
+            >
+              <img
+                class="h-full w-full object-cover"
+                data-alt="Female contact avatar Sarah Miller"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRmkfpTlLq8gCRedDro5p1qE5GhQmhT_WkenvVpbPfbb_uQASCzvMmoBW6gydBYZgdHVgrsmxKhLj2A3F5XQJwlLB3wobhfM0ONJG0C3Y1pud1C1QZqlF9iSnnuSgUB67l37KAt98Y3BzIkwIKKlGC38I1Tr5r_dgMgTV86-VXHBCiW5n5CaUtPnNsBrPr6jsBj3HD5FAFuckWAaJiv2DrkLd_vLEsd-ARJBZUsKmS5nESBKmY91jWcPUWsM2rx_Nty8QHJY0VtbM"
+              />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between items-baseline">
+                <h2 class="text-sm font-semibold truncate">Sarah Miller</h2>
+                <span class="text-[10px] text-slate-500">9:30 AM</span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
+                The report is ready for review.
+              </p>
+            </div>
+          </div>
+          <div
+            class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
+          >
+            <div
+              class="h-12 w-12 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 overflow-hidden"
+            >
+              <img
+                class="h-full w-full object-cover"
+                data-alt="Male contact avatar David Chen"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpS6wzfe8Hx7qT92cI12RHhy_xtDKgyLal015qMM-25D0pNUxzDbbBJ-nr1CLO5Ha3ZeCol8jRrzFndU0TaoJ-7y2PeCrPUYDk62QrKuV_ZIi4WiGmoeu2Jp3FDr4Dow_ngAW4BZ4vAgJU3xiYUwQEXXj6LY68VNDyX_wMHNT_hHkZB3ouaupMYDH6yujUOITL5e2IdnPmhDEFhSn0xsNKtfjM5NvibZ97p8vu1QgTocXCWWF0_sgirHpa-hOoQAYbBcnuudXaLT4"
+              />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between items-baseline">
+                <h2 class="text-sm font-semibold truncate">David Chen</h2>
+                <span class="text-[10px] text-slate-500">Yesterday</span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
+                I'll send the files by tomorrow night.
+              </p>
+            </div>
+          </div>
+          <div
+            class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
+          >
+            <div
+              class="h-12 w-12 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 overflow-hidden"
+            >
+              <img
+                class="h-full w-full object-cover"
+                data-alt="Female contact avatar Jessica Lane"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRmkfpTlLq8gCRedDro5p1qE5GhQmhT_WkenvVpbPfbb_uQASCzvMmoBW6gydBYZgdHVgrsmxKhLj2A3F5XQJwlLB3wobhfM0ONJG0C3Y1pud1C1QZqlF9iSnnuSgUB67l37KAt98Y3BzIkwIKKlGC38I1Tr5r_dgMgTV86-VXHBCiW5n5CaUtPnNsBrPr6jsBj3HD5FAFuckWAaJiv2DrkLd_vLEsd-ARJBZUsKmS5nESBKmY91jWcPUWsM2rx_Nty8QHJY0VtbM"
+              />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between items-baseline">
+                <h2 class="text-sm font-semibold truncate">Jessica Lane</h2>
+                <span class="text-[10px] text-slate-500">Monday</span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
+                That looks amazing! Great job.
+              </p>
+            </div>
+          </div>
+        </nav>
+      </aside>
+      <main class="flex-1 flex flex-col relative bg-white dark:bg-background-dark">
+        <header
+          class="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md z-10"
+        >
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+              <img
+                class="h-full w-full object-cover"
+                data-alt="Alex Johnson circular avatar"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpS6wzfe8Hx7qT92cI12RHhy_xtDKgyLal015qMM-25D0pNUxzDbbBJ-nr1CLO5Ha3ZeCol8jRrzFndU0TaoJ-7y2PeCrPUYDk62QrKuV_ZIi4WiGmoeu2Jp3FDr4Dow_ngAW4BZ4vAgJU3xiYUwQEXXj6LY68VNDyX_wMHNT_hHkZB3ouaupMYDH6yujUOITL5e2IdnPmhDEFhSn0xsNKtfjM5NvibZ97p8vu1QgTocXCWWF0_sgirHpa-hOoQAYbBcnuudXaLT4"
+              />
+            </div>
+            <div>
+              <h2 class="text-sm font-bold leading-tight">Alex Johnson</h2>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                Active now
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"
+            >
+              <span class="material-symbols-outlined text-xl">info</span>
+            </button>
+          </div>
+        </header>
+        <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+          <div class="flex justify-center">
+            <span
+              class="text-[10px] font-bold uppercase tracking-widest text-slate-400 bg-slate-100 dark:bg-slate-800/50 px-3 py-1 rounded-full"
+              >Today</span
+            >
+          </div>
+          <div class="flex items-end gap-3 max-w-[80%]">
+            <div
+              class="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 overflow-hidden"
+            >
+              <img
+                class="h-full w-full object-cover"
+                data-alt="Alex Johnson small avatar"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpS6wzfe8Hx7qT92cI12RHhy_xtDKgyLal015qMM-25D0pNUxzDbbBJ-nr1CLO5Ha3ZeCol8jRrzFndU0TaoJ-7y2PeCrPUYDk62QrKuV_ZIi4WiGmoeu2Jp3FDr4Dow_ngAW4BZ4vAgJU3xiYUwQEXXj6LY68VNDyX_wMHNT_hHkZB3ouaupMYDH6yujUOITL5e2IdnPmhDEFhSn0xsNKtfjM5NvibZ97p8vu1QgTocXCWWF0_sgirHpa-hOoQAYbBcnuudXaLT4"
+              />
+            </div>
+            <div class="space-y-1">
+              <div class="bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl rounded-bl-none shadow-sm">
+                <p class="text-sm leading-relaxed">
+                  Hey Emma! Have you had a chance to look at the new design system components I sent
+                  over yesterday?
+                </p>
+              </div>
+              <span class="text-[10px] text-slate-400 px-1">10:42 AM</span>
+            </div>
+          </div>
+          <div class="flex flex-row-reverse items-end gap-3 max-w-[80%] ml-auto">
+            <div class="h-8 w-8 rounded-full bg-primary flex-shrink-0 overflow-hidden">
+              <img
+                class="h-full w-full object-cover"
+                data-alt="Emma Wilson small avatar"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRmkfpTlLq8gCRedDro5p1qE5GhQmhT_WkenvVpbPfbb_uQASCzvMmoBW6gydBYZgdHVgrsmxKhLj2A3F5XQJwlLB3wobhfM0ONJG0C3Y1pud1C1QZqlF9iSnnuSgUB67l37KAt98Y3BzIkwIKKlGC38I1Tr5r_dgMgTV86-VXHBCiW5n5CaUtPnNsBrPr6jsBj3HD5FAFuckWAaJiv2DrkLd_vLEsd-ARJBZUsKmS5nESBKmY91jWcPUWsM2rx_Nty8QHJY0VtbM"
+              />
+            </div>
+            <div class="space-y-1 flex flex-col items-end">
+              <div
+                class="bg-primary text-white p-3 rounded-2xl rounded-br-none shadow-md shadow-primary/20"
               >
-              <span class="text-slate-300 dark:text-slate-700">|</span>
-              <div class="flex items-center gap-1">
-                <span class="material-symbols-outlined text-yellow-500 text-[14px] fill-current"
-                  >star</span
-                >
-                <span class="text-[11px] font-medium text-slate-500">4.9 (124)</span>
+                <p class="text-sm leading-relaxed">
+                  I just started going through them. They look very clean! I love how you've handled
+                  the spacing in the chat component.
+                </p>
               </div>
+              <span class="text-[10px] text-slate-400 px-1">10:44 AM</span>
             </div>
-            <h3
-              class="text-lg font-bold leading-tight mb-2 group-hover:text-primary transition-colors"
+          </div>
+          <div class="flex items-end gap-3 max-w-[80%]">
+            <div
+              class="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 overflow-hidden"
             >
-              Apex Pro TKL Wireless 2024 Edition
-            </h3>
-            <!-- Quick Specs -->
-            <p
-              class="text-[12px] text-slate-500 dark:text-slate-400 font-medium mb-4 flex items-center gap-2"
-            >
-              <span>Inalámbrico</span>
-              <span class="text-slate-300 dark:text-slate-700">•</span>
-              <span>Mecánico</span>
-              <span class="text-slate-300 dark:text-slate-700">•</span>
-              <span>RGB Prism</span>
-            </p>
-            <!-- Stock & Shipping -->
-            <div class="flex flex-col gap-1.5 mb-6">
-              <div class="flex items-center gap-2">
-                <div class="size-2 rounded-full bg-success"></div>
-                <span class="text-xs font-medium text-success">En Stock</span>
-              </div>
-              <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                <span class="material-symbols-outlined text-[16px]">local_shipping</span>
-                <span class="text-xs font-medium">Recíbelo mañana</span>
-              </div>
+              <img
+                class="h-full w-full object-cover"
+                data-alt="Alex Johnson small avatar"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpS6wzfe8Hx7qT92cI12RHhy_xtDKgyLal015qMM-25D0pNUxzDbbBJ-nr1CLO5Ha3ZeCol8jRrzFndU0TaoJ-7y2PeCrPUYDk62QrKuV_ZIi4WiGmoeu2Jp3FDr4Dow_ngAW4BZ4vAgJU3xiYUwQEXXj6LY68VNDyX_wMHNT_hHkZB3ouaupMYDH6yujUOITL5e2IdnPmhDEFhSn0xsNKtfjM5NvibZ97p8vu1QgTocXCWWF0_sgirHpa-hOoQAYbBcnuudXaLT4"
+              />
             </div>
-            <!-- Price & Actions -->
-            <div class="mt-auto">
-              <div class="flex items-end gap-3 mb-4">
-                <div class="flex flex-col">
-                  <span class="text-xs text-slate-400 line-through">249.99€</span>
-                  <span class="text-2xl font-bold text-slate-900 dark:text-white leading-none"
-                    >199.90€</span
-                  >
-                </div>
-                <span class="bg-success/10 text-success text-[11px] font-bold px-1.5 py-0.5 rounded"
-                  >-20%</span
-                >
+            <div class="space-y-1">
+              <div class="bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl rounded-bl-none shadow-sm">
+                <p class="text-sm leading-relaxed">
+                  Glad you like it! Can we meet at 5? I have the drafts for the remaining views and
+                  want to sync up before the sprint ends.
+                </p>
               </div>
-              <div class="flex gap-2">
-                <button
-                  class="flex-1 bg-success hover:bg-success/90 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
-                >
-                  <span class="material-symbols-outlined text-[20px]">shopping_cart</span>
-                  <span class="text-sm">Añadir al carrito</span>
-                </button>
-                <button
-                  class="aspect-square bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg p-2.5 flex items-center justify-center transition-colors"
-                >
-                  <span class="material-symbols-outlined text-[20px]">compare_arrows</span>
-                </button>
+              <span class="text-[10px] text-slate-400 px-1">10:45 AM</span>
+            </div>
+          </div>
+          <div class="flex flex-row-reverse items-end gap-3 max-w-[80%] ml-auto">
+            <div class="h-8 w-8 rounded-full bg-primary flex-shrink-0 overflow-hidden">
+              <img
+                class="h-full w-full object-cover"
+                data-alt="Emma Wilson small avatar"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRmkfpTlLq8gCRedDro5p1qE5GhQmhT_WkenvVpbPfbb_uQASCzvMmoBW6gydBYZgdHVgrsmxKhLj2A3F5XQJwlLB3wobhfM0ONJG0C3Y1pud1C1QZqlF9iSnnuSgUB67l37KAt98Y3BzIkwIKKlGC38I1Tr5r_dgMgTV86-VXHBCiW5n5CaUtPnNsBrPr6jsBj3HD5FAFuckWAaJiv2DrkLd_vLEsd-ARJBZUsKmS5nESBKmY91jWcPUWsM2rx_Nty8QHJY0VtbM"
+              />
+            </div>
+            <div class="space-y-1 flex flex-col items-end">
+              <div
+                class="bg-primary text-white p-3 rounded-2xl rounded-br-none shadow-md shadow-primary/20"
+              >
+                <p class="text-sm leading-relaxed">
+                  5 PM works for me. I'll send a calendar invite!
+                </p>
+              </div>
+              <div class="flex items-center gap-1 px-1">
+                <span class="text-[10px] text-slate-400">10:46 AM</span>
+                <span class="material-symbols-outlined text-[14px] text-primary">done_all</span>
               </div>
             </div>
           </div>
         </div>
-        <!-- Product Card 2 -->
-        <div
-          class="group bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
+        <footer
+          class="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark"
         >
-          <!-- Image Section -->
-          <div class="relative aspect-square w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-            <div class="absolute top-3 left-3 z-10">
-              <span
-                class="bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider"
-                >Best Seller</span
-              >
-            </div>
-            <div class="absolute top-3 right-3 z-10">
+          <div
+            class="max-w-4xl mx-auto flex items-center gap-3 bg-slate-100 dark:bg-slate-800/50 p-2 rounded-2xl border border-slate-200 dark:border-slate-700/50"
+          >
+            <button
+              class="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors"
+            >
+              <span class="material-symbols-outlined">add</span>
+            </button>
+            <input
+              class="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2"
+              placeholder="Type a message..."
+              type="text"
+            />
+            <div class="flex items-center gap-1">
               <button
-                class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm p-1.5 rounded-full text-slate-400 hover:text-red-500 transition-colors"
+                class="p-2 h-10 w-10 flex items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/30 hover:opacity-90 transition-opacity"
               >
-                <span class="material-symbols-outlined text-[20px] leading-none">favorite</span>
+                <span class="material-symbols-outlined">send</span>
               </button>
             </div>
-            <div
-              class="w-full h-full flex items-center justify-center p-8 group-hover:scale-105 transition-transform duration-500"
-            >
-              <img
-                alt="Ratón Ergonómico High-End"
-                class="object-contain w-full h-full"
-                data-alt="Sleek silver ergonomic wireless mouse"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsjFIdNS43KJlCUAhVFiDF3bJr86AulcTQ2FlAJL5HYBFhyxbVq95J-zngM4ihuFZEpqlScU9j4VwoHAUpRYJfIFiOL-4Bi8j06WArVT5bo8Zk8vJ0l9H0A2O0yCa54LQ1bxveylFy5Bvbxb6_1qtfoZIsx1BAfHuzMzqAZYY0gOGMQTLs3EMzZFzkCMZPkkJHvwKlXFQBRJLnOV3cM9Vwq6bZ3ZW70MSoeGuRBWroQroaElJre4iY2cfKQt6PGR-Mvyfzv9kcdq4"
-              />
-            </div>
-            <!-- Pagination Dots -->
-            <div class="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
-              <div class="size-1.5 rounded-full bg-primary"></div>
-              <div class="size-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></div>
-              <div class="size-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></div>
-            </div>
           </div>
-          <!-- Content Section -->
-          <div class="p-5 flex flex-col flex-grow">
-            <div class="flex items-center gap-2 mb-2">
-              <span
-                class="text-[10px] font-bold text-primary dark:text-primary tracking-widest uppercase"
-                >PERIFÉRICOS</span
-              >
-              <span class="text-slate-300 dark:text-slate-700">|</span>
-              <div class="flex items-center gap-1">
-                <span class="material-symbols-outlined text-yellow-500 text-[14px] fill-current"
-                  >star</span
-                >
-                <span class="text-[11px] font-medium text-slate-500">5.0 (89)</span>
-              </div>
-            </div>
-            <h3
-              class="text-lg font-bold leading-tight mb-2 group-hover:text-primary transition-colors"
-            >
-              MX Master 4 Enterprise Edition
-            </h3>
-            <!-- Quick Specs -->
-            <p
-              class="text-[12px] text-slate-500 dark:text-slate-400 font-medium mb-4 flex items-center gap-2"
-            >
-              <span>Multi-dispositivo</span>
-              <span class="text-slate-300 dark:text-slate-700">•</span>
-              <span>8000 DPI</span>
-              <span class="text-slate-300 dark:text-slate-700">•</span>
-              <span>Silencioso</span>
-            </p>
-            <!-- Stock & Shipping -->
-            <div class="flex flex-col gap-1.5 mb-6">
-              <div class="flex items-center gap-2">
-                <div class="size-2 rounded-full bg-orange-500"></div>
-                <span class="text-xs font-medium text-orange-500">Últimas unidades</span>
-              </div>
-              <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                <span class="material-symbols-outlined text-[16px]">local_shipping</span>
-                <span class="text-xs font-medium">Envío gratis</span>
-              </div>
-            </div>
-            <!-- Price & Actions -->
-            <div class="mt-auto">
-              <div class="flex items-end gap-3 mb-4">
-                <div class="flex flex-col">
-                  <span class="text-2xl font-bold text-slate-900 dark:text-white leading-none"
-                    >129.00€</span
-                  >
-                </div>
-              </div>
-              <div class="flex gap-2">
-                <button
-                  class="flex-1 bg-success hover:bg-success/90 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
-                >
-                  <span class="material-symbols-outlined text-[20px]">shopping_cart</span>
-                  <span class="text-sm">Añadir al carrito</span>
-                </button>
-                <button
-                  class="aspect-square bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg p-2.5 flex items-center justify-center transition-colors"
-                >
-                  <span class="material-symbols-outlined text-[20px]">compare_arrows</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Product Card 3 -->
-        <div
-          class="group bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
-        >
-          <!-- Image Section -->
-          <div class="relative aspect-square w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-            <div class="absolute top-3 left-3 z-10">
-              <span
-                class="bg-primary text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider"
-                >Top rated</span
-              >
-            </div>
-            <div class="absolute top-3 right-3 z-10">
-              <button
-                class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm p-1.5 rounded-full text-slate-400 hover:text-red-500 transition-colors"
-              >
-                <span class="material-symbols-outlined text-[20px] leading-none">favorite</span>
-              </button>
-            </div>
-            <div
-              class="w-full h-full flex items-center justify-center p-8 group-hover:scale-105 transition-transform duration-500"
-            >
-              <img
-                alt="Monitor Curvo 4K"
-                class="object-contain w-full h-full"
-                data-alt="Ultrawide curved gaming monitor display"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtmCDRM2Ow7AbPQIIfZrb9jGd7Ai4CVtptJDhsjEB5YladzAyUbFNL_-RljXHZhgIqv18DhpGqtcZJe2fWr8mTrr9aNm7en6RD3-gxTQor9ZySc6LdermS4tFCnIVAUhGXdQoZsfClkuyS2QZ0LWVJHGqNFtg2auLTkcBTI46u9a1Wozz2CwrUhneEk2CS042MIR5fTqXQw3dKv6W0pYEhkaInDtCENpnoLM5dO4Z7Natb3e9iGkeEqYiVaCVB_gW4DSZxarquFiA"
-              />
-            </div>
-            <!-- Pagination Dots -->
-            <div class="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
-              <div class="size-1.5 rounded-full bg-primary"></div>
-              <div class="size-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></div>
-              <div class="size-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></div>
-            </div>
-          </div>
-          <!-- Content Section -->
-          <div class="p-5 flex flex-col flex-grow">
-            <div class="flex items-center gap-2 mb-2">
-              <span
-                class="text-[10px] font-bold text-primary dark:text-primary tracking-widest uppercase"
-                >MONITORES</span
-              >
-              <span class="text-slate-300 dark:text-slate-700">|</span>
-              <div class="flex items-center gap-1">
-                <span class="material-symbols-outlined text-yellow-500 text-[14px] fill-current"
-                  >star</span
-                >
-                <span class="text-[11px] font-medium text-slate-500">4.8 (210)</span>
-              </div>
-            </div>
-            <h3
-              class="text-lg font-bold leading-tight mb-2 group-hover:text-primary transition-colors"
-            >
-              UltraVision 34" Curved OLED
-            </h3>
-            <!-- Quick Specs -->
-            <p
-              class="text-[12px] text-slate-500 dark:text-slate-400 font-medium mb-4 flex items-center gap-2"
-            >
-              <span>175Hz</span>
-              <span class="text-slate-300 dark:text-slate-700">•</span>
-              <span>0.1ms</span>
-              <span class="text-slate-300 dark:text-slate-700">•</span>
-              <span>HDR400</span>
-            </p>
-            <!-- Stock & Shipping -->
-            <div class="flex flex-col gap-1.5 mb-6">
-              <div class="flex items-center gap-2">
-                <div class="size-2 rounded-full bg-success"></div>
-                <span class="text-xs font-medium text-success">En Stock</span>
-              </div>
-              <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                <span class="material-symbols-outlined text-[16px]">local_shipping</span>
-                <span class="text-xs font-medium">Envío en 48h</span>
-              </div>
-            </div>
-            <!-- Price & Actions -->
-            <div class="mt-auto">
-              <div class="flex items-end gap-3 mb-4">
-                <div class="flex flex-col">
-                  <span class="text-xs text-slate-400 line-through">949.00€</span>
-                  <span class="text-2xl font-bold text-slate-900 dark:text-white leading-none"
-                    >799.00€</span
-                  >
-                </div>
-                <span class="bg-primary/10 text-primary text-[11px] font-bold px-1.5 py-0.5 rounded"
-                  >OFERTA</span
-                >
-              </div>
-              <div class="flex gap-2">
-                <button
-                  class="flex-1 bg-success hover:bg-success/90 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
-                >
-                  <span class="material-symbols-outlined text-[20px]">shopping_cart</span>
-                  <span class="text-sm">Añadir al carrito</span>
-                </button>
-                <button
-                  class="aspect-square bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg p-2.5 flex items-center justify-center transition-colors"
-                >
-                  <span class="material-symbols-outlined text-[20px]">compare_arrows</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Product Card 4 -->
-        <div
-          class="group bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
-        >
-          <!-- Image Section -->
-          <div class="relative aspect-square w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-            <div class="absolute top-3 left-3 z-10">
-              <span
-                class="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider"
-                >Premium</span
-              >
-            </div>
-            <div class="absolute top-3 right-3 z-10">
-              <button
-                class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm p-1.5 rounded-full text-slate-400 hover:text-red-500 transition-colors"
-              >
-                <span class="material-symbols-outlined text-[20px] leading-none">favorite</span>
-              </button>
-            </div>
-            <div
-              class="w-full h-full flex items-center justify-center p-8 group-hover:scale-105 transition-transform duration-500"
-            >
-              <img
-                alt="Cascos Audio Hi-Fi"
-                class="object-contain w-full h-full"
-                data-alt="Professional studio headphones with leather pads"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJ5tzOi5QB35ioxtZAZjIy2R4CCEx0c79S97t3mUE63xo6_rR3TBnh1NUB8vS5Ao2lJKeFPVwOamlBNJDJahSY1ZfMlvXKAFMpu55SXGUDfdcQ2h0L44mQ7diz8ZO97dWbAnbwE8OP4dNh5h3sVeZDg0l2F9GeCf1zMO2AhhBKQ8ZbOMvEx3EJqRzJLRA14IwORKIIiaLpvaB_XsUPyn09SDjF55OgiFsvJq2tYBTrsFpNceKntliZgrTH00r8GzKm7Al11JGt0MM"
-              />
-            </div>
-            <!-- Pagination Dots -->
-            <div class="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
-              <div class="size-1.5 rounded-full bg-primary"></div>
-              <div class="size-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></div>
-              <div class="size-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></div>
-            </div>
-          </div>
-          <!-- Content Section -->
-          <div class="p-5 flex flex-col flex-grow">
-            <div class="flex items-center gap-2 mb-2">
-              <span
-                class="text-[10px] font-bold text-primary dark:text-primary tracking-widest uppercase"
-                >AUDIO</span
-              >
-              <span class="text-slate-300 dark:text-slate-700">|</span>
-              <div class="flex items-center gap-1">
-                <span class="material-symbols-outlined text-yellow-500 text-[14px] fill-current"
-                  >star</span
-                >
-                <span class="text-[11px] font-medium text-slate-500">4.7 (52)</span>
-              </div>
-            </div>
-            <h3
-              class="text-lg font-bold leading-tight mb-2 group-hover:text-primary transition-colors"
-            >
-              SonicPro Studio Wireless ANC
-            </h3>
-            <!-- Quick Specs -->
-            <p
-              class="text-[12px] text-slate-500 dark:text-slate-400 font-medium mb-4 flex items-center gap-2"
-            >
-              <span>ANC Active</span>
-              <span class="text-slate-300 dark:text-slate-700">•</span>
-              <span>40h Batería</span>
-              <span class="text-slate-300 dark:text-slate-700">•</span>
-              <span>Hi-Res</span>
-            </p>
-            <!-- Stock & Shipping -->
-            <div class="flex flex-col gap-1.5 mb-6">
-              <div class="flex items-center gap-2">
-                <div class="size-2 rounded-full bg-success"></div>
-                <span class="text-xs font-medium text-success">En Stock</span>
-              </div>
-              <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                <span class="material-symbols-outlined text-[16px]">local_shipping</span>
-                <span class="text-xs font-medium">Envío gratis</span>
-              </div>
-            </div>
-            <!-- Price & Actions -->
-            <div class="mt-auto">
-              <div class="flex items-end gap-3 mb-4">
-                <div class="flex flex-col">
-                  <span class="text-2xl font-bold text-slate-900 dark:text-white leading-none"
-                    >349.95€</span
-                  >
-                </div>
-              </div>
-              <div class="flex gap-2">
-                <button
-                  class="flex-1 bg-success hover:bg-success/90 text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
-                >
-                  <span class="material-symbols-outlined text-[20px]">shopping_cart</span>
-                  <span class="text-sm">Añadir al carrito</span>
-                </button>
-                <button
-                  class="aspect-square bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg p-2.5 flex items-center justify-center transition-colors"
-                >
-                  <span class="material-symbols-outlined text-[20px]">compare_arrows</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        </footer>
+      </main>
     </div>
   </body>
 </html>

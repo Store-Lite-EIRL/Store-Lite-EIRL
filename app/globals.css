@@ -18,6 +18,12 @@
 @import '../src/styles/components/pickers.css';
 @import '../src/styles/utilities.css';
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 /* Tipografía: texto principal usa --mio-theme-text-font-family (Google Sans Text) */
 body {
   font-family: var(--mio-theme-text-font-family), system-ui, sans-serif;

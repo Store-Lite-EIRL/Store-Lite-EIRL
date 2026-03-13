@@ -26,7 +26,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <article
-      className="relative w-full max-w-[320px] bg-white rounded-[32px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.05)] overflow-hidden flex flex-col group transition-all hover:shadow-[0_10px_30px_rgba(0,0,0,0.1)] h-full"
+      className="relative w-full max-w-[320px] bg-white rounded-[24px] p-5 shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden flex flex-col group transition-all duration-300 hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 h-full"
       data-purpose="product-card"
     >
       {/* Action Buttons (Floating) - Sliding interaction */}
@@ -72,19 +72,30 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
       </div>
 
-      {/* Product Info - Using Project Typography */}
-      <div className="grow space-y-2">
-        <span className="inline-block bg-slate-100 text-slate-500 label-small font-bold px-2 py-0.5 rounded-full uppercase tracking-wider mb-1">
-          {categoryName}
-        </span>
+      {/* Product Info - Premium Layout */}
+      <div className="grow space-y-2 mt-3">
+        <div className="flex flex-wrap items-center gap-2 mb-1.5">
+          <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
+            {categoryName}
+          </span>
+          {product.isAvailable && product.stock > 0 ? (
+            <span className="bg-[#e6f4ea] text-[#137333] text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
+              Stock: {product.stock}
+            </span>
+          ) : (
+            <span className="bg-[#fce8e6] text-[#c5221f] text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
+              Agotado
+            </span>
+          )}
+        </div>
         <h2
-          className="text-[#1a202c] body-large font-bold leading-tight line-clamp-2"
+          className="text-[#0f172a] text-[1.15rem] font-extrabold leading-snug line-clamp-2 transition-colors group-hover:text-blue-600 mb-1"
           data-purpose="product-title"
         >
           {product.title}
         </h2>
         <p
-          className="text-[#718096] body-small leading-normal line-clamp-2"
+          className="text-[#475569] text-[0.875rem] leading-relaxed line-clamp-2"
           data-purpose="product-description"
         >
           {product.description || 'Sin descripción disponible'}
@@ -92,36 +103,43 @@ export default function ProductCard({ product }: ProductCardProps) {
       </div>
 
       {/* Pricing and CTA */}
-      <div className="mt-6 flex flex-col gap-4" data-purpose="pricing-footer">
-        <div className="flex flex-col">
+      <div className="mt-5 flex flex-col gap-4" data-purpose="pricing-footer">
+        <div className="flex flex-col mb-1">
           {originalPrice && (
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[#a0aec0] line-through body-small">
+            <div className="flex items-center gap-2 mb-[2px]">
+              <span className="text-[#94a3b8] line-through text-[13px] font-medium">
                 ${originalPrice.toLocaleString()}
               </span>
               {discount && (
-                <span className="bg-[#ebf4ff] text-[#2b6cb0] label-small font-bold px-1.5 py-0.5 rounded uppercase">
+                <span className="bg-[#fee2e2] text-[#dc2626] text-[10px] font-extrabold px-1.5 py-0.5 rounded-sm uppercase tracking-wide">
                   -{discount}%
                 </span>
               )}
             </div>
           )}
-          <span className="text-3xl font-bold text-[#1a202c]">${price.toLocaleString()}</span>
+          <span className="text-[1.7rem] font-extrabold text-[#0f172a] tracking-tight leading-none">
+            ${price.toLocaleString()}
+          </span>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-2.5">
           <Button
-            className="grow h-[60px] rounded-[18px]! bg-[#22c55e] text-white font-bold transition-all active:scale-95 shadow-md uppercase text-sm tracking-wide"
-            style={{ '--md-filled-button-container-color': '#22c55e' } as React.CSSProperties}
+            className="grow h-[52px] rounded-[16px]! bg-[#0f172a] text-white font-bold transition-all hover:bg-slate-800 active:scale-95 shadow-[0_4px_10px_rgba(15,23,42,0.2)] uppercase text-[13px] tracking-wide"
+            style={{ '--md-filled-button-container-color': '#0f172a' } as React.CSSProperties}
           >
             Comprar
           </Button>
           <Button
-            className="w-[60px]! h-[60px] rounded-[18px]! bg-[#2563eb] text-white flex items-center justify-center transition-transform active:scale-95 shadow-md p-0"
-            style={{ '--md-filled-button-container-color': '#2563eb' } as React.CSSProperties}
+            className="w-[52px]! h-[52px] rounded-[16px]! bg-[#eff6ff] text-[#2563eb] flex items-center justify-center transition-all hover:bg-[#dbeafe] active:scale-95 shadow-sm p-0"
+            style={
+              {
+                '--md-filled-button-container-color': '#eff6ff',
+                '--md-filled-button-label-text-color': '#2563eb',
+              } as React.CSSProperties
+            }
             aria-label="Add to cart"
           >
-            <Icon>shopping_cart</Icon>
+            <Icon>add_shopping_cart</Icon>
           </Button>
         </div>
       </div>

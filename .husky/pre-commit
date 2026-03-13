@@ -1,1 +1,8 @@
-pnpm quality
+#!/bin/bash
+
+ai-review .
+
+if [ $? -ne 0 ]; then
+ echo "AI review failed"
+ exit 1
+fi

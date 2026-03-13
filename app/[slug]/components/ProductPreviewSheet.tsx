@@ -69,6 +69,7 @@ export default function ProductPreviewSheet({
               width={360}
               height={360}
               className={styles.image}
+              priority
             />
           ) : (
             <div className={styles.noImage}>Sin imagen</div>
@@ -167,6 +168,7 @@ export default function ProductPreviewSheet({
                       category,
                       stock: product.stock,
                       price: String(product.price),
+                      currency: product.currency,
                       status: product.isAvailable ? 'ACTIVO' : 'NO ACTIVO',
                       image: mainImage,
                       images: product.media?.map((item) => item.mediaUrl) || [],

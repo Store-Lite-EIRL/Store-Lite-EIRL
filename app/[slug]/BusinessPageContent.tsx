@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 'use client';
 
 import type { Business, ProductCategory } from '@/core/database/schema';
@@ -15,6 +16,7 @@ import ProductFiltersTopBar from '../(main)/home/components/ProductFiltersTopBar
 import { useProductFilters } from '../(main)/home/hooks/useProductFilters';
 import { CartDrawer } from './components/CartDrawer';
 import { FloatingCartButton } from './components/FloatingCartButton';
+import { FloatingChatFab } from './components/FloatingChatFab';
 import ProductPreviewSheet from './components/ProductPreviewSheet';
 import { DeleteProductDialog } from './storage/components/DeleteProductDialog';
 import { CreateProductSheet } from './storage/components/createProduct/CreateProductSheet';
@@ -29,6 +31,7 @@ const PAGE_SIZE = 12;
 interface BusinessPageContentProps {
   business: Business;
   isOwner?: boolean;
+  isLoggedIn?: boolean;
   categories?: ProductCategory[];
   products?: ProductWithRelations[];
 }
@@ -36,6 +39,7 @@ interface BusinessPageContentProps {
 export default function BusinessPageContent({
   business,
   isOwner = false,
+  isLoggedIn = false,
   categories = [],
   products = [],
 }: BusinessPageContentProps) {
@@ -69,6 +73,7 @@ export default function BusinessPageContent({
       <BusinessPageContentUI
         business={business}
         isOwner={isOwner}
+        isLoggedIn={isLoggedIn}
         categories={categories}
         products={products}
       />
@@ -79,6 +84,7 @@ export default function BusinessPageContent({
 function BusinessPageContentUI({
   business,
   isOwner = false,
+  isLoggedIn = false,
   categories = [],
   products = [],
 }: BusinessPageContentProps) {
@@ -352,6 +358,7 @@ function BusinessPageContentUI({
         <>
           <FloatingCartButton />
           <CartDrawer />
+          {!isLoggedIn && <FloatingChatFab businessName={business.name} businessId={business.id} />}
         </>
       )}
       {isOwner && previewProduct && (
