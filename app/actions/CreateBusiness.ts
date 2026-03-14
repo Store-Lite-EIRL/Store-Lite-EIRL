@@ -37,9 +37,18 @@ export async function createBusiness(prevState: ActionState, formData: FormData)
   const userId = user.id;
   const userEmail = user.email ?? '';
 
-  const existingProfile = await db.query.profiles.findFirst({
-    where: eq(profiles.id, userId),
-  });
+  let existingProfile;
+  try {
+    existingProfile = await db.query.profiles.findFirst({
+      where: eq(profiles.id, userId),
+    });
+  } catch (dbError) {
+    console.error('CRITICAL: Database connection failed during profile lookup:', dbError);
+    return {
+      error:
+        'Error de conexión con la base de datos. Por favor, verifica tu configuración de DATABASE_URL.',
+    };
+  }
 
   if (!existingProfile) {
     console.warn('Profile missing for user, creating one...', userId);
@@ -56,9 +65,15 @@ export async function createBusiness(prevState: ActionState, formData: FormData)
   }
 
   // 1.7 Enforce limit (Max 3 businesses)
-  const userBusinesses = await db.query.businesses.findMany({
-    where: eq(businesses.ownerId, userId),
-  });
+  let userBusinesses;
+  try {
+    userBusinesses = await db.query.businesses.findMany({
+      where: eq(businesses.ownerId, userId),
+    });
+  } catch (dbError) {
+    console.error('CRITICAL: Database connection failed during limit check:', dbError);
+    return { error: 'Error al verificar límites de cuenta. Inténtalo de nuevo más tarde.' };
+  }
 
   if (userBusinesses.length >= 3) {
     return { error: 'Has alcanzado el límite de 3 empresas permitidas en el plan gratuito.' };
