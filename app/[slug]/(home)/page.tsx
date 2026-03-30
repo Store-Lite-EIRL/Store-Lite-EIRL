@@ -1,6 +1,7 @@
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businesses, productCategories } from '@/core/database/schema';
+import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
@@ -46,8 +47,6 @@ export default async function BusinessPage({ params }: Props) {
   });
 
   const cookieStore = await cookies();
-  const selectedSlug = cookieStore.get('selected_business_slug')?.value;
-  const isOwner = selectedSlug === slug;
 
   const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
     cookies: {
@@ -62,6 +61,11 @@ export default async function BusinessPage({ params }: Props) {
   } = await supabase.auth.getUser();
 
   const isLoggedIn = !!user;
+  const isOwnerByAuth = Boolean(user?.id && business.ownerId === user.id);
+  const isOwner = isOwnerByAuth;
+
+  const entitlements = await getBusinessEntitlements(business.id);
+  const { hasPaymentGateway, chatEnabled } = entitlements;
 
   const allProducts = await db.query.products.findMany({
     where: (p, { and, eq }) => {
@@ -84,6 +88,8 @@ export default async function BusinessPage({ params }: Props) {
       isLoggedIn={isLoggedIn}
       categories={categories}
       products={allProducts}
+      hasPaymentGateway={hasPaymentGateway}
+      chatEnabled={chatEnabled}
     />
   );
 }

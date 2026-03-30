@@ -49,7 +49,7 @@ export const Select = ({ label, outlined, options, children, ...props }: SelectP
 
   if (outlined) {
     return (
-      <md-outlined-select label={label} {...props}>
+      <md-outlined-select label={label} suppressHydrationWarning {...props}>
         {optionNodes}
         {children}
       </md-outlined-select>
@@ -57,7 +57,7 @@ export const Select = ({ label, outlined, options, children, ...props }: SelectP
   }
 
   return (
-    <md-filled-select label={label} {...props}>
+    <md-filled-select label={label} suppressHydrationWarning {...props}>
       {optionNodes}
       {children}
     </md-filled-select>
@@ -72,7 +72,7 @@ export const SelectOption = ({
   ...props
 }: SelectOptionProps) => {
   return (
-    <md-select-option value={value} selected={selected} {...props}>
+    <md-select-option value={value} selected={selected} suppressHydrationWarning {...props}>
       {headline && <div slot="headline">{headline}</div>}
       {children}
     </md-select-option>

@@ -67,14 +67,15 @@ export interface CardTokenPayload {
 export interface YapeTokenPayload {
   number: string; // Phone number
   otp: string; // 6-digit approval code
+  amount: number;
+  email: string;
 }
 
 export interface CulqiToken {
   id: string;
   type: 'card' | 'yape';
   object?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -133,7 +134,8 @@ export async function tokenizeYape(payload: YapeTokenPayload): Promise<CulqiToke
       type: 'yape',
       number_phone: payload.number,
       otp: payload.otp,
-      amount: Math.round((payload as any).amount * 100 || 0), // Culqi v2/tokens/yape often needs amount
+      email: payload.email,
+      amount: Math.round(payload.amount * 100 || 0), // Culqi v2/tokens/yape often needs amount
     }),
   });
 

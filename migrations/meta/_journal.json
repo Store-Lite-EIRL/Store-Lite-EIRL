@@ -29,6 +29,27 @@
       "when": 1773276633578,
       "tag": "0003_condemned_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1773774541905,
+      "tag": "0004_add_product_categories",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1774628589520,
+      "tag": "0005_overjoyed_mercury",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1774629896978,
+      "tag": "0006_dazzling_colossus",
+      "breakpoints": true
     }
   ]
 }

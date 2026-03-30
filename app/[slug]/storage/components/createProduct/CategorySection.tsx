@@ -1,4 +1,5 @@
-﻿'use client';
+﻿/* eslint-disable max-lines-per-function */
+'use client';
 
 import { Button, Dialog } from '@/shared/components/ui';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
@@ -36,12 +37,12 @@ export const CategorySection = ({
   const handleCreateCategory = () => {
     const trimmed = newCategoryName.trim();
     if (!trimmed) {
-      setNewCategoryError('La categorÃ­a no puede estar vacÃ­a');
+      setNewCategoryError('La categoría no puede estar vacía');
       return;
     }
 
     if (trimmed.length < 3) {
-      setNewCategoryError('MÃ­nimo 3 caracteres');
+      setNewCategoryError('Mínimo 3 caracteres');
       return;
     }
 
@@ -85,16 +86,16 @@ export const CategorySection = ({
 
   return (
     <div className="form-section">
-      <p className="form-section-title">CategorÃ­a</p>
+      <p className="form-section-title">Categoría</p>
       <div className="form-fields">
         <div className="category-row">
           <div style={{ flex: 1, minWidth: 0 }}>
             {categories.length === 0 ? (
-              <div className="no-categories-text">No hay categorÃ­as</div>
+              <div className="no-categories-text">No hay categorías</div>
             ) : (
               <Select
                 outlined
-                label="CategorÃ­a *"
+                label="Categoría *"
                 value={category}
                 style={{ width: '100%' }}
                 onChange={(e: MaterialSelectEvent) => {
@@ -115,8 +116,8 @@ export const CategorySection = ({
               setNewCategoryError(null);
               setIsDialogOpen(true);
             }}
-            aria-label="Administrar categorÃ­as"
-            title="Administrar categorÃ­as"
+            aria-label="Administrar categorías"
+            title="Administrar categorías"
             style={{ flexShrink: 0 }}
           >
             <Icon>add</Icon>
@@ -126,12 +127,12 @@ export const CategorySection = ({
       </div>
 
       <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
-        <div slot="headline">CategorÃ­as del negocio</div>
+        <div slot="headline">Categorías del negocio</div>
         <div slot="content" className="categories-dialog-content">
           <div className="categories-dialog-create-row">
             <div className="categories-dialog-input-wrapper">
               <TextField
-                label="Nueva categorÃ­a"
+                label="Nueva categoría"
                 variant="outlined"
                 value={newCategoryName}
                 error={!!newCategoryError}
@@ -150,7 +151,7 @@ export const CategorySection = ({
                 className={`categories-create-icon-btn${newCategoryName.trim().length >= 3 ? ' is-valid' : ''}`}
                 onClick={handleCreateCategory}
                 disabled={!newCategoryName.trim()}
-                title="Crear categorÃ­a"
+                title="Crear categoría"
               >
                 <Icon>north</Icon>
               </button>
@@ -160,18 +161,18 @@ export const CategorySection = ({
                 className={localCategories.length > 5 ? 'field-error' : 'secondary-text'}
                 style={{ fontSize: '0.75rem', marginTop: '4px' }}
               >
-                CategorÃ­as: {localCategories.length}/5
+                Categorías: {localCategories.length}/5
               </p>
               {localCategories.length > 5 && (
                 <p className="field-error" style={{ fontSize: '0.75rem' }}>
-                  Elimina categorÃ­as para poder guardar.
+                  Elimina categorías para poder guardar.
                 </p>
               )}
             </div>
           </div>
 
           {localCategories.length === 0 ? (
-            <p className="categories-dialog-empty">No hay categorÃ­as</p>
+            <p className="categories-dialog-empty">No hay categorías</p>
           ) : (
             <div className="categories-tags-list">
               {localCategories.map((cat, index) => (
@@ -199,8 +200,8 @@ export const CategorySection = ({
                       e.stopPropagation();
                       handleDeleteCategory(index);
                     }}
-                    aria-label="Eliminar categorÃ­a"
-                    title="Eliminar categorÃ­a"
+                    aria-label="Eliminar categoría"
+                    title="Eliminar categoría"
                   >
                     <Icon>close</Icon>
                   </button>

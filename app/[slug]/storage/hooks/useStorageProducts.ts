@@ -9,9 +9,10 @@ import {
   type SaleStatus,
 } from '../actions';
 import type { Product } from '../data';
-import { uploadProductImage } from '../services/storageService';
+import { deleteProductImage, uploadProductImage } from '../services/storageService';
 import type { SaveProductMediaItem, SaveProductPayload } from '../types';
 import { parsePriceValue } from '../utils/currency';
+import type { BusinessEntitlements } from '@/core/entitlements/plans';
 
 export type SortDirection = 'asc' | 'desc';
 export interface SortConfig {
@@ -24,6 +25,8 @@ export const ITEMS_PER_PAGE = 20;
 interface StorageCache {
   products: Product[];
   categories: string[];
+  businessId: string | null;
+  entitlements: BusinessEntitlements | null;
   timestamp: number;
 }
 const globalStorageCache: Record<string, StorageCache> = {};
@@ -48,7 +51,9 @@ export const useStorageProducts = ({
   const [sortBy, setSortBy] = useState('newest');
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>(initialCategories);
+  const [businessId, setBusinessId] = useState<string | null>(null);
+  const [entitlements, setEntitlements] = useState<BusinessEntitlements | null>(null);
 
   // Fetch products and categories from server
   useEffect(() => {
@@ -62,32 +67,50 @@ export const useStorageProducts = ({
         if (categories.length === 0) {
           setCategories(cached.categories);
         }
+        if (!businessId && cached.businessId) {
+          setBusinessId(cached.businessId);
+        }
+        if (!entitlements && cached.entitlements) {
+          setEntitlements(cached.entitlements);
+        }
         setIsLoading(false);
         return;
       }
 
-      // Si no hay datos y no estamos cargando, entonces cargamos
-      if (currentProducts.length === 0) {
+      const needsProducts = currentProducts.length === 0;
+      const needsCategories = categories.length === 0;
+
+      if (needsProducts || needsCategories) {
         setIsLoading(true);
         try {
           const [productsRes, categoriesRes] = await Promise.all([
-            getProductsByBusinessSlug(businessSlug),
-            getProductCategories(businessSlug),
+            needsProducts
+              ? getProductsByBusinessSlug(businessSlug)
+              : Promise.resolve({ products: currentProducts, businessId, error: null }),
+            needsCategories
+              ? getProductCategories(businessSlug)
+              : Promise.resolve({ categories: categories, error: null }),
           ]);
 
           if (productsRes.error) console.error('Error loading products:', productsRes.error);
           if (categoriesRes.error) console.error('Error loading categories:', categoriesRes.error);
 
-          const products = productsRes.products || [];
-          const cats = categoriesRes.categories || [];
+          const products = productsRes.products || currentProducts;
+          const cats = categoriesRes.categories || categories;
+          const bId = productsRes.businessId || businessId;
+          const ents = productsRes.entitlements || categoriesRes.entitlements || null;
 
           setCurrentProducts(products);
           setCategories(cats);
+          setBusinessId(bId);
+          setEntitlements(ents);
 
           // Guardar en caché
           globalStorageCache[businessSlug] = {
             products,
             categories: cats,
+            businessId: bId,
+            entitlements: ents,
             timestamp: Date.now(),
           };
         } catch (error) {
@@ -119,9 +142,13 @@ export const useStorageProducts = ({
   // CRUD Operations
   const deleteProduct = async (id: string): Promise<{ success: boolean; error?: string }> => {
     // 1. Guardar estado previo
+    // 1. Find the product to delete before optimistic update
+    const productToDelete = currentProducts.find(p => p.id === id);
+
+    // 2. Guardar estado previo
     const previousProducts = [...currentProducts];
 
-    // 2. Actualización optimista: lo quitamos de la UI y caché inmediatamente
+    // 3. Actualización optimista: lo quitamos de la UI y caché inmediatamente
     setCurrentProducts((prev) => {
       const newProducts = prev.filter((p) => p.id !== id);
       if (globalStorageCache[businessSlug]) {
@@ -131,7 +158,7 @@ export const useStorageProducts = ({
     });
 
     try {
-      // 3. Llamar al backend
+      // 4. Llamar al backend
       const { success, error } = await deleteProductAction(businessSlug, id);
 
       if (!success) {
@@ -142,6 +169,17 @@ export const useStorageProducts = ({
           globalStorageCache[businessSlug].products = previousProducts;
         }
         return { success: false, error: error || 'Error al eliminar producto' };
+      }
+
+      // 5. Storage Cleanup: Delete images if the product was successfully deleted from DB
+      if (productToDelete) {
+        const imagesToDelete = productToDelete.images || (productToDelete.image ? [productToDelete.image] : []);
+        if (imagesToDelete.length > 0) {
+          console.warn(`[useStorageProducts] Eliminando ${imagesToDelete.length} imágenes del producto eliminado...`);
+          // We don't await this to avoid blocking the main save flow, 
+          // but we execute it in background.
+          imagesToDelete.forEach(url => deleteProductImage(url).catch(console.error));
+        }
       }
       return { success: true };
     } catch (error) {
@@ -193,21 +231,34 @@ export const useStorageProducts = ({
     }
 
     try {
-      // 1. Process Images
-      const finalImageUrls: string[] = [];
-
-      for (const [index, item] of media.entries()) {
+      // 1. Process Images in parallel
+      console.warn(`[useStorageProducts] Procesando ${media.length} imágenes...`);
+      
+      const uploadPromises = media.map(async (item, index) => {
         if (item.type === 'url') {
-          finalImageUrls.push(item.url);
+          return item.url;
         } else {
           try {
-            console.warn(`[useStorageProducts] Subiendo imagen ${index + 1}/${media.length}...`);
-            const url = await uploadProductImage(item.file);
-            finalImageUrls.push(url);
+            return await uploadProductImage(item.file, businessId);
           } catch (error) {
-            console.error('[useStorageProducts] Error en bucle de subida:', error);
-            throw error; // Re-throw to be caught by outer catch
+            console.error(`[useStorageProducts] Error subiendo imagen ${index + 1}:`, error);
+            throw error;
           }
+        }
+      });
+
+      const finalImageUrls = await Promise.all(uploadPromises);
+
+      // 2. Logic for cleanup (delete images that are no longer used)
+      if (isEdit && initialProduct) {
+        const oldImages = initialProduct.images || (initialProduct.image ? [initialProduct.image] : []);
+        const imagesToDelete = oldImages.filter(url => !finalImageUrls.includes(url));
+        
+        if (imagesToDelete.length > 0) {
+          console.warn(`[useStorageProducts] Eliminando ${imagesToDelete.length} imágenes obsoletas...`);
+          // We don't await this to avoid blocking the main save flow, 
+          // but we execute it in background.
+          imagesToDelete.forEach(url => deleteProductImage(url).catch(console.error));
         }
       }
 
@@ -217,7 +268,7 @@ export const useStorageProducts = ({
         saleStatus: (payload.saleStatus || 'NORMAL') as SaleStatus,
       };
 
-      // 2. Save Backend
+      // 3. Save Backend
       if (isEdit && initialProduct) {
         const result = await updateProductAction(businessSlug, initialProduct.id, finalPayload);
         if (!result.success) throw new Error(result.error || 'Error al actualizar producto');
@@ -400,6 +451,7 @@ export const useStorageProducts = ({
     statuses,
     totalProducts: currentProducts.length,
     isLoading,
+    entitlements,
     deleteProduct,
     addProduct,
     updateProduct,

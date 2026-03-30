@@ -644,3 +644,63 @@
     gap: 0.75rem;
   }
 }
+
+.purchaseProcessSection {
+  margin-top: 40px;
+  padding: 24px;
+  background-color: var(--md-sys-color-surface-container-low);
+  border-radius: 24px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.processTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--md-sys-color-on-surface);
+}
+
+.processSteps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.processStep {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.stepNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-radius: 50%;
+  font-size: 0.875rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.stepTitle {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  margin-bottom: 2px;
+}
+
+.stepDesc {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.4;
+}
+
+@media (max-width: 600px) {
+  .purchaseProcessSection {
+    padding: 20px;
+  }
+}

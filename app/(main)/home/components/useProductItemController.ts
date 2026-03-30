@@ -17,6 +17,7 @@ import { parsePriceValue } from '../../../[slug]/storage/utils/currency';
 
 type AlertColor = 'success' | 'error';
 type MediaItem = { type: 'url'; url: string } | { type: 'file'; file: File; preview: string };
+type SaleStatus = 'NORMAL' | 'MAS_VENDIDO' | 'NUEVO_PRODUCTO';
 
 interface SavePayload {
   name?: string;
@@ -47,7 +48,16 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-export function useProductItemController(product: ProductWithRelations, isOwner = false) {
+function isSaleStatus(value: unknown): value is SaleStatus {
+  return value === 'NORMAL' || value === 'MAS_VENDIDO' || value === 'NUEVO_PRODUCTO';
+}
+
+export function useProductItemController(
+  product: ProductWithRelations,
+  isOwner = false,
+  hasPaymentGateway = true,
+  onContactClick?: () => void,
+) {
   const params = useParams();
   const router = useRouter();
   const businessSlug = params.slug as string;
@@ -184,7 +194,7 @@ export function useProductItemController(product: ProductWithRelations, isOwner 
         if (item.type === 'url') {
           finalImageUrls.push(item.url);
         } else {
-          const url = await uploadProductImage(item.file);
+          const url = await uploadProductImage(item.file, product.businessId);
           finalImageUrls.push(url);
         }
       }
@@ -210,7 +220,7 @@ export function useProductItemController(product: ProductWithRelations, isOwner 
         tags: payload.tags,
         shippingInfo: payload.shippingInfo?.trim(),
         secondPrice: payload.secondPrice ? Number(payload.secondPrice) : undefined,
-        saleStatus: payload.saleStatus,
+        saleStatus: isSaleStatus(payload.saleStatus) ? payload.saleStatus : undefined,
       };
 
       const result = await updateProductIsolated(businessSlug, product.id, updateData);
@@ -258,7 +268,16 @@ export function useProductItemController(product: ProductWithRelations, isOwner 
   };
 
   const isProductInCart = isInCart(product.id);
-  const handleBuyNow = () => setIsPaymentModalOpen(true);
+  const handleBuyNow = () => {
+    if (hasPaymentGateway) {
+      setIsPaymentModalOpen(true);
+    } else {
+      if (!isProductInCart) {
+        handleAddToCart();
+      }
+      onContactClick?.();
+    }
+  };
   const handlePaymentModalClose = () => setIsPaymentModalOpen(false);
 
   return {

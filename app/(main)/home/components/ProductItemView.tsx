@@ -9,7 +9,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import React, { useState } from 'react';
-import { PaymentModal } from '../../../[slug]/components/PaymentModal';
+import Checkout from '../../../[slug]/components/Checkout';
 import { DeleteProductDialog } from '../../../[slug]/storage/components/DeleteProductDialog';
 import { CreateProductSheet } from '../../../[slug]/storage/components/createProduct/CreateProductSheet';
 import type { Product } from '../../../[slug]/storage/data';
@@ -67,13 +67,13 @@ interface ProductItemViewProps {
   onSavingChange: (isSaving: boolean) => void;
   onAlertClose: () => void;
   onAddToCart: () => void;
-  onOpenPreview?: () => void;
+  onOpenPreview?: (index: number) => void;
   onLike: () => void;
   isLiking: boolean;
   isPaymentModalOpen: boolean;
   onPaymentModalClose: () => void;
   onBuyNow: () => void;
-  businessSlug: string;
+  hasPaymentGateway?: boolean;
 }
 
 export function ProductItemView({
@@ -111,7 +111,7 @@ export function ProductItemView({
   isPaymentModalOpen,
   onPaymentModalClose,
   onBuyNow,
-  businessSlug,
+  hasPaymentGateway = true,
 }: ProductItemViewProps) {
   const [copied, setCopied] = useState(false);
   const params = useParams();
@@ -134,7 +134,14 @@ export function ProductItemView({
     setTimeout(() => setCopied(false), 800);
   };
 
+  const handleOpenPreview = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onOpenPreview?.(currentImgIndex);
+  };
+
   const renderImageSection = () => {
+
     return (
       <div className={styles.imageContainer} data-purpose="image-container">
         {/* Visual Content (Lowest Z-Index) */}
@@ -159,7 +166,7 @@ export function ProductItemView({
           <button
             type="button"
             className={styles.clickableOverlay}
-            onClick={onOpenPreview}
+            onClick={handleOpenPreview}
             aria-label="Ver vista previa"
           />
         ) : (
@@ -231,20 +238,39 @@ export function ProductItemView({
           </div>
         )}
 
-        {/* Carousel Dots (Above Overlay) */}
+        {/* Navigation Zones (Above Overlay, Below Actions) */}
         {allImages.length > 1 && (
-          <div className={styles.carouselDots}>
+          <div className={styles.carouselNavOverlay}>
+            <div
+              className={styles.navZone}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const nextIdx = (currentImgIndex - 1 + allImages.length) % allImages.length;
+                onImageIndexChange(nextIdx);
+              }}
+              aria-label="Imagen anterior"
+            />
+            <div
+              className={styles.navZone}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const nextIdx = (currentImgIndex + 1) % allImages.length;
+                onImageIndexChange(nextIdx);
+              }}
+              aria-label="Siguiente imagen"
+            />
+          </div>
+        )}
+
+        {/* Segmented Progress (At the Top) */}
+        {allImages.length > 1 && (
+          <div className={styles.segmentedProgress}>
             {allImages.map((_, idx) => (
-              <button
+              <div
                 key={idx}
-                type="button"
-                className={`${styles.dot} ${idx === currentImgIndex ? styles.activeDot : ''}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onImageIndexChange(idx);
-                }}
-                aria-label={`Ver imagen ${idx + 1}`}
+                className={`${styles.segment} ${idx === currentImgIndex ? styles.segmentActive : ''}`}
               />
             ))}
           </div>
@@ -299,7 +325,7 @@ export function ProductItemView({
             } as React.CSSProperties
           }
         >
-          Comprar
+          {hasPaymentGateway ? 'Comprar' : 'Contactar'}
         </Button>
         <Button
           className={styles.cartBtn}
@@ -312,10 +338,10 @@ export function ProductItemView({
           style={
             {
               '--md-filled-button-container-color': isProductInCart
-                ? 'var(--md-sys-color-error-container)'
+                ? 'var(--md-sys-color-secondary-container)'
                 : 'var(--md-sys-color-primary)',
               '--md-filled-button-label-text-color': isProductInCart
-                ? 'var(--md-sys-color-on-error-container)'
+                ? 'var(--md-sys-color-on-secondary-container)'
                 : 'var(--md-sys-color-on-primary)',
             } as React.CSSProperties
           }
@@ -338,7 +364,7 @@ export function ProductItemView({
     <article className={styles.card} data-purpose="product-card" suppressHydrationWarning>
       <div className={styles.imageLink}>{renderImageSection()}</div>
 
-      <div className={styles.info}>
+      <div className={styles.info} onClick={handleOpenPreview}>
         <div className={styles.headerRow}>
           <span className={styles.category}>
             {product.brand ? `${product.brand.toUpperCase()} | ` : ''}
@@ -357,7 +383,7 @@ export function ProductItemView({
 
         <div className={styles.features}>
           {productFeatures.map((f, i) => (
-            <React.Fragment key={f}>
+            <React.Fragment key={`${f}-${i}`}>
               <span>{f}</span>
               {i < productFeatures.length - 1 && <div className={styles.featureDot} />}
             </React.Fragment>
@@ -378,7 +404,7 @@ export function ProductItemView({
       </div>
 
       <div className={styles.pricingFooter}>
-        <div className={styles.priceContainer}>
+        <div className={styles.priceContainer} onClick={handleOpenPreview}>
           <div className={styles.priceWrapper}>
             {originalPrice && (
               <div
@@ -424,15 +450,12 @@ export function ProductItemView({
         icon={alert.icon}
         onClose={onAlertClose}
       />
-      {!isOwner && (
-        <PaymentModal
-          open={isPaymentModalOpen}
-          onClose={onPaymentModalClose}
-          productId={product.id}
+      {!isOwner && isPaymentModalOpen && (
+        <Checkout
+          totalAmount={price}
           productName={product.title}
-          price={price}
-          currency={currencySymbol}
-          businessSlug={businessSlug}
+          onSuccess={() => onPaymentModalClose()}
+          onCancel={() => onPaymentModalClose()}
         />
       )}
     </article>

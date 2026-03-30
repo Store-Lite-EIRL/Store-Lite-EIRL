@@ -4,6 +4,8 @@ import type { Product, ProductCategory } from '@/core/database/schema';
 import { Button, IconButton } from '@/shared/components/ui/buttons';
 import { Icon } from '@/shared/components/ui/data-display';
 import Image from 'next/image';
+import { useState } from 'react';
+import Checkout from '../../../[slug]/components/Checkout';
 
 interface ProductCardProps {
   product: Product & {
@@ -13,6 +15,8 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
   const mainImage = product.media?.[0]?.mediaUrl || 'https://via.placeholder.com/220';
   const categoryName = product.category?.name || 'Producto';
 
@@ -126,6 +130,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <Button
             className="grow h-[52px] rounded-[16px]! bg-[#0f172a] text-white font-bold transition-all hover:bg-slate-800 active:scale-95 shadow-[0_4px_10px_rgba(15,23,42,0.2)] uppercase text-[13px] tracking-wide"
             style={{ '--md-filled-button-container-color': '#0f172a' } as React.CSSProperties}
+            onClick={() => setIsCheckoutOpen(true)}
           >
             Comprar
           </Button>
@@ -143,6 +148,15 @@ export default function ProductCard({ product }: ProductCardProps) {
           </Button>
         </div>
       </div>
+
+      {isCheckoutOpen && (
+        <Checkout
+          totalAmount={price}
+          productName={product.title}
+          onSuccess={() => setIsCheckoutOpen(false)}
+          onCancel={() => setIsCheckoutOpen(false)}
+        />
+      )}
     </article>
   );
 }

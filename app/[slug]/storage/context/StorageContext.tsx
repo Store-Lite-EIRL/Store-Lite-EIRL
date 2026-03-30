@@ -3,10 +3,11 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { Product } from '../data';
 import { useStorageProducts, type SortConfig } from '../hooks/useStorageProducts';
-import type { SaveProductMediaItem, SaveProductPayload } from '../types';
+import type { BusinessEntitlements } from '@/core/entitlements/plans';
 
 interface StorageContextType {
   products: Product[];
+  entitlements: BusinessEntitlements | null;
   allFilteredProducts: Product[];
   totalFiltered: number;
   totalPages: number;

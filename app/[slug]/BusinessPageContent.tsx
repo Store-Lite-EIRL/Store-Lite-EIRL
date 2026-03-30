@@ -1,9 +1,10 @@
-/* eslint-disable max-lines-per-function */
 'use client';
 
 import type { Business, ProductCategory } from '@/core/database/schema';
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
 import { AlertSnackbar } from '@/shared/components/ui';
+import { Button } from '@/shared/components/ui/buttons/Button';
+import { Icon } from '@/shared/components/ui/data-display/Icon';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import FeaturedItems from '../(main)/home/FeaturedItems';
@@ -14,6 +15,8 @@ import Hero from '../(main)/home/Hero';
 import Pagination from '../(main)/home/Pagination';
 import ProductFiltersTopBar from '../(main)/home/components/ProductFiltersTopBar';
 import { useProductFilters } from '../(main)/home/hooks/useProductFilters';
+import styles from './BusinessPageContent.module.css';
+import { BasicContactDialog } from './components/BasicContactDialog';
 import { CartDrawer } from './components/CartDrawer';
 import { FloatingCartButton } from './components/FloatingCartButton';
 import { FloatingChatFab } from './components/FloatingChatFab';
@@ -22,9 +25,7 @@ import { DeleteProductDialog } from './storage/components/DeleteProductDialog';
 import { CreateProductSheet } from './storage/components/createProduct/CreateProductSheet';
 import { StorageProvider, useStorage } from './storage/context/StorageContext';
 import type { Product as StorageProduct } from './storage/data';
-import { updateProductIsolated } from './storage/isolatedUpdateAction';
-import { uploadProductImage } from './storage/services/storageService';
-import { parsePriceValue } from './storage/utils/currency';
+import type { SaveProductMediaItem, SaveProductPayload } from './storage/types';
 
 const PAGE_SIZE = 12;
 
@@ -34,7 +35,29 @@ interface BusinessPageContentProps {
   isLoggedIn?: boolean;
   categories?: ProductCategory[];
   products?: ProductWithRelations[];
+  hasPaymentGateway?: boolean;
+  chatEnabled?: boolean;
 }
+
+type OwnerSheetSaveArgs = [StorageProduct, SaveProductPayload, SaveProductMediaItem[], boolean];
+
+const mapToStorageProduct = (product: ProductWithRelations): StorageProduct => ({
+  id: product.id,
+  name: product.title,
+  category: product.category?.name || 'Varios',
+  stock: product.stock,
+  price: String(product.price),
+  currency: product.currency,
+  status: product.isAvailable ? 'ACTIVO' : 'NO ACTIVO',
+  image: product.media?.[0]?.mediaUrl || '',
+  images: product.media?.map((m) => m.mediaUrl) || [],
+  description: product.description || '',
+  brand: product.brand,
+  tags: product.tags,
+  shippingInfo: product.shippingInfo,
+  saleStatus: product.saleStatus,
+  secondPrice: product.secondPrice ? String(product.secondPrice) : null,
+});
 
 export default function BusinessPageContent({
   business,
@@ -42,6 +65,8 @@ export default function BusinessPageContent({
   isLoggedIn = false,
   categories = [],
   products = [],
+  hasPaymentGateway = true,
+  chatEnabled = false,
 }: BusinessPageContentProps) {
   // Map ProductWithRelations to the internal 'Product' type used by the Storage feature
   const mappedProducts: StorageProduct[] = products.map((p) => ({
@@ -76,6 +101,8 @@ export default function BusinessPageContent({
         isLoggedIn={isLoggedIn}
         categories={categories}
         products={products}
+        hasPaymentGateway={hasPaymentGateway}
+        chatEnabled={chatEnabled}
       />
     </StorageProvider>
   );
@@ -87,16 +114,20 @@ function BusinessPageContentUI({
   isLoggedIn = false,
   categories = [],
   products = [],
+  hasPaymentGateway = true,
+  chatEnabled = false,
 }: BusinessPageContentProps) {
   const [activeTab, setActiveTab] = useState('products');
   const [currentPage, setCurrentPage] = useState(1);
   const [previewProduct, setPreviewProduct] = useState<ProductWithRelations | null>(null);
   const [previewSignal, setPreviewSignal] = useState(0);
+  const [previewImageIndex, setPreviewImageIndex] = useState(0);
+  const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
 
   // Owner Actions State
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{
     open: boolean;
     description: string;
@@ -109,7 +140,7 @@ function BusinessPageContentUI({
     icon: 'check_circle',
   });
 
-  const { deleteProduct } = useStorage();
+  const { deleteProduct, saveProductBackground } = useStorage();
   const router = useRouter();
 
   const {
@@ -127,6 +158,7 @@ function BusinessPageContentUI({
     setCurrentMaxPrice,
     showDiscountedOnly,
     setShowDiscountedOnly,
+    brandOptions,
     filteredProducts,
     hasActiveFilters,
     clearFilters,
@@ -141,13 +173,18 @@ function BusinessPageContentUI({
     setCurrentPage(1); // reset to first page on tab switch
   };
 
-  const handlePreviewProduct = (product: ProductWithRelations) => {
+  const handlePreviewProduct = (product: ProductWithRelations, imageIndex = 0) => {
     setPreviewProduct(product);
+    setPreviewImageIndex(imageIndex);
     setPreviewSignal((prev) => prev + 1);
   };
 
   const handleEditFromPreview = () => {
     setIsEditOpen(true);
+  };
+
+  const handleCreateProduct = () => {
+    setIsCreateOpen(true);
   };
 
   const handleDeleteFromPreview = () => {
@@ -159,6 +196,7 @@ function BusinessPageContentUI({
     try {
       const result = await deleteProduct(id);
       if (result.success) {
+        router.refresh();
         setAlert({
           open: true,
           description: 'Producto eliminado correctamente',
@@ -181,66 +219,32 @@ function BusinessPageContentUI({
         color: 'error',
         icon: 'error',
       });
-    } finally {
-      setIsSaving(false);
     }
   };
 
-  const handleSaveProduct = async (
-    _optimisticProduct: StorageProduct,
-    payload: {
-      name?: string;
-      description?: string;
-      price?: number | string;
-      stock?: number | string;
-      category?: string;
-      status?: string;
-    },
-    mediaFiles: ({ type: 'url'; url: string } | { type: 'file'; file: File; preview: string })[],
-    isEdit: boolean,
-  ) => {
-    if (!isEdit || !previewProduct) return;
-    setIsSaving(true);
+  const handleSaveProduct = async (...args: OwnerSheetSaveArgs) => {
+    const [optimisticProduct, payload, mediaFiles, isEdit] = args;
     try {
-      const finalImageUrls: string[] = [];
-      for (const item of mediaFiles) {
-        if (item.type === 'url') {
-          finalImageUrls.push(item.url);
-        } else {
-          const url = await uploadProductImage(item.file);
-          finalImageUrls.push(url);
-        }
+      const initialProduct = isEdit && previewProduct ? mapToStorageProduct(previewProduct) : null;
+      const result = await saveProductBackground(
+        payload,
+        mediaFiles,
+        isEdit,
+        initialProduct,
+        optimisticProduct,
+      );
+      if (!result.success) {
+        throw new Error(result.error || 'No se pudo guardar el producto');
       }
-
-      const priceNum =
-        typeof payload.price === 'number'
-          ? payload.price
-          : parsePriceValue(String(payload.price ?? previewProduct.price));
-      const stockNum =
-        typeof payload.stock === 'number'
-          ? payload.stock
-          : parseInt(String(payload.stock ?? previewProduct.stock), 10);
-
-      const updateData = {
-        name: payload.name?.trim() ?? previewProduct.title,
-        description: payload.description?.trim() ?? previewProduct.description ?? '',
-        price: priceNum,
-        stock: stockNum,
-        category: payload.category?.trim() ?? previewProduct.category?.name ?? '',
-        status: payload.status ?? (previewProduct.isAvailable ? 'ACTIVO' : 'NO ACTIVO'),
-        images: finalImageUrls,
-      };
-
-      const result = await updateProductIsolated(business.slug, previewProduct.id, updateData);
-      if (!result.success) throw new Error(result.error);
 
       setAlert({
         open: true,
-        description: 'Producto actualizado correctamente',
+        description: isEdit ? 'Producto actualizado correctamente' : 'Producto guardado correctamente',
         color: 'success',
         icon: 'check_circle',
       });
       setIsEditOpen(false);
+      setIsCreateOpen(false);
       router.refresh();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error al guardar';
@@ -250,8 +254,6 @@ function BusinessPageContentUI({
         color: 'error',
         icon: 'error',
       });
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -306,11 +308,26 @@ function BusinessPageContentUI({
                 );
                 setCurrentPage(1);
               }}
+              brandOptions={brandOptions}
             />
+            {isOwner && (
+              <div className={styles.ownerActionRow}>
+                <Button
+                  variant="filled"
+                  onClick={handleCreateProduct}
+                  className={styles.addProductButton}
+                >
+                  <Icon slot="icon" size={21}>add_circle</Icon>
+                  Agregar Producto
+                </Button>
+              </div>
+            )}
             <Feed
               products={paginatedProducts}
               isOwner={isOwner}
               onProductPreview={handlePreviewProduct}
+              hasPaymentGateway={hasPaymentGateway}
+              onContactClick={() => setIsContactDialogOpen(true)}
             />
             <Pagination
               totalPages={totalPages}
@@ -353,59 +370,47 @@ function BusinessPageContentUI({
         isOwner={isOwner}
         onEdit={handleEditFromPreview}
         onDelete={handleDeleteFromPreview}
+        initialImageIndex={previewImageIndex}
       />
       {!isOwner && (
         <>
           <FloatingCartButton />
-          <CartDrawer />
-          {!isLoggedIn && <FloatingChatFab businessName={business.name} businessId={business.id} />}
+          <CartDrawer hasPaymentGateway={hasPaymentGateway} onContactClick={() => setIsContactDialogOpen(true)} />
+          {chatEnabled && !isLoggedIn && <FloatingChatFab businessName={business.name} businessId={business.id} />}
         </>
       )}
-      {isOwner && previewProduct && (
+      <BasicContactDialog
+        business={business}
+        isOpen={isContactDialogOpen}
+        onClose={() => setIsContactDialogOpen(false)}
+      />
+      {isOwner && (
         <>
           <DeleteProductDialog
             open={isDeleteOpen}
-            product={{
-              id: previewProduct.id,
-              name: previewProduct.title,
-              category: previewProduct.category?.name || 'Varios',
-              stock: previewProduct.stock,
-              price: String(previewProduct.price),
-              status: previewProduct.isAvailable ? 'ACTIVO' : 'NO ACTIVO',
-              image: previewProduct.media?.[0]?.mediaUrl || '',
-              images: previewProduct.media?.map((m) => m.mediaUrl) || [],
-              description: previewProduct.description || '',
-              currency: previewProduct.currency || 'PEN',
-            }}
+            product={previewProduct ? mapToStorageProduct(previewProduct) : null}
             onClose={() => setIsDeleteOpen(false)}
             onConfirm={handleConfirmDelete}
           />
           <CreateProductSheet
-            open={isEditOpen}
-            onClose={() => setIsEditOpen(false)}
-            onSave={handleSaveProduct}
-            initialProduct={{
-              id: previewProduct.id,
-              name: previewProduct.title,
-              category: previewProduct.category?.name || 'Varios',
-              stock: previewProduct.stock,
-              price: String(previewProduct.price),
-              status: previewProduct.isAvailable ? 'ACTIVO' : 'NO ACTIVO',
-              image: previewProduct.media?.[0]?.mediaUrl || '',
-              images: previewProduct.media?.map((m) => m.mediaUrl) || [],
-              description: previewProduct.description || '',
-              currency: previewProduct.currency || 'PEN',
+            open={isEditOpen || isCreateOpen}
+            onClose={() => {
+              setIsEditOpen(false);
+              setIsCreateOpen(false);
             }}
-            onSavingChange={setIsSaving}
-          />
-          <AlertSnackbar
-            open={alert.open}
-            description={alert.description}
-            color={alert.color}
-            icon={alert.icon}
-            onClose={() => setAlert((prev) => ({ ...prev, open: false }))}
+            onSave={handleSaveProduct}
+            initialProduct={isEditOpen && previewProduct ? mapToStorageProduct(previewProduct) : null}
           />
         </>
+      )}
+      {isOwner && (
+        <AlertSnackbar
+          open={alert.open}
+          description={alert.description}
+          color={alert.color}
+          icon={alert.icon}
+          onClose={() => setAlert((prev) => ({ ...prev, open: false }))}
+        />
       )}
     </>
   );

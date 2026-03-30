@@ -7,15 +7,24 @@ import { useProductItemController } from './useProductItemController';
 interface ProductItemProps {
   product: ProductWithRelations;
   isOwner?: boolean;
-  onPreviewOpen?: () => void;
+  onPreviewOpen?: (index: number) => void;
+  hasPaymentGateway?: boolean;
+  onContactClick?: () => void;
 }
 
-export default function ProductItem({ product, isOwner = false, onPreviewOpen }: ProductItemProps) {
-  const controller = useProductItemController(product, isOwner);
+export default function ProductItem({
+  product,
+  isOwner = false,
+  onPreviewOpen,
+  hasPaymentGateway = true,
+  onContactClick,
+}: ProductItemProps) {
+  const controller = useProductItemController(product, isOwner, hasPaymentGateway, onContactClick);
 
   return (
     <ProductItemView
       product={{
+// ... (rest is same)
         id: product.id,
         title: product.title,
         stock: product.stock,
@@ -54,13 +63,13 @@ export default function ProductItem({ product, isOwner = false, onPreviewOpen }:
       onAlertClose={() => controller.setAlert((prev) => ({ ...prev, open: false }))}
       onAddToCart={controller.handleAddToCart}
       isProductInCart={controller.isProductInCart}
-      onOpenPreview={onPreviewOpen}
+      onOpenPreview={(index) => onPreviewOpen?.(index)}
       onLike={controller.handleLike}
       isLiking={controller.isLiking}
       isPaymentModalOpen={controller.isPaymentModalOpen}
       onPaymentModalClose={controller.handlePaymentModalClose}
       onBuyNow={controller.handleBuyNow}
-      businessSlug={controller.businessSlug}
+      hasPaymentGateway={hasPaymentGateway}
     />
   );
 }

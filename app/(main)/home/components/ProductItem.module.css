@@ -25,7 +25,7 @@
   position: absolute;
   top: 0.75rem;
   left: 0.75rem;
-  z-index: 10;
+  z-index: 50;
 }
 
 .newArrivalBadge,
@@ -52,7 +52,7 @@
   right: 0.75rem;
   display: flex;
   gap: 10px;
-  z-index: 10;
+  z-index: 50;
 }
 
 .wishlistBtn {
@@ -67,7 +67,7 @@
   transition: all 0.2s ease;
   border: none;
   cursor: pointer;
-  z-index: 20; /* Above overlay */
+  z-index: 60; /* Above overlay */
 }
 
 .wishlistBtn:hover {
@@ -133,6 +133,7 @@
   gap: 0.5rem;
   padding: 0 0.5rem;
   flex-grow: 1; /* Pushes footer to bottom */
+  cursor: pointer;
 }
 
 .headerRow {
@@ -246,6 +247,7 @@
   gap: 0.5rem;
   margin-bottom: 0.75rem;
   min-height: 3.5rem; /* Reserve space for original/strike price row */
+  cursor: pointer;
 }
 
 .priceWrapper {
@@ -326,7 +328,7 @@
   left: 0.75rem;
   display: flex;
   gap: 0.5rem;
-  z-index: 20;
+  z-index: 50;
 }
 
 .statusOverlay {
@@ -339,34 +341,50 @@
   z-index: 15;
 }
 
-/* ── Carousel Dots ── */
-.carouselDots {
+/* ── Segmented Progress ── */
+.segmentedProgress {
   position: absolute;
-  bottom: 0.75rem;
-  width: 100%;
+  bottom: 0.5rem; /* Moved to bottom */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
   display: flex;
-  justify-content: center;
-  gap: 0.375rem;
+  gap: 4px;
+  z-index: 25;
+  pointer-events: none; /* Let clicks pass through to nav zones */
 }
 
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: var(--md-sys-color-outline-variant);
-  border: none;
-  padding: 0;
-  transition: all 0.2s ease;
+.segment {
+  height: 3px;
+  flex: 1;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-.activeDot {
+.segmentActive {
   background-color: var(--md-sys-color-primary);
-  transform: scale(1.2);
 }
 
-.carouselDots button {
-  position: relative;
-  z-index: 20; /* Above overlay */
+/* ── Carousel Nav Overlay ── */
+.carouselNavOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  z-index: 10;
+}
+
+.navZone {
+  flex: 1;
+  height: 100%;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Custom indicator if no images (avoiding clutter) */
+.carouselDots {
+  display: none !important; /* Hide old dots in favor of segments */
 }
 
 /* ── Responsive ── */

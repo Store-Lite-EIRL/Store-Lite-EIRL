@@ -16,6 +16,13 @@ export async function getBusinessBySlug(slug: string) {
         logoUrl: true,
         storeType: true,
       },
+      with: {
+        subscriptions: {
+          columns: {
+            planType: true,
+          },
+        },
+      },
     });
 
     return business || null;

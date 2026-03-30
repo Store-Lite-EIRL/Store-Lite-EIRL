@@ -1,3 +1,8 @@
+import { db } from '@/core/database/client';
+import { businesses } from '@/core/database/schema';
+import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
+import { eq } from 'drizzle-orm';
+import { notFound } from 'next/navigation';
 import ProductDetailContent from './components/ProductDetailContent';
 
 export default async function ProductDetailPage({
@@ -7,5 +12,21 @@ export default async function ProductDetailPage({
 }) {
   const { slug, productId } = await params;
 
-  return <ProductDetailContent slug={slug} productId={productId} />;
+  const businessDetail = await db.query.businesses.findFirst({
+    where: eq(businesses.slug, slug),
+  });
+
+  if (!businessDetail) {
+    notFound();
+  }
+
+  const { hasPaymentGateway } = await getBusinessEntitlements(businessDetail.id);
+
+  return (
+    <ProductDetailContent
+      slug={slug}
+      productId={productId}
+      hasPaymentGateway={hasPaymentGateway}
+    />
+  );
 }

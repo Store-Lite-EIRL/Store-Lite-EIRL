@@ -25,7 +25,11 @@ export async function getAuthenticatedUser(): Promise<AuthUser | null> {
   }
 
   // Fetch full profile if needed
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .maybeSingle();
 
   return {
     ...user,

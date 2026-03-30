@@ -1,0 +1,612 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Settings — Clean MD3 Layout
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Root shell ─────────────────────────────────────────────────────────── */
+.root {
+  display: flex;
+  background-color: var(--md-sys-color-background);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Sidebar ────────────────────────────────────────────────────────────── */
+.sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  background-color: var(--md-sys-color-surface);
+  border-right: 1px solid var(--md-sys-color-outline-variant);
+  display: flex;
+  flex-direction: column;
+  padding: 32px 16px;
+  /* Not sticky in desktop—fixed layout */
+  height: 100%;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.sidebarHeader {
+  padding: 0 16px 24px;
+}
+
+.sidebarGroupLabel {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 28px;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  height: 48px;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.navItem:hover {
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface);
+}
+
+.navItemActive {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font-weight: 600;
+}
+
+.navItemActive:hover {
+  background: var(--md-sys-color-secondary-container);
+}
+
+.navLabel {
+  flex: 1;
+}
+
+/* ── Content area ───────────────────────────────────────────────────────── */
+.content {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.contentInner {
+  max-width: 840px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 4px 32px 4px;
+}
+
+/* ── Section Header ─────────────────────────────────────────────────────── */
+.sectionHeader {
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 8px;
+}
+
+.sectionSubtitle {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+.sectionArea {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Cards — using base md3-card styles, then adding settings-specific overrides ── */
+.infoCard {
+  border-radius: 16px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.cardLabel {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+  padding: 20px 24px 12px;
+}
+
+/* ── Profile Card ───────────────────────────────────────────────────────── */
+.profileCard {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.coverBanner {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+.coverBannerFallback {
+  width: 100%;
+  height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.profileRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  padding: 0 24px 24px;
+  position: relative;
+  margin-top: -48px;
+}
+
+.logoCircle {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 4px solid var(--md-sys-color-surface);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  position: relative;
+  z-index: 2;
+}
+
+.logoImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.logoInitial {
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+}
+
+@media (max-width: 840) {
+  .profileMeta {
+    margin-top: 10px !important;
+  }
+}
+.profileMeta {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 4px;
+  margin-top: 50px;
+}
+.businessName {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.businessSlug {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+.statusChip {
+  margin-bottom: 8px;
+}
+
+.descriptionText {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+  padding: 0 24px 24px;
+}
+
+/* ── Inline Editing ─────────────────────────────────────────────────────── */
+.slugEditContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.slugInput {
+  flex: 1;
+  max-width: 200px;
+}
+
+.statusToggleContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.statusToggleLabel {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.statusLabelWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spinIcon {
+  animation: spin 1s linear infinite;
+  color: var(--md-sys-color-primary);
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Upgrade Banner ─────────────────────────────────────────────────────── */
+.upgradeBanner {
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px !important;
+  background-color: var(--md-sys-color-surface-container-low);
+  margin-bottom: 24px;
+}
+
+.upgradeBannerContent {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.upgradeBannerTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 4px 0;
+}
+
+.upgradeBannerText {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+/* ── Slug Edit ──────────────────────────────────────────────────────────── */
+.slugEditHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 16px 8px 16px;
+}
+
+.cardSupporting {
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 4px 0 0 0;
+}
+
+.slugEditContent {
+  padding: 0 16px 16px 16px;
+}
+
+.slugDisplayContainer {
+  margin-top: 8px;
+}
+
+.slugEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.slugInputWrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.slugPrefix {
+  font-family: monospace;
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant);
+  padding: 14px 16px;
+  background-color: var(--md-sys-color-surface-container-highest);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  height: 56px;
+  box-sizing: border-box;
+}
+
+.slugInputStandalone {
+  flex: 1;
+}
+
+.slugEditActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ── Info Items ─────────────────────────────────────────────────────────── */
+.infoCard :global(.md3-list) {
+  background: transparent;
+  padding: 8px 16px;
+}
+
+.infoCard :global(.md3-list-item) {
+  background: transparent;
+  border-radius: 12px;
+  margin-bottom: 2px;
+}
+
+.infoCard :global(.md3-list-item-headline) {
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface);
+}
+
+.infoCard :global(.md-list-item-supporting-text) {
+  font-size: 13px;
+}
+
+/* ── Copyable value ─────────────────────────────────────────────────────── */
+.copyableValue {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.monoValue {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--md-sys-color-primary);
+  background: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+/* ── Plan Hero ──────────────────────────────────────────────────────────── */
+.planHero {
+  border-radius: 16px;
+  padding: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.planHeroLeft {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  z-index: 1;
+}
+
+.planIconCircle {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.planHeroLabel {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.85;
+  margin: 0 0 4px;
+}
+
+.planHeroName {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+/* ── Limits ─────────────────────────────────────────────────────────────── */
+.limitsContainer {
+  padding: 12px 24px 24px;
+}
+
+.limitItem {
+  padding: 16px 0;
+}
+
+.limitItemHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: var(--md-sys-color-on-surface);
+}
+
+.limitItemLabel {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.limitItemValue {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
+  background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+  padding: 4px 12px;
+  border-radius: 99px;
+}
+
+/* ── Action rows & Chips ────────────────────────────────────────────────── */
+.chipsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 24px 24px;
+}
+
+.actionRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+}
+
+/* ── Appearance card ────────────────────────────────────────────────────── */
+.appearanceCard {
+  border-radius: 16px;
+  padding: 24px;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 840px) {
+  .root {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: sticky;
+    top: 64px;
+    border-right: none;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    padding: 12px 0 0;
+  }
+
+  .sidebarHeader {
+    display: none;
+  }
+
+  .sidebarNav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 0 12px 12px;
+    gap: 8px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .sidebarNav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .navItem {
+    padding: 10px 20px;
+    white-space: nowrap;
+    border-radius: 99px;
+    font-size: 13px;
+    width: auto;
+  }
+
+  .contentInner {
+    padding: 24px 16px 80px;
+  }
+
+  .coverBanner {
+    height: 140px;
+  }
+
+  .profileRow {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+    margin-top: -40px;
+    padding: 0 16px 20px;
+  }
+
+  .logoCircle {
+    width: 80px;
+    height: 80px;
+  }
+
+  .statusChip {
+    align-self: center;
+    margin-top: 0;
+  }
+
+  .businessName {
+    font-size: 22px;
+  }
+
+  .planHero {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 28px 20px;
+  }
+
+  .planHeroLeft {
+    flex-direction: column;
+    gap: 16px;
+  }
+}

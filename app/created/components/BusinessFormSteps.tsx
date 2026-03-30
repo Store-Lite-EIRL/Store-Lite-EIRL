@@ -98,8 +98,6 @@ export const Step1General = ({
               variant="tonal"
               style={{
                 borderRadius: '12px',
-                backgroundColor: 'var(--md-sys-color-primary)',
-                color: 'var(--md-sys-color-on-primary)',
                 padding: '10px 20px',
                 display: 'flex',
                 alignItems: 'center',
@@ -110,7 +108,9 @@ export const Step1General = ({
               onClick={() => logoUploadRef.current?.click()}
             >
               Subir Logo
-              <Icon slot="icon">upload</Icon>
+              <Icon slot="icon" size={23}>
+                upload
+              </Icon>
             </Button>
             <input
               id="logo-upload"

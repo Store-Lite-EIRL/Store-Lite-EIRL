@@ -2,9 +2,10 @@
 
 import { db } from '@/core/database/client';
 import { products } from '@/core/database/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { updateProduct } from './actions';
+import { requireOwnedBusinessBySlug } from './actions/authz';
 
 export async function updateProductIsolated(
   businessSlug: string,
@@ -43,6 +44,7 @@ export async function toggleProductStatus(
   businessSlug: string,
 ) {
   try {
+    const { businessId } = await requireOwnedBusinessBySlug(businessSlug);
     const newStatus = !currentStatus;
 
     await db
@@ -51,7 +53,7 @@ export async function toggleProductStatus(
         isAvailable: newStatus,
         updatedAt: new Date(),
       })
-      .where(eq(products.id, productId));
+      .where(and(eq(products.id, productId), eq(products.businessId, businessId)));
 
     revalidatePath(`/${businessSlug}`);
 

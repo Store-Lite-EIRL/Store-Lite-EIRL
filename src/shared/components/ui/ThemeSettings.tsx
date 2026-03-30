@@ -1,6 +1,7 @@
 'use client';
 
 import { useTheme } from '@/shared/context/ThemeContext';
+import { Icon } from './data-display';
 
 export function ThemeSettings() {
   const { theme, colorScheme, setTheme, setColorScheme } = useTheme();
@@ -16,9 +17,9 @@ export function ThemeSettings() {
             onClick={() => setTheme('light')}
             suppressHydrationWarning
           >
-            <md-icon slot="icon" suppressHydrationWarning>
+            <Icon slot="icon" size={21}>
               light_mode
-            </md-icon>
+            </Icon>
           </md-filter-chip>
           <md-filter-chip
             label="Oscuro"
@@ -26,9 +27,9 @@ export function ThemeSettings() {
             onClick={() => setTheme('dark')}
             suppressHydrationWarning
           >
-            <md-icon slot="icon" suppressHydrationWarning>
+            <Icon slot="icon" size={21}>
               dark_mode
-            </md-icon>
+            </Icon>
           </md-filter-chip>
         </md-chip-set>
       </section>

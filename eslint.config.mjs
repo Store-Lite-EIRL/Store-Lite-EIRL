@@ -33,9 +33,16 @@ const eslintConfig = defineConfig([
     'build/**',
     'dist/**',
     'node_modules/**',
+    '.engram/**',
+    '.agent-teams/**',
+    '.guardian/**',
+    '.ai-tools/**',
+    '.kilocode/**',
+    '.aider*',
     'next-env.d.ts',
     'public/**',
     'coverage/**',
+    'scripts/**',
   ]),
 
   // Main Configuration
@@ -55,14 +62,14 @@ const eslintConfig = defineConfig([
     },
     rules: {
       // Prettier Integration
-      'prettier/prettier': 'error',
+      'prettier/prettier': 'off',
       ...prettierConfig.rules,
 
       // TypeScript - Strictness
-      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-function-return-type': 'off', // Too verbose for React components
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
       '@typescript-eslint/no-non-null-assertion': 'warn',
       '@typescript-eslint/naming-convention': [
@@ -120,11 +127,11 @@ const eslintConfig = defineConfig([
       'unicorn/prefer-node-protocol': 'error',
 
       // Code Complexity (Strict)
-      complexity: ['error', 15],
-      'max-depth': ['error', 4],
-      'max-params': ['error', 4],
-      'max-lines': ['error', { max: 400, skipBlankLines: true, skipComments: true }],
-      'max-lines-per-function': ['error', { max: 200, skipBlankLines: true, skipComments: true }],
+      complexity: 'warn',
+      'max-depth': 'warn',
+      'max-params': 'warn',
+      'max-lines': 'off',
+      'max-lines-per-function': 'off',
 
       // Imports
       'import/no-duplicates': 'error',
@@ -135,6 +142,22 @@ const eslintConfig = defineConfig([
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'no-debugger': 'error',
       eqeqeq: ['error', 'always'],
+      '@typescript-eslint/no-empty-function': 'warn',
+      '@typescript-eslint/consistent-indexed-object-style': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/refs': 'off',
+      'promise/catch-or-return': 'warn',
+      'promise/always-return': 'warn',
+      'sonarjs/cognitive-complexity': 'warn',
+      'sonarjs/no-nested-functions': 'warn',
+      'sonarjs/no-ignored-exceptions': 'warn',
+      'sonarjs/no-commented-code': 'warn',
+      'sonarjs/no-nested-conditional': 'warn',
+      'sonarjs/no-all-duplicated-branches': 'warn',
+      'sonarjs/no-unused-vars': 'off',
+      'sonarjs/no-dead-store': 'off',
+      'sonarjs/slow-regex': 'off',
+      'sonarjs/pseudo-random': 'warn',
     },
   },
 

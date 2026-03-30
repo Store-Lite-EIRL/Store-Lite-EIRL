@@ -113,23 +113,36 @@ export const ProductTable = ({
                       className="product-info"
                       style={{ textDecoration: 'none', color: 'inherit' }}
                     >
-                      {product.image ? (
-                        <img src={product.image} alt={product.name} className="product-img" />
-                      ) : (
+                      <div className="product-img-container">
+                        {product.image ? (
+                          <img 
+                            src={product.image} 
+                            alt={product.name} 
+                            className="product-img" 
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              target.style.display = 'none';
+                              const placeholder = target.nextElementSibling as HTMLElement;
+                              if (placeholder) placeholder.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
                         <div
-                          className="product-img"
+                          className="product-img placeholder"
                           style={{
-                            display: 'flex',
+                            display: product.image ? 'none' : 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             background: 'var(--md-sys-color-surface-container-high)',
                             borderRadius: 8,
                             flexShrink: 0,
+                            width: '100%',
+                            height: '100%',
                           }}
                         >
-                          <Icon style={{ fontSize: 22, opacity: 0.4 }}>image</Icon>
+                          <Icon style={{ fontSize: 22, opacity: 0.4 }}>image_not_supported</Icon>
                         </div>
-                      )}
+                      </div>
                       <span style={{ cursor: 'pointer' }}>{product.name}</span>
                     </Link>
                   </td>

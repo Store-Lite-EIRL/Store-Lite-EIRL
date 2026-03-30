@@ -2,9 +2,10 @@
 
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
 import { Button, Sheet } from '@/shared/components/ui';
+import { Icon } from '@/shared/components/ui/data-display/Icon';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useCart } from '../storage/context/CartContext';
 import styles from './ProductPreviewSheet.module.css';
 
@@ -15,6 +16,7 @@ interface ProductPreviewSheetProps {
   isOwner?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
+  initialImageIndex?: number;
 }
 
 type SheetElement = HTMLDivElement & { show?: () => void; close?: () => void };
@@ -28,8 +30,10 @@ export default function ProductPreviewSheet({
   isOwner = false,
   onEdit,
   onDelete,
+  initialImageIndex = 0,
 }: ProductPreviewSheetProps) {
   const { isInCart, toggleCartItem } = useCart();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const handleAction = (action?: () => void) => {
     if (!action) return;
@@ -42,7 +46,8 @@ export default function ProductPreviewSheet({
     if (!product) return;
     const node = document.getElementById(SHEET_ID) as SheetElement | null;
     node?.show?.();
-  }, [product, openSignal]);
+    setCurrentImageIndex(initialImageIndex);
+  }, [product, openSignal, initialImageIndex]);
 
   if (!product) {
     return <Sheet id={SHEET_ID} title="Vista previa" direction="bottom" className={styles.sheet} />;
@@ -62,15 +67,51 @@ export default function ProductPreviewSheet({
     >
       <div className={styles.content}>
         <div className={styles.media}>
-          {mainImage ? (
-            <Image
-              src={mainImage}
-              alt={product.title}
-              width={360}
-              height={360}
-              className={styles.image}
-              priority
-            />
+          {product.media && product.media.length > 0 ? (
+            <div className={styles.carouselContainer}>
+              <button
+                className={styles.carouselButton}
+                title="Imagen anterior"
+                onClick={() =>
+                  setCurrentImageIndex(
+                    (prev: number) => (prev - 1 + product.media!.length) % product.media!.length,
+                  )
+                }
+                disabled={product.media.length <= 1}
+              >
+                <Icon size={24}>chevron_left</Icon>
+              </button>
+              <div className={styles.imageWrapper}>
+                <Image
+                  src={product.media[currentImageIndex].mediaUrl}
+                  alt={product.title}
+                  width={400}
+                  height={400}
+                  className={styles.image}
+                  priority
+                />
+              </div>
+              <button
+                className={styles.carouselButton}
+                title="Siguiente imagen"
+                onClick={() =>
+                  setCurrentImageIndex((prev: number) => (prev + 1) % product.media!.length)
+                }
+                disabled={product.media.length <= 1}
+              >
+                <Icon size={24}>chevron_right</Icon>
+              </button>
+              {product.media.length > 1 && (
+                <div className={styles.dots}>
+                  {product.media.map((_, i) => (
+                    <div
+                      key={i}
+                      className={`${styles.dot} ${i === currentImageIndex ? styles.activeDot : ''}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           ) : (
             <div className={styles.noImage}>Sin imagen</div>
           )}
@@ -99,35 +140,45 @@ export default function ProductPreviewSheet({
               </p>
             )}
           </div>
-          <p className={styles.description}>
-            {product.description || 'Sin descripcion disponible para este producto.'}
-          </p>
-          <div className={styles.meta}>
-            <span className={`${styles.chip} ${styles.stockChip}`}>
-              Stock: <strong>{product.stock}</strong>
-            </span>
-            <span
-              className={`${styles.chip} ${
-                product.isAvailable ? styles.availableChip : styles.unavailableChip
-              }`}
-            >
-              {product.isAvailable ? 'Disponible' : 'No disponible'}
-            </span>
+          <div className={styles.descriptionContainer}>
+            <p className={styles.description}>
+              {product.description && product.description.length > 120 
+                ? `${product.description.slice(0, 120)}...` 
+                : (product.description || 'Sin descripción disponible.')}
+            </p>
+            {product.description && product.description.length > 120 && (
+              <Link href={`/${slug}/product/${product.id}`} className={styles.inlineLink}>
+                Ver detalle completo
+              </Link>
+            )}
           </div>
-
+          
           {product.tags && product.tags.length > 0 && (
             <div className={styles.tags}>
-              {product.tags.map((tag) => (
-                <span key={tag} className={styles.tagChip}>
-                  {tag}
+              {product.tags.map((tag, i) => (
+                <span key={i} className={styles.tag}>
+                  #{tag}
                 </span>
               ))}
             </div>
           )}
+          
+          <div className={styles.metaRow}>
+            <span className={styles.priceTag}>
+              {currency} {Number(product.secondPrice || product.price).toLocaleString()}
+            </span>
+            <div className={styles.statusBundle}>
+              <span className={`${styles.statusChip} ${product.isAvailable ? styles.available : styles.unavailable}`}>
+                {product.isAvailable ? 'Disponible' : 'Sin Stock'}
+              </span>
+              <span className={styles.stockLabel}>({product.stock} disp.)</span>
+            </div>
+          </div>
 
           {product.shippingInfo && (
-            <div className={styles.shippingInfo}>
-              <strong>Envío:</strong> {product.shippingInfo}
+            <div className={styles.quickShipping}>
+              <Icon size={18}>local_shipping</Icon>
+              {product.shippingInfo}
             </div>
           )}
 
@@ -178,10 +229,10 @@ export default function ProductPreviewSheet({
                   style={
                     {
                       '--md-filled-button-container-color': isProductInCart
-                        ? 'var(--md-sys-color-error-container)'
+                        ? 'var(--md-sys-color-secondary-container)'
                         : 'var(--md-sys-color-primary)',
                       '--md-filled-button-label-text-color': isProductInCart
-                        ? 'var(--md-sys-color-on-error-container)'
+                        ? 'var(--md-sys-color-on-secondary-container)'
                         : 'var(--md-sys-color-on-primary)',
                     } as React.CSSProperties
                   }
@@ -194,9 +245,6 @@ export default function ProductPreviewSheet({
               </>
             )}
           </div>
-          <p className={styles.hint}>
-            Puedes revisar fotos y datos completos en la ficha del producto.
-          </p>
         </div>
       </div>
     </Sheet>

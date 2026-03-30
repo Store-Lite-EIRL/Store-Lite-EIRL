@@ -1,6 +1,5 @@
 'use client';
 
-import { useAuth } from '@/features/auth';
 import Navbar from '@/shared/components/navigation/Navbar';
 import { CircularProgress } from '@/shared/components/ui/feedback/Progress';
 import '@/styles/components/layout.css';
@@ -10,7 +9,17 @@ import { useEffect, useState } from 'react';
 
 const NAVBAR_COLLAPSED_KEY = 'navbarCollapsed';
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+interface AppLayoutProps {
+  children: React.ReactNode;
+  showNavbarByDefault?: boolean;
+  navbarPlanName?: string;
+}
+
+export default function AppLayout({
+  children,
+  showNavbarByDefault = false,
+  navbarPlanName,
+}: AppLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
@@ -22,15 +31,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, []);
   const [isGlobalLoading, setIsGlobalLoading] = useState(false);
-
-  const { signOut, session } = useAuth();
   const pathname = usePathname();
-  const [prevPath, setPrevPath] = useState(pathname);
 
-  if (pathname !== prevPath) {
-    setPrevPath(pathname);
+  useEffect(() => {
     setIsGlobalLoading(false);
-  }
+  }, [pathname]);
 
   const router = useRouter();
   const params = useParams();
@@ -63,15 +68,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (isPublicPath) {
       return;
     }
-
-    const isOwner = activeSessionSlug === urlSlug;
-    const isAdminPath = pathname.includes('/storage') || pathname.includes('/settings');
-
-    if (urlSlug && isAdminPath) {
-      if (!isOwner) {
-        router.push(`/${urlSlug}`);
-      }
-    }
   }, [urlSlug, pathname, router]);
 
   const toggleNavbar = () => {
@@ -80,25 +76,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     localStorage.setItem(NAVBAR_COLLAPSED_KEY, String(next));
   };
 
-  const handleLogout = async () => {
-    setIsGlobalLoading(true);
-    try {
-      await signOut();
-      document.cookie = 'selected_business_slug=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-      localStorage.removeItem('selectedBusinessSlug');
-      router.push('/auth');
-    } catch (error) {
-      console.error('Error signing out:', error);
-      setIsGlobalLoading(false);
-    }
-  };
-
-  const handleCloseStore = () => {
-    setIsGlobalLoading(true);
-    document.cookie = 'selected_business_slug=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    localStorage.removeItem('selectedBusinessSlug');
-    router.push('/list-business');
-  };
+  const showNavbar =
+    showNavbarByDefault && pathname !== '/list-business' && !pathname?.startsWith('/auth');
 
   return (
     <div className={`layout ${isChatPage ? 'layout--chat' : ''}`}>
@@ -108,16 +87,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       */}
 
       {/* Sidebar - Desktop Only (Navbar component is actually the sidebar) */}
-      {session && (
+      {showNavbar && (
         <Navbar
           isCollapsed={isCollapsed}
           onToggle={toggleNavbar}
-          onLogout={handleLogout}
-          onCloseStore={handleCloseStore}
+          planName={navbarPlanName}
         />
       )}
 
-      <div className={`content-wrapper ${isCollapsed ? 'content-wrapper--collapsed' : ''}`}>
+      <div
+        className={`content-wrapper ${isCollapsed || !showNavbar ? 'content-wrapper--collapsed' : ''}`}
+      >
         <main className={`main-area ${isChatPage ? 'main-area--chat' : ''}`}>{children}</main>
       </div>
 

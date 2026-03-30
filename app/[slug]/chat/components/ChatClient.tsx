@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   deleteChatSession,
   fetchChatSessions,
@@ -13,6 +13,13 @@ import styles from '../messages.module.css';
 import { ChatSidebar } from './ChatSidebar';
 import { ChatWindow } from './ChatWindow';
 import { DeleteChatDialog } from './DeleteChatDialog';
+
+const DEBUG_ABORTS = process.env.NEXT_PUBLIC_DEBUG_ABORTS === '1';
+
+function chatDebug(message: string, payload?: Record<string, unknown>) {
+  if (!DEBUG_ABORTS) return;
+  console.warn('[ChatClientDebug]', message, payload ?? {});
+}
 
 export interface Chat {
   id: string;
@@ -41,8 +48,10 @@ interface ChatClientProps {
 }
 
 export function ChatClient({ slug, storeName, storeDescription, businessId }: ChatClientProps) {
+  const supabase = createClient();
   const [sessions, setSessions] = useState<Chat[]>([]); // Renamed from chats
   const [selectedSession, setSelectedSession] = useState<any>(null);
+  const selectedSessionRef = useRef<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [isSessionsLoading, setIsSessionsLoading] = useState(true);
   const [isMessagesLoading, setIsMessagesLoading] = useState(false);
@@ -61,6 +70,11 @@ export function ChatClient({ slug, storeName, storeDescription, businessId }: Ch
   });
 
   const [isShareConfirmed, setIsShareConfirmed] = useState(false);
+
+  useEffect(() => {
+    selectedSessionRef.current = selectedSession;
+    chatDebug('selectedSession:update', { selectedSessionId: selectedSession?.id ?? null });
+  }, [selectedSession]);
 
   // Load chat sessions
   useEffect(() => {
@@ -133,8 +147,7 @@ export function ChatClient({ slug, storeName, storeDescription, businessId }: Ch
 
   // Real-time subscription for sessions and messages
   useEffect(() => {
-    const supabase = createClient();
-
+    chatDebug('subscriptions:start', { businessId });
     // Subscribe to new chat sessions for this business
     const sessionChannel = supabase
       .channel('public:chat_sessions_owner')
@@ -148,6 +161,7 @@ export function ChatClient({ slug, storeName, storeDescription, businessId }: Ch
         },
         (payload: { new: Record<string, unknown> }) => {
           const newSession = payload.new;
+          chatDebug('sessionChannel:insert', { sessionId: String(newSession.id) });
           const newChat: Chat = {
             id: String(newSession.id),
             name: (newSession.guest_name as string) || 'Invitado',
@@ -177,6 +191,10 @@ export function ChatClient({ slug, storeName, storeDescription, businessId }: Ch
         },
         async (payload: { new: Record<string, unknown> }) => {
           const newMessage = payload.new;
+          chatDebug('messageChannel:insert', {
+            sessionId: String(newMessage.session_id),
+            messageId: String(newMessage.id),
+          });
 
           const mappedMsg: Message = {
             id: String(newMessage.id),
@@ -190,7 +208,10 @@ export function ChatClient({ slug, storeName, storeDescription, businessId }: Ch
           };
 
           // Update message list if it's the current chat
-          if (selectedSession && String(newMessage.session_id) === selectedSession.id) {
+          if (
+            selectedSessionRef.current &&
+            String(newMessage.session_id) === selectedSessionRef.current.id
+          ) {
             setMessages((prev) => {
               if (prev.some((m) => m.id === mappedMsg.id)) return prev;
               return [...prev, mappedMsg];
@@ -210,10 +231,11 @@ export function ChatClient({ slug, storeName, storeDescription, businessId }: Ch
       .subscribe();
 
     return () => {
+      chatDebug('subscriptions:cleanup', { businessId });
       supabase.removeChannel(sessionChannel);
       supabase.removeChannel(messageChannel);
     };
-  }, [businessId, selectedSession]);
+  }, [businessId, supabase]);
 
   // Toggle body class for mobile navbar visibility
   useEffect(() => {

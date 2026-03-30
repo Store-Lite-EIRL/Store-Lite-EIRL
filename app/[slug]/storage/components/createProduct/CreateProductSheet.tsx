@@ -9,6 +9,7 @@ import type { Product } from '../../data';
 import { useCreateProductForm } from '../../hooks/useCreateProductForm';
 import '../../styles/create-product-sheet.css';
 import type { SaveProductMediaItem, SaveProductPayload } from '../../types';
+import { useStorage } from '../../context/StorageContext';
 import { BasicInfoSection } from './BasicInfoSection';
 import { CategorySection } from './CategorySection';
 import { ExtraInfoSection } from './ExtraInfoSection';
@@ -40,6 +41,7 @@ export const CreateProductSheet = ({
 }: CreateProductSheetProps) => {
   const isEditMode = Boolean(initialProduct);
   const { symbol: currencySymbol } = useCurrency();
+  const { entitlements, totalProducts } = useStorage();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -117,6 +119,29 @@ export const CreateProductSheet = ({
 
         {/* Form Sections */}
         <div className="create-sheet-content">
+          {entitlements && !isEditMode && totalProducts >= entitlements.maxProducts && (
+            <div 
+              style={{
+                margin: '0 24px 16px',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                background: 'var(--md-sys-color-error-container)',
+                color: 'var(--md-sys-color-on-error-container)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                fontSize: '14px',
+                border: '1px solid var(--md-sys-color-error)'
+              }}
+            >
+              <Icon size={20}>warning</Icon>
+              <span>
+                Has alcanzado el límite de <strong>{entitlements.maxProducts} productos</strong> de tu plan. 
+                Sube de nivel para agregar más.
+              </span>
+            </div>
+          )}
+
           <ImageUploadSection
             images={images}
             error={errors.images}
@@ -177,7 +202,11 @@ export const CreateProductSheet = ({
           <Button variant="outlined" onClick={handleClose} disabled={isSaving}>
             Cancelar
           </Button>
-          <Button variant="filled" onClick={handleSave} disabled={isSaving}>
+          <Button 
+            variant="filled" 
+            onClick={handleSave} 
+            disabled={isSaving || (!isEditMode && entitlements !== null && totalProducts >= (entitlements?.maxProducts ?? Infinity))}
+          >
             <Icon slot="icon" size={21} className={isSaving ? 'spinner-mini' : ''}>
               {saveIcon}
             </Icon>

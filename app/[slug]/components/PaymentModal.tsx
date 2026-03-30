@@ -1,13 +1,15 @@
+/* eslint-disable max-lines-per-function */
 'use client';
 
 import { Dialog } from '@/shared/components/ui';
-import React, { useState } from 'react';
+import React from 'react';
 import { AmountSection } from '../payment/components/AmountSection';
 import { CardPaymentForm } from '../payment/components/CardPaymentForm';
 import { OrderSummary } from '../payment/components/OrderSummary';
 import type { PaymentMethodId } from '../payment/components/PaymentMethodSelector';
 import { PaymentMethodSelector } from '../payment/components/PaymentMethodSelector';
 import { YapePaymentForm } from '../payment/components/YapePaymentForm';
+import { usePaymentForm } from '../payment/hooks/usePaymentForm';
 
 interface PaymentModalProps {
   open: boolean;
@@ -15,29 +17,51 @@ interface PaymentModalProps {
   productName: string;
   price: number;
   currency: string;
-  productId?: string;
-  businessSlug?: string;
+  productId: string;
+  businessSlug: string;
 }
 
-export function PaymentModal({ open, onClose, productName, price, currency }: PaymentModalProps) {
-  const [activeTab, setActiveTab] = useState<PaymentMethodId>('card');
-  const [step, setStep] = useState<'selection' | 'form' | 'processing' | 'success' | 'error'>(
-    'selection',
-  );
-
-  // Card Form State
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [expiry, setExpiry] = useState('');
-  const [cvv, setCvv] = useState('');
-  const [email, setEmail] = useState('');
-
-  // Yape Form State
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [yapeEmail, setYapeEmail] = useState('');
-
-  const [errorMessage, setErrorMessage] = useState('');
+export function PaymentModal({
+  open,
+  onClose,
+  productName,
+  price,
+  currency,
+  productId,
+  businessSlug,
+}: PaymentModalProps) {
+  const {
+    activeTab,
+    setActiveTab,
+    step,
+    errorMessage,
+    cardNumber,
+    cardName,
+    expiry,
+    cvv,
+    email,
+    phone,
+    otp,
+    yapeEmail,
+    handleCardNumberChange,
+    handleExpiryChange,
+    handleCvvChange,
+    handlePhoneChange,
+    handleOtpChange,
+    setCardName,
+    setEmail,
+    setYapeEmail,
+    handleSubmit,
+    resetForm,
+  } = usePaymentForm({
+    productId,
+    businessSlug,
+    price,
+    currency,
+    onSuccess: () => {
+      console.log('Payment successful');
+    },
+  });
 
   const paymentMethods: { id: PaymentMethodId; label: string; icon: string }[] = [
     { id: 'card', label: 'Tarjeta', icon: 'credit_card' },
@@ -48,64 +72,14 @@ export function PaymentModal({ open, onClose, productName, price, currency }: Pa
 
   const handleClose = () => {
     onClose();
-    // Reset state after a delay to avoid flicker
     setTimeout(() => {
-      setStep('selection');
-      setCardNumber('');
-      setCardName('');
-      setExpiry('');
-      setCvv('');
-      setEmail('');
-      setPhone('');
-      setOtp('');
-      setYapeEmail('');
-      setErrorMessage('');
+      resetForm();
     }, 300);
   };
 
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '').substring(0, 16);
-    const formatted = value.match(/.{1,4}/g)?.join(' ') || '';
-    setCardNumber(formatted);
-  };
-
-  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, '').substring(0, 4);
-    if (value.length >= 2) {
-      value = value.substring(0, 2) + '/' + value.substring(2);
-    }
-    setExpiry(value);
-  };
-
-  const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '').substring(0, 4);
-    setCvv(value);
-  };
-
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '').substring(0, 9);
-    setPhone(value);
-  };
-
-  const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '').substring(0, 6);
-    setOtp(value);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStep('processing');
-
-    // Simulate payment API call
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      // Randomly fail for demo purposes
-      if (Math.random() > 0.8) throw new Error('Fondos insuficientes');
-      setStep('success');
-    } catch (err: unknown) {
-      setErrorMessage(err instanceof Error ? err.message : 'Error desconocido');
-      setStep('error');
-    }
+    await handleSubmit();
   };
 
   const currentMethodLabel = paymentMethods.find((m) => m.id === activeTab)?.label || activeTab;
@@ -115,12 +89,10 @@ export function PaymentModal({ open, onClose, productName, price, currency }: Pa
       <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-50 overflow-y-auto antialiased">
         <div className="flex min-h-full items-center justify-center p-4">
           <div className="relative w-full max-w-xl bg-[#00040a] rounded-[2.5rem] border border-white/5 shadow-[0_0_100px_rgba(19,91,236,0.15)] overflow-hidden">
-            {/* Ambient Background Glows */}
             <div className="absolute top-0 left-1/4 w-1/2 h-64 bg-[#135bec]/10 blur-[120px] pointer-events-none" />
             <div className="absolute bottom-0 right-1/4 w-1/2 h-64 bg-slate-500/5 blur-[120px] pointer-events-none" />
 
             <div className="relative z-10">
-              {/* Header */}
               <div className="flex items-center justify-between p-8 pb-4">
                 <div className="flex items-center gap-4">
                   <div className="bg-[#135bec] p-2.5 rounded-2xl shadow-lg shadow-[#135bec]/20">
@@ -129,13 +101,11 @@ export function PaymentModal({ open, onClose, productName, price, currency }: Pa
                     </span>
                   </div>
                   <div>
-                    <h2 className="text-xl font-black text-white tracking-tight">
-                      Checkout Seguro
-                    </h2>
+                    <h2 className="text-xl font-black text-white tracking-tight">Checkout Seguro</h2>
                     <div className="flex items-center gap-2 mt-1">
                       <div className="size-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                       <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">
-                        Encriptación SSL 256 bits
+                        Encriptacion SSL 256 bits
                       </span>
                     </div>
                   </div>
@@ -164,15 +134,9 @@ export function PaymentModal({ open, onClose, productName, price, currency }: Pa
                 </div>
 
                 <div className="flex flex-col gap-8">
-                  <PaymentMethodSelector
-                    paymentMethods={paymentMethods}
-                    activeTab={activeTab}
-                    onSelect={(id) => {
-                      setActiveTab(id);
-                    }}
-                  />
+                  <PaymentMethodSelector paymentMethods={paymentMethods} activeTab={activeTab} onSelect={setActiveTab} />
 
-                  <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+                  <form onSubmit={handleFormSubmit} className="flex flex-col gap-8">
                     {step === 'error' && (
                       <div className="flex items-start gap-3 rounded-2xl bg-red-500/10 p-4 border border-red-500/20">
                         <span className="material-symbols-outlined text-red-500">error</span>
@@ -214,9 +178,7 @@ export function PaymentModal({ open, onClose, productName, price, currency }: Pa
                         <span className="material-symbols-outlined text-4xl mb-2 opacity-20">
                           hourglass_empty
                         </span>
-                        <p className="text-sm font-medium">
-                          Este método de pago estará disponible pronto
-                        </p>
+                        <p className="text-sm font-medium">Este metodo de pago estara disponible pronto</p>
                       </div>
                     )}
 

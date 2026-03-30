@@ -12,6 +12,10 @@ interface UsePaymentFormProps {
   onSuccess: (data: { deliveryCode: string; culqiChargeId?: string }) => void;
 }
 
+function isValidEmail(value: string): boolean {
+  return /^\S+@\S+\.\S+$/.test(value);
+}
+
 export function usePaymentForm({
   productId,
   businessSlug,
@@ -70,8 +74,33 @@ export function usePaymentForm({
     setYapeEmail('');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const validatePaymentInput = (): string | null => {
+    if (activeTab === 'card') {
+      if (!isValidEmail(email)) return 'Ingresa un correo valido.';
+      if (cardNumber.replace(/\s/g, '').length !== 16) return 'El numero de tarjeta debe tener 16 digitos.';
+      if (!/^\d{2}\/\d{2}$/.test(expiry)) return 'La fecha de expiracion debe tener formato MM/YY.';
+      if (cvv.length !== 3) return 'El CVV debe tener 3 digitos.';
+      return null;
+    }
+
+    if (activeTab === 'yape') {
+      if (!isValidEmail(yapeEmail)) return 'Ingresa un correo valido.';
+      if (phone.length !== 9) return 'El numero de celular debe tener 9 digitos.';
+      if (otp.length !== 6) return 'El codigo OTP debe tener 6 digitos.';
+      return null;
+    }
+
+    return 'Este metodo de pago no esta disponible actualmente.';
+  };
+
+  const handleSubmit = async () => {
+    const validationError = validatePaymentInput();
+    if (validationError) {
+      setErrorMessage(validationError);
+      setStep('error');
+      return;
+    }
+
     setStep('processing');
     setErrorMessage('');
 
@@ -98,7 +127,7 @@ export function usePaymentForm({
           otp,
           amount: price,
           email: buyerEmail,
-        } as any);
+        });
         tokenId = token.id;
       } else {
         setErrorMessage('Este método de pago no está disponible actualmente.');

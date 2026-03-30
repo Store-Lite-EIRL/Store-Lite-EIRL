@@ -1,6 +1,7 @@
 'use client';
 
 import type { ProductCategory } from '@/core/database/schema';
+import type { BrandFilterOption } from '../hooks/useProductFilters';
 import { IconButton } from '@/shared/components/ui/buttons/IconButton';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
 import { DropdownCheckbox } from '@/shared/components/ui/inputs/DropdownCheckbox';
@@ -23,13 +24,12 @@ interface ProductFiltersTopBarProps {
   showDiscountedOnly: boolean;
   onDiscountToggle: (checked: boolean) => void;
 
+  brandOptions: BrandFilterOption[];
   selectedBrands: string[];
   onBrandChange: (brandId: string, checked: boolean) => void;
   onClearFilters: () => void;
   hasActiveFilters: boolean;
 }
-
-const MOCK_BRANDS = ['Nike', 'Adidas', 'Puma', 'Reebok'];
 
 export default function ProductFiltersTopBar({
   categories,
@@ -42,13 +42,13 @@ export default function ProductFiltersTopBar({
   onPriceRangeChange,
   showDiscountedOnly,
   onDiscountToggle,
+  brandOptions = [],
   selectedBrands,
   onBrandChange,
   onClearFilters,
   hasActiveFilters,
 }: ProductFiltersTopBarProps) {
   const categoryOptions = categories.map((cat) => ({ id: cat.id, label: cat.name }));
-  const brandOptions = MOCK_BRANDS.map((brand) => ({ id: brand, label: brand }));
 
   return (
     <div className={styles.topBar}>
@@ -75,12 +75,14 @@ export default function ProductFiltersTopBar({
           />
         )}
 
-        <DropdownCheckbox
-          label="Marcas"
-          options={brandOptions}
-          selectedIds={selectedBrands}
-          onChange={onBrandChange}
-        />
+        {brandOptions.length > 0 && (
+          <DropdownCheckbox
+            label="Marcas"
+            options={brandOptions}
+            selectedIds={selectedBrands}
+            onChange={onBrandChange}
+          />
+        )}
       </div>
 
       <div className={styles.divider} />

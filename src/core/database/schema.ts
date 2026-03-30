@@ -41,6 +41,20 @@ export const paymentStatusEnum = pgEnum('payment_status', [
   'refunded',
 ]);
 export const paymentMethodEnum = pgEnum('payment_method', ['card', 'yape', 'plin']);
+export const subscriptionPlanEnum = pgEnum('subscription_plan', [
+  'basico',
+  'emprendedor',
+  'business_pro',
+  'enterprise_ai',
+]);
+export const subscriptionStatusEnum = pgEnum('subscription_status', [
+  'active',
+  'inactive',
+  'past_due',
+  'canceled',
+  'expired',
+  'trialing',
+]);
 
 // =====================================================
 // AUTH SCHEMA (Supabase)
@@ -107,6 +121,15 @@ export const businesses = pgTable(
     legalRepRole: text('legal_rep_role'),
     legalRepPhone: text('legal_rep_phone'),
     legalRepEmail: text('legal_rep_email'),
+    paymentFlow: text('payment_flow').array(),
+    // SEO & Geolocation
+    latitude: decimal('latitude', { precision: 10, scale: 7 }),
+    longitude: decimal('longitude', { precision: 10, scale: 7 }),
+    geoRegion: text('geo_region'),
+    geoPlacename: text('geo_placename'),
+    seoTitle: text('seo_title'),
+    seoDescription: text('seo_description'),
+    seoKeywords: text('seo_keywords').array(),
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -127,6 +150,10 @@ export const businesses = pgTable(
     whatsappCheck: check(
       'whatsapp_format_check',
       sql`${table.whatsappNumber} ~ '^\\+?[1-9]\\d{1,14}$'`,
+    ),
+    paymentFlowCheck: check(
+      'payment_flow_length_check',
+      sql`coalesce(array_length(${table.paymentFlow}, 1), 0) <= 5`,
     ),
     ownerIdIdx: index('idx_businesses_owner_id').on(table.ownerId),
     slugIdx: index('idx_businesses_slug').on(table.slug),
@@ -165,11 +192,46 @@ export const formMessages = pgTable(
       'message_text_check',
       sql`char_length(${table.messageText}) >= 10 AND char_length(${table.messageText}) <= 1000`,
     ),
-    businessIdIdx: index('idx_messages_business_id').on(table.businessId),
-    isReadIdx: index('idx_messages_is_read')
+    businessIdIdx: index('idx_form_messages_business_id').on(table.businessId),
+    isReadIdx: index('idx_form_messages_is_read')
       .on(table.businessId, table.isRead)
       .where(sql`${table.isRead} = false`),
-    createdAtIdx: index('idx_messages_created_at').on(table.businessId, table.createdAt.desc()),
+    createdAtIdx: index('idx_form_messages_created_at').on(
+      table.businessId,
+      table.createdAt.desc(),
+    ),
+  }),
+);
+
+// =====================================================
+// TABLE: business_subscriptions
+// =====================================================
+
+export const businessSubscriptions = pgTable(
+  'business_subscriptions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    businessId: uuid('business_id')
+      .notNull()
+      .references(() => businesses.id, { onDelete: 'cascade' }),
+    planType: subscriptionPlanEnum('plan_type').notNull().default('basico'),
+    planStatus: subscriptionStatusEnum('plan_status').notNull().default('inactive'),
+    planStartDate: timestamp('plan_start_date', { withTimezone: true }),
+    planEndDate: timestamp('plan_end_date', { withTimezone: true }),
+    planUpdatedAt: timestamp('plan_updated_at', { withTimezone: true }).notNull().defaultNow(),
+    gatewaySubscriptionId: text('gateway_subscription_id').unique(),
+    gatewayCustomerId: text('gateway_customer_id'),
+    gatewayPlanId: text('gateway_plan_id'),
+    cancelAtPeriodEnd: boolean('cancel_at_period_end').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    businessIdIdx: index('idx_business_subscriptions_business_id').on(table.businessId),
+    gatewaySubIdIdx: index('idx_business_subscriptions_gateway_sub_id').on(
+      table.gatewaySubscriptionId,
+    ),
+    createdAtIdx: index('idx_business_subscriptions_created_at').on(table.createdAt.desc()),
   }),
 );
 
@@ -213,19 +275,20 @@ export const productCategories = pgTable(
       .notNull()
       .references(() => businesses.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
+    slug: text('slug').notNull(),
     imageUrl: text('image_url'),
     displayOrder: integer('display_order').default(0),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    uniqueBusinessCategory: unique('unique_business_category').on(table.businessId, table.name),
+    uniqueBusinessCategory: unique('unique_business_category').on(table.businessId, table.slug),
     nameCheck: check(
       'category_name_check',
       sql`char_length(${table.name}) >= 2 AND char_length(${table.name}) <= 50`,
     ),
     businessIdIdx: index('idx_categories_business_id').on(table.businessId),
-    businessNameIdx: index('idx_categories_business_id_name').on(table.businessId, table.name),
+    businessSlugIdx: index('idx_categories_slug').on(table.businessId, table.slug),
     displayOrderIdx: index('idx_categories_display_order').on(table.businessId, table.displayOrder),
   }),
 );
@@ -257,6 +320,9 @@ export const products = pgTable(
       .notNull()
       .default('NORMAL'),
     brand: text('brand'),
+    slug: text('slug'),
+    seoTitle: text('seo_title'),
+    seoDescription: text('seo_description'),
     shippingInfo: text('shipping_info'),
     displayOrder: integer('display_order').default(0),
     metadata: jsonb('metadata').default({}),
@@ -283,6 +349,8 @@ export const products = pgTable(
     displayOrderIdx: index('idx_products_display_order').on(table.businessId, table.displayOrder),
     createdAtIdx: index('idx_products_created_at').on(table.createdAt.desc()),
     titleSearchIdx: index('idx_products_title_search').on(table.title),
+    uniqueBusinessProductSlug: unique('unique_business_product_slug').on(table.businessId, table.slug),
+    slugIdx: index('idx_products_slug').on(table.businessId, table.slug),
   }),
 );
 
@@ -484,11 +552,19 @@ export const businessesRelations = relations(businesses, ({ one, many }) => ({
   categories: many(productCategories),
   products: many(products),
   chatSessions: many(chatSessions),
+  subscriptions: many(businessSubscriptions),
 }));
 
 export const businessSettingsRelations = relations(businessSettings, ({ one }) => ({
   business: one(businesses, {
     fields: [businessSettings.businessId],
+    references: [businesses.id],
+  }),
+}));
+
+export const businessSubscriptionsRelations = relations(businessSubscriptions, ({ one }) => ({
+  business: one(businesses, {
+    fields: [businessSubscriptions.businessId],
     references: [businesses.id],
   }),
 }));
@@ -574,6 +650,9 @@ export type NewProfile = typeof profiles.$inferInsert;
 
 export type Business = typeof businesses.$inferSelect;
 export type NewBusiness = typeof businesses.$inferInsert;
+
+export type BusinessSubscription = typeof businessSubscriptions.$inferSelect;
+export type NewBusinessSubscription = typeof businessSubscriptions.$inferInsert;
 
 export type BusinessSettings = typeof businessSettings.$inferSelect;
 export type NewBusinessSettings = typeof businessSettings.$inferInsert;

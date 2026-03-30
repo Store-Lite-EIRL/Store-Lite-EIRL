@@ -1,10 +1,10 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable max-lines-per-function */
+
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
 import { Icon } from '@/shared';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   fetchMessages,
   getActiveChatSession,
@@ -13,6 +13,13 @@ import {
 } from '../chat/actions/chatActions';
 import styles from './ChatDialog.module.css';
 import Checkout from './Checkout';
+
+const DEBUG_ABORTS = process.env.NEXT_PUBLIC_DEBUG_ABORTS === '1';
+
+function chatDialogDebug(message: string, payload?: Record<string, unknown>) {
+  if (!DEBUG_ABORTS) return;
+  console.warn('[ChatDialogDebug]', message, payload ?? {});
+}
 
 interface Message {
   id: string;
@@ -29,6 +36,7 @@ interface GuestInfo {
 interface ChatDialogProps {
   businessName: string;
   businessId: string;
+  businessLogo?: string | null;
   onClose: () => void;
 }
 
@@ -36,8 +44,9 @@ function formatTime(date: Date) {
   return date.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
 }
 
-export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProps) {
-  const supabase = createClient();
+export function ChatDialog({ businessName, businessId, businessLogo, onClose }: ChatDialogProps) {
+  const supabase = useMemo(() => createClient(), []);
+  const [guestId, setGuestId] = useState<string>('');
   const [step, setStep] = useState<'intro-name' | 'intro-gender' | 'chat'>('intro-name');
   const [guest, setGuest] = useState<{ name: string; gender: 'male' | 'female' }>({
     name: '',
@@ -61,12 +70,15 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
       storedGuestId = `g-${Math.random().toString(36).substring(2, 15)}`;
       localStorage.setItem('chat_guest_id', storedGuestId);
     }
+    setGuestId(storedGuestId);
 
     // Check if there's a stored session or guest info to skip intro if desired
     const checkActiveSession = async (gId: string) => {
       try {
+        chatDialogDebug('checkActiveSession:start', { businessId, guestId: gId });
         const result = await getActiveChatSession(gId, businessId);
         if (result.success && result.session) {
+          chatDialogDebug('checkActiveSession:found', { sessionId: result.session.id });
           setSessionId(result.session.id);
           setGuest({
             name: result.session.guestName,
@@ -74,6 +86,7 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
           });
           setStep('chat');
         } else {
+          chatDialogDebug('checkActiveSession:none');
           // Fallback to local storage for guest info if no session but name exists
           const storedName = localStorage.getItem('chat_guest_name');
           const storedGender = localStorage.getItem('chat_guest_gender') as
@@ -89,6 +102,7 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
         }
       } finally {
         setIsLoadingSession(false);
+        chatDialogDebug('checkActiveSession:done');
       }
     };
 
@@ -103,8 +117,10 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
   // Fetch messages if sessionId exists and setup real-time
   useEffect(() => {
     if (sessionId) {
+      chatDialogDebug('messagesEffect:start', { sessionId });
       const loadMessages = async () => {
-        const result = await fetchMessages(sessionId);
+        chatDialogDebug('loadMessages:start', { sessionId });
+        const result = await fetchMessages(sessionId, guestId);
         if (result.success && result.messages) {
           setMessages(
             result.messages.map((m) => ({
@@ -115,6 +131,7 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
             })),
           );
           setStep('chat');
+          chatDialogDebug('loadMessages:success', { sessionId, count: result.messages.length });
         }
       };
 
@@ -133,6 +150,10 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
           },
           (payload: any) => {
             const newMessage = payload.new;
+            chatDialogDebug('channel:insert', {
+              sessionId: String(newMessage.session_id),
+              messageId: String(newMessage.id),
+            });
             setMessages((prev) => {
               // Avoid duplicate if it was already added optimistically
               if (prev.find((m) => m.id === newMessage.id)) return prev;
@@ -150,10 +171,11 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
         .subscribe();
 
       return () => {
+        chatDialogDebug('messagesEffect:cleanup', { sessionId });
         supabase.removeChannel(channel);
       };
     }
-  }, [sessionId, supabase]);
+  }, [sessionId, supabase, guestId]);
 
   // Focus input when chat opens
   useEffect(() => {
@@ -220,7 +242,7 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
     try {
       const result = await sendMessage({
         sessionId,
-        isFromStore: false,
+        guestId,
         content: text,
       });
 
@@ -230,13 +252,13 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
           prev.map((m) =>
             m.id === tempId
               ? {
-                  id: result.message!.id,
-                  text: result.message!.content,
-                  isFromStore: !!result.message!.isFromStore,
-                  createdAt: result.message!.createdAt
-                    ? new Date(result.message!.createdAt)
-                    : new Date(),
-                }
+                id: result.message!.id,
+                text: result.message!.content,
+                isFromStore: !!result.message!.isFromStore,
+                createdAt: result.message!.createdAt
+                  ? new Date(result.message!.createdAt)
+                  : new Date(),
+              }
               : m,
           ),
         );
@@ -254,7 +276,7 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
     } finally {
       setIsSending(false);
     }
-  }, [newMessage, sessionId, isSending]);
+  }, [newMessage, sessionId, isSending, guestId]);
 
   const handlePaymentSuccess = useCallback(async () => {
     setIsCheckoutOpen(false);
@@ -276,7 +298,7 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
     try {
       const result = await sendMessage({
         sessionId,
-        isFromStore: false,
+        guestId,
         content: alertMsg,
       });
 
@@ -285,13 +307,13 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
           prev.map((m) =>
             m.id === tempId
               ? {
-                  id: result.message!.id,
-                  text: result.message!.content,
-                  isFromStore: !!result.message!.isFromStore,
-                  createdAt: result.message!.createdAt
-                    ? new Date(result.message!.createdAt)
-                    : new Date(),
-                }
+                id: result.message!.id,
+                text: result.message!.content,
+                isFromStore: !!result.message!.isFromStore,
+                createdAt: result.message!.createdAt
+                  ? new Date(result.message!.createdAt)
+                  : new Date(),
+              }
               : m,
           ),
         );
@@ -299,7 +321,7 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
     } catch (error) {
       console.error('Error recording payment success message:', error);
     }
-  }, [sessionId]);
+  }, [sessionId, guestId]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -312,29 +334,25 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
     <div className={styles.dialog} role="dialog" aria-label="Chat con la tienda">
       {/* Header */}
       <div className={styles.header}>
-        <div className={styles.headerAvatar}>store</div>
+        <div className={styles.headerAvatar}>
+          {businessLogo ? (
+            <img src={businessLogo} alt={businessName} className={styles.businessLogo} />
+          ) : (
+            <span className="material-symbols-outlined">store</span>
+          )}
+        </div>
         <div className={styles.headerText}>
           <p className={styles.headerTitle}>{businessName}</p>
           <p className={styles.headerSubtitle}>
             {isLoadingSession
               ? 'Cargando...'
               : step === 'chat'
-                ? `${guest.name} · en línea`
-                : 'Cuéntanos quién eres'}
+                ? `En línea`
+                : 'Paso ' + (step === 'intro-name' ? '1/2' : '2/2')}
           </p>
         </div>
-        {step === 'chat' && (
-          <button
-            className={styles.payHeaderBtn}
-            onClick={() => setIsCheckoutOpen(true)}
-            aria-label="Pagar"
-          >
-            <span className="material-symbols-outlined">credit_card</span>
-            <span className={styles.payHeaderBtnText}>Pagar</span>
-          </button>
-        )}
         <button className={styles.closeBtn} onClick={onClose} aria-label="Cerrar chat">
-          close
+          <span className="material-symbols-outlined">close</span>
         </button>
       </div>
 
@@ -357,9 +375,8 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
                 messages.map((msg) => (
                   <div key={msg.id}>
                     <div
-                      className={`${styles.bubble} ${
-                        msg.isFromStore ? styles.bubbleStore : styles.bubbleUser
-                      }`}
+                      className={`${styles.bubble} ${msg.isFromStore ? styles.bubbleStore : styles.bubbleUser
+                        }`}
                     >
                       {msg.text}
                     </div>
@@ -386,6 +403,7 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
                 onKeyDown={handleKeyDown}
                 maxLength={500}
                 disabled={isSending}
+                autoFocus
               />
               <button
                 className={styles.sendBtn}
@@ -410,11 +428,11 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
                   </label>
                   <input
                     id="chat-name"
-                    className={styles.input}
                     type="text"
-                    placeholder="Ej: María García"
+                    placeholder="Escribe tu nombre..."
                     value={guest.name}
-                    onChange={(e) => setGuest((g) => ({ ...g, name: e.target.value }))}
+                    onChange={(e) => setGuest({ ...guest, name: e.target.value })}
+                    className={styles.input}
                     onKeyDown={(e) =>
                       e.key === 'Enter' && guest.name.trim() && setStep('intro-gender')
                     }
@@ -436,32 +454,24 @@ export function ChatDialog({ businessName, businessId, onClose }: ChatDialogProp
                 <p className={styles.stepTitle}>¡Hola {guest.name}! ¿Cuál es tu género?</p>
                 <div className={styles.formGroup}>
                   <div className={styles.genderGroup}>
-                    <div
-                      role="button"
-                      tabIndex={0}
+                    <button
+                      type="button"
                       className={`${styles.genderOption} ${guest.gender === 'male' ? styles.genderOptionSelected : ''}`}
                       onClick={() => setGuest((g) => ({ ...g, gender: 'male' }))}
-                      onKeyDown={(e) =>
-                        e.key === 'Enter' && setGuest((g) => ({ ...g, gender: 'male' }))
-                      }
                       aria-pressed={guest.gender === 'male' ? 'true' : 'false'}
                     >
                       <span className={styles.genderIcon}>man</span>
                       Hombre
-                    </div>
-                    <div
-                      role="button"
-                      tabIndex={0}
+                    </button>
+                    <button
+                      type="button"
                       className={`${styles.genderOption} ${guest.gender === 'female' ? styles.genderOptionSelected : ''}`}
                       onClick={() => setGuest((g) => ({ ...g, gender: 'female' }))}
-                      onKeyDown={(e) =>
-                        e.key === 'Enter' && setGuest((g) => ({ ...g, gender: 'female' }))
-                      }
                       aria-pressed={guest.gender === 'female' ? 'true' : 'false'}
                     >
                       <span className={styles.genderIcon}>woman</span>
                       Mujer
-                    </div>
+                    </button>
                   </div>
                 </div>
                 <div className={styles.buttonRow}>

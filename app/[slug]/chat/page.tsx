@@ -1,8 +1,9 @@
 import { db } from '@/core/database/client';
 import { businesses } from '@/core/database/schema';
+import { createClient } from '@/lib/supabase/server';
 import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { ChatClient } from './components/ChatClient';
 
 interface Props {
@@ -31,10 +32,20 @@ export default async function ChatPage({ params }: Props) {
   const { slug } = await params;
   const business = await db.query.businesses.findFirst({
     where: eq(businesses.slug, slug),
+    columns: { id: true, name: true, description: true, ownerId: true },
   });
 
   if (!business) {
     return notFound();
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user || user.id !== business.ownerId) {
+    redirect('/list-business');
   }
 
   return (

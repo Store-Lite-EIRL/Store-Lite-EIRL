@@ -3,6 +3,13 @@ out
 build
 dist
 node_modules
+.engram
+.agent-teams
+.guardian
+.ai-tools
+.kilocode
+.aider.chat.history.md
+.aider.input.history
 pnpm-lock.yaml
 package-lock.json
 yarn.lock

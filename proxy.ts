@@ -1,26 +1,26 @@
 // =====================================================
-// NEXT.JS MIDDLEWARE
+// NEXT.JS PROXY (Next.js 16)
 // =====================================================
-// Description: Middleware for route protection and session refresh
+// Description: Proxy (formerly Middleware) for route protection and session refresh
 // Usage: Automatically runs on all routes except static files
-// =====================================================
+// =====================================
 
 import { type NextRequest } from 'next/server';
-import { updateSession } from './src/lib/supabase/middleware';
+import { updateProxy } from './src/lib/supabase/proxy';
 
 /**
- * Middleware function that handles:
+ * Proxy function (Next.js 16 convention)
+ * Handles:
  * - Session refresh
  * - Route protection
  * - Redirects for authenticated/unauthenticated users
  */
-export async function middleware(request: NextRequest) {
-  return await updateSession(request);
+export async function proxy(request: NextRequest) {
+  return await updateProxy(request);
 }
 
 /**
  * Matcher configuration
- * Specifies which routes the middleware should run on
  */
 export const config = {
   matcher: [

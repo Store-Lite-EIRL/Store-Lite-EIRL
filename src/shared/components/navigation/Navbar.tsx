@@ -1,94 +1,70 @@
 'use client';
 
+import { createClient } from '@/lib/supabase/client';
 import '@/styles/components/navbar.css';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Icon } from '../ui';
-import { getBusinessBySlug } from './actions';
 
 interface NavbarProps {
-  onLogout?: () => void;
-  onCloseStore?: () => void;
   isCollapsed: boolean;
   onToggle: () => void;
+  planName?: string;
 }
 
-interface BusinessData {
-  id: string;
-  name: string;
-  slug: string;
-  coverImageUrl: string | null;
-  logoUrl: string | null;
-  storeType: string | null;
-}
-
-// ... interface definitions ...
-
-export default function Navbar({ onLogout, onCloseStore, isCollapsed, onToggle }: NavbarProps) {
+export default function Navbar({
+  isCollapsed,
+  onToggle,
+  planName = 'Básico',
+}: NavbarProps) {
   const pathname = usePathname();
   const params = useParams();
   const router = useRouter();
   const slug = params?.slug as string;
-  const [businessData, setBusinessData] = useState<BusinessData | null>(null);
 
-  const [timestamp, setTimestamp] = useState(0);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchBusiness = () => {
-      if (slug) {
-        getBusinessBySlug(slug)
-          .then((data) => {
-            if (isMounted && data) {
-              setBusinessData(data);
-              setTimestamp(Date.now());
-            }
-            return null;
-          })
-          .catch((error) => {
-            if (isMounted && error?.name !== 'AbortError') {
-              console.error('Error fetching business data:', error);
-            }
-          });
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
       }
     };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
-    fetchBusiness();
-
+  useEffect(() => {
     if (slug) {
       localStorage.setItem('selectedBusinessSlug', slug);
     }
-
-    // Listen for updates from other components (e.g. Hero)
-    window.addEventListener('business-data-updated', fetchBusiness);
-    return () => {
-      isMounted = false;
-      window.removeEventListener('business-data-updated', fetchBusiness);
-    };
   }, [slug]);
 
-  const handleLogout = () => {
-    if (onLogout) {
-      onLogout();
+  const handleLogout = async () => {
+    const supabase = createClient();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error al cerrar sesión:', error);
+    } else {
+      router.push('/login');
     }
   };
 
   const handleCloseStore = () => {
-    if (onCloseStore) {
-      onCloseStore();
-    } else {
-      document.cookie = 'selected_business_slug=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      localStorage.removeItem('selectedBusinessSlug');
-      router.push('/list-business');
-    }
+    document.cookie = 'selected_business_slug=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    localStorage.removeItem('selectedBusinessSlug');
+    router.push('/list-business');
   };
 
   const navItems = [
     { id: 'home', icon: 'home', label: 'Inicio', path: `/${slug}` },
-    { id: 'storage', icon: 'package_2', label: 'Almacén', path: `/${slug}/storage` },
     { id: 'chat', icon: 'chat', label: 'Mensajes', path: `/${slug}/chat` },
+    { id: 'storage', icon: 'package_2', label: 'Almacén', path: `/${slug}/storage` },
+    { id: 'dashboard', icon: 'dashboard', label: 'Dashboard', path: `/${slug}/dashboard` },
     { id: 'settings', icon: 'settings', label: 'Ajustes', path: `/${slug}/settings` },
   ];
 
@@ -99,7 +75,6 @@ export default function Navbar({ onLogout, onCloseStore, isCollapsed, onToggle }
     if (path !== `/${slug}` && pathname.startsWith(path)) {
       return true;
     }
-    // Specific case for storage: keep it active when viewing a product
     if (path === `/${slug}/storage` && pathname.startsWith(`/${slug}/product/`)) {
       return true;
     }
@@ -107,25 +82,25 @@ export default function Navbar({ onLogout, onCloseStore, isCollapsed, onToggle }
   };
 
   return (
-    <nav className={`navbar ${isCollapsed ? '' : 'navbar--expanded'}`}>
+    <nav className={`navbar ${isCollapsed ? 'navbar--collapsed' : 'navbar--expanded'}`}>
       <div className="navbar__content">
-        {/* Toggle Button at Top */}
-        <button
-          className="navbar__item navbar__item--toggle"
-          onClick={onToggle}
-          aria-label={isCollapsed ? 'Expandir' : 'Contraer'}
-          title={isCollapsed ? 'Expandir' : 'Contraer'}
-          suppressHydrationWarning
-        >
-          <Icon slot="icon" size={24} className="navbar__item-icon">
-            {isCollapsed ? 'input' : 'output'}
-          </Icon>
+        <div className="navbar__header-actions">
           {!isCollapsed && (
-            <span className="navbar__item-label" suppressHydrationWarning>
-              Contraer
-            </span>
+            <div className="navbar__plan-badge">
+              <span className="navbar__plan-label">{planName}</span>
+            </div>
           )}
-        </button>
+          <button
+            className={`navbar__item--toggle-small ${isCollapsed ? 'collapsed' : ''}`}
+            onClick={onToggle}
+            aria-label={isCollapsed ? 'Expandir' : 'Contraer'}
+            title={isCollapsed ? 'Expandir' : 'Contraer'}
+          >
+            <Icon size={isCollapsed ? 24 : 18}>
+              {isCollapsed ? 'chevron_right' : 'chevron_left'}
+            </Icon>
+          </button>
+        </div>
 
         <div className="navbar__divider" />
 
@@ -154,41 +129,35 @@ export default function Navbar({ onLogout, onCloseStore, isCollapsed, onToggle }
         <div className="navbar__divider" />
 
         <div className="navbar__actions">
-          {/* Close Store Button */}
-          <button
-            className="navbar__item navbar__item--close-store"
-            onClick={handleCloseStore}
-            aria-label="Cerrar tienda"
-            title="Cerrar tienda"
-            suppressHydrationWarning
-          >
-            <md-icon className="navbar__item-icon" suppressHydrationWarning>
-              storefront
-            </md-icon>
-            {!isCollapsed && (
-              <span className="navbar__item-label" suppressHydrationWarning>
-                Cerrar Tienda
-              </span>
-            )}
-          </button>
+          <div className="navbar__account-actions" ref={dropdownRef}>
+            <button
+              className="navbar__item navbar__item--account"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              title="Salir"
+            >
+              <Icon size={24} className="navbar__item-icon">
+                login
+              </Icon>
+              {!isCollapsed && (
+                <span className="navbar__item-label" suppressHydrationWarning>
+                  Salir
+                </span>
+              )}
+            </button>
 
-          {/* Logout Button */}
-          <button
-            className="navbar__item navbar__item--logout"
-            onClick={handleLogout}
-            aria-label="Cerrar sesión"
-            title="Cerrar sesión"
-            suppressHydrationWarning
-          >
-            <md-icon className="navbar__item-icon" suppressHydrationWarning>
-              logout
-            </md-icon>
-            {!isCollapsed && (
-              <span className="navbar__item-label" suppressHydrationWarning>
-                Cerrar Sesión
-              </span>
+            {isDropdownOpen && (
+              <div className="navbar__dropdown-menu">
+                <button onClick={handleCloseStore} className="navbar__dropdown-item">
+                  <Icon size={20}>store</Icon>
+                  <span className="navbar__dropdown-label">Cerrar tienda</span>
+                </button>
+                <button onClick={handleLogout} className="navbar__dropdown-item">
+                  <Icon size={20}>logout</Icon>
+                  <span className="navbar__dropdown-label">Cerrar sesión</span>
+                </button>
+              </div>
             )}
-          </button>
+          </div>
         </div>
       </div>
     </nav>

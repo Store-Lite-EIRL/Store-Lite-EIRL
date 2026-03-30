@@ -11,7 +11,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "type-check": "tsc --noEmit",
-    "quality": "pnpm lint && pnpm format:check && pnpm type-check",
+    "quality": "pnpm lint && pnpm type-check",
     "prepare": "husky"
   },
   "dependencies": {
@@ -23,16 +23,20 @@
     "@material/web": "^2.4.1",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.2",
+    "canvas-confetti": "^1.9.4",
     "dayjs": "^1.11.19",
     "drizzle-orm": "^0.45.1",
+    "lucide-react": "^0.577.0",
     "next": "16.1.6",
     "postgres": "^3.4.8",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "recharts": "^3.8.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

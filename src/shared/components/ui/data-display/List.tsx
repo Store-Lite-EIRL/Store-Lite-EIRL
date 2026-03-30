@@ -31,7 +31,7 @@ export const ListItem = ({
   ...props
 }: ListItemProps) => {
   return (
-    <md-list-item type={type} {...props}>
+    <md-list-item type={type || 'text'} suppressHydrationWarning {...props}>
       {headline && <div slot="headline">{headline}</div>}
       {supportingText && <div slot="supporting-text">{supportingText}</div>}
       {trailingSupportingText && (

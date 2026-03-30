@@ -1,9 +1,11 @@
 'use server';
 
 import { db } from '@/core/database/client';
-import { businesses, productCategories, productMedia, products } from '@/core/database/schema';
+import { productCategories, productMedia, products } from '@/core/database/schema';
+import { getUniqueCategorySlug } from '@/shared/utils/categorySlug';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { requireOwnedBusinessBySlug } from './authz';
 
 interface ImportProductInput {
   name: string;
@@ -30,14 +32,7 @@ export async function importProductsBatch(
       imageUrl: p.imageUrl?.trim(),
     }));
 
-    const business = await db.query.businesses.findFirst({
-      where: eq(businesses.slug, businessSlug),
-      columns: { id: true },
-    });
-
-    if (!business) {
-      throw new Error('Negocio no encontrado');
-    }
+    const { businessId } = await requireOwnedBusinessBySlug(businessSlug);
 
     const uniqueCategoryNames = Array.from(
       new Set(normalizedProductsList.map((p) => p.category).filter(Boolean)),
@@ -47,9 +42,11 @@ export async function importProductsBatch(
 
     if (uniqueCategoryNames.length > 0) {
       const existingCategories = await db.query.productCategories.findMany({
-        where: eq(productCategories.businessId, business.id),
-        columns: { id: true, name: true },
+        where: eq(productCategories.businessId, businessId),
+        columns: { id: true, name: true, slug: true },
       });
+
+      const usedSlugs = new Set(existingCategories.map((c) => c.slug));
 
       for (const cat of existingCategories) {
         categoryMap.set(cat.name, cat.id);
@@ -62,8 +59,9 @@ export async function importProductsBatch(
           .insert(productCategories)
           .values(
             toCreate.map((name) => ({
-              businessId: business.id,
+              businessId,
               name,
+              slug: getUniqueCategorySlug(name, usedSlugs),
             })),
           )
           .returning({ id: productCategories.id, name: productCategories.name });
@@ -75,7 +73,7 @@ export async function importProductsBatch(
     }
 
     const newProductsData = normalizedProductsList.map((p) => ({
-      businessId: business.id,
+      businessId,
       categoryId: p.category ? categoryMap.get(p.category) || null : null,
       title: p.name,
       description: p.description,

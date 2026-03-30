@@ -24,11 +24,25 @@ export const Dialog = ({ id, className, children, open, onClose, ...props }: Dia
     const dialog = dialogRef.current;
     if (dialog) {
       if (open) {
-        dialog.show();
+        if (typeof dialog.show === 'function') {
+          dialog.show();
+        } else {
+          dialog.setAttribute('open', 'true');
+        }
+        document.body.style.overflow = 'hidden';
       } else {
-        dialog.close();
+        if (typeof dialog.close === 'function') {
+          dialog.close();
+        } else {
+          dialog.removeAttribute('open');
+        }
+        document.body.style.overflow = '';
       }
     }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [open]);
 
   React.useEffect(() => {

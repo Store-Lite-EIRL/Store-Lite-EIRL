@@ -16,9 +16,17 @@
   overflow: hidden; /* Ensure gradient doesn't overflow */
 }
 
-/* Gradient removed as per user request to remove 'scroll shadow' */
+/* Gradient for landing page look and text readability */
 .heroContainer::after {
-  display: none;
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0.9) 100%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .menuContainer {

@@ -1,0 +1,489 @@
+.dashboardRoot {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  color: var(--md-sys-color-on-background);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  gap: 1rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  color: var(--md-sys-color-on-primary-container);
+  cursor: pointer;
+  --md-icon-button-icon-color: var(--md-sys-color-on-primary-container);
+  --md-icon-button-hover-icon-color: var(--md-sys-color-on-primary-container);
+  --md-icon-button-focus-icon-color: var(--md-sys-color-on-primary-container);
+  --md-icon-button-pressed-icon-color: var(--md-sys-color-on-primary-container);
+  --md-filled-tonal-icon-button-container-color: var(--md-sys-color-primary-container);
+  --md-filled-tonal-icon-button-icon-color: var(--md-sys-color-on-primary-container);
+  --md-filled-tonal-icon-button-hover-icon-color: var(--md-sys-color-on-primary-container);
+  --md-filled-tonal-icon-button-focus-icon-color: var(--md-sys-color-on-primary-container);
+  --md-filled-tonal-icon-button-pressed-icon-color: var(--md-sys-color-on-primary-container);
+}
+
+.iconButton md-icon {
+  color: var(--md-sys-color-on-primary-container);
+  font-size: 22px;
+}
+
+.summaryCards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.card {
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.cardInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cardLabel {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.cardValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin-top: 0.25rem;
+}
+
+.iconWrapper {
+  display: inline-flex;
+  padding: 0.5rem;
+  border-radius: 8px;
+}
+
+.iconWrapper md-icon {
+  font-size: 20px;
+}
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+}
+
+.chartCard {
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 170px;
+}
+
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+.chartTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.lineChartArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.chartSvg {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 4.2;
+}
+
+.gridLine {
+  stroke: color-mix(in srgb, var(--md-sys-color-outline-variant) 65%, transparent);
+  stroke-width: 1;
+}
+
+.axisLabel {
+  fill: var(--md-sys-color-on-surface-variant);
+  font-size: 11px;
+  font-family: inherit;
+}
+
+.primaryLine,
+.secondaryLine {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.primaryLine,
+.primaryDot,
+.primarySwatch {
+  stroke: #3b82f6;
+  fill: #3b82f6;
+}
+
+.secondaryLine,
+.secondaryDot,
+.secondarySwatch {
+  stroke: #8b5cf6;
+  fill: #8b5cf6;
+}
+
+.primaryDot,
+.secondaryDot {
+  stroke: var(--md-sys-color-surface-container);
+  stroke-width: 2;
+}
+
+.axisTerms {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  font-size: 0.68rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.seriesLegend {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.78rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.seriesLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.legendSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.donutContainer {
+  flex: 1;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(122px, 40%) 1fr;
+  align-items: start;
+  justify-items: start;
+  gap: 0.75rem;
+}
+
+.donutChart {
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.donutHole {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 72px;
+  height: 72px;
+  background: var(--md-sys-color-surface-container);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.donutTotal {
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.donutHint {
+  font-size: 0.66rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.donutLegend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  width: 100%;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legendText {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.72rem;
+}
+
+.legendLabel {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.legendValue {
+  color: var(--md-sys-color-on-surface);
+  font-weight: 600;
+}
+
+.controls {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.chartSelect {
+  min-width: 144px;
+  --md-outlined-select-text-field-container-shape: 8px;
+  --md-outlined-select-text-field-container-color: var(--md-sys-color-surface-container-low);
+  --md-outlined-select-text-field-hover-state-layer-color: var(--md-sys-color-surface-container);
+  --md-outlined-select-text-field-input-text-size: 0.8rem;
+  --md-outlined-select-text-field-label-text-size: 0.72rem;
+}
+
+.tablesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.tableCard {
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.tableTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  text-align: left;
+}
+
+.table th {
+  color: var(--md-sys-color-on-surface-variant);
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  font-weight: 500;
+}
+
+.table td {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.avatarName {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge.approved {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10B981;
+}
+
+.badge.reviewing {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3B82F6;
+}
+
+.badge.missing {
+  background: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
+}
+
+.badge.submitted {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.viewAll {
+  background: none;
+  border: none;
+  color: var(--md-sys-color-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+@media (max-width: 1200px) {
+  .summaryCards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .chartsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .donutContainer {
+    grid-template-columns: minmax(120px, 34%) 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .tablesGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .cardValue {
+    font-size: 1.45rem;
+  }
+
+  .chartCard,
+  .tableCard {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 700px) {
+  .header {
+    align-items: flex-start;
+  }
+
+  .title {
+    font-size: 1.05rem;
+    line-height: 1.35;
+  }
+
+  .chartHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+  }
+
+  .controls {
+    width: 100%;
+    gap: 0.45rem;
+  }
+
+  .chartSelect {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .donutContainer {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .axisTerms {
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .summaryCards {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .table {
+    min-width: 620px;
+  }
+}

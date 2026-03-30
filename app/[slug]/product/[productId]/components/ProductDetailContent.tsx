@@ -1,7 +1,11 @@
+import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businesses } from '@/core/database/schema';
+import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
+import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
+
 import { notFound } from 'next/navigation';
 import { getProductById } from '../../../storage/actions';
 import {
@@ -18,6 +22,7 @@ interface ProductDetailContentProps {
   slug: string;
   productId: string;
   isModal?: boolean;
+  hasPaymentGateway?: boolean;
 }
 
 export default async function ProductDetailContent({
@@ -25,15 +30,33 @@ export default async function ProductDetailContent({
   productId,
   isModal = false,
 }: ProductDetailContentProps) {
-  // Run cookies fetch + both DB queries in parallel
-  const [cookieStore, productResult, businessDetail] = await Promise.all([
-    cookies(),
+  const cookieStore = await cookies();
+  const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
+    cookies: {
+      get(name: string) {
+        return cookieStore.get(name)?.value;
+      },
+    },
+  });
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const [productResult, businessDetail] = await Promise.all([
     getProductById(slug, productId),
     db.query.businesses.findFirst({ where: eq(businesses.slug, slug) }),
   ]);
 
-  const selectedSlug = cookieStore.get('selected_business_slug')?.value;
-  const isOwner = selectedSlug === slug;
+  if (productResult.error || !productResult.product || !businessDetail) {
+    return notFound();
+  }
+
+  // Obtenemos los entitlements centrales para este negocio
+  const entitlements = await getBusinessEntitlements(businessDetail.id);
+  const { hasPaymentGateway } = entitlements;
+
+  const isOwner = Boolean(user?.id && businessDetail?.ownerId === user.id);
 
   if (productResult.error || !productResult.product || !businessDetail) {
     return notFound();
@@ -94,7 +117,11 @@ export default async function ProductDetailContent({
             </p>
           </div>
 
-          <PurchaseActions product={product} businessSlug={slug} />
+          <PurchaseActions
+            product={product}
+            business={businessDetail}
+            hasPaymentGateway={hasPaymentGateway}
+          />
 
           <div className={styles.accordion}>
             <div className={styles.accordionHeader}>
@@ -176,7 +203,7 @@ export default async function ProductDetailContent({
               <div key={p.id} className={styles.productCardMock}>
                 <div
                   className={styles.cardImagePlaceholder}
-                  style={{ backgroundImage: `url(${p.img})` }}
+                  style={{ backgroundImage: `url('${p.img}')` }}
                 />
                 <p className={styles.cardTitle}>{p.name}</p>
                 <p className={styles.cardPrice}>{p.price}</p>
@@ -208,12 +235,59 @@ export default async function ProductDetailContent({
           </div>
         </div>
       </section> */}
-      <section>
-        <h1>Proceso de compra</h1>
-        <p>Paso 1: Deposita el 50% del producto</p>
-        <p>Paso 2: Envíanos el comprobante de pago</p>
-        <p>Paso 3: Te enviaremos el producto</p>
-        <p>Paso 4: Paga el resto al recibir el producto</p>
+      <section className={styles.purchaseProcessSection}>
+        <h2 className={styles.purchaseProcessTitle}>¿Cómo comprar?</h2>
+        <div className={styles.processSteps}>
+          {hasPaymentGateway ? (
+            <>
+              <div className={styles.processStep}>
+                <span className={styles.stepNumber}>1</span>
+                <div>
+                  <p className={styles.stepTitle}>Paga en línea</p>
+                  <p className={styles.stepDesc}>Completa tu pago seguro con Culqi, Plin o Yape.</p>
+                </div>
+              </div>
+              <div className={styles.processStep}>
+                <span className={styles.stepNumber}>2</span>
+                <div>
+                  <p className={styles.stepTitle}>Confirmación</p>
+                  <p className={styles.stepDesc}>Recibirás una confirmación inmediata por WhatsApp y Email.</p>
+                </div>
+              </div>
+              <div className={styles.processStep}>
+                <span className={styles.stepNumber}>3</span>
+                <div>
+                  <p className={styles.stepTitle}>Entrega</p>
+                  <p className={styles.stepDesc}>Despachamos tu pedido en un plazo máximo de 24-48 horas.</p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className={styles.processStep}>
+                <span className={styles.stepNumber}>1</span>
+                <div>
+                  <p className={styles.stepTitle}>Agrega al carrito</p>
+                  <p className={styles.stepDesc}>Añade tus productos y presiona &quot;Contactar Vendedor&quot;.</p>
+                </div>
+              </div>
+              <div className={styles.processStep}>
+                <span className={styles.stepNumber}>2</span>
+                <div>
+                  <p className={styles.stepTitle}>Coordinación Directa</p>
+                  <p className={styles.stepDesc}>Te atenderemos vía WhatsApp para definir el método de pago y entrega.</p>
+                </div>
+              </div>
+              <div className={styles.processStep}>
+                <span className={styles.stepNumber}>3</span>
+                <div>
+                  <p className={styles.stepTitle}>Pago y Envío</p>
+                  <p className={styles.stepDesc}>Aceptamos transferencias y pago contra entrega según el vendedor.</p>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </section>
 
       {/* BEGIN: Business Contact Info Section */}

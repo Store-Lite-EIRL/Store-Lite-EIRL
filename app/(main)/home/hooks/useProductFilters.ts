@@ -1,6 +1,15 @@
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
 import { useMemo, useState } from 'react';
 
+export interface BrandFilterOption {
+  id: string;
+  label: string;
+}
+
+function normalizeBrand(value: string | null | undefined): string {
+  return (value ?? '').trim().toLowerCase();
+}
+
 export function useProductFilters(initialProducts: ProductWithRelations[]) {
   // calculate min/max possible prices from dataset
   const { absoluteMin, absoluteMax } = useMemo(() => {
@@ -29,6 +38,21 @@ export function useProductFilters(initialProducts: ProductWithRelations[]) {
   const [currentMaxPrice, setCurrentMaxPrice] = useState(absoluteMax);
   const [showDiscountedOnly, setShowDiscountedOnly] = useState(false);
 
+  const brandOptions = useMemo<BrandFilterOption[]>(() => {
+    const unique = new Map<string, string>();
+
+    for (const product of initialProducts) {
+      const rawBrand = (product.brand ?? '').trim();
+      const key = normalizeBrand(rawBrand);
+      if (!key || unique.has(key)) continue;
+      unique.set(key, rawBrand);
+    }
+
+    return Array.from(unique.entries())
+      .map(([id, label]) => ({ id, label }))
+      .sort((a, b) => a.label.localeCompare(b.label, 'es', { sensitivity: 'base' }));
+  }, [initialProducts]);
+
   const filteredProducts = useMemo(() => {
     let result = [...initialProducts];
 
@@ -41,9 +65,7 @@ export function useProductFilters(initialProducts: ProductWithRelations[]) {
     }
 
     if (selectedBrands.length > 0) {
-      result = result.filter((p) =>
-        selectedBrands.some((brand) => p.title.toLowerCase().includes(brand.toLowerCase())),
-      );
+      result = result.filter((p) => selectedBrands.includes(normalizeBrand(p.brand)));
     }
 
     if (showDiscountedOnly) {
@@ -115,6 +137,7 @@ export function useProductFilters(initialProducts: ProductWithRelations[]) {
     setCurrentMaxPrice,
     showDiscountedOnly,
     setShowDiscountedOnly,
+    brandOptions,
     filteredProducts,
     hasActiveFilters,
     clearFilters,

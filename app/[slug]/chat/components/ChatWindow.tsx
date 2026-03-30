@@ -32,8 +32,6 @@ export function ChatWindow({
   searchQuery,
   onSearchChange,
   onDeleteChat,
-  onShareChat,
-  isShareConfirmed,
   onBack,
   slug,
   isLoading = false,
@@ -216,9 +214,6 @@ export function ChatWindow({
           <div className={`${styles.headerActions} ${isSearchVisible ? styles.actionsHidden : ''}`}>
             <IconButton variant="standard" aria-label="Buscar en chat" onClick={openSearchBar}>
               <Icon>search</Icon>
-            </IconButton>
-            <IconButton variant="standard" aria-label="Compartir chat" onClick={onShareChat}>
-              <Icon>{isShareConfirmed ? 'check' : 'share'}</Icon>
             </IconButton>
             <IconButton variant="standard" aria-label="Eliminar chat" onClick={onDeleteChat}>
               <Icon>delete</Icon>

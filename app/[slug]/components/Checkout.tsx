@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './Checkout.module.css';
 
 interface CheckoutProps {
@@ -14,6 +15,11 @@ export default function Checkout({ totalAmount, productName, onSuccess, onCancel
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'yape'>('card');
   const [email, setEmail] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handlePayment = async () => {
     if (!email) {
@@ -48,9 +54,17 @@ export default function Checkout({ totalAmount, productName, onSuccess, onCancel
     }
   };
 
-  return (
-    <div className={styles.checkoutOverlay}>
-      <div className={styles.checkoutModal}>
+  if (!mounted) return null;
+
+  return createPortal(
+    <div
+      className={styles.checkoutOverlay}
+      onClick={(e) => {
+        e.stopPropagation();
+        onCancel();
+      }}
+    >
+      <div className={styles.checkoutModal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <h2 className={styles.title}>Completar Pago</h2>
           <button className={styles.closeBtn} onClick={onCancel}>
@@ -143,6 +157,7 @@ export default function Checkout({ totalAmount, productName, onSuccess, onCancel
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -1,0 +1,22 @@
+.ownerActionRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.addProductButton {
+  --md-filled-button-container-height: 44px;
+  --md-filled-button-label-text-size: 0.95rem;
+  --md-filled-button-label-text-font: var(--mio-theme-text-font-family), sans-serif;
+}
+
+@media (max-width: 768px) {
+  .ownerActionRow {
+    justify-content: stretch;
+  }
+
+  .addProductButton {
+    width: 100%;
+  }
+}

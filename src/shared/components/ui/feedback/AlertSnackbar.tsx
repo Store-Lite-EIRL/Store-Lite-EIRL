@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon } from '../data-display';
 
 interface AlertSnackbarProps {
@@ -41,6 +42,11 @@ export const AlertSnackbar: React.FC<AlertSnackbarProps> = ({
   const [isVisible, setIsVisible] = useState(open);
   const [isClosing, setIsClosing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleClose = useCallback(() => {
     setIsClosing(true);
@@ -74,7 +80,7 @@ export const AlertSnackbar: React.FC<AlertSnackbarProps> = ({
     }
   }, [open, autoCloseDuration, handleClose]);
 
-  if (!isVisible) {
+  if (!isVisible || !mounted) {
     return null;
   }
 
@@ -132,7 +138,7 @@ export const AlertSnackbar: React.FC<AlertSnackbarProps> = ({
     return 'translateY(20px)';
   };
 
-  return (
+  return createPortal(
     <div
       className={`alert-snackbar ${isClosing ? 'closing' : ''} ${className}`}
       style={{
@@ -239,6 +245,7 @@ export const AlertSnackbar: React.FC<AlertSnackbarProps> = ({
           }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 };

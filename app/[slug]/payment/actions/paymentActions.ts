@@ -1,31 +1,14 @@
 'use server';
 
-/**
- * paymentActions.ts
- *
- * Server Actions for Culqi payment processing.
- * All actions in this file run exclusively on the server.
- *
- * Flow:
- *  1. Client tokenizes card/Yape data with Culqi → gets token_id
- *  2. Client calls processPayment(token_id, ...) → Server Action
- *  3. Server Action calls Culqi /v2/charges with the SECRET key (never exposed)
- *  4. Server Action creates a Payment record in DB (Supabase/Drizzle)
- *  5. Server Action returns Success/Error to client
- */
-
 import { db } from '@/core/database/client';
 import { businesses, payments, products } from '@/core/database/schema';
+import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { createClient } from '@/lib/supabase/server';
-import { eq } from 'drizzle-orm';
+import { and, eq, gt, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { createHash, randomBytes } from 'node:crypto';
 
 const CULQI_CHARGE_URL = 'https://api.culqi.com/v2/charges';
-
-// ============================================================
-// TYPES
-// ============================================================
 
 export type PaymentMethod = 'card' | 'yape';
 
@@ -36,7 +19,6 @@ export interface ProcessPaymentInput {
   paymentMethod: PaymentMethod;
   buyerEmail: string;
   buyerPhone?: string;
-  /** Amount in soles (e.g., 49.99). Will be converted to cents internally. */
   amountSoles: number;
   currency?: string;
 }
@@ -49,41 +31,23 @@ export interface ProcessPaymentResult {
   error?: string;
 }
 
-// ============================================================
-// HELPERS
-// ============================================================
-
-/** Generates a 10-digit delivery confirmation code */
 function generateDeliveryCode(): string {
   const bytes = randomBytes(5);
-  // Reduce each byte to 0-9 and pad to 10 digits
   return Array.from(bytes)
     .map((b) => b % 10)
     .join('');
 }
 
-/** Creates a SHA-256 hash of the delivery code */
 function hashDeliveryCode(code: string): string {
   return createHash('sha256').update(code).digest('hex');
 }
 
-/** Computes the delivery code expiration: 30 days from now */
 function deliveryCodeExpiresAt(): Date {
   const d = new Date();
   d.setDate(d.getDate() + 30);
   return d;
 }
 
-// ============================================================
-// SERVER ACTION: processPayment
-// ============================================================
-
-/**
- * Processes a payment using Culqi's v2/charges endpoint.
- * Creates a payment record in the database on success.
- *
- * @param input - Payment data including token, product, and buyer info
- */
 export async function processPayment(input: ProcessPaymentInput): Promise<ProcessPaymentResult> {
   const {
     tokenId,
@@ -92,8 +56,7 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
     paymentMethod,
     buyerEmail,
     buyerPhone,
-    amountSoles,
-    currency = 'PEN',
+    amountSoles: requestedAmountSoles,
   } = input;
 
   const sk = process.env.CULQI_SK;
@@ -101,33 +64,67 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
     return { success: false, error: 'Payment gateway not configured (missing CULQI_SK).' };
   }
 
-  // --- 1. Look up Business and Product ---
   const business = await db.query.businesses.findFirst({
     where: eq(businesses.slug, businessSlug),
-    columns: { id: true, ownerId: true },
+    columns: { id: true, ownerId: true, isActive: true },
   });
 
   if (!business) {
     return { success: false, error: 'Negocio no encontrado.' };
   }
 
+  if (!business.isActive) {
+    return {
+      success: false,
+      error: 'Este negocio no esta disponible para cobros en este momento.',
+    };
+  }
+
+  // 1.5. Check entitlements
+  const entitlements = await getBusinessEntitlements(business.id);
+  if (!entitlements.hasPaymentGateway) {
+    return {
+      success: false,
+      error: 'La pasarela de pago no está habilitada para este negocio.',
+    };
+  }
+
   const product = await db.query.products.findFirst({
-    where: eq(products.id, productId),
-    columns: { id: true, title: true, price: true, stock: true },
+    where: (table, { and, eq }) => and(eq(table.id, productId), eq(table.businessId, business.id)),
+    columns: { id: true, title: true, price: true, stock: true, currency: true },
   });
 
   if (!product) {
     return { success: false, error: 'Producto no encontrado.' };
   }
 
-  if (product.stock <= 0) {
-    return { success: false, error: 'El producto está agotado.' };
+  const authoritativeAmountSoles = Number(product.price);
+  if (!Number.isFinite(authoritativeAmountSoles) || authoritativeAmountSoles <= 0) {
+    return { success: false, error: 'Monto invalido para el producto seleccionado.' };
   }
 
-  // --- 2. Compute amount in cents ---
-  const amountCents = Math.round(amountSoles * 100);
+  const currency = product.currency || 'PEN';
+  if (requestedAmountSoles !== authoritativeAmountSoles) {
+    console.warn('[processPayment] Client amount mismatch ignored', {
+      requestedAmountSoles,
+      authoritativeAmountSoles,
+      productId,
+      businessSlug,
+    });
+  }
 
-  // --- 3. Call Culqi API ---
+  const [reservedStock] = await db
+    .update(products)
+    .set({ stock: sql`${products.stock} - 1`, updatedAt: new Date() })
+    .where(and(eq(products.id, product.id), gt(products.stock, 0)))
+    .returning({ id: products.id });
+
+  if (!reservedStock) {
+    return { success: false, error: 'El producto esta agotado.' };
+  }
+
+  const amountCents = Math.round(authoritativeAmountSoles * 100);
+
   let culqiResponse: Response;
   try {
     culqiResponse = await fetch(CULQI_CHARGE_URL, {
@@ -150,14 +147,21 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
       }),
     });
   } catch (networkError) {
+    await db
+      .update(products)
+      .set({ stock: sql`${products.stock} + 1`, updatedAt: new Date() })
+      .where(eq(products.id, product.id));
     console.error('[processPayment] Network error calling Culqi:', networkError);
-    return { success: false, error: 'Error de conexión al procesar el pago. Intenta de nuevo.' };
+    return { success: false, error: 'Error de conexion al procesar el pago. Intenta de nuevo.' };
   }
 
   const chargeData = await culqiResponse.json();
 
-  // --- 4. Handle Culqi errors ---
   if (!culqiResponse.ok || chargeData.object === 'error') {
+    await db
+      .update(products)
+      .set({ stock: sql`${products.stock} + 1`, updatedAt: new Date() })
+      .where(eq(products.id, product.id));
     const message =
       chargeData.user_message ||
       chargeData.merchant_message ||
@@ -166,12 +170,10 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
     return { success: false, error: message };
   }
 
-  // --- 5. Generate delivery code ---
   const deliveryCode = generateDeliveryCode();
   const deliveryCodeHash = hashDeliveryCode(deliveryCode);
   const codeExpiresAt = deliveryCodeExpiresAt();
 
-  // --- 6. Create payment record ---
   let paymentRecord: { id: string } | undefined;
   try {
     const [newPayment] = await db
@@ -180,7 +182,7 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
         businessId: business.id,
         productId: product.id,
         sellerUserId: business.ownerId,
-        amount: String(amountSoles),
+        amount: String(authoritativeAmountSoles),
         currency,
         paymentMethod,
         culqiChargeId: chargeData.id,
@@ -194,18 +196,19 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
         metadata: {
           culqi_outcome: chargeData.outcome,
           product_title: product.title,
+          amount_source: 'server_product_price',
+          requested_amount: requestedAmountSoles,
+          authoritative_amount: authoritativeAmountSoles,
         },
       })
       .returning({ id: payments.id });
 
     paymentRecord = newPayment;
   } catch (dbError) {
-    // Payment went through Culqi but DB insert failed — critical issue
     console.error('[processPayment] CRITICAL: Charge succeeded but DB insert failed:', {
       culqiChargeId: chargeData.id,
       dbError,
     });
-    // Return success anyway because money was charged — manual reconciliation needed
     return {
       success: true,
       culqiChargeId: chargeData.id,
@@ -215,7 +218,6 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
     };
   }
 
-  // --- 7. Revalidate paths ---
   revalidatePath(`/${businessSlug}`);
 
   return {
@@ -226,14 +228,6 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
   };
 }
 
-// ============================================================
-// SERVER ACTION: getPaymentById
-// ============================================================
-
-/**
- * Retrieves a payment record by its ID.
- * Note: Delivery code is NOT returned here (only shown once at purchase time).
- */
 export async function getPaymentById(paymentId: string) {
   const supabase = await createClient();
   const {
@@ -252,7 +246,6 @@ export async function getPaymentById(paymentId: string) {
     return { payment: null, error: 'Pago no encontrado.' };
   }
 
-  // Only the seller (business owner) can view payment details
   if (user?.id !== payment.sellerUserId) {
     return { payment: null, error: 'No autorizado.' };
   }

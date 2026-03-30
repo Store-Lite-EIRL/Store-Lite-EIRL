@@ -34,7 +34,9 @@ export default function LogoutButton() {
         disabled={isLoggingOut}
         title="Cerrar sesión"
       >
-        <Icon>power_settings_new</Icon>
+        <Icon size={28} style={{ color: 'white' }}>
+          power_settings_new
+        </Icon>
       </md-icon-button>
 
       {isLoggingOut && (

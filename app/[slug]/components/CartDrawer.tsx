@@ -5,12 +5,20 @@ import { IconButton } from '@/shared/components/ui/buttons';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useState } from 'react';
 import { useCart } from '../storage/context/CartContext';
 import styles from './CartDrawer.module.css';
+import Checkout from './Checkout';
 
-export function CartDrawer() {
+interface CartDrawerProps {
+  hasPaymentGateway?: boolean;
+  onContactClick?: () => void;
+}
+
+export function CartDrawer({ hasPaymentGateway = true, onContactClick }: CartDrawerProps) {
   const { cartItems, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, totalPrice } =
     useCart();
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const params = useParams();
   const slug = params.slug as string;
 
@@ -116,10 +124,31 @@ export function CartDrawer() {
               <span>Total</span>
               <span className={styles.totalPrice}>S/ {totalPrice.toLocaleString()}</span>
             </div>
-            <button className={styles.checkoutBtn}>Finalizar Compra</button>
+            <button
+              className={styles.checkoutBtn}
+              onClick={() => {
+                if (hasPaymentGateway) {
+                  setIsCheckoutOpen(true);
+                } else {
+                  setIsCartOpen(false);
+                  onContactClick?.();
+                }
+              }}
+            >
+              {hasPaymentGateway ? 'Finalizar Compra' : 'Contactar Negocio'}
+            </button>
           </div>
         )}
       </div>
+
+      {isCheckoutOpen && (
+        <Checkout
+          totalAmount={totalPrice}
+          productName={`Orden de ${cartItems.length} producto${cartItems.length > 1 ? 's' : ''}`}
+          onSuccess={() => setIsCheckoutOpen(false)}
+          onCancel={() => setIsCheckoutOpen(false)}
+        />
+      )}
     </div>
   );
 }

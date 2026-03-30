@@ -7,10 +7,18 @@ import ProductItem from './components/ProductItem';
 interface FeedProps {
   products?: ProductWithRelations[];
   isOwner?: boolean;
-  onProductPreview?: (product: ProductWithRelations) => void;
+  onProductPreview?: (product: ProductWithRelations, initialIndex?: number) => void;
+  hasPaymentGateway?: boolean;
+  onContactClick?: () => void;
 }
 
-export default function Feed({ products = [], isOwner = false, onProductPreview }: FeedProps) {
+export default function Feed({ 
+  products = [], 
+  isOwner = false, 
+  onProductPreview,
+  hasPaymentGateway = true,
+  onContactClick
+}: FeedProps) {
   return (
     <div className={styles.feedContainer}>
       {products.length === 0 ? (
@@ -24,7 +32,9 @@ export default function Feed({ products = [], isOwner = false, onProductPreview 
               <ProductItem
                 product={product}
                 isOwner={isOwner}
-                onPreviewOpen={() => onProductPreview?.(product)}
+                onPreviewOpen={(idx) => onProductPreview?.(product, idx)}
+                hasPaymentGateway={hasPaymentGateway}
+                onContactClick={onContactClick}
               />
             </div>
           ))}

@@ -1,21 +1,25 @@
 'use client';
 
+import type { Business } from '@/core/database/schema';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { useState } from 'react';
-import { PaymentModal } from '../../../components/PaymentModal';
+import { BasicContactDialog } from '../../../components/BasicContactDialog';
+import Checkout from '../../../components/Checkout';
 import { useCart } from '../../../storage/context/CartContext';
 import type { Product } from '../../../storage/data';
 import styles from './ProductDetail.module.css';
 
 interface PurchaseActionsProps {
   product: Product;
-  businessSlug: string;
+  business: Business;
+  hasPaymentGateway: boolean;
 }
 
-export default function PurchaseActions({ product, businessSlug }: PurchaseActionsProps) {
+export default function PurchaseActions({ product, business, hasPaymentGateway }: PurchaseActionsProps) {
   const { addToCart } = useCart();
   const [isAdding, setIsAdding] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
 
   const handleAddToCart = async () => {
     setIsAdding(true);
@@ -33,7 +37,11 @@ export default function PurchaseActions({ product, businessSlug }: PurchaseActio
   };
 
   const handleBuyNow = () => {
-    setIsPaymentModalOpen(true);
+    if (hasPaymentGateway) {
+      setIsPaymentModalOpen(true);
+    } else {
+      setIsContactDialogOpen(true);
+    }
   };
 
   const isOutOfStock = product.stock <= 0;
@@ -43,6 +51,11 @@ export default function PurchaseActions({ product, businessSlug }: PurchaseActio
     addToCartText = 'Añadiendo...';
   } else if (isOutOfStock) {
     addToCartText = 'Sin stock';
+  }
+
+  let buyNowText = hasPaymentGateway ? 'Comprar ahora' : 'Contactar Negocio';
+  if (isOutOfStock) {
+    buyNowText = 'Agotado';
   }
 
   return (
@@ -64,19 +77,26 @@ export default function PurchaseActions({ product, businessSlug }: PurchaseActio
           disabled={isOutOfStock}
           style={{ width: '100%' }}
         >
-          {isOutOfStock ? 'Agotado' : 'Comprar ahora'}
+          {buyNowText}
         </Button>
       </div>
 
-      <PaymentModal
-        open={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
-        productId={product.id}
-        productName={product.name}
-        price={Number(product.price)}
-        currency={product.currency}
-        businessSlug={businessSlug}
-      />
+      {isPaymentModalOpen && (
+        <Checkout
+          totalAmount={Number(product.price)}
+          productName={product.name}
+          onSuccess={() => setIsPaymentModalOpen(false)}
+          onCancel={() => setIsPaymentModalOpen(false)}
+        />
+      )}
+
+      {isContactDialogOpen && (
+        <BasicContactDialog
+          business={business}
+          isOpen={isContactDialogOpen}
+          onClose={() => setIsContactDialogOpen(false)}
+        />
+      )}
     </>
   );
 }

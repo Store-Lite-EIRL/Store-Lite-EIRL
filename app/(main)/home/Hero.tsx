@@ -8,7 +8,7 @@ import styles from './Hero.module.css';
 import { useHeroController, type HeroBusiness } from './useHeroController';
 
 interface HeroProps {
-  business?: HeroBusiness;
+  business?: HeroBusiness | null;
   isOwner?: boolean;
 }
 
@@ -27,7 +27,6 @@ export default function Hero({ business, isOwner = false }: HeroProps) {
     handleMouseMove,
     handleMouseUp,
     handleSave,
-    handleUploadClick,
     heroRef,
     isEditing,
     isSaving,
@@ -36,7 +35,13 @@ export default function Hero({ business, isOwner = false }: HeroProps) {
     setSnackbar,
     showDeleteDialog,
     snackbar,
-  } = useHeroController({ business });
+  } = useHeroController({ business: business || null });
+
+  const handleUploadClick = () => {
+    alert('[Hero] handleUploadClick called');
+    console.warn('[Hero] handleUploadClick called');
+    fileInputRef.current?.click();
+  };
 
   return (
     <>
@@ -48,7 +53,7 @@ export default function Hero({ business, isOwner = false }: HeroProps) {
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         style={{
-          backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined,
+          backgroundImage: backgroundImage ? `url('${backgroundImage}')` : undefined,
           backgroundPosition: backgroundPositionStyle,
           cursor: cursorStyle,
         }}
@@ -71,11 +76,15 @@ export default function Hero({ business, isOwner = false }: HeroProps) {
             >
               <md-menu-item onClick={handleUploadClick} suppressHydrationWarning>
                 <div slot="headline">Subir publicidad (Portada)</div>
-                <Icon slot="end">upload</Icon>
+                <Icon slot="icon" size={21}>
+                  upload
+                </Icon>
               </md-menu-item>
               <md-menu-item onClick={handleDeleteClick} suppressHydrationWarning>
                 <div slot="headline">Eliminar imagen</div>
-                <Icon slot="end">delete</Icon>
+                <Icon slot="icon" size={21}>
+                  delete
+                </Icon>
               </md-menu-item>
             </md-menu>
           </div>
@@ -104,7 +113,10 @@ export default function Hero({ business, isOwner = false }: HeroProps) {
         <input
           type="file"
           ref={fileInputRef}
-          onChange={handleFileChange}
+          onChange={(e) => {
+            console.warn('[Hero] input onChange triggered');
+            handleFileChange(e);
+          }}
           accept="image/*"
           style={{ display: 'none' }}
           aria-label="Subir publicidad"

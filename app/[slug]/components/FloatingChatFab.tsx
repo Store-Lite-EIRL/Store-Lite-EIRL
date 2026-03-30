@@ -7,9 +7,10 @@ import styles from './FloatingChatFab.module.css';
 interface FloatingChatFabProps {
   businessName: string;
   businessId: string;
+  businessLogo?: string | null;
 }
 
-export function FloatingChatFab({ businessName, businessId }: FloatingChatFabProps) {
+export function FloatingChatFab({ businessName, businessId, businessLogo }: FloatingChatFabProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -22,6 +23,7 @@ export function FloatingChatFab({ businessName, businessId }: FloatingChatFabPro
         <ChatDialog
           businessName={businessName}
           businessId={businessId}
+          businessLogo={businessLogo}
           onClose={() => setIsOpen(false)}
         />
       )}

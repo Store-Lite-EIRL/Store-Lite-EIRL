@@ -47,7 +47,7 @@ ls migrations/
 ## 💾 Proyecto Supabase
 
 - **Nombre:** ecommerce-sass
-- **ID:** likloeyrdzfsrwelpdoz
+- **ID:** cncmbykyycuajxcjfjfp
 
 ## ✅ Tablas Actuales
 

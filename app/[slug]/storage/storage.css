@@ -44,6 +44,30 @@
   margin: 0;
 }
 
+.product-count-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.limit-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.limit-badge.limit-reached {
+  background-color: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  border-color: var(--md-sys-color-error);
+}
+
 .stats-header {
   display: flex;
   gap: 1.5rem;
@@ -283,6 +307,12 @@
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+}
+
+.storage-table th:first-child,
+.storage-table td:first-child {
+  width: 300px;
+  min-width: 300px;
 }
 
 .storage-table th {

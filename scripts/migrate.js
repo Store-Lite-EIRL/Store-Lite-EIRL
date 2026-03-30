@@ -9,7 +9,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const MIGRATIONS_DIR = path.join(__dirname, '..', 'migrations');
-const SUPABASE_PROJECT_ID = 'likloeyrdzfsrwelpdoz'; // ecommerce-sass
+const SUPABASE_PROJECT_ID = 'cncmbykyycuajxcjfjfp'; // ecommerce-sass
 
 async function applyMigration(migrationFile) {
   console.log(`📦 Applying migration: ${migrationFile}`);

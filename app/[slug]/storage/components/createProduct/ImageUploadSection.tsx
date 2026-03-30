@@ -38,7 +38,7 @@ export const ImageUploadSection = ({
             onClick={() => onRemove(idx)}
             aria-label="Eliminar imagen"
           >
-            <Icon>close</Icon>
+            <Icon size={21}>close</Icon>
           </button>
         </div>
       ))}

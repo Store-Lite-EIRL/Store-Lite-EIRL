@@ -7,6 +7,7 @@ import { importProductsBatch } from '../actions';
 import type { Product } from '../data';
 import { ImportPreviewDialog } from './ImportPreviewDialog';
 import { ImportSourceModal } from './ImportSourceModal';
+import { useStorage } from '../context/StorageContext';
 import { StatsHeader } from './StatsHeader';
 
 interface StorageHeaderProps {
@@ -16,7 +17,9 @@ interface StorageHeaderProps {
 }
 
 export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: StorageHeaderProps) => {
+  const { entitlements } = useStorage();
   const [sourceModalOpen, setSourceModalOpen] = useState(false);
+  // ... rest of state
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -87,7 +90,16 @@ export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: Stor
     <header className="storage-header">
       <div className="storage-title-wrap">
         <h1 className="storage-title">Productos</h1>
-        <p className="product-count">( {productsCount} productos )</p>
+        <div className="product-count-wrapper">
+          <p className="product-count">({productsCount} productos)</p>
+          {entitlements && entitlements.maxProducts !== Infinity && (
+            <div 
+              className={`limit-badge ${productsCount >= entitlements.maxProducts ? 'limit-reached' : ''}`}
+            >
+              Límite: {entitlements.maxProducts}
+            </div>
+          )}
+        </div>
       </div>
 
       <StatsHeader products={allProducts} />

@@ -64,10 +64,10 @@ export default function ProductFiltersSidebar({
         </Select>
       </section>
 
-      {/* CategorÃ­as */}
+      {/* Categorías */}
       {categories.length > 0 && (
         <section className={styles.filterSection}>
-          <h4 className={styles.sectionTitle}>CategorÃ­as</h4>
+          <h4 className={styles.sectionTitle}>Categorías</h4>
           <div className={styles.checkboxList}>
             {categories.map((cat) => (
               <label key={cat.id} className={styles.checkboxLabel}>

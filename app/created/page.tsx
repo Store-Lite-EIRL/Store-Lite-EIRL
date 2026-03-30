@@ -97,29 +97,47 @@ export default function CreatedPage() {
   };
 
   const handleFileChange = (file: File | null) => {
-    if (file && file.size > 1024 * 1024) {
+    if (!file) {
+      setFormData((prev) => ({ ...prev, logo: null }));
+      if (logoPreview) URL.revokeObjectURL(logoPreview);
+      setLogoPreview(null);
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
       setAlert({
         open: true,
-        message: 'La imagen no debe pesar más de 1MB.',
+        message: 'El archivo es demasiado grande (máximo 2MB)',
         color: 'error',
       });
       return;
     }
 
-    setFormData((prev) => {
-      return { ...prev, logo: file };
-    });
-
-    if (logoPreview) {
-      URL.revokeObjectURL(logoPreview);
-    }
-
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setLogoPreview(url);
-    } else {
-      setLogoPreview(null);
-    }
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      if (img.width < 256 || img.height < 256) {
+        setAlert({
+          open: true,
+          message: 'El logo debe tener al menos 256x256 píxeles para una mejor calidad.',
+          color: 'error',
+        });
+        URL.revokeObjectURL(objectUrl);
+      } else {
+        setFormData((prev) => ({ ...prev, logo: file }));
+        if (logoPreview) URL.revokeObjectURL(logoPreview);
+        setLogoPreview(objectUrl);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      setAlert({
+        open: true,
+        message: 'Error al cargar la imagen. Asegúrese de que sea un formato válido.',
+        color: 'error',
+      });
+    };
+    img.src = objectUrl;
   };
 
   const validateStep = (step: number): boolean => {
@@ -281,10 +299,12 @@ export default function CreatedPage() {
         style={{
           height: '100vh',
           width: '100vw',
+          display: 'grid',
+          placeItems: 'center',
           backgroundColor: 'var(--md-sys-color-surface)',
         }}
       >
-        <CircularProgress indeterminate />
+        <CircularProgress indeterminate style={{ width: 100, height: 100 }} />
       </main>
     );
   }

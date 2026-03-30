@@ -2,8 +2,13 @@
 
 import { db } from '@/core/database/client';
 import { businesses, productCategories } from '@/core/database/schema';
-import { eq } from 'drizzle-orm';
+import { getUniqueCategorySlug } from '@/shared/utils/categorySlug';
+import { eq, sql } from 'drizzle-orm';
+
 import { revalidatePath } from 'next/cache';
+import { getBusinessEntitlements } from '@/core/entitlements';
+import { requireOwnedBusinessBySlug } from './authz';
+
 
 export async function getProductCategories(slug: string) {
   try {
@@ -22,8 +27,11 @@ export async function getProductCategories(slug: string) {
       orderBy: (table, { asc }) => [asc(table.name)],
     });
 
+    const entitlements = await getBusinessEntitlements(business.id);
+
     return {
       categories: categoriesList.map((c) => c.name),
+      entitlements,
       error: null,
     };
   } catch (error) {
@@ -37,21 +45,15 @@ export async function getProductCategories(slug: string) {
 
 export async function syncProductCategories(slug: string, categoryNames: string[]) {
   try {
-    const business = await db.query.businesses.findFirst({
-      where: eq(businesses.slug, slug),
-      columns: { id: true },
-    });
-
-    if (!business) {
-      return { success: false, error: 'Negocio no encontrado' };
-    }
+    const { businessId } = await requireOwnedBusinessBySlug(slug);
 
     const existingCategories = await db.query.productCategories.findMany({
-      where: eq(productCategories.businessId, business.id),
-      columns: { id: true, name: true },
+      where: eq(productCategories.businessId, businessId),
+      columns: { id: true, name: true, slug: true },
     });
 
     const existingNames = existingCategories.map((c) => c.name);
+    const usedSlugs = new Set(existingCategories.map((c) => c.slug));
     const newNames = categoryNames.map((n) => n.trim()).filter(Boolean);
 
     const toDelete = existingCategories.filter((c) => !newNames.includes(c.name));
@@ -64,15 +66,35 @@ export async function syncProductCategories(slug: string, categoryNames: string[
     }
 
     if (toAdd.length > 0) {
+      // --- Entitlements Check for New Categories ---
+      const entitlements = await getBusinessEntitlements(businessId);
+      if (entitlements.maxCategories !== -1) {
+        const [{ count: currentCategoryCount }] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(productCategories)
+          .where(eq(productCategories.businessId, businessId));
+
+        if (currentCategoryCount + toAdd.length > entitlements.maxCategories) {
+          return {
+            success: false,
+            categories: existingNames,
+            error: `No se pueden sincronizar las categorías. El plan actual solo permite hasta ${entitlements.maxCategories} categorías y estás intentando tener ${currentCategoryCount + toAdd.length}.`,
+          };
+        }
+      }
+      // ---------------------------------------------
+
       const newItems = toAdd.map((name) => ({
-        businessId: business.id,
-        name,
+         businessId,
+         name,
+         slug: getUniqueCategorySlug(name, usedSlugs),
       }));
       await db.insert(productCategories).values(newItems);
     }
 
+
     const finalCategories = await db.query.productCategories.findMany({
-      where: eq(productCategories.businessId, business.id),
+      where: eq(productCategories.businessId, businessId),
       columns: { name: true },
       orderBy: (table, { asc }) => [asc(table.name)],
     });
@@ -100,18 +122,11 @@ export async function updateCategory(
   },
 ) {
   try {
-    const business = await db.query.businesses.findFirst({
-      where: eq(businesses.slug, businessSlug),
-      columns: { id: true },
-    });
-
-    if (!business) {
-      return { success: false, error: 'Negocio no encontrado' };
-    }
+    const { businessId } = await requireOwnedBusinessBySlug(businessSlug);
 
     const category = await db.query.productCategories.findFirst({
       where: (categories, { and, eq }) =>
-        and(eq(categories.id, categoryId), eq(categories.businessId, business.id)),
+        and(eq(categories.id, categoryId), eq(categories.businessId, businessId)),
       columns: { id: true },
     });
 
@@ -154,20 +169,38 @@ export async function createCategory(
   },
 ) {
   try {
-    const business = await db.query.businesses.findFirst({
-      where: eq(businesses.slug, businessSlug),
-      columns: { id: true },
-    });
+    const { businessId } = await requireOwnedBusinessBySlug(businessSlug);
 
-    if (!business) {
-      return { success: false, error: 'Negocio no encontrado' };
+    // --- Entitlements Check ---
+    const entitlements = await getBusinessEntitlements(businessId);
+    if (entitlements.maxCategories !== -1) {
+      const [{ count: currentCategoryCount }] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(productCategories)
+        .where(eq(productCategories.businessId, businessId));
+
+      if (currentCategoryCount >= entitlements.maxCategories) {
+        return {
+          success: false,
+          error: `Has alcanzado el límite de categorías de tu plan (${entitlements.maxCategories}).`,
+        };
+      }
     }
+    // -------------------------
+
+    const existingCategories = await db.query.productCategories.findMany({
+
+      where: eq(productCategories.businessId, businessId),
+      columns: { slug: true },
+    });
+    const usedSlugs = new Set(existingCategories.map((c) => c.slug));
 
     const [newCategory] = await db
       .insert(productCategories)
       .values({
-        businessId: business.id,
+        businessId,
         name: data.name.trim(),
+        slug: getUniqueCategorySlug(data.name.trim(), usedSlugs),
         imageUrl: data.imageUrl || null,
         displayOrder: 0,
       })

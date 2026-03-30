@@ -168,7 +168,7 @@ export default function FeaturedItems({
         const { uploadCategoryImage } =
           await import('../../[slug]/storage/services/storageService');
 
-        finalImageUrl = await uploadCategoryImage(imageFile);
+        finalImageUrl = await uploadCategoryImage(imageFile, businessSlug);
       }
 
       setItems((prev) =>
@@ -208,7 +208,7 @@ export default function FeaturedItems({
       if (imageFile) {
         const { uploadCategoryImage } =
           await import('../../[slug]/storage/services/storageService');
-        finalImageUrl = await uploadCategoryImage(imageFile);
+        finalImageUrl = await uploadCategoryImage(imageFile, businessSlug);
       }
 
       const result = await createCategory(businessSlug, {

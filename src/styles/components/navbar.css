@@ -88,7 +88,7 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: 0.25rem;
+  gap: 0.45rem;
 }
 
 .navbar__item {
@@ -178,6 +178,166 @@
 }
 
 /* ============================================
+   Dropdown Menu
+   ============================================ */
+.navbar__account-actions {
+  position: relative;
+  width: 100%;
+  margin-top: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.navbar__dropdown-menu {
+  position: absolute;
+  background-color: var(--md-sys-color-surface-container);
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 180px;
+  z-index: 1000;
+  border: 1px solid var(--md-sys-color-outline-variant);
+
+  /* Animation */
+  opacity: 0;
+  transform: translateY(10px) scale(0.95);
+  animation: dropdownFadeIn 0.25s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+@keyframes dropdownFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.navbar--collapsed .navbar__dropdown-menu,
+.navbar--expanded .navbar__dropdown-menu {
+  left: calc(100% + 16px);
+  bottom: 0;
+  margin-bottom: 0;
+  animation-name: dropdownFadeInRight;
+}
+
+@keyframes dropdownFadeInRight {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.navbar__dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  border-radius: 12px;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.navbar__dropdown-item:hover {
+  background-color: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-primary);
+  transform: scale(0.98);
+}
+
+.navbar__dropdown-item .material-symbols-rounded {
+  color: var(--md-sys-color-on-surface-variant);
+  transition: color 0.2s ease;
+  font-size: 1.25rem;
+}
+
+.navbar__dropdown-item:hover .material-symbols-rounded {
+  color: var(--md-sys-color-primary);
+}
+
+.navbar__dropdown-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-family: inherit;
+}
+
+/* ============================================
+   Redesigned Elements
+   ============================================ */
+
+.navbar__header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  min-height: 56px;
+  width: 100%;
+}
+
+.navbar--collapsed .navbar__header-actions {
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.navbar__plan-badge {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.navbar__item--toggle-small {
+  background: none;
+  border: none;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 50%;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navbar__item--toggle-small:hover {
+  background-color: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface);
+}
+
+.navbar__item--account {
+  width: 90%;
+  gap: 10px;
+}
+/* Ensure account icon stands out */
+.navbar__item--account .navbar__item-icon {
+  color: var(--md-sys-color-primary);
+}
+
+/* Material Menu Styling */
+md-menu {
+  --md-menu-container-shape: 12px;
+  --md-menu-container-color: var(--md-sys-color-surface-container);
+  min-width: 200px;
+}
+
+md-menu-item {
+  --md-menu-item-label-text-size: 0.9rem;
+}
+
+/* ============================================
    Responsive: Mobile (<= 425px)
    ============================================ */
 /* Default state (Hidden on desktop) */
@@ -191,13 +351,13 @@
     max-width: 450px;
     height: auto;
     margin: 0;
-    border-radius: 2rem;
-    bottom: 1rem;
+    border-radius: 99px;
+    bottom: 24px;
     top: auto;
     left: 50%;
     transform: translateX(-50%);
-    padding: 0 0.5rem;
-    background-color: var(--md-sys-color-surface);
+    padding: 0 12px;
+    background-color: var(--md-sys-color-surface-container-high);
     border: 1px solid var(--md-sys-color-outline-variant);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     z-index: 100;
@@ -221,8 +381,16 @@
 
   /* Hide Desktop-only elements */
   .navbar__item--toggle,
+  .navbar__header-actions,
   .navbar__divider {
-    display: none;
+    display: none !important;
+  }
+
+  .navbar__account-actions {
+    width: auto;
+    margin-top: 0;
+    flex: 1;
+    height: 100%;
   }
 
   /* Shared item styles for mobile */
@@ -239,6 +407,12 @@
     background-color: transparent !important;
   }
 
+  /* Reset account item specifically on mobile */
+  .navbar__item--account {
+    width: 100%;
+    gap: 0;
+  }
+
   /* Hide labels completely to save space for 6 icons */
   .navbar__item-label {
     display: none !important;
@@ -246,35 +420,57 @@
 
   /* Icons - Size optimized for bottom navigation */
   .navbar__item-icon {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
   }
 
   /* Active State on Mobile: Icon Highlight Pill AROUND the icon */
   .navbar__item--active {
     color: var(--md-sys-color-on-surface);
-    background-color: transparent;
-    background-image: none;
-    box-shadow: none;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    filter: none !important;
   }
 
   .navbar__item--active .navbar__item-icon {
     background-color: var(--md-sys-color-secondary-container);
     color: var(--md-sys-color-on-secondary-container);
-    width: 3.8rem;
-    height: 2.2rem;
+    width: 3.2rem;
+    height: 1.8rem;
     border-radius: 999px;
     font-variation-settings: 'FILL' 1;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
-  /* Reset hover background for touch */
-  .navbar__item:hover {
-    background-color: transparent;
+  /* Reset hover/active background for touch to prevent double hover */
+  .navbar__item:hover,
+  .navbar__item:focus,
+  .navbar__item:active {
+    background-color: transparent !important;
+    filter: none !important;
   }
 
   /* Hide navbar during active chat on mobile */
   body.is-chat-active .navbar {
     display: none;
+  }
+
+  /* Dropdown on mobile */
+  .navbar__dropdown-menu {
+    left: auto !important;
+    right: -10px !important;
+    bottom: calc(100% + 12px) !important;
+    top: auto !important;
+    transform: translateY(10px) scale(0.95) !important;
+    margin-bottom: 0px;
+    animation-name: dropdownFadeInUpRight;
+  }
+}
+
+@keyframes dropdownFadeInUpRight {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1) !important;
   }
 }
