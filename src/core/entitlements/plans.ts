@@ -43,6 +43,10 @@ export interface BusinessEntitlements {
   /** El dashboard de ventas y métricas está habilitado */
   dashboardEnabled: boolean;
 
+  // ─── SEO & Marketing ──────────────────────────────────
+  /** SEO avanzado (Metadata dinámica, JSON-LD, Sitemap) habilitado */
+  seoEnabled: boolean;
+
   // ─── IA ───────────────────────────────────────────────
   /** Puede usar el asistente de IA */
   canUseAIAssistant: boolean;
@@ -68,18 +72,20 @@ export const PLAN_ENTITLEMENTS: Record<
     canCustomizeStorefront: false,
     chatEnabled: false,
     dashboardEnabled: false,
+    seoEnabled: false,
     canUseAIAssistant: false,
     maxTeamMembers: 1,
   },
 
   emprendedor: {
-    hasPaymentGateway: true,
+    hasPaymentGateway: false,
     maxProducts: 150,
     maxCategories: 20,
     canImportProducts: true,
     canCustomizeStorefront: false,
     chatEnabled: true,
     dashboardEnabled: true,
+    seoEnabled: true,
     canUseAIAssistant: false,
     maxTeamMembers: 3,
   },
@@ -92,8 +98,9 @@ export const PLAN_ENTITLEMENTS: Record<
     canCustomizeStorefront: true,
     chatEnabled: true,
     dashboardEnabled: true,
+    seoEnabled: true,
     canUseAIAssistant: true,
-    maxTeamMembers: 7,
+    maxTeamMembers: 2, // Owner + 1 invitado
   },
 
   enterprise_ai: {
@@ -104,8 +111,9 @@ export const PLAN_ENTITLEMENTS: Record<
     canCustomizeStorefront: true,
     chatEnabled: true,
     dashboardEnabled: true,
+    seoEnabled: true,
     canUseAIAssistant: true,
-    maxTeamMembers: -1, // ilimitado
+    maxTeamMembers: 5, // Owner + 4 invitados
   },
 };
 

@@ -1,21 +1,15 @@
 'use server';
 
 import { db } from '@/core/database/client';
-import {
-  businesses,
-  productCategories,
-  productLikes,
-  productMedia,
-  products,
-} from '@/core/database/schema';
+import { productCategories, productLikes, productMedia, products } from '@/core/database/schema';
+import { getBusinessEntitlements } from '@/core/entitlements';
 import { getUniqueCategorySlug } from '@/shared/utils/categorySlug';
 import { getUniqueProductSlug } from '@/shared/utils/productSlug';
-import { and, eq, sql, or } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
-import { getBusinessEntitlements } from '@/core/entitlements';
-import { requireOwnedBusinessBySlug } from './authz';
-
+import { logError } from '@/lib/errorHandling';
+import { requireAccess } from './authz';
 
 export type SaleStatus = 'NORMAL' | 'MAS_VENDIDO' | 'NUEVO_PRODUCTO';
 
@@ -32,6 +26,8 @@ interface ProductActionInput {
   shippingInfo?: string;
   secondPrice?: number;
   saleStatus?: SaleStatus;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
 }
 
 function normalizeProductInput(input: ProductActionInput): ProductActionInput {
@@ -51,22 +47,17 @@ function normalizeProductInput(input: ProductActionInput): ProductActionInput {
     shippingInfo: input.shippingInfo?.trim(),
     secondPrice: input.secondPrice,
     saleStatus: input.saleStatus,
+    seoTitle: input.seoTitle?.trim() || null,
+    seoDescription: input.seoDescription?.trim() || null,
   };
 }
 
 export async function getProductsByBusinessSlug(slug: string) {
   try {
-    const business = await db.query.businesses.findFirst({
-      where: eq(businesses.slug, slug),
-      columns: { id: true },
-    });
-
-    if (!business) {
-      return { products: [], error: null };
-    }
+    const { businessId: id } = await requireAccess(slug, 'products.view');
 
     const productsList = await db.query.products.findMany({
-      where: eq(products.businessId, business.id),
+      where: eq(products.businessId, id),
       with: {
         category: {
           columns: {
@@ -102,16 +93,16 @@ export async function getProductsByBusinessSlug(slug: string) {
       secondPrice: product.secondPrice ? String(product.secondPrice) : null,
     }));
 
-    const entitlements = await getBusinessEntitlements(business.id);
+    const entitlements = await getBusinessEntitlements(id);
 
-    return { 
-      products: transformedProducts, 
-      businessId: business.id, 
+    return {
+      products: transformedProducts,
+      businessId: id,
       entitlements,
-      error: null 
+      error: null,
     };
   } catch (error) {
-    console.error('Error fetching products:', error);
+    logError('getProductsByBusinessSlug', error);
     return {
       products: [],
       businessId: null,
@@ -123,20 +114,11 @@ export async function getProductsByBusinessSlug(slug: string) {
 
 export async function getProductById(businessSlug: string, productId: string) {
   try {
-    const business = await db.query.businesses.findFirst({
-      where: eq(businesses.slug, businessSlug),
-      columns: { id: true },
-    });
-
-    if (!business) {
-      return { product: null, error: 'Negocio no encontrado' };
-    }
+    const { businessId } = await requireAccess(businessSlug, 'products.view');
 
     const product = await db.query.products.findFirst({
-      where: (p, { and, eq, or }) => and(
-        or(eq(p.id, productId), eq(p.slug, productId)), 
-        eq(p.businessId, business.id)
-      ),
+      where: (p, { and, eq, or }) =>
+        and(or(eq(p.id, productId), eq(p.slug, productId)), eq(p.businessId, businessId)),
       with: {
         category: {
           columns: {
@@ -164,7 +146,9 @@ export async function getProductById(businessSlug: string, productId: string) {
       stock: product.stock,
       price: String(product.price),
       status: product.isAvailable ? 'ACTIVO' : 'NO ACTIVO',
-      slug: product.slug, // Make sure slug is available if needed
+      slug: product.slug,
+      seoTitle: product.seoTitle,
+      seoDescription: product.seoDescription,
       image: product.media[0]?.mediaUrl || '',
       images: product.media.map((m) => m.mediaUrl),
       description: product.description || '',
@@ -180,7 +164,7 @@ export async function getProductById(businessSlug: string, productId: string) {
 
     return { product: transformedProduct, error: null };
   } catch (error) {
-    console.error('Error fetching product by ID:', error);
+    logError('getProductById', error);
     return {
       product: null,
       error: error instanceof Error ? error.message : 'Error al obtener el producto',
@@ -191,7 +175,7 @@ export async function getProductById(businessSlug: string, productId: string) {
 export async function createProduct(businessSlug: string, productData: ProductActionInput) {
   try {
     const normalizedProduct = normalizeProductInput(productData);
-    const { businessId } = await requireOwnedBusinessBySlug(businessSlug);
+    const { businessId } = await requireAccess(businessSlug, 'products.create');
 
     // --- Entitlements Check ---
     const entitlements = await getBusinessEntitlements(businessId);
@@ -211,7 +195,6 @@ export async function createProduct(businessSlug: string, productData: ProductAc
       }
     }
     // -------------------------
-
 
     let categoryId: string | null = null;
     const cleanCategory = normalizedProduct.category;
@@ -259,7 +242,6 @@ export async function createProduct(businessSlug: string, productData: ProductAc
           .returning({ id: productCategories.id });
         categoryId = newCategory.id;
       }
-
     }
 
     // Generate valid slug
@@ -267,7 +249,9 @@ export async function createProduct(businessSlug: string, productData: ProductAc
       where: eq(products.businessId, businessId),
       columns: { slug: true },
     });
-    const usedProductSlugs = new Set(siblingProducts.map((p) => p.slug).filter(Boolean) as string[]);
+    const usedProductSlugs = new Set(
+      siblingProducts.map((p) => p.slug).filter(Boolean) as string[],
+    );
     const newSlug = getUniqueProductSlug(normalizedProduct.name, usedProductSlugs);
 
     const [newProduct] = await db
@@ -292,6 +276,8 @@ export async function createProduct(businessSlug: string, productData: ProductAc
           normalizedProduct.secondPrice !== undefined && normalizedProduct.secondPrice !== null
             ? String(normalizedProduct.secondPrice)
             : null,
+        seoTitle: normalizedProduct.seoTitle,
+        seoDescription: normalizedProduct.seoDescription,
       })
       .returning({ id: products.id });
 
@@ -311,7 +297,7 @@ export async function createProduct(businessSlug: string, productData: ProductAc
 
     return { success: true, productId: newProduct.id, error: null };
   } catch (error) {
-    console.error('Error creating product:', error);
+    logError('createProduct', error);
     return {
       success: false,
       productId: null,
@@ -327,7 +313,7 @@ export async function updateProduct(
 ) {
   try {
     const normalizedProduct = normalizeProductInput(productData);
-    const { businessId } = await requireOwnedBusinessBySlug(businessSlug);
+    const { businessId } = await requireAccess(businessSlug, 'products.edit');
 
     const existingProduct = await db.query.products.findFirst({
       where: (table, { and, eq }) => and(eq(table.id, productId), eq(table.businessId, businessId)),
@@ -389,6 +375,8 @@ export async function updateProduct(
           normalizedProduct.secondPrice !== undefined && normalizedProduct.secondPrice !== null
             ? String(normalizedProduct.secondPrice)
             : null,
+        seoTitle: normalizedProduct.seoTitle,
+        seoDescription: normalizedProduct.seoDescription,
       })
       .where(and(eq(products.id, productId), eq(products.businessId, businessId)));
 
@@ -410,7 +398,7 @@ export async function updateProduct(
 
     return { success: true, productId, error: null };
   } catch (error) {
-    console.error('Error updating product:', error);
+    logError('updateProduct', error);
     return {
       success: false,
       productId: null,
@@ -465,7 +453,7 @@ export async function toggleLikeProduct(productId: string, businessSlug?: string
     revalidatePath('/', 'layout');
     return { success: true, alreadyLiked: false };
   } catch (error) {
-    console.error('Error in toggleLikeProduct:', error);
+    logError('toggleLikeProduct', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error al dar like',
@@ -475,7 +463,8 @@ export async function toggleLikeProduct(productId: string, businessSlug?: string
 
 export async function deleteProduct(businessSlug: string, productId: string) {
   try {
-    const { businessId } = await requireOwnedBusinessBySlug(businessSlug);
+    // Usar requireAccess para soportar miembros del equipo con permisos
+    const { businessId } = await requireAccess(businessSlug, 'products.delete');
 
     const product = await db.query.products.findFirst({
       where: eq(products.id, productId),
@@ -494,7 +483,7 @@ export async function deleteProduct(businessSlug: string, productId: string) {
 
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error deleting product:', error);
+    logError('deleteProduct', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error al eliminar producto',

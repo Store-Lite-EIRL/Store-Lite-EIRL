@@ -3,6 +3,7 @@
 import { useAuth } from '@/features/auth';
 import { Icon } from '@/shared/components/ui/data-display';
 import { CircularProgress } from '@/shared/components/ui/feedback/Progress';
+import { clearBusinessSessionData } from '@/shared/hooks/useBusinessSession';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import styles from '../ListBusiness.module.css';
@@ -17,8 +18,7 @@ export default function LogoutButton() {
     try {
       await signOut();
       // Clear business session on user logout
-      document.cookie = 'selected_business_slug=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-      localStorage.removeItem('selectedBusinessSlug');
+      clearBusinessSessionData();
       router.push('/auth');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -42,7 +42,6 @@ export default function LogoutButton() {
       {isLoggingOut && (
         <div className={styles.loadingOverlay}>
           <CircularProgress indeterminate fourColor />
-          <p className={styles.loadingText}>Cerrando tienda...</p>
         </div>
       )}
     </>

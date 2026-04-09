@@ -2,6 +2,7 @@
 
 import Navbar from '@/shared/components/navigation/Navbar';
 import { CircularProgress } from '@/shared/components/ui/feedback/Progress';
+import { useBusinessSession } from '@/shared/hooks/useBusinessSession';
 import '@/styles/components/layout.css';
 import '@/styles/components/navbar.css';
 import { useParams, usePathname, useRouter } from 'next/navigation';
@@ -21,6 +22,9 @@ export default function AppLayout({
   navbarPlanName,
 }: AppLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Business session management - only for detecting when session is killed from another tab
+  const { sessionKilledFromOtherTab, resetSessionKilledFlag } = useBusinessSession();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -79,34 +83,40 @@ export default function AppLayout({
   const showNavbar =
     showNavbarByDefault && pathname !== '/list-business' && !pathname?.startsWith('/auth');
 
+  // If session was killed from another tab (user closed business there), redirect to list
+  useEffect(() => {
+    if (sessionKilledFromOtherTab && !pathname?.startsWith('/list-business')) {
+      resetSessionKilledFlag();
+      router.push('/list-business');
+    }
+  }, [sessionKilledFromOtherTab, pathname, router, resetSessionKilledFlag]);
+
   return (
-    <div className={`layout ${isChatPage ? 'layout--chat' : ''}`}>
-      {/*
+    <>
+      <div className={`layout ${isChatPage ? 'layout--chat' : ''}`}>
+        {/*
         The "styles.xxx" was incorrect because it wasn't importing CSS modules.
         Using global classes that we will define in layout.css or equivalent.
       */}
 
-      {/* Sidebar - Desktop Only (Navbar component is actually the sidebar) */}
-      {showNavbar && (
-        <Navbar
-          isCollapsed={isCollapsed}
-          onToggle={toggleNavbar}
-          planName={navbarPlanName}
-        />
-      )}
+        {/* Sidebar - Desktop Only (Navbar component is actually the sidebar) */}
+        {showNavbar && (
+          <Navbar isCollapsed={isCollapsed} onToggle={toggleNavbar} planName={navbarPlanName} />
+        )}
 
-      <div
-        className={`content-wrapper ${isCollapsed || !showNavbar ? 'content-wrapper--collapsed' : ''}`}
-      >
-        <main className={`main-area ${isChatPage ? 'main-area--chat' : ''}`}>{children}</main>
-      </div>
-
-      {isGlobalLoading && (
-        <div className="loadingOverlay">
-          <CircularProgress />
-          <p className="loadingText">Cargando...</p>
+        <div
+          className={`content-wrapper ${isCollapsed || !showNavbar ? 'content-wrapper--collapsed' : ''}`}
+        >
+          <main className={`main-area ${isChatPage ? 'main-area--chat' : ''}`}>{children}</main>
         </div>
-      )}
-    </div>
+
+        {isGlobalLoading && (
+          <div className="loadingOverlay">
+            <CircularProgress />
+            <p className="loadingText">Cargando...</p>
+          </div>
+        )}
+      </div>
+    </>
   );
 }

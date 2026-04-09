@@ -297,6 +297,23 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.teamBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.35rem 0.85rem;
+  background: linear-gradient(135deg, #1e1e1e 0%, #3a3a3a 100%);
+  color: #ffffff;
+  border-radius: 12px 4px 12px 4px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  margin-right: 8px;
+}
+
 .rucWrapper {
   display: flex;
   align-items: center;

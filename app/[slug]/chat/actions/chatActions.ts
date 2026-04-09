@@ -1,7 +1,8 @@
 'use server';
 
 import { db } from '@/core/database/client';
-import { businesses, chatSessions, messages } from '@/core/database/schema';
+import { businesses, businessTeamMembers, chatSessions, messages } from '@/core/database/schema';
+import { checkPermission } from '@/lib/permissions';
 import { createClient } from '@/lib/supabase/server';
 import { and, eq } from 'drizzle-orm';
 
@@ -30,8 +31,32 @@ async function resolveSessionActor(sessionId: string, guestId?: string) {
       where: eq(businesses.id, session.businessId),
       columns: { ownerId: true },
     });
+
+    // Check if user is owner
     if (business?.ownerId === userId) {
       return { allowed: true as const, role: 'store' as const, session };
+    }
+
+    // Check if user is team member with chat permission
+    const membership = await db.query.businessTeamMembers.findFirst({
+      where: and(
+        eq(businessTeamMembers.businessId, session.businessId),
+        eq(businessTeamMembers.userId, userId),
+      ),
+    });
+
+    if (membership) {
+      // For general actions, check respondent permission
+      const hasPermission = await checkPermission(session.businessId, userId, 'chat.respond');
+      if (hasPermission) {
+        return { allowed: true as const, role: 'store' as const, session };
+      }
+      
+      // If we only need view access, check that too
+      const hasViewPermission = await checkPermission(session.businessId, userId, 'chat.view');
+      if (hasViewPermission) {
+        return { allowed: true as const, role: 'store' as const, session };
+      }
     }
   }
 
@@ -156,7 +181,11 @@ export async function getActiveChatSession(guestId: string, businessId: string) 
   try {
     const session = await db.query.chatSessions.findFirst({
       where: (table, { and, eq }) =>
-        and(eq(table.guestId, guestId), eq(table.businessId, businessId), eq(table.status, 'active')),
+        and(
+          eq(table.guestId, guestId),
+          eq(table.businessId, businessId),
+          eq(table.status, 'active'),
+        ),
       orderBy: (table, { desc }) => [desc(table.createdAt)],
     });
 
@@ -175,11 +204,18 @@ export async function fetchChatSessions(businessId: string) {
     }
 
     const business = await db.query.businesses.findFirst({
-      where: and(eq(businesses.id, businessId), eq(businesses.ownerId, userId)),
-      columns: { id: true },
+      where: eq(businesses.id, businessId),
+      columns: { id: true, ownerId: true },
     });
 
     if (!business) {
+      return { success: false, error: 'Negocio no encontrado', sessions: [] };
+    }
+
+    const isOwner = business.ownerId === userId;
+    const hasPermission = isOwner || await checkPermission(businessId, userId, 'chat.view');
+
+    if (!hasPermission) {
       return { success: false, error: 'No autorizado', sessions: [] };
     }
 
@@ -200,6 +236,21 @@ export async function deleteChatSession(sessionId: string) {
     const actor = await resolveSessionActor(sessionId);
     if (!actor.allowed || actor.role !== 'store') {
       return { success: false, error: 'No autorizado' };
+    }
+
+    const userId = await getAuthenticatedUserId();
+    if (!userId) return { success: false, error: 'No autorizado' };
+
+    const business = await db.query.businesses.findFirst({
+      where: eq(businesses.id, actor.session.businessId),
+      columns: { ownerId: true },
+    });
+
+    const isOwner = business?.ownerId === userId;
+    const hasDeletePermission = isOwner || await checkPermission(actor.session.businessId, userId, 'chat.delete');
+
+    if (!hasDeletePermission) {
+      return { success: false, error: 'No tienes permiso para eliminar chats' };
     }
 
     await db.delete(chatSessions).where(eq(chatSessions.id, sessionId));

@@ -24,9 +24,9 @@
 
 .gridContainer {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  column-gap: 1.5rem;
-  row-gap: 3.5rem;
+  grid-template-columns: repeat(var(--storefront-grid-columns-desktop, 4), 1fr);
+  column-gap: var(--storefront-grid-gap-desktop, 1.5rem);
+  row-gap: calc(var(--storefront-grid-gap-desktop, 1.5rem) * 2.333);
 }
 
 .gridItem {
@@ -43,18 +43,18 @@
 /* Tablet: 2 columns */
 @media (max-width: 1024px) {
   .gridContainer {
-    grid-template-columns: repeat(2, 1fr);
-    column-gap: 1.25rem;
-    row-gap: 2.5rem;
+    grid-template-columns: repeat(var(--storefront-grid-columns-tablet, 2), 1fr);
+    column-gap: var(--storefront-grid-gap-tablet, 1.25rem);
+    row-gap: calc(var(--storefront-grid-gap-tablet, 1.25rem) * 2);
   }
 }
 
-/* Mobile: 1 column below 550px, 2 above */
+/* Mobile */
 @media (max-width: 550px) {
   .gridContainer {
-    grid-template-columns: repeat(1, 1fr);
-    column-gap: 0;
-    row-gap: 1.5rem;
+    grid-template-columns: repeat(var(--storefront-grid-columns-mobile, 1), 1fr);
+    column-gap: var(--storefront-grid-gap-mobile, 1rem);
+    row-gap: calc(var(--storefront-grid-gap-mobile, 1rem) * 1.5);
   }
 }
 

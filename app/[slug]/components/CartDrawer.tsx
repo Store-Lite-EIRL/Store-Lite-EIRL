@@ -144,7 +144,7 @@ export function CartDrawer({ hasPaymentGateway = true, onContactClick }: CartDra
       {isCheckoutOpen && (
         <Checkout
           totalAmount={totalPrice}
-          productName={`Orden de ${cartItems.length} producto${cartItems.length > 1 ? 's' : ''}`}
+          cartItems={cartItems}
           onSuccess={() => setIsCheckoutOpen(false)}
           onCancel={() => setIsCheckoutOpen(false)}
         />

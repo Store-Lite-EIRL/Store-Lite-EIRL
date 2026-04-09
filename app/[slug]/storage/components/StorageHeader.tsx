@@ -9,6 +9,7 @@ import { ImportPreviewDialog } from './ImportPreviewDialog';
 import { ImportSourceModal } from './ImportSourceModal';
 import { useStorage } from '../context/StorageContext';
 import { StatsHeader } from './StatsHeader';
+import { usePermissions } from '../../context/PermissionsContext';
 
 interface StorageHeaderProps {
   productsCount: number;
@@ -18,6 +19,7 @@ interface StorageHeaderProps {
 
 export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: StorageHeaderProps) => {
   const { entitlements } = useStorage();
+  const { can, isOwner } = usePermissions();
   const [sourceModalOpen, setSourceModalOpen] = useState(false);
   // ... rest of state
   const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -116,18 +118,20 @@ export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: Stor
           <Icon>notifications</Icon>
           <Badge count="3" />
         </IconButton>
-        <Button variant="outlined" onClick={handleImportClick} className="btn-import">
-          <Icon slot="icon" size={23}>
-            download
-          </Icon>
-          <span>Importar</span>
-        </Button>
-        <Button variant="filled" onClick={onAddProduct} className="btn-add-product">
-          <Icon slot="icon" size={23}>
-            add
-          </Icon>
-          <span>Añadir Producto</span>
-        </Button>
+        
+        {(isOwner || can('products.edit')) && (
+          <Button variant="outlined" onClick={handleImportClick} className="btn-import">
+            <Icon slot="icon" size={23}>download</Icon>
+            <span>Importar</span>
+          </Button>
+        )}
+
+        {(isOwner || can('products.create')) && (
+          <Button variant="filled" onClick={onAddProduct} className="btn-add-product">
+            <Icon slot="icon" size={23}>add</Icon>
+            <span>Añadir Producto</span>
+          </Button>
+        )}
       </div>
 
       {/* Step 1: choose source */}

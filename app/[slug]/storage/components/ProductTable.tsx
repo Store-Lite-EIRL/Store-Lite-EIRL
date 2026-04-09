@@ -11,6 +11,7 @@ import { formatPrice, parsePriceValue } from '../utils/currency';
 import { EmptyState } from './product-table/EmptyState';
 import { ProductActionsMenu } from './product-table/ProductActionsMenu';
 import { TableHeader } from './product-table/TableHeader';
+import { usePermissions } from '../../context/PermissionsContext';
 
 type MaterialMenuElement = HTMLElement & {
   open: boolean;
@@ -37,6 +38,7 @@ export const ProductTable = ({
   const router = useRouter();
   const businessSlug = params.slug as string;
 
+  const { can, isOwner } = usePermissions();
   const [menuProduct, setMenuProduct] = useState<Product | null>(null);
   const [copiedAlert, setCopiedAlert] = useState(false);
   const actionsMenuRef = useRef<MaterialMenuElement | null>(null);
@@ -160,12 +162,16 @@ export const ProductTable = ({
                   </td>
                   <td>
                     <div className="actions-cell">
-                      <IconButton aria-label="Editar" onClick={() => onEdit(product)}>
-                        <Icon style={{ fontSize: '18px' }}>edit</Icon>
-                      </IconButton>
-                      <IconButton aria-label="Eliminar" onClick={() => onDelete(product)}>
-                        <Icon style={{ fontSize: '18px' }}>delete</Icon>
-                      </IconButton>
+                      {(isOwner || can('products.edit')) && (
+                        <IconButton aria-label="Editar" onClick={() => onEdit(product)}>
+                          <Icon style={{ fontSize: '18px' }}>edit</Icon>
+                        </IconButton>
+                      )}
+                      {(isOwner || can('products.delete')) && (
+                        <IconButton aria-label="Eliminar" onClick={() => onDelete(product)}>
+                          <Icon style={{ fontSize: '18px' }}>delete</Icon>
+                        </IconButton>
+                      )}
                       <IconButton
                         aria-label="Más opciones"
                         onClick={(e) => handleMenuClick(e, product)}

@@ -1,0 +1,58 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.group {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.groupLabel {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.permissionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.permissionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.permissionItem:last-child {
+  border-bottom: none;
+}
+
+.permissionInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.permissionLabel {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.permissionDescription {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+}

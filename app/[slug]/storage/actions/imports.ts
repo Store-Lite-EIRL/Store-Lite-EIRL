@@ -5,6 +5,7 @@ import { productCategories, productMedia, products } from '@/core/database/schem
 import { getUniqueCategorySlug } from '@/shared/utils/categorySlug';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { logError } from '@/lib/errorHandling';
 import { requireOwnedBusinessBySlug } from './authz';
 
 interface ImportProductInput {
@@ -115,7 +116,7 @@ export async function importProductsBatch(
 
     return { success: true };
   } catch (error) {
-    console.error('Error bulk importing products:', error);
+    logError('importProductsBatch', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error al importar productos masivamente',

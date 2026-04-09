@@ -1,33 +1,26 @@
 'use server';
 
 import { db } from '@/core/database/client';
-import { businesses, productCategories } from '@/core/database/schema';
+import { productCategories } from '@/core/database/schema';
 import { getUniqueCategorySlug } from '@/shared/utils/categorySlug';
 import { eq, sql } from 'drizzle-orm';
 
-import { revalidatePath } from 'next/cache';
 import { getBusinessEntitlements } from '@/core/entitlements';
-import { requireOwnedBusinessBySlug } from './authz';
-
+import { revalidatePath } from 'next/cache';
+import { logError } from '@/lib/errorHandling';
+import { requireAccess } from './authz';
 
 export async function getProductCategories(slug: string) {
   try {
-    const business = await db.query.businesses.findFirst({
-      where: eq(businesses.slug, slug),
-      columns: { id: true },
-    });
-
-    if (!business) {
-      return { categories: [], error: 'Negocio no encontrado' };
-    }
+    const { businessId: id } = await requireAccess(slug, 'categories.view');
 
     const categoriesList = await db.query.productCategories.findMany({
-      where: eq(productCategories.businessId, business.id),
+      where: eq(productCategories.businessId, id),
       columns: { name: true },
       orderBy: (table, { asc }) => [asc(table.name)],
     });
 
-    const entitlements = await getBusinessEntitlements(business.id);
+    const entitlements = await getBusinessEntitlements(id);
 
     return {
       categories: categoriesList.map((c) => c.name),
@@ -35,7 +28,7 @@ export async function getProductCategories(slug: string) {
       error: null,
     };
   } catch (error) {
-    console.error('Error fetching categories:', error);
+    logError('getProductCategories', error);
     return {
       categories: [],
       error: error instanceof Error ? error.message : 'Error al obtener categorias',
@@ -45,7 +38,8 @@ export async function getProductCategories(slug: string) {
 
 export async function syncProductCategories(slug: string, categoryNames: string[]) {
   try {
-    const { businessId } = await requireOwnedBusinessBySlug(slug);
+    // Usar requireAccess para soportar miembros del equipo con permisos
+    const { businessId } = await requireAccess(slug, 'categories.edit');
 
     const existingCategories = await db.query.productCategories.findMany({
       where: eq(productCategories.businessId, businessId),
@@ -85,13 +79,12 @@ export async function syncProductCategories(slug: string, categoryNames: string[
       // ---------------------------------------------
 
       const newItems = toAdd.map((name) => ({
-         businessId,
-         name,
-         slug: getUniqueCategorySlug(name, usedSlugs),
+        businessId,
+        name,
+        slug: getUniqueCategorySlug(name, usedSlugs),
       }));
       await db.insert(productCategories).values(newItems);
     }
-
 
     const finalCategories = await db.query.productCategories.findMany({
       where: eq(productCategories.businessId, businessId),
@@ -104,7 +97,7 @@ export async function syncProductCategories(slug: string, categoryNames: string[
       categories: finalCategories.map((c) => c.name),
     };
   } catch (error) {
-    console.error('Error syncing categories:', error);
+    logError('syncProductCategories', error);
     return {
       success: false,
       categories: [],
@@ -122,7 +115,7 @@ export async function updateCategory(
   },
 ) {
   try {
-    const { businessId } = await requireOwnedBusinessBySlug(businessSlug);
+    const { businessId } = await requireAccess(businessSlug, 'categories.edit');
 
     const category = await db.query.productCategories.findFirst({
       where: (categories, { and, eq }) =>
@@ -153,7 +146,7 @@ export async function updateCategory(
 
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error updating category:', error);
+    logError('updateCategory', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error al actualizar categoria',
@@ -169,7 +162,7 @@ export async function createCategory(
   },
 ) {
   try {
-    const { businessId } = await requireOwnedBusinessBySlug(businessSlug);
+    const { businessId } = await requireAccess(businessSlug, 'categories.create');
 
     // --- Entitlements Check ---
     const entitlements = await getBusinessEntitlements(businessId);
@@ -189,7 +182,6 @@ export async function createCategory(
     // -------------------------
 
     const existingCategories = await db.query.productCategories.findMany({
-
       where: eq(productCategories.businessId, businessId),
       columns: { slug: true },
     });
@@ -211,7 +203,7 @@ export async function createCategory(
 
     return { success: true, category: newCategory, error: null };
   } catch (error) {
-    console.error('Error creating category:', error);
+    logError('createCategory', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error al crear la categoria',

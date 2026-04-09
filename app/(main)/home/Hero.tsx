@@ -38,8 +38,6 @@ export default function Hero({ business, isOwner = false }: HeroProps) {
   } = useHeroController({ business: business || null });
 
   const handleUploadClick = () => {
-    alert('[Hero] handleUploadClick called');
-    console.warn('[Hero] handleUploadClick called');
     fileInputRef.current?.click();
   };
 

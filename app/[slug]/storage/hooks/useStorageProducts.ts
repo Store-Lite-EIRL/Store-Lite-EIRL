@@ -12,6 +12,7 @@ import type { Product } from '../data';
 import { deleteProductImage, uploadProductImage } from '../services/storageService';
 import type { SaveProductMediaItem, SaveProductPayload } from '../types';
 import { parsePriceValue } from '../utils/currency';
+import { isBusinessError } from '@/lib/errorHandling';
 import type { BusinessEntitlements } from '@/core/entitlements/plans';
 
 export type SortDirection = 'asc' | 'desc';
@@ -36,12 +37,16 @@ interface UseStorageProductsProps {
   businessSlug: string;
   initialProducts?: Product[];
   initialCategories?: string[];
+  initialBusinessId?: string | null;
+  isOwner?: boolean;
 }
 
 export const useStorageProducts = ({
   businessSlug,
   initialProducts = [],
   initialCategories = [],
+  initialBusinessId = null,
+  isOwner = false,
 }: UseStorageProductsProps) => {
   const [currentProducts, setCurrentProducts] = useState<Product[]>(initialProducts);
   const [isLoading, setIsLoading] = useState(initialProducts.length === 0);
@@ -52,12 +57,25 @@ export const useStorageProducts = ({
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [categories, setCategories] = useState<string[]>(initialCategories);
-  const [businessId, setBusinessId] = useState<string | null>(null);
+  const [businessId, setBusinessId] = useState<string | null>(initialBusinessId);
   const [entitlements, setEntitlements] = useState<BusinessEntitlements | null>(null);
+
+  // Sincronizar businessId si cambia el prop (hidratación o re-render)
+  useEffect(() => {
+    if (initialBusinessId && !businessId) {
+      setBusinessId(initialBusinessId);
+    }
+  }, [initialBusinessId, businessId]);
 
   // Fetch products and categories from server
   useEffect(() => {
     const fetchInitialData = async () => {
+      // Si no es el dueño, no intentamos sincronizar con el storage interno (evita 401/403)
+      if (!isOwner) {
+        setIsLoading(false);
+        return;
+      }
+
       // Revisar caché primero
       const cached = globalStorageCache[businessSlug];
       if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -86,10 +104,10 @@ export const useStorageProducts = ({
           const [productsRes, categoriesRes] = await Promise.all([
             needsProducts
               ? getProductsByBusinessSlug(businessSlug)
-              : Promise.resolve({ products: currentProducts, businessId, error: null }),
+              : Promise.resolve({ products: currentProducts, businessId, entitlements, error: null }),
             needsCategories
               ? getProductCategories(businessSlug)
-              : Promise.resolve({ categories: categories, error: null }),
+              : Promise.resolve({ categories: categories, entitlements, error: null }),
           ]);
 
           if (productsRes.error) console.error('Error loading products:', productsRes.error);
@@ -122,9 +140,23 @@ export const useStorageProducts = ({
     };
 
     if (businessSlug) {
+      // Si tenemos initialBusinessId, guardarlo en el caché si no está
+      if (initialBusinessId && (!globalStorageCache[businessSlug] || !globalStorageCache[businessSlug].businessId)) {
+        if (!globalStorageCache[businessSlug]) {
+          globalStorageCache[businessSlug] = {
+            products: initialProducts,
+            categories: initialCategories,
+            businessId: initialBusinessId,
+            entitlements: null,
+            timestamp: Date.now(),
+          };
+        } else {
+          globalStorageCache[businessSlug].businessId = initialBusinessId;
+        }
+      }
       fetchInitialData();
     }
-  }, [businessSlug]);
+  }, [businessSlug, isOwner]);
 
   const statuses = useMemo(
     () => [...new Set(currentProducts.map((p) => p.status))],
@@ -162,7 +194,9 @@ export const useStorageProducts = ({
       const { success, error } = await deleteProductAction(businessSlug, id);
 
       if (!success) {
-        console.error('Error al eliminar producto por action:', error);
+        if (!isBusinessError(error)) {
+          console.error('Error al eliminar producto por action:', error);
+        }
         // Si falló, restaurar de vuelta el producto a la lista
         setCurrentProducts(previousProducts);
         if (globalStorageCache[businessSlug]) {
@@ -213,13 +247,14 @@ export const useStorageProducts = ({
     });
   };
 
-  const saveProductBackground = async (
-    payload: SaveProductPayload,
-    media: SaveProductMediaItem[],
-    isEdit: boolean,
-    initialProduct: Product | null | undefined,
-    optimisticProduct: Product,
-  ): Promise<{ success: boolean; error?: string }> => {
+  const saveProductBackground = async (params: {
+    payload: SaveProductPayload;
+    media: SaveProductMediaItem[];
+    isEdit: boolean;
+    initialProduct: Product | null | undefined;
+    optimisticProduct: Product;
+  }): Promise<{ success: boolean; error?: string }> => {
+    const { payload, media, isEdit, initialProduct, optimisticProduct } = params;
     const previousProducts = [...currentProducts];
 
     // Optimistically update the UI:
@@ -232,14 +267,15 @@ export const useStorageProducts = ({
 
     try {
       // 1. Process Images in parallel
-      console.warn(`[useStorageProducts] Procesando ${media.length} imágenes...`);
+      const effectiveBusinessId = initialBusinessId || businessId;
+      console.warn(`[useStorageProducts] Procesando ${media.length} imágenes para businessId: ${effectiveBusinessId}...`);
       
       const uploadPromises = media.map(async (item, index) => {
         if (item.type === 'url') {
           return item.url;
         } else {
           try {
-            return await uploadProductImage(item.file, businessId);
+            return await uploadProductImage(item.file, effectiveBusinessId);
           } catch (error) {
             console.error(`[useStorageProducts] Error subiendo imagen ${index + 1}:`, error);
             throw error;
@@ -289,7 +325,9 @@ export const useStorageProducts = ({
               globalStorageCache[businessSlug].products = newProducts;
             }
           } catch (e) {
-            console.error('Failed to update global cache:', e);
+            if (!isBusinessError(e)) {
+              console.error('Failed to update global cache:', e);
+            }
           }
           return newProducts;
         });
@@ -315,7 +353,9 @@ export const useStorageProducts = ({
               globalStorageCache[businessSlug].products = newProducts;
             }
           } catch (e) {
-            console.error('Failed to update global cache:', e);
+            if (!isBusinessError(e)) {
+              console.error('Failed to update global cache:', e);
+            }
           }
 
           return newProducts;
@@ -323,7 +363,9 @@ export const useStorageProducts = ({
       }
       return { success: true };
     } catch (error) {
-      console.error('Background save error catch block reached:', error);
+      if (!isBusinessError(error)) {
+        console.error('Background save error catch block reached:', error);
+      }
       // Revert Optimistic UI
       setCurrentProducts(previousProducts);
       if (globalStorageCache[businessSlug]) {
@@ -457,5 +499,14 @@ export const useStorageProducts = ({
     updateProduct,
     saveProductBackground,
     saveCategories,
+    refreshCategories: async () => {
+      const { categories: updatedCategories } = await getProductCategories(businessSlug);
+      if (updatedCategories) {
+        setCategories(updatedCategories);
+        if (globalStorageCache[businessSlug]) {
+          globalStorageCache[businessSlug].categories = updatedCategories;
+        }
+      }
+    }
   };
 };

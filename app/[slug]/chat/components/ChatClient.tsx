@@ -45,9 +45,18 @@ interface ChatClientProps {
   storeName: string;
   storeDescription: string;
   businessId: string;
+  canRespond: boolean;
+  canManage: boolean;
 }
 
-export function ChatClient({ slug, storeName, storeDescription, businessId }: ChatClientProps) {
+export function ChatClient({
+  slug,
+  storeName,
+  storeDescription,
+  businessId,
+  canRespond,
+  canManage,
+}: ChatClientProps) {
   const supabase = createClient();
   const [sessions, setSessions] = useState<Chat[]>([]); // Renamed from chats
   const [selectedSession, setSelectedSession] = useState<any>(null);
@@ -262,7 +271,7 @@ export function ChatClient({ slug, storeName, storeDescription, businessId }: Ch
   );
 
   const handleSendMessage = async (text: string) => {
-    if (!selectedSession) return;
+    if (!selectedSession || !canRespond) return;
 
     const result = await sendMessage({
       sessionId: selectedSession.id,
@@ -289,7 +298,7 @@ export function ChatClient({ slug, storeName, storeDescription, businessId }: Ch
   };
 
   const handleDeleteChat = () => {
-    if (!selectedSession) return;
+    if (!selectedSession || !canManage) return;
     setIsDeleteDialogOpen(true);
   };
 

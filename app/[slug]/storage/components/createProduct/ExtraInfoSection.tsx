@@ -1,20 +1,31 @@
 'use client';
 
+import { Divider } from '@/shared/components/ui/data-display/Divider';
 import { TextField } from '@/shared/components/ui/inputs/TextField';
 import React from 'react';
 
 interface ExtraInfoSectionProps {
   tags: string[];
   shippingInfo: string;
+  seoTitle: string;
+  seoDescription: string;
   onTagsChange: (tags: string[]) => void;
   onShippingInfoChange: (value: string) => void;
+  onSeoTitleChange: (value: string) => void;
+  onSeoDescriptionChange: (value: string) => void;
+  seoEnabled?: boolean;
 }
 
 export const ExtraInfoSection = ({
   tags,
   shippingInfo,
+  seoTitle,
+  seoDescription,
   onTagsChange,
   onShippingInfoChange,
+  onSeoTitleChange,
+  onSeoDescriptionChange,
+  seoEnabled = false,
 }: ExtraInfoSectionProps) => {
   const handleTagChange = (index: number, value: string) => {
     const newTags = [...tags];
@@ -86,6 +97,39 @@ export const ExtraInfoSection = ({
             style={{ width: '100%' }}
           />
         </div>
+
+        {seoEnabled && (
+          <>
+            <Divider style={{ margin: '16px 0' }} />
+            <p className="form-section-title" style={{ fontSize: '0.9rem', opacity: 0.8 }}>SEO del Producto</p>
+            <div>
+              <TextField
+                label="Título SEO"
+                variant="outlined"
+                value={seoTitle}
+                maxLength={60}
+                supportingText="Título que aparecerá en buscadores."
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  onSeoTitleChange(e.target.value)
+                }
+                style={{ width: '100%' }}
+              />
+            </div>
+            <div style={{ marginTop: '12px' }}>
+              <TextField
+                label="Descripción SEO"
+                variant="outlined"
+                value={seoDescription}
+                maxLength={160}
+                supportingText="Resumen para buscadores (Google sugiere < 160 carácteres)."
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  onSeoDescriptionChange(e.target.value)
+                }
+                style={{ width: '100%' }}
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

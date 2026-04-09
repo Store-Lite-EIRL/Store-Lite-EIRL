@@ -75,7 +75,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const fetchProfile = async (session: AuthSession) => {
       const requestId = ++profileRequestIdRef.current;
       authDebug('fetchProfile:start', { requestId, userId: session.user.id });
+
       try {
+        // CRITICAL: Sync session before RLS-sensitive queries
+        // Without this, the Supabase client may not have the access token updated yet,
+        // causing RLS to fail with an empty error object
+        await supabase.auth.getSession();
+
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('*')
@@ -83,13 +89,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .maybeSingle();
 
         if (!isMounted || requestId !== profileRequestIdRef.current) {
-          authDebug('fetchProfile:stale', { requestId, currentRequestId: profileRequestIdRef.current });
+          authDebug('fetchProfile:stale', {
+            requestId,
+            currentRequestId: profileRequestIdRef.current,
+          });
           return;
         }
 
         if (error) {
           // PGRST116 is 'no rows returned', which is expected if a user hasn't created a profile yet
           if (error.code === 'PGRST116') {
+            authDebug('fetchProfile:no-profile-found');
             setStableAuthState(session, { ...session.user, profile: undefined } as AuthUser);
             return;
           }
@@ -98,19 +108,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (isAbortLikeError(error)) {
             authDebug('fetchProfile:abort-like-error', {
               requestId,
-              code: error.code,
-              message: error.message,
+              code: (error as any).code,
+              message: (error as any).message,
             });
             setStableAuthState(session, { ...session.user, profile: undefined } as AuthUser);
             return;
           }
 
-          console.error('Error fetching profile:', {
-            code: error.code,
-            message: error.message,
-            hint: error.hint,
-            details: error.details,
-          });
+          // More detailed error logging to identify RLS or connection issues
+          console.error('Error fetching profile from Supabase:', error);
 
           // Set user even if profile is missing (just basic session user)
           setStableAuthState(session, { ...session.user, profile: undefined } as AuthUser);

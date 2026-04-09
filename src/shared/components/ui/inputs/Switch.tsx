@@ -16,7 +16,7 @@ export const Switch = ({ className, children, id, ...props }: SwitchProps) => {
   const switchId = id || generatedId;
 
   return (
-    <md-switch id={switchId} className={className} {...props}>
+    <md-switch id={switchId} className={className} suppressHydrationWarning {...props}>
       {children}
     </md-switch>
   );

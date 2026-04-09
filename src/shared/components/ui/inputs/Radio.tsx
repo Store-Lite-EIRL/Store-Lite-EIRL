@@ -15,7 +15,7 @@ export const Radio = ({ className, children, id, ...props }: RadioProps) => {
   const radioId = id || generatedId;
 
   return (
-    <md-radio id={radioId} className={className} {...props}>
+    <md-radio id={radioId} className={className} suppressHydrationWarning {...props}>
       {children}
     </md-radio>
   );

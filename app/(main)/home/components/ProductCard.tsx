@@ -152,7 +152,19 @@ export default function ProductCard({ product }: ProductCardProps) {
       {isCheckoutOpen && (
         <Checkout
           totalAmount={price}
-          productName={product.title}
+          cartItems={[
+            {
+              id: product.id,
+              name: product.title,
+              price: price.toString(),
+              currency: 'PEN',
+              image: mainImage,
+              category: categoryName,
+              stock: product.stock,
+              status: product.isAvailable ? 'Active' : 'Inactive',
+              quantity: 1,
+            },
+          ]}
           onSuccess={() => setIsCheckoutOpen(false)}
           onCancel={() => setIsCheckoutOpen(false)}
         />

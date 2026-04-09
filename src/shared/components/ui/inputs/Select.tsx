@@ -27,6 +27,7 @@ interface SelectProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange'
   value?: string | number;
   className?: string;
   error?: boolean;
+  disabled?: boolean;
   errorText?: string;
   supportingText?: string;
   onChange?: SelectEventHandler;
@@ -37,6 +38,7 @@ interface SelectOptionProps extends React.HTMLAttributes<HTMLElement> {
   value: string;
   headline?: React.ReactNode;
   selected?: boolean;
+  disabled?: boolean;
   children?: React.ReactNode;
 }
 

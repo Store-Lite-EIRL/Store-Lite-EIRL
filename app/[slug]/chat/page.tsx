@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
+import { getMemberPermissions } from '@/lib/permissions/checkPermission';
 import { ChatClient } from './components/ChatClient';
 
 interface Props {
@@ -44,9 +45,18 @@ export default async function ChatPage({ params }: Props) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user || user.id !== business.ownerId) {
+  if (!user) {
     redirect('/list-business');
   }
+
+  const { isOwner, permissions } = await getMemberPermissions(business.id, user.id);
+
+  if (!isOwner && !permissions.includes('chat.view')) {
+    redirect('/list-business');
+  }
+
+  const canRespond = isOwner || permissions.includes('chat.respond');
+  const canManage = isOwner || permissions.includes('chat.delete');
 
   return (
     <ChatClient
@@ -54,6 +64,8 @@ export default async function ChatPage({ params }: Props) {
       storeName={business.name}
       storeDescription={business.description || ''}
       businessId={business.id}
+      canRespond={canRespond}
+      canManage={canManage}
     />
   );
 }

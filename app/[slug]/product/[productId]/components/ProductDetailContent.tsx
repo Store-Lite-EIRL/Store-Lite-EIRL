@@ -1,13 +1,12 @@
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
-import { businesses } from '@/core/database/schema';
+import { businesses, products as productsTable } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { createServerClient } from '@supabase/ssr';
-import { eq } from 'drizzle-orm';
+import { and, eq, or } from 'drizzle-orm';
 import { cookies } from 'next/headers';
 
 import { notFound } from 'next/navigation';
-import { getProductById } from '../../../storage/actions';
 import {
   formatPrice,
   getCurrencyByCountry,
@@ -43,12 +42,36 @@ export default async function ProductDetailContent({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [productResult, businessDetail] = await Promise.all([
-    getProductById(slug, productId),
-    db.query.businesses.findFirst({ where: eq(businesses.slug, slug) }),
-  ]);
+  const businessDetail = await db.query.businesses.findFirst({
+    where: eq(businesses.slug, slug),
+  });
 
-  if (productResult.error || !productResult.product || !businessDetail) {
+  if (!businessDetail) {
+    return notFound();
+  }
+
+  const rawProduct = await db.query.products.findFirst({
+    where: and(
+      eq(productsTable.businessId, businessDetail.id),
+      or(eq(productsTable.id, productId), eq(productsTable.slug, productId)),
+    ),
+    with: {
+      category: {
+        columns: {
+          name: true,
+        },
+      },
+      media: {
+        orderBy: (media, { asc }) => [asc(media.displayOrder)],
+        columns: {
+          mediaUrl: true,
+          displayOrder: true,
+        },
+      },
+    },
+  });
+
+  if (!rawProduct) {
     return notFound();
   }
 
@@ -58,11 +81,28 @@ export default async function ProductDetailContent({
 
   const isOwner = Boolean(user?.id && businessDetail?.ownerId === user.id);
 
-  if (productResult.error || !productResult.product || !businessDetail) {
-    return notFound();
-  }
-
-  const { product } = productResult;
+  const product = {
+    id: rawProduct.id,
+    name: rawProduct.title,
+    category: rawProduct.category?.name || 'Sin categoria',
+    stock: rawProduct.stock,
+    price: String(rawProduct.price),
+    status: rawProduct.isAvailable ? 'ACTIVO' : 'NO ACTIVO',
+    slug: rawProduct.slug,
+    seoTitle: rawProduct.seoTitle,
+    seoDescription: rawProduct.seoDescription,
+    image: rawProduct.media[0]?.mediaUrl || '',
+    images: rawProduct.media.map((m) => m.mediaUrl),
+    description: rawProduct.description || '',
+    currency: rawProduct.currency,
+    displayOrder: rawProduct.displayOrder,
+    createdAt: rawProduct.createdAt,
+    brand: rawProduct.brand,
+    tags: rawProduct.tags,
+    shippingInfo: rawProduct.shippingInfo,
+    saleStatus: rawProduct.saleStatus,
+    secondPrice: rawProduct.secondPrice ? String(rawProduct.secondPrice) : null,
+  };
 
   // Deny access to inactive products for non-owners
   if (product.status === 'NO ACTIVO' && !isOwner) {

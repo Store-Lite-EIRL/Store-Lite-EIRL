@@ -1,6 +1,6 @@
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
-import { businesses } from '@/core/database/schema';
+import { businesses, businessTeamMembers } from '@/core/database/schema';
 import AppLayout from '@/shared/components/layout/AppLayout';
 import { Icon } from '@/shared/components/ui/data-display';
 import { createServerClient } from '@supabase/ssr';
@@ -35,25 +35,59 @@ export default async function ListBusinessPage() {
     redirect('/auth');
   }
 
-  const rawBusinesses = await db.query.businesses.findMany({
+  // 1. Fetch businesses user owns
+  const rawOwnedBusinesses = await db.query.businesses.findMany({
     where: eq(businesses.ownerId, user.id),
     orderBy: (businesses, { desc }) => [desc(businesses.createdAt)],
     with: {
       subscriptions: {
         where: (subscriptions, { eq }) => eq(subscriptions.planStatus, 'active'),
         limit: 1,
-      }
-    }
+      },
+    },
   });
 
-  const myBusinesses = rawBusinesses.map(b => ({
+  // 2. Fetch businesses where user is a team member
+  const teamMemberships = await db.query.businessTeamMembers.findMany({
+    where: eq(businessTeamMembers.userId, user.id),
+    with: {
+      business: {
+        with: {
+          subscriptions: {
+            where: (subscriptions, { eq }) => eq(subscriptions.planStatus, 'active'),
+            limit: 1,
+          },
+        },
+      },
+    },
+  });
+
+  const ownedBusinesses = rawOwnedBusinesses.map((b) => ({
     ...b,
     planType: b.subscriptions?.[0]?.planType || 'basico',
+    isTeam: false,
   }));
 
-  if (selectedSlug && myBusinesses.some((business) => business.slug === selectedSlug)) {
+  const teamBusinesses = teamMemberships
+    .map((m) => {
+      if (!m.business) return null;
+      return {
+        ...m.business,
+        planType: m.business.subscriptions?.[0]?.planType || 'basico',
+        isTeam: true,
+      };
+    })
+    .filter(Boolean) as any[];
+
+  // Combine lists
+  const allBusinesses = [...ownedBusinesses, ...teamBusinesses];
+
+  if (selectedSlug && allBusinesses.some((business) => business.slug === selectedSlug)) {
     redirect(`/${selectedSlug}`);
   }
+
+  const myBusinesses = ownedBusinesses; // Keep this for limit calculations
+  const displayBusinesses = allBusinesses;
 
   // Derive display name and avatar initial from user metadata
   const displayName: string =
@@ -101,16 +135,21 @@ export default async function ListBusinessPage() {
         </div>
 
         {/* ── Content ── */}
-        {myBusinesses.length > 0 ? (
+        {displayBusinesses.length > 0 ? (
           <>
             <div className={style.sectionHeader}>
               <span className={style.sectionTitle}>
-                {myBusinesses.length === 1
-                  ? '1 negocio registrado'
-                  : `${myBusinesses.length} negocios registrados`}
+                {displayBusinesses.length === 1
+                   ? '1 negocio encontrado'
+                   : `${displayBusinesses.length} negocios encontrados`}
+                {ownedBusinesses.length > 0 && teamBusinesses.length > 0 && (
+                   <span style={{ fontSize: '0.8rem', opacity: 0.7, marginLeft: '8px' }}>
+                     ({ownedBusinesses.length} propios, {teamBusinesses.length} de equipo)
+                   </span>
+                )}
               </span>
             </div>
-            <BusinessGrid businesses={myBusinesses} />
+            <BusinessGrid businesses={displayBusinesses} />
           </>
         ) : (
           <div className={style.emptyState}>

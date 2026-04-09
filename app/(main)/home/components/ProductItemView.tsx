@@ -453,7 +453,7 @@ export function ProductItemView({
       {!isOwner && isPaymentModalOpen && (
         <Checkout
           totalAmount={price}
-          productName={product.title}
+          cartItems={[{ ...storageProduct, quantity: 1 }]}
           onSuccess={() => onPaymentModalClose()}
           onCancel={() => onPaymentModalClose()}
         />

@@ -14,6 +14,8 @@ export interface Product {
   shippingInfo?: string | null;
   saleStatus?: string;
   secondPrice?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
 }
 
 export const PRODUCTS: Product[] = [
