@@ -1,14 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useAuth } from '@/features/auth';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import FeaturedItems from './home/FeaturedItems';
 import FilterBar from './home/FilterBar';
 import Hero from './home/Hero';
 import Pagination from './home/Pagination';
 
 export default function HomePage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('products');
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace('/list-business');
+    }
+  }, [user, loading, router]);
+
+  if (loading || user) {
+    return null; // Or a simple loader
+  }
 
   return (
     <div className="page-container">

@@ -1,29 +1,17 @@
 'use client';
 
+import type { StorefrontTheme } from '@/core/storefront';
+import { createRandomStorefrontTheme, getReadableTextColor } from '@/core/storefront';
 import { Button, Icon } from '@/shared/components/ui';
 import Image from 'next/image';
-import { useState } from 'react';
 import type { BusinessData } from '../types';
 
 interface BusinessPreviewProps {
   formData: BusinessData;
   logoPreview: string | null;
+  storefrontTheme: StorefrontTheme;
+  onStorefrontThemeChange: (theme: StorefrontTheme) => void;
 }
-
-const PRESET_COLORS = [
-  ['#6366f1', '#a855f7', '#ec4899'],
-  ['#3b82f6', '#06b6d4', '#10b981'],
-  ['#f59e0b', '#ef4444', '#f472b6'],
-  ['#8b5cf6', '#6366f1', '#3b82f6'],
-  ['#14b8a6', '#0ea5e9', '#6366f1'],
-];
-
-const getLuminance = (hex: string) => {
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-};
 
 import { getSectorIcon } from '@/shared/utils/business';
 
@@ -182,24 +170,20 @@ const PreviewLegalRep = ({
   </div>
 );
 
-export const BusinessPreview = ({ formData, logoPreview }: BusinessPreviewProps) => {
-  const [gradientColors, setGradientColors] = useState(PRESET_COLORS[0]);
-  const [isDark, setIsDark] = useState(true);
-
-  const randomizeColors = () => {
-    const randomHex = () =>
-      '#' +
-      Math.floor(Math.random() * 16777215)
-        .toString(16)
-        .padStart(6, '0');
-    const newColors = [randomHex(), randomHex(), randomHex()];
-    setGradientColors(newColors);
-    const avgL = newColors.reduce((acc, c) => acc + getLuminance(c), 0) / 3;
-    setIsDark(avgL < 0.65);
-  };
-
-  const textColor = isDark ? '#FFF' : '#000';
-  const subTextColor = isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)';
+export const BusinessPreview = ({
+  formData,
+  logoPreview,
+  storefrontTheme,
+  onStorefrontThemeChange,
+}: BusinessPreviewProps) => {
+  const gradientColors = [
+    storefrontTheme.palette.primary,
+    storefrontTheme.palette.secondary,
+    storefrontTheme.palette.accent,
+  ];
+  const isDark = storefrontTheme.surfaceMode === 'dark';
+  const textColor = isDark ? '#FFF' : '#111827';
+  const subTextColor = isDark ? 'rgba(255,255,255,0.7)' : 'rgba(17,24,39,0.7)';
 
   const hexToRGBA = (hex: string, alpha: number) => {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -233,7 +217,7 @@ export const BusinessPreview = ({ formData, logoPreview }: BusinessPreviewProps)
     >
       <Button
         variant="tonal"
-        onClick={randomizeColors}
+        onClick={() => onStorefrontThemeChange(createRandomStorefrontTheme())}
         style={{
           position: 'absolute',
           top: '28px',
@@ -246,7 +230,7 @@ export const BusinessPreview = ({ formData, logoPreview }: BusinessPreviewProps)
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.12)',
+          backgroundColor: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(17,24,39,0.12)',
           color: textColor,
           backdropFilter: 'blur(12px)',
           zIndex: 30,
@@ -323,8 +307,8 @@ export const BusinessPreview = ({ formData, logoPreview }: BusinessPreviewProps)
           height: '60px',
           minWidth: '60px',
           padding: 0,
-          backgroundColor: isDark ? '#FFF' : 'var(--md-sys-color-primary)',
-          color: isDark ? '#000' : 'var(--md-sys-color-on-primary)',
+          backgroundColor: gradientColors[0],
+          color: getReadableTextColor(gradientColors[0]),
           boxShadow: '0 10px 20px rgba(0,0,0,0.2)',
           zIndex: 40,
         }}

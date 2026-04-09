@@ -3,7 +3,7 @@
 import { ThemeSettings } from '@/shared/components/ui/ThemeSettings';
 import { closeElementById, showElementById, showNextSiblingElement } from '@/shared/utils';
 
-// eslint-disable-next-line max-lines-per-function
+
 export default function MaterialDemo() {
   return (
     <div className="page-container">
@@ -61,8 +61,8 @@ export default function MaterialDemo() {
       <section className="section">
         <h2 className="section-title">Campos de texto (TextField)</h2>
         <div className="form-row">
-          <md-outlined-text-field label="Outlined" placeholder="Escribe aquÃ­" />
-          <md-filled-text-field label="Filled" placeholder="Escribe aquÃ­" />
+          <md-outlined-text-field label="Outlined" placeholder="Escribe aquí" />
+          <md-filled-text-field label="Filled" placeholder="Escribe aquí" />
         </div>
       </section>
 
@@ -101,15 +101,15 @@ export default function MaterialDemo() {
         <div className="row row--vertical">
           <label className="field-label">
             <md-radio name="opcion" value="a" />
-            <span>OpciÃ³n A</span>
+            <span>Opción A</span>
           </label>
           <label className="field-label">
             <md-radio name="opcion" value="b" checked />
-            <span>OpciÃ³n B</span>
+            <span>Opción B</span>
           </label>
           <label className="field-label">
             <md-radio name="opcion" value="c" />
-            <span>OpciÃ³n C</span>
+            <span>Opción C</span>
           </label>
         </div>
       </section>
@@ -158,8 +158,8 @@ export default function MaterialDemo() {
       <section className="section">
         <h2 className="section-title">Dialog</h2>
         <md-dialog id="demo-dialog">
-          <div slot="headline">TÃ­tulo del diÃ¡logo</div>
-          <div slot="content">Contenido del diÃ¡logo. Cierra con Cancelar u Ok.</div>
+          <div slot="headline">Título del diálogo</div>
+          <div slot="content">Contenido del diálogo. Cierra con Cancelar u Ok.</div>
           <div slot="actions">
             <md-text-button onClick={() => closeElementById('demo-dialog')}>
               Cancelar
@@ -168,7 +168,7 @@ export default function MaterialDemo() {
           </div>
         </md-dialog>
         <md-filled-button onClick={() => showElementById('demo-dialog')}>
-          Abrir diÃ¡logo
+          Abrir diálogo
         </md-filled-button>
       </section>
 
@@ -179,17 +179,17 @@ export default function MaterialDemo() {
             id="menu-anchor"
             onClick={(e: React.MouseEvent<HTMLElement>) => showNextSiblingElement(e.currentTarget)}
           >
-            Abrir menÃº
+            Abrir menú
           </md-filled-button>
           <md-menu anchor="menu-anchor" positioning="popover">
             <md-menu-item>
-              <span slot="headline">OpciÃ³n 1</span>
+              <span slot="headline">Opción 1</span>
             </md-menu-item>
             <md-menu-item>
-              <span slot="headline">OpciÃ³n 2</span>
+              <span slot="headline">Opción 2</span>
             </md-menu-item>
             <md-menu-item>
-              <span slot="headline">OpciÃ³n 3</span>
+              <span slot="headline">Opción 3</span>
             </md-menu-item>
           </md-menu>
         </div>
@@ -221,10 +221,10 @@ export default function MaterialDemo() {
         <h2 className="section-title">Select (Outlined)</h2>
         <md-outlined-select label="Selecciona" className="select-wrap">
           <md-select-option value="1" selected>
-            OpciÃ³n 1
+            Opción 1
           </md-select-option>
-          <md-select-option value="2">OpciÃ³n 2</md-select-option>
-          <md-select-option value="3">OpciÃ³n 3</md-select-option>
+          <md-select-option value="2">Opción 2</md-select-option>
+          <md-select-option value="3">Opción 3</md-select-option>
         </md-outlined-select>
       </section>
 
@@ -232,10 +232,10 @@ export default function MaterialDemo() {
         <h2 className="section-title">Select (Filled)</h2>
         <md-filled-select label="Selecciona" className="select-wrap">
           <md-select-option value="a" selected>
-            OpciÃ³n A
+            Opción A
           </md-select-option>
-          <md-select-option value="b">OpciÃ³n B</md-select-option>
-          <md-select-option value="c">OpciÃ³n C</md-select-option>
+          <md-select-option value="b">Opción B</md-select-option>
+          <md-select-option value="c">Opción C</md-select-option>
         </md-filled-select>
       </section>
 

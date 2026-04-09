@@ -1,3 +1,5 @@
+'use client';
+
 import type { ProductCategory } from '@/core/database/schema';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
@@ -123,9 +125,11 @@ function CategoryItem({
   );
 }
 
+const EMPTY_CATEGORIES: ProductCategory[] = [];
+
 export default function FeaturedItems({
   isOwner = false,
-  categories = [],
+  categories = EMPTY_CATEGORIES,
 }: {
   isOwner?: boolean;
   categories?: ProductCategory[];

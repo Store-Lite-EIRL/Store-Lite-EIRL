@@ -26,6 +26,8 @@ function productToFormState(product: Product): FormState {
     shippingInfo: product.shippingInfo ?? '',
     secondPrice: product.secondPrice ? String(parsePriceValue(product.secondPrice)) : '',
     saleStatus: product.saleStatus || 'NORMAL',
+    seoTitle: product.seoTitle || '',
+    seoDescription: product.seoDescription || '',
   };
 }
 
@@ -116,6 +118,8 @@ export const useCreateProductForm = ({
         secondPrice: form.secondPrice
           ? formatPrice(parsePriceValue(form.secondPrice), currencySymbol)
           : null,
+        seoTitle: form.seoTitle.trim() || null,
+        seoDescription: form.seoDescription.trim() || null,
       };
 
       await onSave(

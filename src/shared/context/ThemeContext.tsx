@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
-export type Theme = 'light' | 'dark';
+export type Theme = 'light' | 'dark' | 'system';
 export type ColorScheme = 'default' | 'medium' | 'high';
 
 interface ThemeContextProps {
@@ -27,8 +27,8 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  // Default values
-  const [theme, setThemeState] = useState<Theme>('light');
+  // Default to system
+  const [theme, setThemeState] = useState<Theme>('system');
   const [colorScheme, setColorSchemeState] = useState<ColorScheme>('default');
   const [mounted, setMounted] = useState(false);
 
@@ -38,10 +38,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       const storedTheme = localStorage.getItem('app-theme') as Theme;
       const storedScheme = localStorage.getItem('app-color-scheme') as ColorScheme;
 
-      if (storedTheme && ['light', 'dark'].includes(storedTheme)) {
+      if (storedTheme && ['light', 'dark', 'system'].includes(storedTheme)) {
         setThemeState(storedTheme);
-      } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        setThemeState('dark');
       }
 
       if (storedScheme && ['default', 'medium', 'high'].includes(storedScheme)) {
@@ -62,39 +60,56 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     localStorage.setItem('app-theme', theme);
     localStorage.setItem('app-color-scheme', colorScheme);
 
-    // Remove all previous theme classes
-    document.body.classList.remove(
-      'light',
-      'light-medium-contrast',
-      'light-high-contrast',
-      'dark',
-      'dark-medium-contrast',
-      'dark-high-contrast',
-    );
+    // Helper to apply theme
+    const applyTheme = (currentTheme: 'light' | 'dark') => {
+      // Remove all previous theme classes
+      document.body.classList.remove(
+        'light',
+        'light-medium-contrast',
+        'light-high-contrast',
+        'dark',
+        'dark-medium-contrast',
+        'dark-high-contrast',
+      );
 
-    // Determine new class name
-    let className = '';
+      // Determine new class name
+      let className = '';
 
-    if (theme === 'light') {
-      if (colorScheme === 'default') {
-        className = 'light';
-      } else if (colorScheme === 'medium') {
-        className = 'light-medium-contrast';
-      } else if (colorScheme === 'high') {
-        className = 'light-high-contrast';
+      if (currentTheme === 'light') {
+        if (colorScheme === 'default') {
+          className = 'light';
+        } else if (colorScheme === 'medium') {
+          className = 'light-medium-contrast';
+        } else if (colorScheme === 'high') {
+          className = 'light-high-contrast';
+        }
+      } else {
+        if (colorScheme === 'default') {
+          className = 'dark';
+        } else if (colorScheme === 'medium') {
+          className = 'dark-medium-contrast';
+        } else if (colorScheme === 'high') {
+          className = 'dark-high-contrast';
+        }
       }
+
+      if (className) {
+        document.body.classList.add(className);
+      }
+    };
+
+    if (theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleSystemThemeChange = (e: MediaQueryListEvent | MediaQueryList) => {
+        applyTheme(e.matches ? 'dark' : 'light');
+      };
+      
+      handleSystemThemeChange(mediaQuery);
+      
+      mediaQuery.addEventListener('change', handleSystemThemeChange);
+      return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
     } else {
-      if (colorScheme === 'default') {
-        className = 'dark';
-      } else if (colorScheme === 'medium') {
-        className = 'dark-medium-contrast';
-      } else if (colorScheme === 'high') {
-        className = 'dark-high-contrast';
-      }
-    }
-
-    if (className) {
-      document.body.classList.add(className);
+      applyTheme(theme);
     }
   }, [theme, colorScheme, mounted]);
 

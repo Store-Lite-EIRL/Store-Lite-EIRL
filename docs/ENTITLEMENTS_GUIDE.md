@@ -96,8 +96,8 @@ export async function doSomething(businessId: string) {
 | --------------- | :-------------: | :-----------: | :---------: | :-: | :-------: | :----: |
 | `basico`        |        ✗        |      50       |      ✗      |  ✗  |     ✗     |   1    |
 | `emprendedor`   |        ✓        |      150      |      ✓      |  ✗  |     ✓     |   3    |
-| `business_pro`  |        ✓        |      300      |      ✓      |  ✓  |     ✓     |   7    |
-| `enterprise_ai` |        ✓        |       ∞       |      ✓      |  ✓  |     ✓     |   ∞    |
+| `business_pro`  |        ✓        |      300      |      ✓      |  ✓  |     ✓     |   2    |
+| `enterprise_ai` |        ✓        |       ∞       |      ✓      |  ✓  |     ✓     |   5    |
 
 > Para actualizar estos valores, editar únicamente `PLAN_ENTITLEMENTS` en `src/core/entitlements/plans.ts`.
 

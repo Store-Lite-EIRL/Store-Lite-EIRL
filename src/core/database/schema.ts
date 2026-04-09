@@ -254,6 +254,8 @@ export const businessSettings = pgTable(
       .default('standard'),
     customColors: jsonb('custom_colors').default({}),
     preferences: jsonb('preferences').default({}),
+    culqiPublicKey: text('culqi_public_key'),
+    culqiSecretKey: text('culqi_secret_key'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -349,7 +351,10 @@ export const products = pgTable(
     displayOrderIdx: index('idx_products_display_order').on(table.businessId, table.displayOrder),
     createdAtIdx: index('idx_products_created_at').on(table.createdAt.desc()),
     titleSearchIdx: index('idx_products_title_search').on(table.title),
-    uniqueBusinessProductSlug: unique('unique_business_product_slug').on(table.businessId, table.slug),
+    uniqueBusinessProductSlug: unique('unique_business_product_slug').on(
+      table.businessId,
+      table.slug,
+    ),
     slugIdx: index('idx_products_slug').on(table.businessId, table.slug),
   }),
 );
@@ -533,6 +538,83 @@ export const sellerPayoutAccounts = pgTable(
 );
 
 // =====================================================
+// TABLE: business_invitations
+// =====================================================
+
+export const businessInvitations = pgTable(
+  'business_invitations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    businessId: uuid('business_id')
+      .notNull()
+      .references(() => businesses.id, { onDelete: 'cascade' }),
+    code: text('code').notNull().unique(),
+    codeHash: text('code_hash').notNull(),
+    maxUses: integer('max_uses'),
+    usedCount: integer('used_count').notNull().default(0),
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    createdBy: uuid('created_by').references(() => profiles.id, { onDelete: 'set null' }),
+  },
+  (table) => ({
+    codeIdx: index('idx_business_invitations_code').on(table.code),
+    businessIdIdx: index('idx_business_invitations_business_id').on(table.businessId),
+    expiresIdx: index('idx_business_invitations_expires').on(table.expiresAt),
+  }),
+);
+
+// =====================================================
+// TABLE: business_team_members
+// =====================================================
+
+export const businessTeamMembers = pgTable(
+  'business_team_members',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    businessId: uuid('business_id')
+      .notNull()
+      .references(() => businesses.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    role: text('role').notNull().default('member'),
+    customPermissions: jsonb('custom_permissions').$type<string[]>(),
+    joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
+    invitationId: uuid('invitation_id').references(() => businessInvitations.id, {
+      onDelete: 'set null',
+    }),
+  },
+  (table) => ({
+    uniqueBusinessUser: unique('unique_business_user').on(table.businessId, table.userId),
+    businessIdIdx: index('idx_business_team_members_business_id').on(table.businessId),
+    userIdIdx: index('idx_business_team_members_user_id').on(table.userId),
+  }),
+);
+
+// =====================================================
+// TABLE: business_team_roles
+// =====================================================
+
+export const businessTeamRoles = pgTable(
+  'business_team_roles',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    businessId: uuid('business_id')
+      .notNull()
+      .references(() => businesses.id, { onDelete: 'cascade' }),
+    role: text('role').notNull(),
+    permissions: jsonb('permissions').$type<string[]>().default([]),
+    isDefault: boolean('is_default').default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueBusinessRole: unique('unique_business_role').on(table.businessId, table.role),
+    businessIdIdx: index('idx_business_team_roles_business_id').on(table.businessId),
+  }),
+);
+
+// =====================================================
 // RELATIONS
 // =====================================================
 
@@ -553,6 +635,9 @@ export const businessesRelations = relations(businesses, ({ one, many }) => ({
   products: many(products),
   chatSessions: many(chatSessions),
   subscriptions: many(businessSubscriptions),
+  invitations: many(businessInvitations),
+  teamMembers: many(businessTeamMembers),
+  teamRoles: many(businessTeamRoles),
 }));
 
 export const businessSettingsRelations = relations(businessSettings, ({ one }) => ({
@@ -642,6 +727,43 @@ export const sellerPayoutAccountsRelations = relations(sellerPayoutAccounts, ({ 
 }));
 
 // =====================================================
+// RELATIONS: Team Collaboration
+// =====================================================
+
+export const businessInvitationsRelations = relations(businessInvitations, ({ one }) => ({
+  business: one(businesses, {
+    fields: [businessInvitations.businessId],
+    references: [businesses.id],
+  }),
+  creator: one(profiles, {
+    fields: [businessInvitations.createdBy],
+    references: [profiles.id],
+  }),
+}));
+
+export const businessTeamMembersRelations = relations(businessTeamMembers, ({ one }) => ({
+  business: one(businesses, {
+    fields: [businessTeamMembers.businessId],
+    references: [businesses.id],
+  }),
+  user: one(profiles, {
+    fields: [businessTeamMembers.userId],
+    references: [profiles.id],
+  }),
+  invitation: one(businessInvitations, {
+    fields: [businessTeamMembers.invitationId],
+    references: [businessInvitations.id],
+  }),
+}));
+
+export const businessTeamRolesRelations = relations(businessTeamRoles, ({ one }) => ({
+  business: one(businesses, {
+    fields: [businessTeamRoles.businessId],
+    references: [businesses.id],
+  }),
+}));
+
+// =====================================================
 // TYPE EXPORTS
 // =====================================================
 
@@ -680,3 +802,13 @@ export type NewPayment = typeof payments.$inferInsert;
 
 export type SellerPayoutAccount = typeof sellerPayoutAccounts.$inferSelect;
 export type NewSellerPayoutAccount = typeof sellerPayoutAccounts.$inferInsert;
+
+// Team collaboration types
+export type BusinessInvitation = typeof businessInvitations.$inferSelect;
+export type NewBusinessInvitation = typeof businessInvitations.$inferInsert;
+
+export type BusinessTeamMember = typeof businessTeamMembers.$inferSelect;
+export type NewBusinessTeamMember = typeof businessTeamMembers.$inferInsert;
+
+export type BusinessTeamRole = typeof businessTeamRoles.$inferSelect;
+export type NewBusinessTeamRole = typeof businessTeamRoles.$inferInsert;

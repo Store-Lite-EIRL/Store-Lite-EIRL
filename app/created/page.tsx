@@ -1,6 +1,7 @@
 /* eslint-disable max-lines-per-function */
 'use client';
 
+import { createDefaultStorefrontTheme, type StorefrontTheme } from '@/core/storefront';
 import { Button, Icon } from '@/shared/components/ui';
 import { CircularProgress } from '@/shared/components/ui/feedback';
 import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
@@ -41,6 +42,9 @@ export default function CreatedPage() {
     legalRepPhone: '',
     legalRepEmail: 'gerente@eatech.pe',
   });
+  const [storefrontTheme, setStorefrontTheme] = useState<StorefrontTheme>(
+    createDefaultStorefrontTheme(),
+  );
 
   const [alert, setAlert] = useState<{
     open: boolean;
@@ -250,6 +254,7 @@ export default function CreatedPage() {
             formDataToSubmit.append(key, value.toString());
           }
         });
+        formDataToSubmit.append('storefrontTheme', JSON.stringify(storefrontTheme));
 
         // Handle the logo file specially with optimization
         if (formData.logo) {
@@ -428,7 +433,12 @@ export default function CreatedPage() {
           padding: '40px',
         }}
       >
-        <BusinessPreview formData={formData} logoPreview={logoPreview} />
+        <BusinessPreview
+          formData={formData}
+          logoPreview={logoPreview}
+          storefrontTheme={storefrontTheme}
+          onStorefrontThemeChange={setStorefrontTheme}
+        />
       </div>
 
       <AlertSnackbar

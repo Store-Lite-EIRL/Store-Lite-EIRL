@@ -5,14 +5,19 @@
 // Usage: Called automatically by Supabase after OAuth
 // =====================================================
 
+import { db } from '@/core/database/client';
+import { businesses } from '@/core/database/schema';
 import { createClient } from '@/lib/supabase/server';
+import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 /**
  * GET handler for OAuth callback
  * Exchanges the authorization code for a session
  * Creates or updates user profile in database
- * Redirects to home page
+ * Redirects based on user state:
+ * - NO businesses → /onboarding
+ * - HAS businesses → /list-business
  */
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -35,10 +40,26 @@ export async function GET(request: Request) {
 
   if (data.user) {
     await syncUserProfile(supabase, data.user);
+
+    // Check if user has any businesses
+    const userBusinesses = await db.query.businesses.findMany({
+      where: eq(businesses.ownerId, data.user.id),
+      columns: { id: true },
+      limit: 1,
+    });
+
+    const hasBusinesses = userBusinesses.length > 0;
+
+    // Redirect based on user state
+    if (hasBusinesses) {
+      return NextResponse.redirect(`${origin}/list-business`);
+    } else {
+      return NextResponse.redirect(`${origin}/onboarding`);
+    }
   }
 
-  // Redirect to home page
-  return NextResponse.redirect(`${origin}/`);
+  // Fallback
+  return NextResponse.redirect(`${origin}/list-business`);
 }
 
 import { type SupabaseClient, type User } from '@supabase/supabase-js';
@@ -64,7 +85,7 @@ async function syncUserProfile(supabase: SupabaseClient, user: User) {
   };
 
   // Create profile if it doesn't exist
-  if (!existingProfile && !profileError) {
+  if (!existingProfile || (profileError && (profileError as any).code === 'PGRST116')) {
     const { error: insertError } = await supabase.from('profiles').insert({
       id: user.id,
       ...profileData,

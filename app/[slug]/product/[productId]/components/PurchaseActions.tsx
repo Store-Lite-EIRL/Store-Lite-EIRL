@@ -84,7 +84,7 @@ export default function PurchaseActions({ product, business, hasPaymentGateway }
       {isPaymentModalOpen && (
         <Checkout
           totalAmount={Number(product.price)}
-          productName={product.name}
+          cartItems={[{ ...product, quantity: 1 }]}
           onSuccess={() => setIsPaymentModalOpen(false)}
           onCancel={() => setIsPaymentModalOpen(false)}
         />

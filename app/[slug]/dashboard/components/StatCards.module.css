@@ -1,0 +1,131 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+/* ─── Card ─── */
+.card {
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--md-sys-color-shadow) 8%, transparent);
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+/* ─── Info ─── */
+.cardInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cardLabel {
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 500;
+}
+
+.cardValue {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.cardLimit {
+  font-size: 0.72rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-top: 0.1rem;
+}
+
+.cardLimitWarn {
+  color: #f59e0b;
+  font-weight: 500;
+}
+
+/* ─── Icon ─── */
+.iconWrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.emoji {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+/* ─── Progress ─── */
+.progressWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.progressTrack {
+  flex: 1;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--md-sys-color-outline-variant);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--md-sys-color-primary);
+  transition: width 0.4s ease;
+}
+
+.progressFillWarn {
+  background: #f59e0b;
+}
+
+.progressPct {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+  min-width: 2ch;
+  text-align: right;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .cardValue {
+    font-size: 1.5rem;
+  }
+}

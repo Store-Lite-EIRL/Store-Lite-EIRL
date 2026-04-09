@@ -1,203 +1,62 @@
-'use client';
+import { db } from '@/core/database/client';
+import { businesses } from '@/core/database/schema';
+import { eq } from 'drizzle-orm';
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
+import { env } from '@/config/env';
+import { getMemberPermissions } from '@/lib/permissions/checkPermission';
+import { StorageClient } from './StorageClient';
 
-import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import './storage.css';
-
-// Components
-import { CreateProductSheet } from './components/CreateProductSheet';
-import { DeleteProductDialog } from './components/DeleteProductDialog';
-import { ProductTable } from './components/ProductTable';
-import { StorageHeader } from './components/StorageHeader';
-import { TableControls } from './components/TableControls';
-import { TablePagination } from './components/TablePagination';
-
-// Hooks & Logic
-import { StorageProvider, useStorage } from './context/StorageContext';
-import type { Product } from './data';
-import type { SaveProductMediaItem, SaveProductPayload } from './types';
-
-import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
-
-function StorageContent() {
-  // Delete dialog state
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
-
-  // Create/Edit sheet state
-  const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
-  const [productToEdit, setProductToEdit] = useState<Product | null>(null);
-
-  // Alert State
-  const [alert, setAlert] = useState<{
-    open: boolean;
-    description: string;
-    color: 'success' | 'error';
-    icon: string;
-  }>({
-    open: false,
-    description: '',
-    color: 'success',
-    icon: 'check_circle',
-  });
-
-  const showAlert = (description: string, color: 'success' | 'error', icon: string) => {
-    setAlert({ open: true, description, color, icon });
-  };
-
-  const {
-    products,
-    allFilteredProducts,
-    totalFiltered,
-    totalPages,
-    currentPage,
-    setCurrentPage,
-    sortConfig,
-    handleSort,
-    totalProducts,
-    deleteProduct,
-    saveProductBackground,
-    isLoading,
-  } = useStorage();
-
-  if (isLoading && products.length === 0) {
-    return (
-      <div className="storage-loading-container">
-        <div className="spinner-large" />
-        <p>Cargando almacén...</p>
-      </div>
-    );
-  }
-
-  // --- Delete handlers ---
-  const handleDeleteClick = (product: Product) => {
-    setProductToDelete(product);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const handleConfirmDelete = async (id: string) => {
-    setIsDeleteDialogOpen(false);
-    setProductToDelete(null);
-
-    const result = await deleteProduct(id);
-    if (!result.success) {
-      showAlert(result.error || 'Error al eliminar el producto', 'error', 'error');
-    }
-  };
-
-  // --- Create/Edit handlers ---
-  const handleEditClick = (product: Product) => {
-    setProductToEdit(product);
-    setIsCreateSheetOpen(true);
-  };
-
-  const handleSaveProduct = async (
-    optimisticProduct: Product,
-    payload: SaveProductPayload,
-    media: SaveProductMediaItem[],
-    isEdit: boolean,
-  ) => {
-    // El background save ya actualiza la UI optimista por dentro
-    const result = await saveProductBackground(
-      payload,
-      media,
-      isEdit,
-      productToEdit,
-      optimisticProduct,
-    );
-
-    if (result.success) {
-      setIsCreateSheetOpen(false);
-      setProductToEdit(null);
-      showAlert(isEdit ? 'Producto actualizado' : 'Producto guardado', 'success', 'check_circle');
-    } else {
-      showAlert(result.error || 'No se pudo guardar el producto', 'error', 'error');
-    }
-  };
-
-  const handleCloseProductSheet = () => {
-    setIsCreateSheetOpen(false);
-    setProductToEdit(null);
-  };
-
-  return (
-    <>
-      <StorageHeader
-        productsCount={totalProducts}
-        allProducts={allFilteredProducts}
-        onAddProduct={() => {
-          setProductToEdit(null);
-          setIsCreateSheetOpen(true);
-        }}
-      />
-
-      <main className="storage-content" style={{ position: 'relative' }}>
-        <TableControls />
-
-        <ProductTable
-          products={products}
-          sortConfig={sortConfig}
-          onSort={handleSort}
-          onEdit={handleEditClick}
-          onDelete={handleDeleteClick}
-        />
-
-        <TablePagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalFiltered={totalFiltered}
-          currentItemsCount={products.length}
-          onPageChange={setCurrentPage}
-        />
-      </main>
-
-      {/* Snackbar Alert */}
-      <AlertSnackbar
-        open={alert.open}
-        description={alert.description}
-        color={alert.color}
-        icon={alert.icon}
-        onClose={() => setAlert((prev) => ({ ...prev, open: false }))}
-      />
-
-      {/* Delete confirmation dialog */}
-      <DeleteProductDialog
-        open={isDeleteDialogOpen}
-        product={productToDelete}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onConfirm={handleConfirmDelete}
-      />
-
-      {/* Create/Edit product side sheet */}
-      <CreateProductSheet
-        open={isCreateSheetOpen}
-        onClose={handleCloseProductSheet}
-        onSave={handleSaveProduct}
-        nextId={''}
-        initialProduct={productToEdit}
-      />
-    </>
-  );
+interface StoragePageProps {
+  params: Promise<{ slug: string }>;
 }
 
-export default function StoragePage() {
-  const params = useParams();
-  const businessSlug = params.slug as string;
-  const [mounted, setMounted] = useState(false);
+export async function generateMetadata({ params }: StoragePageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const business = await db.query.businesses.findFirst({
+    where: eq(businesses.slug, slug),
+    columns: { name: true },
+  });
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  return {
+    title: business ? `Almacén — ${business.name}` : 'Almacén | Store Lite',
+    description: 'Gestión de inventario y productos.',
+    robots: { index: false, follow: false },
+  };
+}
 
-  if (!mounted) {
-    return <div className="storage-container" />;
+export default async function StoragePage({ params }: StoragePageProps) {
+  const { slug } = await params;
+
+  const business = await db.query.businesses.findFirst({
+    where: eq(businesses.slug, slug),
+    columns: { id: true, ownerId: true },
+  });
+
+  if (!business) {
+    return notFound();
   }
 
-  return (
-    <div className="storage-container">
-      <StorageProvider businessSlug={businessSlug}>
-        <StorageContent />
-      </StorageProvider>
-    </div>
-  );
+  // --- Auth & Ownership Guard ---
+  const cookieStore = await cookies();
+  const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
+    cookies: {
+      get(name: string) {
+        return cookieStore.get(name)?.value;
+      },
+    },
+  });
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return notFound();
+
+  const { isOwner, permissions } = await getMemberPermissions(business.id, user.id);
+
+  if (!isOwner && !permissions.includes('products.view') && !permissions.includes('categories.view')) {
+    return notFound();
+  }
+
+  return <StorageClient businessSlug={slug} isOwner={isOwner} permissions={permissions} />;
 }

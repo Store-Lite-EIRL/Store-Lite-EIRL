@@ -1,7 +1,11 @@
+'use server';
+
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
-import { businesses, productCategories } from '@/core/database/schema';
+import { businesses, businessSettings, productCategories } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
+import { getStorefrontLayoutFromPreferences, getStorefrontThemeFromPreferences, hasCustomStorefrontTheme } from '@/core/storefront';
+import { getMemberPermissions } from '@/lib/permissions';
 import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
@@ -25,9 +29,37 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  const { seoEnabled } = await getBusinessEntitlements(business.id);
+
+  if (!seoEnabled) {
+    return {
+      title: `${business.name} | Store Lite`,
+      description: business.description || `Welcome to ${business.name}`,
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const title =
+    business.seoTitle || `${business.name} — Tienda en ${business.city || 'Perú'} | Store Lite`;
+  const description =
+    business.seoDescription ||
+    business.description ||
+    `Bienvenido a ${business.name}, tu tienda de confianza.`;
+
   return {
-    title: `${business.name} | Store Lite`,
-    description: business.description || `Welcome to ${business.name}`,
+    title,
+    description,
+    keywords: business.seoKeywords?.join(', '),
+    other: {
+      ...(business.geoRegion && { 'geo.region': business.geoRegion }),
+      ...(business.geoPlacename && { 'geo.placename': business.geoPlacename }),
+      ...(business.city && !business.geoPlacename && { 'geo.placename': business.city }),
+      ...(business.latitude &&
+        business.longitude && {
+          'geo.position': `${business.latitude};${business.longitude}`,
+          ICBM: `${business.latitude}, ${business.longitude}`,
+        }),
+    },
   };
 }
 
@@ -45,6 +77,12 @@ export default async function BusinessPage({ params }: Props) {
     where: eq(productCategories.businessId, business.id),
     orderBy: (categories, { asc }) => [asc(categories.displayOrder)],
   });
+  const settings = await db.query.businessSettings.findFirst({
+    where: eq(businessSettings.businessId, business.id),
+    columns: {
+      preferences: true,
+    },
+  });
 
   const cookieStore = await cookies();
 
@@ -61,16 +99,48 @@ export default async function BusinessPage({ params }: Props) {
   } = await supabase.auth.getUser();
 
   const isLoggedIn = !!user;
-  const isOwnerByAuth = Boolean(user?.id && business.ownerId === user.id);
-  const isOwner = isOwnerByAuth;
+
+  // Acceso basado en dueño o equipo
+  const { isOwner, permissions } = await getMemberPermissions(business.id, user?.id);
+
+  // Consideramos staff a quien tenga acceso de gestión (Dueño o Miembro con algún permiso)
+  const isStaff = isOwner || permissions.length > 0;
 
   const entitlements = await getBusinessEntitlements(business.id);
-  const { hasPaymentGateway, chatEnabled } = entitlements;
+  const { hasPaymentGateway, chatEnabled, seoEnabled, canCustomizeStorefront } = entitlements;
+
+  const jsonLd = seoEnabled
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'LocalBusiness',
+        name: business.name,
+        description: business.seoDescription || business.description,
+        url: `${env.nextPublicAppUrl}/${business.slug}`,
+        logo: business.logoUrl,
+        image: business.coverImageUrl,
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: business.address,
+          addressLocality: business.city,
+          addressCountry: business.country || 'PE',
+        },
+        geo:
+          business.latitude && business.longitude
+            ? {
+                '@type': 'GeoCoordinates',
+                latitude: business.latitude,
+                longitude: business.longitude,
+              }
+            : undefined,
+        telephone: business.whatsappNumber,
+      }
+    : null;
 
   const allProducts = await db.query.products.findMany({
     where: (p, { and, eq }) => {
       const basicFilter = eq(p.businessId, business.id);
-      return isOwner ? basicFilter : and(basicFilter, eq(p.isAvailable, true));
+      // El staff (dueño+equipo) ve todos los productos para poder gestionarlos
+      return isStaff ? basicFilter : and(basicFilter, eq(p.isAvailable, true));
     },
     orderBy: (p, { desc }) => [desc(p.updatedAt)],
     with: {
@@ -82,14 +152,29 @@ export default async function BusinessPage({ params }: Props) {
   });
 
   return (
-    <BusinessPageContent
-      business={business}
-      isOwner={isOwner}
-      isLoggedIn={isLoggedIn}
-      categories={categories}
-      products={allProducts}
-      hasPaymentGateway={hasPaymentGateway}
-      chatEnabled={chatEnabled}
-    />
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <BusinessPageContent
+        business={business}
+        isOwner={isOwner}
+        isStaff={isStaff}
+        isLoggedIn={isLoggedIn}
+        categories={categories}
+        products={allProducts}
+        hasPaymentGateway={hasPaymentGateway}
+        chatEnabled={chatEnabled}
+        storefrontLayout={getStorefrontLayoutFromPreferences(settings?.preferences)}
+        storefrontTheme={
+          canCustomizeStorefront && hasCustomStorefrontTheme(settings?.preferences)
+            ? getStorefrontThemeFromPreferences(settings?.preferences)
+            : undefined
+        }
+      />
+    </>
   );
 }

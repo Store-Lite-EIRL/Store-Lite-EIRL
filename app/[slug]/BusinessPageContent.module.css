@@ -1,3 +1,9 @@
+.storefrontThemeRoot {
+  font-family: var(--storefront-font-family);
+  color: var(--md-sys-color-on-surface);
+  --mio-theme-text-font-family: var(--storefront-font-family);
+}
+
 .ownerActionRow {
   display: flex;
   justify-content: flex-end;

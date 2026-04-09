@@ -163,8 +163,13 @@ export const CreateProductSheet = ({
           <ExtraInfoSection
             tags={form.tags}
             shippingInfo={form.shippingInfo}
+            seoTitle={form.seoTitle}
+            seoDescription={form.seoDescription}
             onTagsChange={(v) => setField('tags', v)}
             onShippingInfoChange={(v) => setField('shippingInfo', v)}
+            onSeoTitleChange={(v) => setField('seoTitle', v)}
+            onSeoDescriptionChange={(v) => setField('seoDescription', v)}
+            seoEnabled={entitlements?.seoEnabled}
           />
 
           <CategorySection

@@ -1,4 +1,3 @@
-import { Icon } from '@/shared/components/ui';
 import type { RefObject } from 'react';
 
 interface ProductActionsMenuProps {
@@ -19,11 +18,9 @@ export const ProductActionsMenu = ({ id, menuRef, onView, onShare }: ProductActi
     >
       <md-menu-item onClick={onView}>
         <div slot="headline">Ir al detalle</div>
-        <Icon slot="end">visibility</Icon>
       </md-menu-item>
       <md-menu-item onClick={onShare}>
         <div slot="headline">Compartir</div>
-        <Icon slot="end">share</Icon>
       </md-menu-item>
     </md-menu>
   );

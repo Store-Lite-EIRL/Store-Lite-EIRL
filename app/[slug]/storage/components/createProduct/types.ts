@@ -13,6 +13,8 @@ export interface FormState {
   tags: string[];
   secondPrice: string;
   saleStatus: string;
+  seoTitle: string;
+  seoDescription: string;
 }
 
 export interface FormErrors {
@@ -54,6 +56,8 @@ export const EMPTY_FORM: FormState = {
   tags: [],
   secondPrice: '',
   saleStatus: 'NORMAL',
+  seoTitle: '',
+  seoDescription: '',
 };
 
 export const PLACEHOLDER_IMAGE =

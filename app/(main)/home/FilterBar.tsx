@@ -57,7 +57,7 @@ export default function FilterBar({
             tabIndex={-1}
           >
             <button className={styles.searchIconBtn} onClick={handleSearchClick}>
-              <Icon>search</Icon>
+              <Icon size={21}>search</Icon>
               {!isSearchExpanded && !searchQuery && <span>Buscar</span>}
             </button>
             <input

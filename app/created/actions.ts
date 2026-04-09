@@ -4,7 +4,14 @@
 
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
-import { businesses, profiles } from '@/core/database/schema';
+import { businesses, businessSettings, profiles } from '@/core/database/schema';
+import {
+  createDefaultStorefrontLayout,
+  createDefaultStorefrontTheme,
+  mergeStorefrontLayoutIntoPreferences,
+  mergeStorefrontThemeIntoPreferences,
+  normalizeStorefrontTheme,
+} from '@/core/storefront';
 import { generateBusinessSlug } from '@/shared/utils/slugify';
 import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
@@ -79,6 +86,16 @@ export async function createBusinessAction(formData: FormData) {
   const legalRepPhone = formData.get('legalRepPhone') as string;
   const legalRepEmail = formData.get('legalRepEmail') as string;
   const logoFile = formData.get('logo') as File | null;
+  const rawStorefrontTheme = formData.get('storefrontTheme');
+
+  let storefrontTheme = createDefaultStorefrontTheme();
+  if (typeof rawStorefrontTheme === 'string' && rawStorefrontTheme.trim().length > 0) {
+    try {
+      storefrontTheme = normalizeStorefrontTheme(JSON.parse(rawStorefrontTheme));
+    } catch (error) {
+      console.warn('[createBusinessAction] Invalid storefront theme payload, using default.', error);
+    }
+  }
 
   if (!commercialName || commercialName.length < 3) {
     return { error: 'El nombre comercial es obligatorio.' };
@@ -120,6 +137,23 @@ export async function createBusinessAction(formData: FormData) {
 
     const businessId = newBusiness.id;
     console.warn('[createBusinessAction] DB insertion success:', businessId);
+
+    const preferencesWithLayout = mergeStorefrontLayoutIntoPreferences(
+      {},
+      createDefaultStorefrontLayout(),
+    );
+    const initialPreferences = mergeStorefrontThemeIntoPreferences(
+      preferencesWithLayout,
+      storefrontTheme,
+    );
+
+    await db.insert(businessSettings).values({
+      businessId,
+      themeMode: storefrontTheme.surfaceMode,
+      contrastLevel: 'standard',
+      customColors: storefrontTheme.palette,
+      preferences: initialPreferences,
+    });
 
     // 3. Handle Logo Upload
     if (logoFile && logoFile.size > 0) {

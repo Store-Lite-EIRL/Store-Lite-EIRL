@@ -67,39 +67,39 @@ const SteppedSheetDemo = () => (
   <SteppedSheet id="stepped-sheet-demo" title="Registro de Usuario">
     {/* Step 1 */}
     <div className="flex-col-gap-3">
-      <h3>InformaciÃ³n Personal</h3>
+      <h3>Información Personal</h3>
       <TextField label="Nombre Completo" variant="outlined" />
-      <TextField label="Correo ElectrÃ³nico" variant="outlined" type="email" />
+      <TextField label="Correo Electrónico" variant="outlined" type="email" />
       <p>
-        Por favor, ingresa tus datos bÃ¡sicos para comenzar el proceso de registro en nuestro
-        catÃ¡logo.
+        Por favor, ingresa tus datos básicos para comenzar el proceso de registro en nuestro
+        catálogo.
       </p>
     </div>
 
     {/* Step 2 */}
     <div className="flex-col-gap-3">
       <h3>Preferencias</h3>
-      <p>Â¿QuÃ© tipo de componentes te interesan mÃ¡s? (Selecciona uno para continuar)</p>
+      <p>¿Qué tipo de componentes te interesan más? (Selecciona uno para continuar)</p>
       <div className="flex-col-gap-2">
         <label className="field-label">
-          <Checkbox /> <span>Componentes de AcciÃ³n</span>
+          <Checkbox /> <span>Componentes de Acción</span>
         </label>
         <label className="field-label">
           <Checkbox /> <span>Componentes de Entrada</span>
         </label>
         <label className="field-label">
-          <Checkbox /> <span>Superficies y NavegaciÃ³n</span>
+          <Checkbox /> <span>Superficies y Navegación</span>
         </label>
       </div>
     </div>
 
     {/* Step 3 */}
     <div className="flex-col-gap-3">
-      <h3>ConfirmaciÃ³n</h3>
+      <h3>Confirmación</h3>
       <Card variant="outlined" style={{ padding: '16px' }}>
         <p>
-          EstÃ¡s a punto de finalizar. Una vez que pulses &quot;Aceptar&quot;, tus preferencias se
-          guardarÃ¡n localmente.
+          Estás a punto de finalizar. Una vez que pulses &quot;Aceptar&quot;, tus preferencias se
+          guardarán localmente.
         </p>
         <Divider style={{ margin: '12px 0' }} />
         <div className="flex-wrap-center" style={{ justifyContent: 'flex-start', gap: '8px' }}>

@@ -3,7 +3,9 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { Product } from '../data';
 import { useStorageProducts, type SortConfig } from '../hooks/useStorageProducts';
+import type { SaveProductMediaItem, SaveProductPayload } from '../types';
 import type { BusinessEntitlements } from '@/core/entitlements/plans';
+import { usePermissions } from '../../context/PermissionsContext';
 
 interface StorageContextType {
   products: Product[];
@@ -30,14 +32,15 @@ interface StorageContextType {
   deleteProduct: (id: string) => Promise<{ success: boolean; error?: string }>;
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;
-  saveProductBackground: (
-    payload: SaveProductPayload,
-    media: SaveProductMediaItem[],
-    isEdit: boolean,
-    initialProduct: Product | null | undefined,
-    optimisticProduct: Product,
-  ) => Promise<{ success: boolean; error?: string }>;
+  saveProductBackground: (params: {
+    payload: SaveProductPayload;
+    media: SaveProductMediaItem[];
+    isEdit: boolean;
+    initialProduct: Product | null | undefined;
+    optimisticProduct: Product;
+  }) => Promise<{ success: boolean; error?: string }>;
   saveCategories: (categories: string[]) => Promise<{ success: boolean; error?: string }>;
+  refreshCategories: () => Promise<void>;
 }
 
 export const StorageContext = createContext<StorageContextType | undefined>(undefined);
@@ -45,18 +48,29 @@ export const StorageContext = createContext<StorageContextType | undefined>(unde
 export const StorageProvider = ({
   children,
   businessSlug,
+  businessId,
   initialProducts,
   initialCategories,
+  isOwner = false,
+  permissions: _permissions,
 }: {
   children: ReactNode;
   businessSlug: string;
+  businessId?: string;
   initialProducts?: Product[];
   initialCategories?: string[];
+  isOwner?: boolean;
+  permissions?: string[];
 }) => {
+  const { can } = usePermissions();
+  const canViewProducts = can('products.view');
+
   const storage = useStorageProducts({
     businessSlug,
     initialProducts,
     initialCategories,
+    initialBusinessId: businessId,
+    isOwner: isOwner || canViewProducts, // Ahora permite cargar si tiene permiso
   });
 
   return <StorageContext.Provider value={storage}>{children}</StorageContext.Provider>;

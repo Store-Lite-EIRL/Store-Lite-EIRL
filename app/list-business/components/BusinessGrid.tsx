@@ -8,7 +8,7 @@ import DeleteBusinessDialog from './DeleteBusinessDialog';
 import BusinessSettingsModal from './BusinessSettingsModal';
 
 interface BusinessGridProps {
-  businesses: Business[];
+  businesses: (Business & { isTeam?: boolean; planType?: string | null })[];
 }
 
 export default function BusinessGrid({ businesses }: BusinessGridProps) {

@@ -51,9 +51,9 @@ export default async function PricingPage() {
       buttonText: 'Comenzar ahora',
       buttonVariant: 'outlined',
       features: [
-        { text: 'Dominio personalizado' },
-        { text: 'Pasarela de pagos integrada (Yape y Plin)' },
+        { text: 'Dominio personalizado + SEO' },
         { text: 'Catálogo de hasta 150 productos' },
+        { text: 'Gestión de pedidos: Vía WhatsApp y Chat directo' },
         { text: 'Control total: Activa o desactiva tu negocio al instante' },
       ],
     },
@@ -69,11 +69,11 @@ export default async function PricingPage() {
       badgeType: 'primary',
       features: [
         { text: 'Pasarela completa: Pagos digitales y tarjetas bancarias' },
-        { text: 'Dominio personalizado + SEO' },
         { text: 'Almacenamiento premium para 300 productos' },
         { text: 'Personalización avanzada: Edición Drag & Drop, colores y tipografía' },
         { text: 'Colaboración élite: Equipo de trabajo con 2 usuarios adicionales' },
         { text: 'Centro de mando: Dashboard de ventas y métricas de progreso' },
+        { text: 'Servicio de envios con Shalom en tiempo real' },
       ],
     },
     {

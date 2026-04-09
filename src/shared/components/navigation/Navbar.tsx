@@ -1,10 +1,12 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
+import { clearBusinessSessionData, STORAGE_KEY } from '@/shared/hooks/useBusinessSession';
 import '@/styles/components/navbar.css';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { usePermissions } from '../../../../app/[slug]/context/PermissionsContext';
 import { Icon } from '../ui';
 
 interface NavbarProps {
@@ -13,15 +15,12 @@ interface NavbarProps {
   planName?: string;
 }
 
-export default function Navbar({
-  isCollapsed,
-  onToggle,
-  planName = 'Básico',
-}: NavbarProps) {
+export default function Navbar({ isCollapsed, onToggle, planName = 'Básico' }: NavbarProps) {
   const pathname = usePathname();
   const params = useParams();
   const router = useRouter();
   const slug = params?.slug as string;
+  const { can, isOwner } = usePermissions();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -41,6 +40,13 @@ export default function Navbar({
   useEffect(() => {
     if (slug) {
       localStorage.setItem('selectedBusinessSlug', slug);
+      // Also set the active business session
+      const session = {
+        slug,
+        openedAt: Date.now(),
+        tabId: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
     }
   }, [slug]);
 
@@ -55,8 +61,7 @@ export default function Navbar({
   };
 
   const handleCloseStore = () => {
-    document.cookie = 'selected_business_slug=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    localStorage.removeItem('selectedBusinessSlug');
+    clearBusinessSessionData();
     router.push('/list-business');
   };
 
@@ -105,25 +110,39 @@ export default function Navbar({
         <div className="navbar__divider" />
 
         <div className="navbar__items">
-          {navItems.map((item) => (
-            <Link
-              key={item.id}
-              href={item.path}
-              className={`navbar__item ${isActive(item.path) ? 'navbar__item--active' : ''}`}
-              aria-label={item.label}
-              title={item.label}
-              suppressHydrationWarning
-            >
-              <md-icon className="navbar__item-icon" suppressHydrationWarning>
-                {item.icon}
-              </md-icon>
-              {!isCollapsed && (
-                <span className="navbar__item-label" suppressHydrationWarning>
-                  {item.label}
-                </span>
-              )}
-            </Link>
-          ))}
+          {navItems
+            .filter((item) => {
+              // 1. Plan-based filtering
+              if (item.id === 'dashboard' && planName === 'basico') return false;
+
+              // 2. Permission-based filtering
+              if (isOwner) return true;
+
+              if (item.id === 'chat') return can('chat.view');
+              if (item.id === 'storage') return can('products.view') || can('categories.view');
+              if (item.id === 'dashboard') return can('dashboard.view');
+
+              return true; // home, settings always visible
+            })
+            .map((item) => (
+              <Link
+                key={item.id}
+                href={item.path}
+                className={`navbar__item ${isActive(item.path) ? 'navbar__item--active' : ''}`}
+                aria-label={item.label}
+                title={item.label}
+                suppressHydrationWarning
+              >
+                <md-icon className="navbar__item-icon" suppressHydrationWarning>
+                  {item.icon}
+                </md-icon>
+                {!isCollapsed && (
+                  <span className="navbar__item-label" suppressHydrationWarning>
+                    {item.label}
+                  </span>
+                )}
+              </Link>
+            ))}
         </div>
 
         <div className="navbar__divider" />
