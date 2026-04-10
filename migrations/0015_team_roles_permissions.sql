@@ -184,7 +184,7 @@ BEGIN
     result := (
       SELECT jsonb_agg(value) 
       FROM jsonb_array_elements_text(v_role_permissions) AS perm
-      WHERE perm IN (SELECT value FROM jsonb_array_elements(v_custom))
+      WHERE perm IN (SELECT value FROM jsonb_array_elements_text(v_custom))
     );
     RETURN COALESCE(result, '[]'::jsonb);
   END IF;

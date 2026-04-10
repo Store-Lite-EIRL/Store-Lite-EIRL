@@ -10,6 +10,7 @@ import postgres from 'postgres';
 import * as schema from './schema';
 
 // Connection pooling configuration for Supabase
+// Uses transaction mode pooler for serverless compatibility
 const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
 if (!connectionString) {
@@ -17,7 +18,6 @@ if (!connectionString) {
     'DATABASE_URL or POSTGRES_URL environment variable is not set. Please check your production configuration.',
   );
 }
-
 // ---------------------------------------------------------
 // SINGLETON PATTERN (Prevention of connection exhaustion)
 // ---------------------------------------------------------

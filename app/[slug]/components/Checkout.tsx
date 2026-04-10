@@ -153,8 +153,20 @@ export default function Checkout({ totalAmount, cartItems, onSuccess, onCancel }
 
     setLoading(true);
     try {
-      // Simulation of payment processing
+      // 1. Aquí iría la carga del SDK de la pasarela y la tokenización
+      // Ejemplo: const token = await Culqi.createToken();
+
+      // Simulación de delay de tokenización y carga en backend
       await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // 2. Aquí llamarías a tu Edge Function o Route Handler pasándole el token
+      /*
+      await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: 'mock_token', amount: totalAmount * 100, email })
+      });
+      */
       onSuccess();
     } catch (error) {
       console.error('Error procesando pago:', error);
@@ -256,6 +268,7 @@ export default function Checkout({ totalAmount, cartItems, onSuccess, onCancel }
                     className={styles.input}
                   />
                 </div>
+              </div>
               </div>
 
               {shippingInfo.courier === 'shalom' ? (

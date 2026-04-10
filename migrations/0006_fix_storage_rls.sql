@@ -12,10 +12,14 @@ ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
 -- Step 3: Remove existing restrictive policies if any (optional but safer)
 -- NOTE: We target the 'products' bucket specifically
-DO $$
+DO $$ 
+DECLARE
+    pol RECORD;
 BEGIN
-    DELETE FROM pg_policies WHERE tablename = 'objects' AND schemaname = 'storage' AND policyname LIKE '%products%';
-EXCEPTION WHEN OTHERS THEN NULL;
+    FOR pol IN SELECT policyname FROM pg_policies WHERE tablename = 'objects' AND schemaname = 'storage' AND policyname ILIKE '%products%' 
+    LOOP
+        EXECUTE format('DROP POLICY IF EXISTS %I ON storage.objects', pol.policyname);
+    END LOOP;
 END $$;
 
 -- Step 4: Add comprehensive policies for 'products' bucket
