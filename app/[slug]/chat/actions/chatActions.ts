@@ -34,7 +34,7 @@ async function resolveSessionActor(sessionId: string, guestId?: string) {
 
     // Check if user is owner
     if (business?.ownerId === userId) {
-      return { allowed: true as const, role: 'store' as const, session };
+      return { allowed: true as const, role: 'store' as const, session, permissions: { canView: true, canRespond: true } };
     }
 
     // Check if user is team member with chat permission
@@ -46,16 +46,16 @@ async function resolveSessionActor(sessionId: string, guestId?: string) {
     });
 
     if (membership) {
-      // For general actions, check respondent permission
-      const hasPermission = await checkPermission(session.businessId, userId, 'chat.respond');
-      if (hasPermission) {
-        return { allowed: true as const, role: 'store' as const, session };
-      }
+      const canView = await checkPermission(session.businessId, userId, 'chat.view');
+      const canRespond = await checkPermission(session.businessId, userId, 'chat.respond');
       
-      // If we only need view access, check that too
-      const hasViewPermission = await checkPermission(session.businessId, userId, 'chat.view');
-      if (hasViewPermission) {
-        return { allowed: true as const, role: 'store' as const, session };
+      if (canView || canRespond) {
+        return { 
+          allowed: true as const, 
+          role: 'store' as const, 
+          session,
+          permissions: { canView, canRespond }
+        };
       }
     }
   }
@@ -140,6 +140,10 @@ export async function sendMessage(data: {
     const actor = await resolveSessionActor(data.sessionId, data.guestId);
     if (!actor.allowed) {
       return { success: false, error: actor.reason };
+    }
+
+    if (actor.role === 'store' && actor.permissions && !actor.permissions.canRespond) {
+      return { success: false, error: 'No tienes permiso para responder a los chats' };
     }
 
     const [newMessage] = await db
