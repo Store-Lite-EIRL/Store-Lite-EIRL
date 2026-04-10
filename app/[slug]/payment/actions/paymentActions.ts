@@ -155,7 +155,17 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
     return { success: false, error: 'Error de conexion al procesar el pago. Intenta de nuevo.' };
   }
 
-  const chargeData = await culqiResponse.json();
+  let chargeData;
+  try {
+    chargeData = await culqiResponse.json();
+  } catch (parseError) {
+    await db
+      .update(products)
+      .set({ stock: sql`${products.stock} + 1`, updatedAt: new Date() })
+      .where(eq(products.id, product.id));
+    console.error('[processPayment] Error parsing Culqi response:', parseError);
+    return { success: false, error: 'Error inesperado en la pasarela de pago.' };
+  }
 
   if (!culqiResponse.ok || chargeData.object === 'error') {
     await db
