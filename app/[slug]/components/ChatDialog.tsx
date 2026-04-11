@@ -507,7 +507,7 @@ export function ChatDialog({ businessName, businessId, businessLogo, onClose }: 
       {isCheckoutOpen && (
         <Checkout
           totalAmount={99.9} // Mock value for demo purposes
-          productName="Orden de prueba interactiva" // Mock value
+          cartItems={[]}
           onSuccess={handlePaymentSuccess}
           onCancel={() => setIsCheckoutOpen(false)}
         />

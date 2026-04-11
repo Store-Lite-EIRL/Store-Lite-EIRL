@@ -131,6 +131,9 @@ export const businesses = pgTable(
     seoDescription: text('seo_description'),
     seoKeywords: text('seo_keywords').array(),
     isActive: boolean('is_active').notNull().default(true),
+    // Payment Gateway (Culqi)
+    culqiPublicKey: text('culqi_public_key'),
+    culqiSecretKey: text('culqi_secret_key'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
