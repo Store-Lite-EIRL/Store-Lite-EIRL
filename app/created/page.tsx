@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 'use client';
 
 import { createDefaultStorefrontTheme, type StorefrontTheme } from '@/core/storefront';

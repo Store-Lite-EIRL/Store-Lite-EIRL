@@ -1,7 +1,7 @@
 'use client';
 
-import { createContext, useContext, type ReactNode } from 'react';
 import type { Permission, Role } from '@/lib/permissions/definitions';
+import { createContext, useContext, type ReactNode } from 'react';
 
 interface PermissionsContextType {
   role: Role | null;
@@ -24,7 +24,7 @@ export function PermissionsProvider({
   isOwner: boolean;
 }) {
   const can = (permission: Permission) => {
-    // El dueño siempre puede todo
+    // El dueño siempre tiene permisos totales
     if (isOwner) return true;
     return permissions.includes(permission);
   };

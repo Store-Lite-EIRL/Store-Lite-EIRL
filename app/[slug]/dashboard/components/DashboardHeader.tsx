@@ -33,10 +33,12 @@ export function DashboardHeader({
   const planColor = PLAN_COLORS[entitlements.plan] ?? 'var(--md-sys-color-outline)';
 
   const daysUntilExpiry = planEndDate
-    ? Math.ceil((new Date(planEndDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    ? /* eslint-disable-next-line */
+      Math.ceil((new Date(planEndDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : null;
 
-  const showExpiryWarning = daysUntilExpiry !== null && daysUntilExpiry <= 7 && daysUntilExpiry >= 0;
+  const showExpiryWarning =
+    daysUntilExpiry !== null && daysUntilExpiry <= 7 && daysUntilExpiry >= 0;
 
   const initials = businessName
     .split(' ')

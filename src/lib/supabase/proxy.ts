@@ -1,5 +1,5 @@
 // =====================================================
-// SUPABASE PROXY CLIENT (Next.js 16)
+// SUPABASE PROXY CLIENT
 // =====================================================
 // Description: Supabase client for Next.js proxy
 // Usage: Import from '@/lib/supabase/proxy'
@@ -9,11 +9,15 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 /**
- * Handles proxy operations (formerly middleware)
+ * Handles proxy operations
  * Handles session refresh and cookie management
  */
 export async function updateProxy(request: NextRequest) {
-  let supabaseResponse = NextResponse.next();
+  let supabaseResponse = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -30,8 +34,15 @@ export async function updateProxy(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
+        // Propagate cookies to request
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        supabaseResponse = NextResponse.next();
+
+        // Update response to include mutated request so server components see the refreshed token
+        supabaseResponse = NextResponse.next({
+          request,
+        });
+
+        // Propagate cookies to response for the browser
         cookiesToSet.forEach(({ name, value, options }) =>
           supabaseResponse.cookies.set(name, value, options),
         );
@@ -41,7 +52,7 @@ export async function updateProxy(request: NextRequest) {
 
   // IMPORTANT: Avoid writing any logic between createServerClient and
   // supabase.auth.getUser().
-  
+
   try {
     const {
       data: { user },
@@ -56,48 +67,52 @@ export async function updateProxy(request: NextRequest) {
     // Identify public storefront paths like /[slug] or /[slug]/product/[id]
     const pathSegments = pathname.split('/').filter(Boolean);
     const isStorefrontBase =
-      pathSegments.length === 1 && !['auth', 'created', 'list-business', 'pricing'].includes(pathSegments[0]);
+      pathSegments.length === 1 &&
+      !['auth', 'created', 'list-business', 'pricing'].includes(pathSegments[0]);
     const isProductDetail = pathSegments.length === 3 && pathSegments[1] === 'product';
     const isPublicStorefront = isStorefrontBase || isProductDetail;
-    const adminSections = new Set(['storage', 'chat', 'settings', 'dashboard']);
-    const isBusinessAdminRoute = pathSegments.length >= 2 && adminSections.has(pathSegments[1]);
+
+    // Helper to return redirects while preserving refreshed cookies
+    const redirectWithCookies = (url: URL) => {
+      const redirectResponse = NextResponse.redirect(url);
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        redirectResponse.cookies.set(cookie.name, cookie.value);
+      });
+      return redirectResponse;
+    };
+
+    const isRootPage = pathname === '/';
 
     // Handle unauthenticated users
-    if (!user && !isAuthPage && !isPublicStorefront) {
+    if (!user && !isAuthPage && !isPublicStorefront && !isRootPage) {
       const url = request.nextUrl.clone();
       url.pathname = '/auth';
-      return NextResponse.redirect(url);
+      return redirectWithCookies(url);
     }
 
     // Handle authenticated users on auth page
     if (user && isAuthPage) {
       const url = request.nextUrl.clone();
       url.pathname = '/';
-      return NextResponse.redirect(url);
-    }
-
-    // Owner-only enforcement for tenant admin routes
-    if (user && isBusinessAdminRoute) {
-      const slug = pathSegments[0];
-      if (slug) {
-        const { data: ownedBusiness } = await supabase
-          .from('businesses')
-          .select('id')
-          .eq('slug', slug)
-          .eq('owner_id', user.id)
-          .maybeSingle();
-
-        if (!ownedBusiness) {
-          const url = request.nextUrl.clone();
-          url.pathname = '/list-business';
-          return NextResponse.redirect(url);
-        }
-      }
+      return redirectWithCookies(url);
     }
 
     // Handle business redirection for authenticated users
     if (user && !isCreatePage && !isListPage && !isPricingPage && pathname === '/') {
-      return await handleBusinessRedirection(request, supabase, user.id);
+      const { data: userBusinesses, error } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('owner_id', user.id);
+
+      if (!error) {
+        const url = request.nextUrl.clone();
+        if (!userBusinesses || userBusinesses.length === 0) {
+          url.pathname = '/created';
+        } else {
+          url.pathname = '/list-business';
+        }
+        return redirectWithCookies(url);
+      }
     }
   } catch (error) {
     // Gracefully handle fetch failures in proxy/edge runtime
@@ -105,34 +120,4 @@ export async function updateProxy(request: NextRequest) {
   }
 
   return supabaseResponse;
-}
-
-/**
- * Handles redirection for authenticated users without an active business session
- */
-async function handleBusinessRedirection(
-  request: NextRequest,
-  supabase: ReturnType<typeof createServerClient>,
-  userId: string,
-) {
-  try {
-    const { data: userBusinesses, error } = await supabase
-      .from('businesses')
-      .select('id')
-      .eq('owner_id', userId);
-
-    if (!error) {
-      const url = request.nextUrl.clone();
-      if (!userBusinesses || userBusinesses.length === 0) {
-        url.pathname = '/created';
-      } else {
-        url.pathname = '/list-business';
-      }
-      return NextResponse.redirect(url);
-    }
-  } catch (err) {
-    console.error('Business redirection fetch failed:', err);
-  }
-
-  return NextResponse.next();
 }

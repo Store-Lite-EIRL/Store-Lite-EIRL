@@ -14,6 +14,27 @@ interface ThemeContextProps {
 
 const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
 
+const THEME_CLASSES = [
+  'light',
+  'light-medium-contrast',
+  'light-high-contrast',
+  'dark',
+  'dark-medium-contrast',
+  'dark-high-contrast',
+] as const;
+
+function getThemeClass(currentTheme: 'light' | 'dark', colorScheme: ColorScheme) {
+  if (colorScheme === 'medium') {
+    return `${currentTheme}-medium-contrast`;
+  }
+
+  if (colorScheme === 'high') {
+    return `${currentTheme}-high-contrast`;
+  }
+
+  return currentTheme;
+}
+
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (!context) {
@@ -27,12 +48,10 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  // Default to system
   const [theme, setThemeState] = useState<Theme>('system');
   const [colorScheme, setColorSchemeState] = useState<ColorScheme>('default');
   const [mounted, setMounted] = useState(false);
 
-  // Load from localStorage on mount
   useEffect(() => {
     try {
       const storedTheme = localStorage.getItem('app-theme') as Theme;
@@ -51,7 +70,6 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     setMounted(true);
   }, []);
 
-  // Update localStorage and document body
   useEffect(() => {
     if (!mounted) {
       return;
@@ -60,42 +78,12 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     localStorage.setItem('app-theme', theme);
     localStorage.setItem('app-color-scheme', colorScheme);
 
-    // Helper to apply theme
     const applyTheme = (currentTheme: 'light' | 'dark') => {
-      // Remove all previous theme classes
-      document.body.classList.remove(
-        'light',
-        'light-medium-contrast',
-        'light-high-contrast',
-        'dark',
-        'dark-medium-contrast',
-        'dark-high-contrast',
-      );
+      document.body.classList.remove(...THEME_CLASSES);
 
-      // Determine new class name
-      let className = '';
-
-      if (currentTheme === 'light') {
-        if (colorScheme === 'default') {
-          className = 'light';
-        } else if (colorScheme === 'medium') {
-          className = 'light-medium-contrast';
-        } else if (colorScheme === 'high') {
-          className = 'light-high-contrast';
-        }
-      } else {
-        if (colorScheme === 'default') {
-          className = 'dark';
-        } else if (colorScheme === 'medium') {
-          className = 'dark-medium-contrast';
-        } else if (colorScheme === 'high') {
-          className = 'dark-high-contrast';
-        }
-      }
-
-      if (className) {
-        document.body.classList.add(className);
-      }
+      const className = getThemeClass(currentTheme, colorScheme);
+      document.body.classList.add(className);
+      document.documentElement.style.colorScheme = currentTheme;
     };
 
     if (theme === 'system') {
@@ -103,20 +91,14 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       const handleSystemThemeChange = (e: MediaQueryListEvent | MediaQueryList) => {
         applyTheme(e.matches ? 'dark' : 'light');
       };
-      
+
       handleSystemThemeChange(mediaQuery);
-      
       mediaQuery.addEventListener('change', handleSystemThemeChange);
       return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
-    } else {
-      applyTheme(theme);
     }
-  }, [theme, colorScheme, mounted]);
 
-  // Prevent flash of incorrect theme by rendering nothing until mounted (optional, but good for heavy changes)
-  // Or just render children and let the effect update the class.
-  // For 'use client' in nextjs, 'mounted' check is good for hydration mismatch avoidance if we rendered class on server.
-  // But here we manipulate DOM in effect.
+    applyTheme(theme);
+  }, [theme, colorScheme, mounted]);
 
   return (
     <ThemeContext.Provider
