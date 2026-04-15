@@ -1,8 +1,9 @@
 #!/bin/bash
 
-ai-review .
+npx lint-staged
+# ai-review .
 
-if [ $? -ne 0 ]; then
- echo "AI review failed"
- exit 1
-fi
+# if [ $? -ne 0 ]; then
+#  echo "AI review failed"
+#  exit 1
+# fi

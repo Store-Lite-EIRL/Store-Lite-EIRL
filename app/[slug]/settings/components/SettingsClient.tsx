@@ -65,7 +65,7 @@ import {
 import styles from '../settings.module.css';
 import { PermissionsMatrix } from './PermissionsMatrix';
 
-interface Business {
+export interface SettingsBusiness {
   id: string;
   name: string;
   slug: string;
@@ -113,7 +113,7 @@ interface Entitlements {
 }
 
 interface SettingsClientProps {
-  business: Business;
+  business: SettingsBusiness;
   entitlements: Entitlements;
   initialStorefrontLayout: StorefrontLayout;
   initialStorefrontTheme: StorefrontTheme;
@@ -323,7 +323,7 @@ function BusinessSection({
   isOwner,
   permissions,
 }: {
-  business: Business;
+  business: SettingsBusiness;
   entitlements: Entitlements;
   isOwner: boolean;
   permissions: Permission[];
@@ -602,7 +602,7 @@ function AppearanceSection({
   isOwner,
   permissions,
 }: {
-  business: Business;
+  business: SettingsBusiness;
   entitlements: Entitlements;
   initialStorefrontTheme: StorefrontTheme;
   initialHasCustomTheme?: boolean;
@@ -722,10 +722,20 @@ function AppearanceSection({
       ) : (
         <>
           {/* ── Card unificada de apariencia pública ── */}
-          <Card variant="outlined" className={styles.infoCard} style={{ padding: 0, overflow: 'hidden' }}>
-
+          <Card
+            variant="outlined"
+            className={styles.infoCard}
+            style={{ padding: 0, overflow: 'hidden' }}
+          >
             {/* Header + Switch */}
-            <div style={{ padding: '20px 24px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div
+              style={{
+                padding: '20px 24px 16px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+              }}
+            >
               <div>
                 <p className={styles.cardLabel} style={{ padding: 0 }}>
                   Vista pública de tu tienda
@@ -756,7 +766,9 @@ function AppearanceSection({
             </div>
 
             {/* Preview del tema */}
-            <div className={`${styles.themePreviewWrap} ${usePlatformColors ? styles.disabledCard : ''}`}>
+            <div
+              className={`${styles.themePreviewWrap} ${usePlatformColors ? styles.disabledCard : ''}`}
+            >
               <StorefrontThemePreview
                 businessName={business.name}
                 storefrontTheme={usePlatformColors ? undefined : storefrontTheme}
@@ -764,14 +776,22 @@ function AppearanceSection({
             </div>
 
             {/* Divisor */}
-            <div style={{ height: '1px', background: 'var(--md-sys-color-outline-variant)', margin: '0 24px' }} />
+            <div
+              style={{
+                height: '1px',
+                background: 'var(--md-sys-color-outline-variant)',
+                margin: '0 24px',
+              }}
+            />
 
             {/* Tipografía */}
             <div
               className={usePlatformColors ? styles.disabledCard : ''}
               style={{ padding: '20px 24px 0' }}
             >
-              <p className={styles.cardLabel} style={{ padding: 0 }}>Tipografía principal</p>
+              <p className={styles.cardLabel} style={{ padding: 0 }}>
+                Tipografía principal
+              </p>
               <p className={styles.previewSupporting} style={{ padding: 0, marginTop: '4px' }}>
                 Elegí una sola personalidad visual. Más simple, más claro, mejor mantenible.
               </p>
@@ -798,12 +818,20 @@ function AppearanceSection({
             </div>
 
             {/* Divisor */}
-            <div style={{ height: '1px', background: 'var(--md-sys-color-outline-variant)', margin: '16px 24px 0' }} />
+            <div
+              style={{
+                height: '1px',
+                background: 'var(--md-sys-color-outline-variant)',
+                margin: '16px 24px 0',
+              }}
+            />
 
             {/* Colores */}
             <div className={usePlatformColors ? styles.disabledCard : ''}>
               <div style={{ padding: '20px 24px 0' }}>
-                <p className={styles.cardLabel} style={{ padding: 0 }}>Colores principales</p>
+                <p className={styles.cardLabel} style={{ padding: 0 }}>
+                  Colores principales
+                </p>
                 <p className={styles.previewSupporting} style={{ padding: 0, marginTop: '4px' }}>
                   Partimos de la paleta base del preview de creación y desde acá la podés ajustar.
                 </p>
@@ -834,14 +862,18 @@ function AppearanceSection({
                           )
                         }
                       />
-                      <span className={styles.themeColorCode}>{storefrontTheme.palette[field.key]}</span>
+                      <span className={styles.themeColorCode}>
+                        {storefrontTheme.palette[field.key]}
+                      </span>
                     </div>
                   </div>
                 ))}
               </div>
 
               {/* Botones de paleta — integrados con padding correcto */}
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', padding: '8px 24px 24px' }}>
+              <div
+                style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', padding: '8px 24px 24px' }}
+              >
                 <Button
                   variant="tonal"
                   disabled={usePlatformColors}
@@ -877,7 +909,11 @@ function AppearanceSection({
               <Icon slot="icon" size={20}>
                 {isPending ? 'sync' : 'save'}
               </Icon>
-              {isPending ? 'Guardando...' : hasChanges ? 'Guardar apariencia pública' : 'Sin cambios pendientes'}
+              {isPending
+                ? 'Guardando...'
+                : hasChanges
+                  ? 'Guardar apariencia pública'
+                  : 'Sin cambios pendientes'}
             </Button>
           </div>
         </>
@@ -1047,7 +1083,7 @@ function ContactSection({
   isOwner: _isOwner,
   permissions: _permissions,
 }: {
-  business: Business;
+  business: SettingsBusiness;
   isOwner: boolean;
   permissions: Permission[];
 }) {
@@ -1127,7 +1163,7 @@ function LegalSection({
   isOwner: _isOwner,
   permissions: _permissions,
 }: {
-  business: Business;
+  business: SettingsBusiness;
   isOwner: boolean;
   permissions: Permission[];
 }) {
@@ -1255,7 +1291,7 @@ function StorefrontSectionEditor({
   isOwner,
   permissions,
 }: {
-  business: Business;
+  business: SettingsBusiness;
   entitlements: Entitlements;
   initialStorefrontLayout: StorefrontLayout;
   isOwner: boolean;
@@ -1294,12 +1330,12 @@ function StorefrontSectionEditor({
       updateSection(prev, 'product_grid', (section) =>
         section.type === 'product_grid'
           ? {
-            ...section,
-            config: {
-              ...section.config,
-              [key]: value,
-            },
-          }
+              ...section,
+              config: {
+                ...section.config,
+                [key]: value,
+              },
+            }
           : section,
       ),
     );
@@ -1617,7 +1653,7 @@ function SEOSection({
   isOwner: _isOwner,
   permissions: _permissions,
 }: {
-  business: Business;
+  business: SettingsBusiness;
   entitlements: Entitlements;
   isOwner: boolean;
   permissions: Permission[];
@@ -1828,7 +1864,7 @@ function TeamSection({
   isOwner,
   permissions,
 }: {
-  business: Business;
+  business: SettingsBusiness;
   entitlements: Entitlements;
   isOwner: boolean;
   permissions: Permission[];
@@ -1858,7 +1894,10 @@ function TeamSection({
 
   // Dialog de eliminación
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [memberToDelete, setMemberToDelete] = useState<{ userId: string, fullName: string | null } | null>(null);
+  const [memberToDelete, setMemberToDelete] = useState<{
+    userId: string;
+    fullName: string | null;
+  } | null>(null);
 
   const currentMemberCount = members.length;
   const maxMembers = entitlements.maxTeamMembers;
@@ -1974,7 +2013,7 @@ function TeamSection({
 
   const handleCopyCode = () => {
     if (invitationCode) {
-      navigator.clipboard.writeText(invitationCode).catch(() => { });
+      navigator.clipboard.writeText(invitationCode).catch(() => {});
     }
   };
 
@@ -2104,7 +2143,14 @@ function TeamSection({
       <SectionHeader title="Equipo" subtitle="Gestiona quién tiene acceso a tu negocio." />
 
       {isLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '300px',
+          }}
+        >
           <CircularProgress indeterminate />
         </div>
       ) : (
@@ -2123,7 +2169,12 @@ function TeamSection({
                   <ListItem
                     headline={member.fullName || 'Sin nombre'}
                     supportingText={member.email || 'Sin email'}
-                    style={{ '--md-list-item-headline-size': '16px', '--md-list-item-headline-weight': '600' } as React.CSSProperties}
+                    style={
+                      {
+                        '--md-list-item-headline-size': '16px',
+                        '--md-list-item-headline-weight': '600',
+                      } as React.CSSProperties
+                    }
                     trailingSupportingText={
                       member.role === 'owner' ? (
                         <Chips label="Owner" variant="filter" selected />
@@ -2135,7 +2186,12 @@ function TeamSection({
                                 <Select
                                   value={member.role}
                                   onChange={(e: any) =>
-                                    handleChangeRole(member.userId, (e.target?.value || e.currentTarget?.value) as 'admin' | 'member')
+                                    handleChangeRole(
+                                      member.userId,
+                                      (e.target?.value || e.currentTarget?.value) as
+                                        | 'admin'
+                                        | 'member',
+                                    )
                                   }
                                   style={{ minWidth: '130px' }}
                                 >
@@ -2156,7 +2212,9 @@ function TeamSection({
                                   disabled={isPending}
                                   title="Eliminar miembro"
                                 >
-                                  <Icon size={20} style={{ color: 'var(--md-sys-color-error)' }}>delete</Icon>
+                                  <Icon size={20} style={{ color: 'var(--md-sys-color-error)' }}>
+                                    delete
+                                  </Icon>
                                 </IconButton>
                               </div>
                             </>
@@ -2180,7 +2238,15 @@ function TeamSection({
               <p className={styles.cardLabel}>Código de invitación</p>
 
               {canAddMembers ? (
-                <div className={styles.formGrid} style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 24px 24px' }}>
+                <div
+                  className={styles.formGrid}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px',
+                    padding: '0 24px 24px',
+                  }}
+                >
                   <p className={styles.previewSupporting} style={{ padding: 0 }}>
                     {invitationCode
                       ? 'Compartí este código con quienes quieras invitar a tu equipo. Por seguridad, el código cambia automáticamente.'
@@ -2190,10 +2256,16 @@ function TeamSection({
                   {invitationCode ? (
                     <div style={{ textAlign: 'center' }}>
                       <div className={styles.rotationTimer}>
-                        <Icon size={16} className={styles.rotatingIcon}>sync</Icon>
+                        <Icon size={16} className={styles.rotatingIcon}>
+                          sync
+                        </Icon>
                         Protección activa: El código rotará pronto
                       </div>
-                      <div className={styles.monoValue} onClick={handleCopyCode} style={{ cursor: 'pointer' }}>
+                      <div
+                        className={styles.monoValue}
+                        onClick={handleCopyCode}
+                        style={{ cursor: 'pointer' }}
+                      >
                         {invitationCode}
                       </div>
                       <div className={styles.slugEditActions} style={{ justifyContent: 'center' }}>
@@ -2206,11 +2278,7 @@ function TeamSection({
                       </div>
                     </div>
                   ) : (
-                    <Button
-                      variant="filled"
-                      onClick={handleGenerateCode}
-                      disabled={isPending}
-                    >
+                    <Button variant="filled" onClick={handleGenerateCode} disabled={isPending}>
                       <Icon slot="icon" size={20}>
                         add
                       </Icon>
@@ -2226,12 +2294,15 @@ function TeamSection({
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <p className={styles.planLimitTitle}>¡Límite de equipo alcanzado!</p>
                     <p className={styles.planLimitDescription}>
-                      Tu plan actual permite hasta {maxMembers} miembros. Subí de nivel para seguir sumando talento a tu negocio.
+                      Tu plan actual permite hasta {maxMembers} miembros. Subí de nivel para seguir
+                      sumando talento a tu negocio.
                     </p>
                   </div>
                   <div className={styles.planLimitActions}>
                     <Button variant="filled" onClick={() => router.push('/pricing')}>
-                      <Icon slot="icon" size={20}>workspace_premium</Icon>
+                      <Icon slot="icon" size={20}>
+                        workspace_premium
+                      </Icon>
                       Ver Planes Premium
                     </Button>
                   </div>
@@ -2256,16 +2327,19 @@ function TeamSection({
       )}
 
       {/* Modal de edición de permisos */}
-      <Dialog
-        open={showPermissionsModal && !!selectedMember}
-        onClose={handleClosePermissionsModal}
-      >
+      <Dialog open={showPermissionsModal && !!selectedMember} onClose={handleClosePermissionsModal}>
         <div slot="headline">
-          {selectedMember ? `Permisos de ${selectedMember.fullName || 'Miembro'}` : 'Permisos de Miembro'}
+          {selectedMember
+            ? `Permisos de ${selectedMember.fullName || 'Miembro'}`
+            : 'Permisos de Miembro'}
         </div>
         <div slot="content">
-          <p className={styles.permissionsModalSubtitle} style={{ marginBottom: '1.5rem', marginTop: '0.5rem' }}>
-            Editá los permisos individuales para este miembro. Las acciones de administración del equipo están bloqueadas por defecto para miembros.
+          <p
+            className={styles.permissionsModalSubtitle}
+            style={{ marginBottom: '1.5rem', marginTop: '0.5rem' }}
+          >
+            Editá los permisos individuales para este miembro. Las acciones de administración del
+            equipo están bloqueadas por defecto para miembros.
           </p>
           {selectedMember && (
             <PermissionsMatrix
@@ -2297,19 +2371,26 @@ function TeamSection({
       />
 
       {/* Dialog de confirmación de eliminación */}
-      <Dialog
-        open={showDeleteDialog}
-        onClose={() => setShowDeleteDialog(false)}
-      >
+      <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
         <div slot="headline">Eliminar miembro</div>
         <div slot="content">
-          ¿Estás seguro de que querés eliminar a <strong>{memberToDelete?.fullName || 'este miembro'}</strong> de tu equipo? No podrá volver a entrar a menos que lo vuelvas a invitar.
+          ¿Estás seguro de que querés eliminar a{' '}
+          <strong>{memberToDelete?.fullName || 'este miembro'}</strong> de tu equipo? No podrá
+          volver a entrar a menos que lo vuelvas a invitar.
         </div>
         <div slot="actions">
           <Button variant="text" onClick={() => setShowDeleteDialog(false)}>
             Cancelar
           </Button>
-          <Button variant="filled" onClick={confirmRemoveMember} disabled={isPending} style={{ backgroundColor: 'var(--md-sys-color-error)', color: 'var(--md-sys-color-on-error)' }}>
+          <Button
+            variant="filled"
+            onClick={confirmRemoveMember}
+            disabled={isPending}
+            style={{
+              backgroundColor: 'var(--md-sys-color-error)',
+              color: 'var(--md-sys-color-on-error)',
+            }}
+          >
             Eliminar permanentemente
           </Button>
         </div>
@@ -2323,7 +2404,7 @@ function PaymentsSection({
   isOwner,
   permissions,
 }: {
-  business: Business;
+  business: SettingsBusiness;
   isOwner: boolean;
   permissions: Permission[];
 }) {
@@ -2378,29 +2459,39 @@ function PaymentsSection({
 
   return (
     <div className={styles.sectionArea}>
-      <SectionHeader
-        title="Pagos"
-        subtitle="Configurá cómo recibís el dinero de tus ventas."
-      />
+      <SectionHeader title="Pagos" subtitle="Configurá cómo recibís el dinero de tus ventas." />
 
       <Card variant="outlined" className={styles.infoCard}>
         <div style={{ padding: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              backgroundColor: isConfigured ? 'var(--md-sys-color-primary-container)' : 'var(--md-sys-color-surface-container-highest)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <Icon size={24} style={{ color: isConfigured ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-surface-variant)' }}>
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                backgroundColor: isConfigured
+                  ? 'var(--md-sys-color-primary-container)'
+                  : 'var(--md-sys-color-surface-container-highest)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Icon
+                size={24}
+                style={{
+                  color: isConfigured
+                    ? 'var(--md-sys-color-on-primary-container)'
+                    : 'var(--md-sys-color-on-surface-variant)',
+                }}
+              >
                 payments
               </Icon>
             </div>
             <div>
-              <p className={styles.cardLabel} style={{ padding: 0 }}>Pasarela Culqi</p>
+              <p className={styles.cardLabel} style={{ padding: 0 }}>
+                Pasarela Culqi
+              </p>
               <p className={styles.previewSupporting} style={{ padding: 0 }}>
                 {isConfigured
                   ? 'Tus clientes pueden pagar con tarjeta directamente a tu cuenta.'
@@ -2410,40 +2501,72 @@ function PaymentsSection({
           </div>
 
           {isConfigured ? (
-            <div style={{
-              backgroundColor: 'var(--md-sys-color-surface-container-low)',
-              borderRadius: '8px',
-              padding: '16px',
-              marginBottom: '16px',
-              border: '1px solid var(--md-sys-color-outline-variant)'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--md-sys-color-on-surface-variant)', textTransform: 'uppercase' }}>Estado</span>
+            <div
+              style={{
+                backgroundColor: 'var(--md-sys-color-surface-container-low)',
+                borderRadius: '8px',
+                padding: '16px',
+                marginBottom: '16px',
+                border: '1px solid var(--md-sys-color-outline-variant)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '8px',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: 'var(--md-sys-color-on-surface-variant)',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Estado
+                </span>
                 <Chips label="Conectado" variant="filter" selected />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)' }}>Public Key</span>
-                  <code style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface)' }}>{maskKey(business.culqiPublicKey)}</code>
+                  <span
+                    style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)' }}
+                  >
+                    Public Key
+                  </span>
+                  <code style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface)' }}>
+                    {maskKey(business.culqiPublicKey)}
+                  </code>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)' }}>Secret Key</span>
-                  <code style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface)' }}>{maskKey(business.culqiSecretKey)}</code>
+                  <span
+                    style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)' }}
+                  >
+                    Secret Key
+                  </span>
+                  <code style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface)' }}>
+                    {maskKey(business.culqiSecretKey)}
+                  </code>
                 </div>
               </div>
             </div>
           ) : (
-            <div style={{
-              padding: '16px',
-              backgroundColor: 'var(--md-sys-color-error-container)',
-              color: 'var(--md-sys-color-on-error-container)',
-              borderRadius: '8px',
-              marginBottom: '16px',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
+            <div
+              style={{
+                padding: '16px',
+                backgroundColor: 'var(--md-sys-color-error-container)',
+                color: 'var(--md-sys-color-on-error-container)',
+                borderRadius: '8px',
+                marginBottom: '16px',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+              }}
+            >
               <Icon size={20}>info</Icon>
               Aún no has configurado tus credenciales. Los pagos con tarjeta no estarán disponibles.
             </div>
@@ -2454,7 +2577,9 @@ function PaymentsSection({
             onClick={() => setShowConfigDialog(true)}
             disabled={!isOwner && !permissions.includes('business.edit')}
           >
-            <Icon slot="icon" size={20}>{isConfigured ? 'edit' : 'add'}</Icon>
+            <Icon slot="icon" size={20}>
+              {isConfigured ? 'edit' : 'add'}
+            </Icon>
             {isConfigured ? 'Cambiar credenciales' : 'Configurar Culqi'}
           </Button>
         </div>
@@ -2463,8 +2588,15 @@ function PaymentsSection({
       <Dialog open={showConfigDialog} onClose={() => !isPending && setShowConfigDialog(false)}>
         <div slot="headline">Configurar Culqi</div>
         <div slot="content">
-          <p style={{ marginBottom: '24px', fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)' }}>
-            Ingresá tus API Keys de Culqi. Podés encontrarlas en tu panel de Culqi {'>'} Desarrollo {'>'} API Keys.
+          <p
+            style={{
+              marginBottom: '24px',
+              fontSize: '14px',
+              color: 'var(--md-sys-color-on-surface-variant)',
+            }}
+          >
+            Ingresá tus API Keys de Culqi. Podés encontrarlas en tu panel de Culqi {'>'} Desarrollo{' '}
+            {'>'} API Keys.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -2531,18 +2663,16 @@ export function SettingsClient({
       } else {
         switch (item.id) {
           case 'business':
-            hasAccess = permissions.includes('business.edit') || permissions.includes('contact.edit');
+            hasAccess =
+              permissions.includes('business.edit') || permissions.includes('contact.edit');
             break;
           case 'appearance':
           case 'storefront':
             hasAccess = permissions.includes('storefront.edit');
             break;
           case 'plan':
-            hasAccess = isOwner; // Solo el dueño ve el plan
-            break;
           case 'team':
-            hasAccess = isOwner; // Solo el dueño ve y gestiona el equipo
-            break;
+            break; // Ya es false por defecto
           case 'contact':
             hasAccess = permissions.includes('contact.edit');
             break;
@@ -2553,7 +2683,7 @@ export function SettingsClient({
             hasAccess = permissions.includes('legal.edit');
             break;
           case 'payments':
-            hasAccess = isOwner || permissions.includes('business.edit');
+            hasAccess = permissions.includes('business.edit');
             break;
         }
       }
@@ -2561,7 +2691,7 @@ export function SettingsClient({
     });
   }, [isOwner, permissions]);
 
-  const accessibleItems = navItemsWithAccess.filter(i => i.hasAccess);
+  const accessibleItems = navItemsWithAccess.filter((i) => i.hasAccess);
   const [active, setActive] = useState<Section>(
     accessibleItems.length > 0 ? accessibleItems[0].id : 'business',
   );
@@ -2582,7 +2712,7 @@ export function SettingsClient({
               disabled={!item.hasAccess}
               style={{
                 opacity: item.hasAccess ? 1 : 0.6,
-                cursor: item.hasAccess ? 'pointer' : 'not-allowed'
+                cursor: item.hasAccess ? 'pointer' : 'not-allowed',
               }}
             >
               <Icon size={20}>{item.hasAccess ? item.icon : 'lock'}</Icon>
@@ -2596,11 +2726,42 @@ export function SettingsClient({
       <main className={styles.content}>
         <div className={styles.contentInner}>
           {accessibleItems.length === 0 ? (
-            <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-              <Card variant="outlined" style={{ padding: '3rem', textAlign: 'center', maxWidth: '400px' }}>
-                <Icon size={48} style={{ color: 'var(--md-sys-color-primary)', marginBottom: '1rem' } as React.CSSProperties}>lock_person</Icon>
-                <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--md-sys-color-on-surface)' }}>Acceso restringido</h2>
-                <p style={{ color: 'var(--md-sys-color-on-surface-variant)', lineHeight: '1.5' }}>No tienes permisos para ver o editar las configuraciones de este negocio.</p>
+            <div
+              style={{
+                display: 'flex',
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '60vh',
+              }}
+            >
+              <Card
+                variant="outlined"
+                style={{ padding: '3rem', textAlign: 'center', maxWidth: '400px' }}
+              >
+                <Icon
+                  size={48}
+                  style={
+                    {
+                      color: 'var(--md-sys-color-primary)',
+                      marginBottom: '1rem',
+                    } as React.CSSProperties
+                  }
+                >
+                  lock_person
+                </Icon>
+                <h2
+                  style={{
+                    fontSize: '1.5rem',
+                    marginBottom: '0.5rem',
+                    color: 'var(--md-sys-color-on-surface)',
+                  }}
+                >
+                  Acceso restringido
+                </h2>
+                <p style={{ color: 'var(--md-sys-color-on-surface-variant)', lineHeight: '1.5' }}>
+                  No tienes permisos para ver o editar las configuraciones de este negocio.
+                </p>
               </Card>
             </div>
           ) : (
@@ -2632,9 +2793,7 @@ export function SettingsClient({
                   permissions={permissions}
                 />
               )}
-              {active === 'plan' && (
-                <PlanSection entitlements={entitlements} isOwner={isOwner} />
-              )}
+              {active === 'plan' && <PlanSection entitlements={entitlements} isOwner={isOwner} />}
               {active === 'team' && (
                 <TeamSection
                   business={business}
@@ -2644,11 +2803,7 @@ export function SettingsClient({
                 />
               )}
               {active === 'contact' && (
-                <ContactSection
-                  business={business}
-                  isOwner={isOwner}
-                  permissions={permissions}
-                />
+                <ContactSection business={business} isOwner={isOwner} permissions={permissions} />
               )}
               {active === 'seo' && (
                 <SEOSection
@@ -2662,11 +2817,7 @@ export function SettingsClient({
                 <LegalSection business={business} isOwner={isOwner} permissions={permissions} />
               )}
               {active === 'payments' && (
-                <PaymentsSection
-                  business={business}
-                  isOwner={isOwner}
-                  permissions={permissions}
-                />
+                <PaymentsSection business={business} isOwner={isOwner} permissions={permissions} />
               )}
             </>
           )}

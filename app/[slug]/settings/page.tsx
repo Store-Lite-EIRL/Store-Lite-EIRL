@@ -1,19 +1,19 @@
+import { env } from '@/config/env';
 import { db } from '@/core/database/client';
-import { businesses, businessSettings, type Business } from '@/core/database/schema';
+import { businesses, businessSettings } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import {
   getStorefrontLayoutFromPreferences,
   getStorefrontThemeFromPreferences,
   hasCustomStorefrontTheme,
 } from '@/core/storefront';
+import { getMemberPermissions } from '@/lib/permissions/checkPermission';
+import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import { SettingsClient } from './components/SettingsClient';
 import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
-import { env } from '@/config/env';
-import { getMemberPermissions } from '@/lib/permissions/checkPermission';
+import { notFound } from 'next/navigation';
+import { SettingsClient, type SettingsBusiness } from './components/SettingsClient';
 
 interface SettingsPageProps {
   params: Promise<{ slug: string }>;
@@ -54,8 +54,10 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
     },
   });
 
-  const { data: { user } } = await supabase.auth.getUser();
-  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (!user) {
     return notFound();
   }
@@ -76,7 +78,13 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
 
   return (
     <SettingsClient
-      business={business as Business}
+      business={
+        {
+          ...business,
+          culqiPublicKey: settings?.culqiPublicKey ?? null,
+          culqiSecretKey: settings?.culqiSecretKey ?? null,
+        } as SettingsBusiness
+      }
       entitlements={entitlements}
       initialStorefrontLayout={getStorefrontLayoutFromPreferences(settings?.preferences)}
       initialStorefrontTheme={getStorefrontThemeFromPreferences(settings?.preferences)}

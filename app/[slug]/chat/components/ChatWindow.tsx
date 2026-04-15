@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { CircularProgress, Icon } from '@/shared/components/ui';
 import { IconButton } from '@/shared/components/ui/buttons';
 import React, { useEffect, useRef, useState } from 'react';

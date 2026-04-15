@@ -91,11 +91,13 @@ Resultado esperado:
 Estados sugeridos:
 
 ### Orden
+
 - `payment_processing`
 - `paid_in_escrow`
 - `payment_failed`
 
 ### Transacción de pago
+
 - `pending`
 - `authorized`
 - `captured`
@@ -221,10 +223,12 @@ Resultado esperado:
 Estados sugeridos:
 
 ### Orden
+
 - `delivery_confirmed`
 - `completed`
 
 ### Payout
+
 - `pending`
 - `scheduled`
 - `processing`

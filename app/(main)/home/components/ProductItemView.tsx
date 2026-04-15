@@ -1,6 +1,3 @@
-/* eslint-disable max-lines */
-/* eslint-disable max-lines-per-function */
-
 'use client';
 
 import { AlertSnackbar, Icon } from '@/shared/components/ui';
@@ -141,7 +138,6 @@ export function ProductItemView({
   };
 
   const renderImageSection = () => {
-
     return (
       <div className={styles.imageContainer} data-purpose="image-container">
         {/* Visual Content (Lowest Z-Index) */}

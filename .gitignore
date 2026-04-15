@@ -43,7 +43,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env
 # vercel
 .vercel
 
@@ -67,3 +67,12 @@ designInspo
 .aider.chat.history.md
 .aider.input.history
 clone.html
+
+# Sentry Config File
+.env.sentry-build-plugin
+
+# IDE & MCP Meta
+.cursor/
+.mcp.json
+.vscode/mcp.json
+opencode.json

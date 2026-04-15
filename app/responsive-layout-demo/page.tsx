@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 export default function ResponsiveLayoutDemo() {
   return (
     <div className="container">

@@ -1,17 +1,16 @@
-/* eslint-disable max-lines-per-function */
 'use client';
 
 import type { Business } from '@/core/database/schema';
 import { Icon } from '@/shared/components/ui/data-display';
 import { AlertSnackbar } from '@/shared/components/ui/feedback';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useBusinessSettings } from '../hooks/useBusinessSettings';
 import styles from './BusinessSettingsModal.module.css';
+import { EquipoTab } from './settings-tabs/EquipoTab';
 import { NegocioTab } from './settings-tabs/NegocioTab';
 import { ProductosTab } from './settings-tabs/ProductosTab';
 import { ResultadosTab } from './settings-tabs/ResultadosTab';
-import { EquipoTab } from './settings-tabs/EquipoTab';
 import { TemasTab } from './settings-tabs/TemasTab';
-import { useBusinessSettings } from '../hooks/useBusinessSettings';
 
 interface BusinessSettingsModalProps {
   business: Business | null;

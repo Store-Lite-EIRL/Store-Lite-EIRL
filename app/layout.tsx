@@ -1,7 +1,8 @@
 import { AuthProvider } from '@/features/auth';
 import { MaterialWebInit } from '@/lib/material-design/MaterialWebInit';
 import { ThemeProvider } from '@/shared/context/ThemeContext';
-import '@fontsource/google-sans'; // Importa Google Sans (pesos 400 por defecto)
+import { CSPostHogProvider } from '@/shared/providers/PostHogProvider';
+import '@fontsource/google-sans';
 import type { Metadata } from 'next';
 import { Inter, Poppins, Roboto, Roboto_Mono } from 'next/font/google';
 import './globals.css';
@@ -32,6 +33,35 @@ const poppins = Poppins({
   variable: '--font-storefront-poppins',
 });
 
+const themeBootScript = `
+(() => {
+  try {
+    const classes = [
+      'light',
+      'light-medium-contrast',
+      'light-high-contrast',
+      'dark',
+      'dark-medium-contrast',
+      'dark-high-contrast',
+    ];
+
+    const storedTheme = localStorage.getItem('app-theme') || 'system';
+    const storedScheme = localStorage.getItem('app-color-scheme') || 'default';
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const resolvedTheme = storedTheme === 'system' ? (prefersDark ? 'dark' : 'light') : storedTheme;
+    const suffix =
+      storedScheme === 'medium' ? '-medium-contrast' : storedScheme === 'high' ? '-high-contrast' : '';
+    const nextClass = resolvedTheme + suffix;
+
+    document.body.classList.remove(...classes);
+    document.body.classList.add(nextClass);
+    document.documentElement.style.colorScheme = resolvedTheme;
+  } catch (error) {
+    console.warn('Theme boot script failed', error);
+  }
+})();
+`;
+
 export const metadata: Metadata = {
   title: 'Store Lite',
   description: 'Gestiona tus negocios de forma sencilla y eficiente.',
@@ -46,10 +76,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <head>
-        {/* ------------------TIK TOK - pixel + events api studio */}
-        {/* ------------------TIK TOK - pixel + events api studio */}
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
           rel="stylesheet"
@@ -57,14 +85,18 @@ export default function RootLayout({
         />
       </head>
       <body
+        suppressHydrationWarning
         className={`${roboto_mono.variable} ${inter.variable} ${roboto.variable} ${poppins.variable} antialiased`}
       >
-        <ThemeProvider>
-          <AuthProvider>
-            <MaterialWebInit />
-            {children}
-          </AuthProvider>
-        </ThemeProvider>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        <CSPostHogProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <MaterialWebInit />
+              {children}
+            </AuthProvider>
+          </ThemeProvider>
+        </CSPostHogProvider>
       </body>
     </html>
   );

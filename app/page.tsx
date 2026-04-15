@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 // Landing Components
+import FaqSection from './(main)/home/FaqSection';
 import FooterSection from './(main)/home/FooterSection';
 import HeroLanding from './(main)/home/HeroLanding';
 import './(main)/home/landing.css';

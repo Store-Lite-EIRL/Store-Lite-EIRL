@@ -1,9 +1,9 @@
-import { MetadataRoute } from 'next';
+import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businesses } from '@/core/database/schema';
-import { eq } from 'drizzle-orm';
-import { env } from '@/config/env';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
+import { eq } from 'drizzle-orm';
+import type { MetadataRoute } from 'next';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = env.nextPublicAppUrl;
@@ -19,7 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .where(eq(businesses.isActive, true));
 
   // 2. Filter using centralized entitlements logic (SEO Enabled)
-  const seoEnabledBusinesses = new Map<string, typeof allActiveBusinesses[number]>();
+  const seoEnabledBusinesses = new Map<string, (typeof allActiveBusinesses)[number]>();
 
   await Promise.all(
     allActiveBusinesses.map(async (b) => {
@@ -27,15 +27,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       if (seoEnabled) {
         seoEnabledBusinesses.set(b.id, b);
       }
-    })
+    }),
   );
 
-  const businessUrls: MetadataRoute.Sitemap = Array.from(seoEnabledBusinesses.values()).map((b) => ({
-    url: `${baseUrl}/${b.slug}`,
-    lastModified: b.updatedAt,
-    changeFrequency: 'weekly',
-    priority: 0.8,
-  }));
+  const businessUrls: MetadataRoute.Sitemap = Array.from(seoEnabledBusinesses.values()).map(
+    (b) => ({
+      url: `${baseUrl}/${b.slug}`,
+      lastModified: b.updatedAt,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    }),
+  );
 
   const seoBusinessIds = Array.from(seoEnabledBusinesses.keys());
 

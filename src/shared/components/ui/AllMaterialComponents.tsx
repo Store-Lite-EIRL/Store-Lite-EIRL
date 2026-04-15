@@ -1,5 +1,3 @@
-/* eslint-disable complexity */
-/* eslint-disable max-lines */
 'use client';
 
 import { showElementById } from '@/shared/utils';
@@ -45,7 +43,7 @@ import {
 } from '@/shared/components/ui';
 import { AlertSnackbar } from './feedback/AlertSnackbar';
 
-// eslint-disable-next-line max-lines-per-function, sonarjs/cognitive-complexity
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function AllMaterialComponents() {
   const handleToolbarAction = () => undefined;
   const [showPrimaryAlert, setShowPrimaryAlert] = useState(false);

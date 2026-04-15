@@ -12,7 +12,11 @@
     "format:check": "prettier --check .",
     "type-check": "tsc --noEmit",
     "quality": "pnpm lint && pnpm type-check",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test": "pnpm test:unit && pnpm test:e2e"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -21,6 +25,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@fontsource/google-sans": "^5.2.1",
     "@material/web": "^2.4.1",
+    "@sentry/nextjs": "10",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.2",
     "canvas-confetti": "^1.9.4",
@@ -29,19 +34,27 @@
     "lucide-react": "^0.577.0",
     "next": "16.1.6",
     "postgres": "^3.4.8",
+    "posthog-js": "^1.368.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "^3.8.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "@eslint/js": "^9.39.2",
+    "@playwright/test": "^1.59.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
     "@typescript-eslint/parser": "^8.54.0",
+    "@vitejs/plugin-react": "^6.0.1",
     "dotenv": "^17.2.4",
     "drizzle-kit": "^0.31.8",
     "eslint": "^9",
@@ -57,9 +70,21 @@
     "eslint-plugin-sonarjs": "^3.0.6",
     "eslint-plugin-unicorn": "^62.0.0",
     "husky": "^9.1.7",
+    "jsdom": "^29.0.2",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "prettier-plugin-organize-imports": "^4.3.0",
     "typescript": "^5",
-    "typescript-eslint": "^8.54.0"
+    "typescript-eslint": "^8.54.0",
+    "vitest": "^4.1.4"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write"
+    ]
   }
 }

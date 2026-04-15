@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 'use client';
 
 import { Dialog } from '@/shared/components/ui';
@@ -101,7 +100,9 @@ export function PaymentModal({
                     </span>
                   </div>
                   <div>
-                    <h2 className="text-xl font-black text-white tracking-tight">Checkout Seguro</h2>
+                    <h2 className="text-xl font-black text-white tracking-tight">
+                      Checkout Seguro
+                    </h2>
                     <div className="flex items-center gap-2 mt-1">
                       <div className="size-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                       <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">
@@ -134,7 +135,11 @@ export function PaymentModal({
                 </div>
 
                 <div className="flex flex-col gap-8">
-                  <PaymentMethodSelector paymentMethods={paymentMethods} activeTab={activeTab} onSelect={setActiveTab} />
+                  <PaymentMethodSelector
+                    paymentMethods={paymentMethods}
+                    activeTab={activeTab}
+                    onSelect={setActiveTab}
+                  />
 
                   <form onSubmit={handleFormSubmit} className="flex flex-col gap-8">
                     {step === 'error' && (
@@ -178,7 +183,9 @@ export function PaymentModal({
                         <span className="material-symbols-outlined text-4xl mb-2 opacity-20">
                           hourglass_empty
                         </span>
-                        <p className="text-sm font-medium">Este metodo de pago estara disponible pronto</p>
+                        <p className="text-sm font-medium">
+                          Este metodo de pago estara disponible pronto
+                        </p>
                       </div>
                     )}
 

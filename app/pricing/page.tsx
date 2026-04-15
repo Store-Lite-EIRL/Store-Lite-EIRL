@@ -33,10 +33,10 @@ export default async function PricingPage() {
         subscriptions: {
           where: (subscriptions, { eq }) => eq(subscriptions.planStatus, 'active'),
           limit: 1,
-        }
-      }
+        },
+      },
     });
-    myBusinesses = rawBusinesses.map(b => ({
+    myBusinesses = rawBusinesses.map((b) => ({
       ...b,
       planType: b.subscriptions?.[0]?.planType || 'basico',
       planEndDate: b.subscriptions?.[0]?.planEndDate,
@@ -45,7 +45,8 @@ export default async function PricingPage() {
   const plans: PricingCardProps[] = [
     {
       title: 'Plan Emprendedor',
-      description: 'La base sólida e inteligente para formalizar y despegar tu primer gran proyecto.',
+      description:
+        'La base sólida e inteligente para formalizar y despegar tu primer gran proyecto.',
       price: '30',
       period: 'mes',
       buttonText: 'Comenzar ahora',
@@ -70,7 +71,7 @@ export default async function PricingPage() {
       features: [
         { text: 'Pasarela completa: Pagos digitales y tarjetas bancarias' },
         { text: 'Almacenamiento premium para 300 productos' },
-        { text: 'Personalización avanzada: Edición Drag & Drop, colores y tipografía' },
+        { text: 'Personalización avanzada: Edición del negocio' },
         { text: 'Colaboración élite: Equipo de trabajo con 2 usuarios adicionales' },
         { text: 'Centro de mando: Dashboard de ventas y métricas de progreso' },
         { text: 'Servicio de envios con Shalom en tiempo real' },
@@ -78,7 +79,8 @@ export default async function PricingPage() {
     },
     {
       title: 'Plan Enterprise AI',
-      description: 'La solución definitiva con potencia de Inteligencia Artificial y datos masivos.',
+      description:
+        'La solución definitiva con potencia de Inteligencia Artificial y datos masivos.',
       price: '90',
       period: 'mes',
       originalPrice: '100',
@@ -107,8 +109,8 @@ export default async function PricingPage() {
       <div className="pricing-header">
         <h1 className="pricing-title">Planes y Precios</h1>
         <p className="pricing-subtitle">
-          Elige el plan que mejor se adapte al tamaño y las necesidades de tu negocio.
-          Cambia o cancela en cualquier momento.
+          Elige el plan que mejor se adapte al tamaño y las necesidades de tu negocio. Cambia o
+          cancela en cualquier momento.
         </p>
       </div>
 
