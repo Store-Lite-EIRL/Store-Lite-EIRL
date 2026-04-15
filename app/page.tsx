@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 // Landing Components
+import FaqSection from './(main)/home/FaqSection';
 import FooterSection from './(main)/home/FooterSection';
 import HeroLanding from './(main)/home/HeroLanding';
 import './(main)/home/landing.css';
@@ -12,6 +13,8 @@ import LandingNav from './(main)/home/LandingNav';
 import PricingSection from './(main)/home/PricingSection';
 import ProcessSection from './(main)/home/ProcessSection';
 import SolutionsSection from './(main)/home/SolutionsSection';
+import StatsSection from './(main)/home/StatsSection';
+import TrustSection from './(main)/home/TrustSection';
 
 export default function HomePage() {
   const { user, loading } = useAuth();
@@ -36,8 +39,11 @@ export default function HomePage() {
       <main>
         <HeroLanding />
         <SolutionsSection />
+        <StatsSection />
         <ProcessSection />
         <PricingSection />
+        <TrustSection />
+        <FaqSection />
       </main>
       <FooterSection />
     </div>

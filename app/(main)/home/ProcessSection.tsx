@@ -1,24 +1,40 @@
-﻿export default function ProcessSection() {
+export default function ProcessSection() {
   const steps = [
     {
       number: '01',
-      title: 'Creá tu acceso',
-      description: 'Entrás con Google y evitás formularios eternos que nadie quiere completar.',
+      icon: 'bolt',
+      eyebrow: 'ARRANCÁ',
+      title: 'Tu cuenta en 30 segundos',
+      description:
+        'Entrá con Google. Sin formularios largos ni verificación complicate. Listo para usar.',
+      highlight: 'fast',
     },
     {
       number: '02',
-      title: 'Configurá tu negocio',
-      description: 'Definís identidad, catálogo y estructura base con foco en salir rápido.',
+      icon: 'storefront',
+      eyebrow: 'TU MARCA',
+      title: 'Tu tienda, tu estilo',
+      description:
+        'Subí tu logo, elegí colores y cargá tu catálogo. Tus productos online en minutos.',
+      highlight: 'style',
     },
     {
       number: '03',
-      title: 'Publicá y validá',
-      description: 'Mostrás tu tienda, revisás la experiencia y corregís antes de escalar tráfico.',
+      icon: 'campaign',
+      eyebrow: 'VENDÉ',
+      title: 'Compartí y empezá a vender',
+      description:
+        'Tu link listo. Integralo con Instagram o compartilo directo. Tus clientes compran sin fricción.',
+      highlight: 'sell',
     },
     {
       number: '04',
-      title: 'Operá con confianza',
-      description: 'Gestionás pedidos y evolución del negocio sobre una base más ordenada.',
+      icon: 'account_balance_wallet',
+      eyebrow: 'COBRÁ',
+      title: 'Pagos seguros con Culqi',
+      description:
+        'El comprador paga. El dinero se retiene seguro. Entregamos al vendedor. Vos cobrás tu comisión.',
+      highlight: 'money',
     },
   ];
 
@@ -27,21 +43,37 @@
       <div className="section-container">
         <div className="section-heading">
           <span className="section-eyebrow">Proceso</span>
-          <h2 className="section-title-landing">Menos fricción, más foco en ejecutar</h2>
+          <h2 className="section-title-landing">Tu tienda online en 4 pasos</h2>
           <p className="section-description">
-            No alcanza con decir “es fácil”. Hay que mostrar el recorrido. Esta sección ahora lo
-            hace con pasos concretos y entendibles.
+            Arrancá minutos. Olvidate dePapers. Vos vendé, que nosotros nos encargamos del resto.
           </p>
         </div>
 
-        <div className="process-grid">
-          {steps.map((step) => (
-            <article className="process-card" key={step.number}>
-              <span className="process-number">{step.number}</span>
-              <h3>{step.title}</h3>
-              <p>{step.description}</p>
+        <div className="process-steps-flow">
+          {steps.map((step, index) => (
+            <article className={`process-step-card ${step.highlight}`} key={step.number}>
+              <div className="process-step-connector">
+                <span className="process-step-number">{step.number}</span>
+                {index < steps.length - 1 && <div className="process-step-line" />}
+              </div>
+
+              <div className="process-step-content">
+                <span className="process-step-eyebrow">{step.eyebrow}</span>
+                <div className="process-step-icon-wrapper">
+                  <span className="material-symbols-outlined process-step-icon">{step.icon}</span>
+                </div>
+                <h3>{step.title}</h3>
+                <p>{step.description}</p>
+              </div>
             </article>
           ))}
+        </div>
+
+        <div className="process-bottom-cta">
+          <p className="process-trust-note">
+            <span className="material-symbols-outlined">verified</span>
+            Pagos protegidos con Culqi · Configuración gratis · Sin permanence
+          </p>
         </div>
       </div>
     </section>

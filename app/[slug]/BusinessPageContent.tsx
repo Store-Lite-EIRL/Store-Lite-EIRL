@@ -9,7 +9,6 @@ import type {
 } from '@/core/storefront';
 import { getReadableTextColor } from '@/core/storefront';
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
-import type { BrandFilterOption } from '../(main)/home/hooks/useProductFilters';
 import { AlertSnackbar } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
@@ -22,6 +21,7 @@ import filterStyles from '../(main)/home/FilterBar.module.css';
 import Hero from '../(main)/home/Hero';
 import Pagination from '../(main)/home/Pagination';
 import ProductFiltersTopBar from '../(main)/home/components/ProductFiltersTopBar';
+import type { BrandFilterOption } from '../(main)/home/hooks/useProductFilters';
 import { useProductFilters } from '../(main)/home/hooks/useProductFilters';
 import styles from './BusinessPageContent.module.css';
 import { BasicContactDialog } from './components/BasicContactDialog';
@@ -242,20 +242,22 @@ function BusinessPageContentUI({
     const [optimisticProduct, payload, mediaFiles, isEdit] = args;
     try {
       const initialProduct = isEdit && previewProduct ? mapToStorageProduct(previewProduct) : null;
-      const result = await saveProductBackground(
+      const result = await saveProductBackground({
         payload,
-        mediaFiles,
+        media: mediaFiles,
         isEdit,
         initialProduct,
         optimisticProduct,
-      );
+      });
       if (!result.success) {
         throw new Error(result.error || 'No se pudo guardar el producto');
       }
 
       setAlert({
         open: true,
-        description: isEdit ? 'Producto actualizado correctamente' : 'Producto guardado correctamente',
+        description: isEdit
+          ? 'Producto actualizado correctamente'
+          : 'Producto guardado correctamente',
         color: 'success',
         icon: 'check_circle',
       });
@@ -340,15 +342,21 @@ function BusinessPageContentUI({
           '--md-sys-color-primary': storefrontTheme.palette.primary,
           '--md-sys-color-on-primary': getReadableTextColor(storefrontTheme.palette.primary),
           '--md-sys-color-primary-container': storefrontTheme.palette.primary,
-          '--md-sys-color-on-primary-container': getReadableTextColor(storefrontTheme.palette.primary),
+          '--md-sys-color-on-primary-container': getReadableTextColor(
+            storefrontTheme.palette.primary,
+          ),
           '--md-sys-color-secondary': storefrontTheme.palette.secondary,
           '--md-sys-color-on-secondary': getReadableTextColor(storefrontTheme.palette.secondary),
           '--md-sys-color-secondary-container': storefrontTheme.palette.secondary,
-          '--md-sys-color-on-secondary-container': getReadableTextColor(storefrontTheme.palette.secondary),
+          '--md-sys-color-on-secondary-container': getReadableTextColor(
+            storefrontTheme.palette.secondary,
+          ),
           '--md-sys-color-tertiary': storefrontTheme.palette.accent,
           '--md-sys-color-on-tertiary': getReadableTextColor(storefrontTheme.palette.accent),
           '--md-sys-color-tertiary-container': storefrontTheme.palette.accent,
-          '--md-sys-color-on-tertiary-container': getReadableTextColor(storefrontTheme.palette.accent),
+          '--md-sys-color-on-tertiary-container': getReadableTextColor(
+            storefrontTheme.palette.accent,
+          ),
           '--md-sys-color-surface': isDark ? '#0f1117' : '#ffffff',
           '--md-sys-color-on-surface': isDark ? '#f3f4f6' : '#111827',
           '--md-sys-color-surface-variant': isDark ? '#161b24' : '#f5f7fb',
@@ -364,10 +372,7 @@ function BusinessPageContentUI({
 
   return (
     <>
-      <div
-        className={`page-container ${styles.storefrontThemeRoot}`}
-        style={themeStyles}
-      >
+      <div className={`page-container ${styles.storefrontThemeRoot}`} style={themeStyles}>
         {storefrontLayout.sections.map(renderStorefrontSection)}
       </div>
       <ProductPreviewSheet
@@ -411,7 +416,9 @@ function BusinessPageContentUI({
               setIsCreateOpen(false);
             }}
             onSave={handleSaveProduct}
-            initialProduct={isEditOpen && previewProduct ? mapToStorageProduct(previewProduct) : null}
+            initialProduct={
+              isEditOpen && previewProduct ? mapToStorageProduct(previewProduct) : null
+            }
           />
         </>
       )}

@@ -65,7 +65,7 @@ import {
 import styles from '../settings.module.css';
 import { PermissionsMatrix } from './PermissionsMatrix';
 
-interface Business {
+export interface SettingsBusiness {
   id: string;
   name: string;
   slug: string;
@@ -113,7 +113,7 @@ interface Entitlements {
 }
 
 interface SettingsClientProps {
-  business: Business;
+  business: SettingsBusiness;
   entitlements: Entitlements;
   initialStorefrontLayout: StorefrontLayout;
   initialStorefrontTheme: StorefrontTheme;
@@ -323,7 +323,7 @@ function BusinessSection({
   isOwner,
   permissions,
 }: {
-  business: Business;
+  business: SettingsBusiness;
   entitlements: Entitlements;
   isOwner: boolean;
   permissions: Permission[];
@@ -602,7 +602,7 @@ function AppearanceSection({
   isOwner,
   permissions,
 }: {
-  business: Business;
+  business: SettingsBusiness;
   entitlements: Entitlements;
   initialStorefrontTheme: StorefrontTheme;
   initialHasCustomTheme?: boolean;
@@ -1083,7 +1083,7 @@ function ContactSection({
   isOwner: _isOwner,
   permissions: _permissions,
 }: {
-  business: Business;
+  business: SettingsBusiness;
   isOwner: boolean;
   permissions: Permission[];
 }) {
@@ -1163,7 +1163,7 @@ function LegalSection({
   isOwner: _isOwner,
   permissions: _permissions,
 }: {
-  business: Business;
+  business: SettingsBusiness;
   isOwner: boolean;
   permissions: Permission[];
 }) {
@@ -1291,7 +1291,7 @@ function StorefrontSectionEditor({
   isOwner,
   permissions,
 }: {
-  business: Business;
+  business: SettingsBusiness;
   entitlements: Entitlements;
   initialStorefrontLayout: StorefrontLayout;
   isOwner: boolean;
@@ -1653,7 +1653,7 @@ function SEOSection({
   isOwner: _isOwner,
   permissions: _permissions,
 }: {
-  business: Business;
+  business: SettingsBusiness;
   entitlements: Entitlements;
   isOwner: boolean;
   permissions: Permission[];
@@ -1864,7 +1864,7 @@ function TeamSection({
   isOwner,
   permissions,
 }: {
-  business: Business;
+  business: SettingsBusiness;
   entitlements: Entitlements;
   isOwner: boolean;
   permissions: Permission[];
@@ -2404,7 +2404,7 @@ function PaymentsSection({
   isOwner,
   permissions,
 }: {
-  business: Business;
+  business: SettingsBusiness;
   isOwner: boolean;
   permissions: Permission[];
 }) {

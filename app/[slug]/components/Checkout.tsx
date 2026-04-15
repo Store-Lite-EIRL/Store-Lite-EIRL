@@ -185,6 +185,54 @@ export default function Checkout({ totalAmount, cartItems, onSuccess, onCancel }
     }
   };
 
+  const renderCourierFields = () => {
+    if (shippingInfo.courier === 'shalom') {
+      return (
+        <div className={styles.formGroup}>
+          <Select
+            label="Agencia Shalom"
+            outlined
+            value={shippingInfo.agency}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+              setShippingInfo((prev) => ({ ...prev, agency: e.target.value }))
+            }
+            options={availableAgencies}
+            disabled={!shippingInfo.district}
+          />
+          {availableAgencies.length === 0 && shippingInfo.district && (
+            <p className={styles.errorText}>No se encontraron agencias en este distrito.</p>
+          )}
+          <p className={styles.helpText}>El recojo se realiza en la agencia seleccionada.</p>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div className={styles.formGroup}>
+          <label>Dirección de Entrega</label>
+          <input
+            type="text"
+            placeholder="Calle, Número, Dpto..."
+            value={shippingInfo.address}
+            onChange={(e) => setShippingInfo((prev) => ({ ...prev, address: e.target.value }))}
+            className={styles.input}
+          />
+        </div>
+        <div className={styles.formGroup}>
+          <label>Referencia</label>
+          <input
+            type="text"
+            placeholder="Ej. Cerca al parque central"
+            value={shippingInfo.reference}
+            onChange={(e) => setShippingInfo((prev) => ({ ...prev, reference: e.target.value }))}
+            className={styles.input}
+          />
+        </div>
+      </>
+    );
+  };
+
   if (!mounted) return null;
 
   return createPortal(
@@ -285,53 +333,7 @@ export default function Checkout({ totalAmount, cartItems, onSuccess, onCancel }
                 </div>
               </div>
 
-              {shippingInfo.courier === 'shalom' ? (
-                <div className={styles.formGroup}>
-                  <Select
-                    label="Agencia Shalom"
-                    outlined
-                    value={shippingInfo.agency}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      setShippingInfo((prev) => ({ ...prev, agency: e.target.value }))
-                    }
-                    options={availableAgencies}
-                    disabled={!shippingInfo.district}
-                  />
-                  {availableAgencies.length === 0 && shippingInfo.district && (
-                    <p className={styles.errorText}>No se encontraron agencias en este distrito.</p>
-                  )}
-                  <p className={styles.helpText}>
-                    El recojo se realiza en la agencia seleccionada.
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <div className={styles.formGroup}>
-                    <label>Dirección de Entrega</label>
-                    <input
-                      type="text"
-                      placeholder="Calle, Número, Dpto..."
-                      value={shippingInfo.address}
-                      onChange={(e) =>
-                        setShippingInfo((prev) => ({ ...prev, address: e.target.value }))
-                      }
-                      className={styles.input}
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Referencia</label>
-                    <input
-                      type="text"
-                      placeholder="Ej. Cerca al parque central"
-                      value={shippingInfo.reference}
-                      onChange={(e) =>
-                        setShippingInfo((prev) => ({ ...prev, reference: e.target.value }))
-                      }
-                      className={styles.input}
-                    />
-                  </div>
-                </>
-              )}
+              {renderCourierFields()}
 
               <div className={styles.shippingSummary}>
                 <div className={styles.summaryRow}>

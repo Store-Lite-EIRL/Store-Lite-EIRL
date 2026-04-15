@@ -147,7 +147,6 @@ app/(main)/home/
     └── useFeaturedItems.ts         ← handleSaveCategory, handleSaveNewCategory, items state
 ```
 
-- [ ] Extraer lógica de drag en `useHeroDrag.ts`
 - [ ] Extraer lógica de upload/canvas en `useHeroUpload.ts`
 - [ ] Extraer componentes de categoría a sus propios archivos
 - [ ] Extraer hook `useFeaturedItems` con el estado y handlers

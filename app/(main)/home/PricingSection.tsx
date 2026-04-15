@@ -3,27 +3,60 @@ import Link from 'next/link';
 export default function PricingSection() {
   const plans = [
     {
-      name: 'Starter',
-      description: 'Para validar tu tienda y empezar a vender sin complicarte.',
-      price: 'Gratis',
-      features: ['Acceso inicial', 'Setup rápido', 'Base visual profesional'],
-    },
-    {
-      name: 'Growth',
-      description: 'Para negocios que ya venden y necesitan una operación más seria.',
-      price: 'Escalable',
+      name: 'Emprendedor',
+      price: '30',
+      period: 'mes',
+      description:
+        'Perfecto para vos que arrancás. Tené tu tienda online lista en minutos, sin complicaciones técnicas ni costos ocultos.',
       features: [
-        'Más control operativo',
-        'Mejor visibilidad del negocio',
-        'Experiencia más sólida',
+        '🌐 Tu dominio personalizado (tutienda.com)',
+        '📦 Hasta 150 productos en tu catálogo',
+        '💬 Gestión de pedidos por WhatsApp y Chat',
+        '🔒 Seguridad básica incluida',
+        '⚡ Configuración en menos de 10 minutos',
+        '📱 Diseño adaptado a celular',
       ],
-      highlighted: true,
+      cta: 'Crear mi tienda gratis',
+      popular: false,
     },
     {
-      name: 'Scale',
-      description: 'Para marcas que necesitan una base lista para evolucionar con el equipo.',
-      price: 'A medida',
-      features: ['Acompañamiento estratégico', 'Mayor personalización', 'Roadmap de crecimiento'],
+      name: 'Business Pro',
+      price: '55',
+      period: 'mes',
+      badge: 'Más elegido',
+      description:
+        'Para negocios que ya venden y quieren escalar. Herramientas profesionales para crecer sin límites y con equipo de trabajo.',
+      features: [
+        '💳 Pagos con tarjetas y billeteras digitales',
+        '📦 Hasta 300 productos premium',
+        '🎨 Personalización completa del diseño',
+        '👥 Equipo de 2 usuarios adicionales',
+        '📊 Dashboard con métricas de ventas',
+        '📦 Integración con Shalom Envíos',
+        '🎯 SEO avanzado incluido',
+        '🔐 Seguridad avanzada',
+      ],
+      cta: 'Escalar mi negocio',
+      popular: true,
+    },
+    {
+      name: 'Enterprise AI',
+      price: '90',
+      period: 'mes',
+      description:
+        'La versión completa con inteligencia artificial. Para marcas que necesitan el máximo rendimiento y soporte.',
+      features: [
+        '🤖 IA que sugerir productos trending',
+        '📊 Dashboard inteligente con análisis',
+        '👥 Hasta 5 usuarios en tu equipo',
+        '💰 Productos ilimitados',
+        '🎁 Sistema de fidelización de clientes',
+        '🌟 Prioridad en soporte 24/7',
+        '📈 Reportes avanzados',
+        '🔐 Seguridad enterprise',
+      ],
+      cta: 'Obtener máxima potencia',
+      popular: false,
     },
   ];
 
@@ -32,38 +65,50 @@ export default function PricingSection() {
       <div className="section-container">
         <div className="section-heading">
           <span className="section-eyebrow">Planes</span>
-          <h2 className="section-title-landing">Elegí el ritmo de crecimiento que necesitás</h2>
+          <h2 className="section-title-landing">Encontrá el plan que hace crecer tu negocio</h2>
           <p className="section-description">
-            En vez de cajas vacías, ahora hay una comparación visual decente para orientar la
-            decisión y empujar al usuario hacia la acción correcta.
+            Precios claros. Sin letras chiquitas. Arrancá gratis y escalá cuando quieras.
           </p>
         </div>
 
-        <div className="pricing-grid">
+        <div className="pricing-cards-flow">
           {plans.map((plan) => (
-            <article
-              className={`price-card ${plan.highlighted ? 'highlighted' : ''}`}
-              key={plan.name}
-            >
-              <div className="price-card-header">
-                <span className="price-card-name">{plan.name}</span>
-                <strong className="price-card-value">{plan.price}</strong>
+            <article className={`pricing-card ${plan.popular ? 'popular' : ''}`} key={plan.name}>
+              {plan.popular && <span className="pricing-badge">{plan.badge}</span>}
+              <div className="pricing-card-header">
+                <span className="pricing-plan-name">{plan.name}</span>
+                <div className="pricing-price-wrapper">
+                  <span className="pricing-currency">S/</span>
+                  <span className="pricing-price">{plan.price}</span>
+                  <span className="pricing-period">/{plan.period}</span>
+                </div>
               </div>
-              <p className="price-card-description">{plan.description}</p>
-              <ul className="price-card-list">
+              <p className="pricing-description">{plan.description}</p>
+              <ul className="pricing-features">
                 {plan.features.map((feature) => (
-                  <li key={feature}>{feature}</li>
+                  <li key={feature}>
+                    <span className="material-symbols-outlined check-icon">check_circle</span>
+                    {feature}
+                  </li>
                 ))}
               </ul>
               <Link
-                className={plan.highlighted ? 'btn-primary-glow' : 'btn-secondary-ghost'}
+                className={`pricing-cta-btn ${
+                  plan.popular ? 'pricing-btn-primary' : 'pricing-btn-secondary'
+                }`}
                 href="/auth"
               >
-                Empezar
+                {plan.cta}
+                <span className="material-symbols-outlined btn-icon">arrow_forward</span>
               </Link>
             </article>
           ))}
         </div>
+
+        <p className="pricing-footer-note">
+          <span className="material-symbols-outlined">verified</span>
+          Todos los planes incluyen dominio gratis · Soporte básico · Sin permanencia
+        </p>
       </div>
     </section>
   );
