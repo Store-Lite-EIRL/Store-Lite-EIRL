@@ -54,7 +54,8 @@ export async function POST(request: Request) {
     console.log('[payment/charge] Validating - token:', token, 'amount:', amount, 'email:', email, 'businessId:', businessId, 'productId:', productId);
     
     // Email es opcional para Yape pero requerido para tarjeta
-    if (!token || !amount || !businessId || !productId) {
+    // Validar que el amount sea positivo y mayor al mínimo de Culqi (S/ 1.00)
+    if (!token || !amount || amount < 100 || !businessId || !productId) {
       console.error('[payment/charge] Missing fields:', { token: !!token, amount: !!amount, businessId: !!businessId, productId: !!productId });
       return NextResponse.json(
         { error: 'Faltan campos requeridos: token, amount, businessId, productId', received: { token, amount, email, businessId, productId } },
@@ -104,8 +105,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // 3. Crear el cargo en Culqi
+    // 3. Crear el cargo en Culqi con timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10 seg timeout
+
     const culqiResponse = await fetch('https://api.culqi.com/v2/charges', {
+      signal: controller.signal,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -175,11 +180,19 @@ export async function POST(request: Request) {
        shippingPhone: shippingInfo.phone || phone,
        shippingCost: String(shippingInfo.cost || 0),
        metadata: {
-         ...metadata,
-         culqiResponse: {
-           id: culqiData.id,
-           createdAt: culqiData.creation_date,
+         ...paymentMetadata,
+         paymentGateway: {
+           provider: 'culqi',
+           chargeId: culqiData.id,
+           createdAt: new Date(culqiData.creation_date * 1000).toISOString(),
+           rawResponse: culqiData // Guardar respuesta completa para debugging
          },
+         platform: 'store-lite',
+         riskData: {
+           // Datos útiles para análisis de fraude
+           ip: request.headers.get('x-forwarded-for'),
+           userAgent: request.headers.get('user-agent')
+         }
        },
      }).returning();
 
@@ -216,9 +229,17 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('[payment/charge] Error:', error);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    const statusCode = error.name === 'AbortError' ? 504 : 500;
+
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
+      { 
+        error: 'Error procesando el pago',
+        details: errorMessage,
+        code: statusCode
+      },
+      { status: statusCode }
     );
   }
 }
