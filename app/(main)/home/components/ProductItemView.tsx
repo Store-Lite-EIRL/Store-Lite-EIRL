@@ -320,21 +320,37 @@ export function ProductItemView({
 
     return (
       <>
-        <Button
-          className={styles.buyBtn}
-          variant="filled"
-          onClick={(e) => {
-            e.stopPropagation();
-            onBuyNow();
-          }}
-          style={
-            {
-              '--md-filled-button-container-color': 'var(--md-sys-color-tertiary)',
-            } as React.CSSProperties
-          }
-        >
-          {hasPaymentGateway ? 'Comprar' : 'Contactar'}
-        </Button>
+        {product.stock > 0 ? (
+          <Button
+            className={styles.buyBtn}
+            variant="filled"
+            onClick={(e) => {
+              e.stopPropagation();
+              onBuyNow();
+            }}
+            style={
+              {
+                '--md-filled-button-container-color': 'var(--md-sys-color-tertiary)',
+              } as React.CSSProperties
+            }
+          >
+            {hasPaymentGateway ? 'Comprar' : 'Contactar'}
+          </Button>
+        ) : (
+          <Button
+            className={styles.buyBtn}
+            variant="filled"
+            disabled
+            style={
+              {
+                '--md-filled-button-container-color': 'var(--md-sys-color-surface-variant)',
+                '--md-filled-button-label-text-color': 'var(--md-sys-color-on-surface-variant)',
+              } as React.CSSProperties
+            }
+          >
+            SIN STOCK
+          </Button>
+        )}
         <Button
           className={styles.cartBtn}
           variant="filled"
