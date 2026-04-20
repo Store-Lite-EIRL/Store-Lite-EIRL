@@ -169,12 +169,18 @@ export default async function ProductDetailContent({
             </p>
           </div>
 
-          <PurchaseActions
-            product={product}
-            business={businessDetail}
-            hasPaymentGateway={paymentsEnabled}
-            culqiPublicKey={culqiPublicKey || entitlements.culqiPublicKey}
-          />
+          {product.stock > 0 ? (
+            <PurchaseActions
+              product={product}
+              business={businessDetail}
+              hasPaymentGateway={paymentsEnabled}
+              culqiPublicKey={culqiPublicKey || entitlements.culqiPublicKey}
+            />
+          ) : (
+            <button className={styles.outOfStockButton} disabled>
+              SIN STOCK
+            </button>
+          )}
 
           <div className={styles.accordion}>
             <div className={styles.accordionHeader}>

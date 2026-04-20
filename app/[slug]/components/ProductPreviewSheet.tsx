@@ -216,34 +216,46 @@ export default function ProductPreviewSheet({
               </>
             ) : (
               <>
-                <Button
-                  onClick={() =>
-                    toggleCartItem({
-                      id: product.id,
-                      name: product.title,
-                      category,
-                      stock: product.stock,
-                      price: String(product.price),
-                      currency: product.currency,
-                      status: product.isAvailable ? 'ACTIVO' : 'NO ACTIVO',
-                      image: mainImage,
-                      images: product.media?.map((item) => item.mediaUrl) || [],
-                      description: product.description || '',
-                    })
-                  }
-                  style={
-                    {
-                      '--md-filled-button-container-color': isProductInCart
-                        ? 'var(--md-sys-color-secondary-container)'
-                        : 'var(--md-sys-color-primary)',
-                      '--md-filled-button-label-text-color': isProductInCart
-                        ? 'var(--md-sys-color-on-secondary-container)'
-                        : 'var(--md-sys-color-on-primary)',
-                    } as React.CSSProperties
-                  }
-                >
-                  {isProductInCart ? 'Quitar del carrito' : 'Agregar al carrito'}
-                </Button>
+                {product.stock > 0 ? (
+                  <Button
+                    onClick={() =>
+                      toggleCartItem({
+                        id: product.id,
+                        name: product.title,
+                        category,
+                        stock: product.stock,
+                        price: String(product.price),
+                        currency: product.currency,
+                        status: product.isAvailable ? 'ACTIVO' : 'NO ACTIVO',
+                        image: mainImage,
+                        images: product.media?.map((item) => item.mediaUrl) || [],
+                        description: product.description || '',
+                      })
+                    }
+                    style={
+                      {
+                        '--md-filled-button-container-color': isProductInCart
+                          ? 'var(--md-sys-color-secondary-container)'
+                          : 'var(--md-sys-color-primary)',
+                        '--md-filled-button-label-text-color': isProductInCart
+                          ? 'var(--md-sys-color-on-secondary-container)'
+                          : 'var(--md-sys-color-on-primary)',
+                      } as React.CSSProperties
+                    }
+                  >
+                    {isProductInCart ? 'Quitar del carrito' : 'Agregar al carrito'}
+                  </Button>
+                ) : (
+                  <Button 
+                    disabled
+                    style={{
+                      '--md-filled-button-container-color': 'var(--md-sys-color-surface-variant)',
+                      '--md-filled-button-label-text-color': 'var(--md-sys-color-on-surface-variant)',
+                    } as React.CSSProperties}
+                  >
+                    SIN STOCK
+                  </Button>
+                )}
                 <Link href={`/${slug}/product/${product.id}`} className={styles.fullLink}>
                   Ver detalle completo
                 </Link>
