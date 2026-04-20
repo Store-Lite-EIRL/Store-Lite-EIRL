@@ -1,6 +1,7 @@
 import { env } from '@/config/env';
+import { resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
-import { businesses, products as productsTable } from '@/core/database/schema';
+import { products as productsTable } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { createServerClient } from '@supabase/ssr';
 import { and, eq, or } from 'drizzle-orm';
@@ -22,12 +23,16 @@ interface ProductDetailContentProps {
   productId: string;
   isModal?: boolean;
   hasPaymentGateway?: boolean;
+  isPaymentConfigured?: boolean;
+  culqiPublicKey?: string;
 }
 
 export default async function ProductDetailContent({
   slug,
   productId,
   isModal = false,
+  isPaymentConfigured = false,
+  culqiPublicKey,
 }: ProductDetailContentProps) {
   const cookieStore = await cookies();
   const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
@@ -42,9 +47,7 @@ export default async function ProductDetailContent({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const businessDetail = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-  });
+  const businessDetail = (await resolveBusinessSlug(slug))?.business;
 
   if (!businessDetail) {
     return notFound();
@@ -115,6 +118,9 @@ export default async function ProductDetailContent({
   const mappedSymbol = product.currency === 'PEN' ? 'S/ ' : `${currencyInfo.symbol} `;
   const finalPrice = formatPrice(numericPrice, mappedSymbol);
 
+  // Consideramos pagos habilitados solo si el plan lo permite Y las llaves están configuradas
+  const paymentsEnabled = hasPaymentGateway && isPaymentConfigured;
+
   return (
     <div className={`${styles.pageContainer} ${isModal ? styles.modalContent : ''}`}>
       {!isModal && (
@@ -144,9 +150,15 @@ export default async function ProductDetailContent({
             </div>
           </div>
 
-          <div>
-            <p className={styles.productPrice}>{finalPrice}</p>
-          </div>
+           <div>
+             <p className={styles.productPrice}>{finalPrice}</p>
+             {product.stock === 0 && (
+               <p className={styles.stockStatusOutOfStock}>AGOTADO*</p>
+             )}
+             {product.stock > 0 && product.stock <= 5 && (
+               <p className={styles.stockStatusLowStock}>Quedan {product.stock} unidades</p>
+             )}
+           </div>
 
           <div className={styles.accordion}>
             <div className={styles.accordionHeader}>
@@ -160,7 +172,8 @@ export default async function ProductDetailContent({
           <PurchaseActions
             product={product}
             business={businessDetail}
-            hasPaymentGateway={hasPaymentGateway}
+            hasPaymentGateway={paymentsEnabled}
+            culqiPublicKey={culqiPublicKey || entitlements.culqiPublicKey}
           />
 
           <div className={styles.accordion}>
@@ -254,31 +267,10 @@ export default async function ProductDetailContent({
       )}
 
       {/* BEGIN: Rating & Reviews Section */}
-      {/* <section className={styles.reviewsSection}>
-        <h2 className={styles.reviewsTitle}>Rating &amp; Reviews</h2>
-        <div className={styles.reviewsGrid}>
-          <div className={styles.reviewsList}>
-            {reviews.map((r, i) => (
-              <div key={i} className={styles.featuredReview}>
-                <div className={styles.reviewerHeader}>
-                  <div>
-                    <p className={styles.reviewerName}>{r.name}</p>
-                    <div className={styles.reviewerStars}>
-                      <span className={styles.reviewerStarIcon}>★★★★★</span>
-                    </div>
-                  </div>
-                  <span className={styles.reviewDate}>{r.date}</span>
-                </div>
-                <p className={styles.reviewText}>{r.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section> */}
       <section className={styles.purchaseProcessSection}>
         <h2 className={styles.purchaseProcessTitle}>¿Cómo comprar?</h2>
         <div className={styles.processSteps}>
-          {hasPaymentGateway ? (
+          {paymentsEnabled ? (
             <>
               <div className={styles.processStep}>
                 <span className={styles.stepNumber}>1</span>

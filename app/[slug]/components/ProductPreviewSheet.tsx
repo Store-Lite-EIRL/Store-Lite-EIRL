@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useCart } from '../storage/context/CartContext';
+import { formatPrice } from '../storage/utils/currency';
 import styles from './ProductPreviewSheet.module.css';
 
 interface ProductPreviewSheetProps {
@@ -127,23 +128,23 @@ export default function ProductPreviewSheet({
           <div className={styles.priceContainer}>
             {product.secondPrice ? (
               <>
-                <p className={styles.originalPrice}>
-                  {currency} {Number(product.price).toLocaleString()}
-                </p>
                 <p className={styles.price}>
-                  {currency} {Number(product.secondPrice).toLocaleString()}
+                  {formatPrice(Number(product.secondPrice), currency)}
+                </p>
+                <p className={styles.originalPrice}>
+                  {formatPrice(Number(product.price), currency)}
                 </p>
               </>
             ) : (
               <p className={styles.price}>
-                {currency} {Number(product.price).toLocaleString()}
+                {formatPrice(Number(product.price), currency)}
               </p>
             )}
           </div>
           <div className={styles.descriptionContainer}>
             <p className={styles.description}>
-              {product.description && product.description.length > 120 
-                ? `${product.description.slice(0, 120)}...` 
+              {product.description && product.description.length > 120
+                ? `${product.description.slice(0, 120)}...`
                 : (product.description || 'Sin descripción disponible.')}
             </p>
             {product.description && product.description.length > 120 && (
@@ -152,7 +153,7 @@ export default function ProductPreviewSheet({
               </Link>
             )}
           </div>
-          
+
           {product.tags && product.tags.length > 0 && (
             <div className={styles.tags}>
               {product.tags.map((tag, i) => (
@@ -162,16 +163,20 @@ export default function ProductPreviewSheet({
               ))}
             </div>
           )}
-          
+
           <div className={styles.metaRow}>
             <span className={styles.priceTag}>
-              {currency} {Number(product.secondPrice || product.price).toLocaleString()}
+              {formatPrice(Number(product.secondPrice || product.price), currency)}
             </span>
             <div className={styles.statusBundle}>
-              <span className={`${styles.statusChip} ${product.isAvailable ? styles.available : styles.unavailable}`}>
-                {product.isAvailable ? 'Disponible' : 'Sin Stock'}
+              <span className={`${styles.statusChip} ${product.stock > 0 ? styles.available : styles.unavailable}`}>
+                {product.stock > 0 ? 'Disponible' : 'Sin Stock'}
               </span>
-              <span className={styles.stockLabel}>({product.stock} disp.)</span>
+              {product.stock === 0 ? (
+                <span className={styles.stockLabel}> (AGOTADO) </span>
+              ) : (
+                <span className={styles.stockLabel}> ({product.stock} disp.) </span>
+              )}
             </div>
           </div>
 
