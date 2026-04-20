@@ -10,6 +10,7 @@ import Checkout from '../../../[slug]/components/Checkout';
 import { DeleteProductDialog } from '../../../[slug]/storage/components/DeleteProductDialog';
 import { CreateProductSheet } from '../../../[slug]/storage/components/createProduct/CreateProductSheet';
 import type { Product } from '../../../[slug]/storage/data';
+import { formatPrice } from '../../../[slug]/storage/utils/currency';
 import styles from './ProductItem.module.css';
 
 export interface ProductViewData {
@@ -48,6 +49,11 @@ interface ProductItemViewProps {
     color: 'success' | 'error';
     icon: string;
   };
+  // Props del negocio para el checkout
+  businessName?: string;
+  businessRuc?: string;
+  businessAddress?: string;
+  businessId?: string;
   onEditOpen: () => void;
   onDeleteOpen: () => void;
   onDeleteClose: () => void;
@@ -71,6 +77,7 @@ interface ProductItemViewProps {
   onPaymentModalClose: () => void;
   onBuyNow: () => void;
   hasPaymentGateway?: boolean;
+  culqiPublicKey?: string;
 }
 
 export function ProductItemView({
@@ -109,6 +116,11 @@ export function ProductItemView({
   onPaymentModalClose,
   onBuyNow,
   hasPaymentGateway = true,
+  culqiPublicKey,
+  businessName,
+  businessRuc,
+  businessAddress,
+  businessId,
 }: ProductItemViewProps) {
   const [copied, setCopied] = useState(false);
   const params = useParams();
@@ -387,8 +399,8 @@ export function ProductItemView({
         </div>
 
         <div className={styles.stockInfo}>
-          <div className={styles.stockDot} />
-          <span>{product.isAvailable ? 'En Stock' : 'Agotado'}</span>
+          <div className={`${styles.stockDot} ${product.stock === 0 ? styles.unavailable : styles.available}`} />
+          <span className={product.stock === 0 ? styles.unavailable : styles.available}>{product.stock === 0 ? 'AGOTADO' : product.isAvailable ? 'En Stock' : 'Agotado'}</span>
         </div>
 
         {product.shippingInfo && (
@@ -407,14 +419,13 @@ export function ProductItemView({
                 style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10 }}
               >
                 <span className={styles.originalPrice}>
-                  {currencySymbol}
-                  {originalPrice.toLocaleString()}
+                  {formatPrice(originalPrice, currencySymbol)}
                 </span>
                 {discount && <span className={styles.discountBadge}>-{discount}%</span>}
               </div>
             )}
             <span className={styles.currentPrice}>
-              {currencySymbol}&nbsp;{price.toLocaleString()}
+              {formatPrice(price, currencySymbol)}
             </span>
           </div>
         </div>
@@ -450,6 +461,11 @@ export function ProductItemView({
         <Checkout
           totalAmount={price}
           cartItems={[{ ...storageProduct, quantity: 1 }]}
+          culqiPublicKey={culqiPublicKey}
+          businessName={businessName}
+          businessRuc={businessRuc}
+          businessAddress={businessAddress}
+          businessId={businessId}
           onSuccess={() => onPaymentModalClose()}
           onCancel={() => onPaymentModalClose()}
         />
