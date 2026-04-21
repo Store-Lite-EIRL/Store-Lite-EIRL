@@ -1,0 +1,242 @@
+/* Modern Glassmorphism Receipt — High Fidelity Design */
+.receipt {
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --accent: var(--md-sys-color-primary, #6750A4);
+  --on-surface: var(--md-sys-color-on-surface, #1C1B1F);
+  --on-surface-variant: var(--md-sys-color-on-surface-variant, #49454F);
+  --outline-variant: var(--md-sys-color-outline-variant, #CAC4D0);
+
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 28px;
+  max-width: 360px;
+  width: 100%;
+  margin: 0 auto;
+  font-family: var(--storefront-font-family, 'Inter', sans-serif);
+  color: var(--on-surface);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    inset 0 0 0 1px var(--glass-border);
+  border: 1px solid var(--outline-variant);
+}
+
+/* Header Section */
+.header {
+  padding: 24px 24px 16px;
+  text-align: center;
+  position: relative;
+}
+
+.successBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #E8F5E9;
+  color: #2E7D32;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 16px;
+}
+
+.logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  object-fit: cover;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: #fff;
+}
+
+.defaultLogo {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #6750A4 0%, #7C4DEF 100%);
+  color: white;
+  box-shadow: 0 4px 16px rgba(103, 80, 164, 0.35);
+}
+
+.businessName {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.ruc, .address {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  margin: 2px 0 0;
+}
+
+/* Order Info Grid */
+.orderInfo {
+  padding: 0 24px 16px;
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 16px;
+}
+
+.infoBlock {
+  display: flex;
+  flex-direction: column;
+}
+
+.infoLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--on-surface-variant);
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.infoValue {
+  font-size: 12px;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+/* Items List */
+.items {
+  padding: 16px 24px;
+  border-top: 1px solid var(--outline-variant);
+}
+
+.itemRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.itemInfo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.itemLabel {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.itemSub {
+  font-size: 11px;
+  color: var(--on-surface-variant);
+}
+
+.itemValue {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Total Section */
+.totalSection {
+  padding: 24px;
+  background: var(--accent);
+  color: white;
+  margin: 0 12px 12px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.totalLabel {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.9;
+}
+
+.totalAmount {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+/* Details List (Payment & Customer) */
+.detailsList {
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.detailLabel {
+  color: var(--on-surface-variant);
+}
+
+.detailValue {
+  font-weight: 600;
+}
+
+/* Footer */
+.footer {
+  padding: 24px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.footerText {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.footerSubtext {
+  font-size: 11px;
+  color: var(--on-surface-variant);
+  opacity: 0.8;
+}
+
+.barcode {
+  height: 40px;
+  margin: 16px auto 0;
+  opacity: 0.3;
+  background: repeating-linear-gradient(90deg, #000 0 1px, transparent 1px 4px, #000 4px 5px);
+}
+
+/* Utility */
+.divider {
+  height: 1px;
+  background: var(--outline-variant);
+  margin: 0 24px;
+}
+
+@media (max-width: 400px) {
+  .receipt {
+    border-radius: 0;
+    max-width: 100%;
+  }
+}
