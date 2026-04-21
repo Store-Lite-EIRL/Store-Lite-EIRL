@@ -105,158 +105,182 @@ md-icon {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-
-/* Campos (Field): altura mínima para que se vea el cuadro completo (label + borde + input).
+  /* Campos (Field): altura mínima para que se vea el cuadro completo (label + borde + input).
    Sin esto el host colapsa y solo se ven las líneas del borde solapadas. */
-.form-row--fields {
-  gap: 1.5rem;
-}
+  .form-row--fields {
+    gap: 1.5rem;
+  }
 
-.form-row--fields md-outlined-field,
-.form-row--fields md-filled-field {
-  min-height: 56px;
-  width: 100%;
-  align-self: stretch;
-}
+  .form-row--fields md-outlined-field,
+  .form-row--fields md-filled-field {
+    min-height: 56px;
+    width: 100%;
+    align-self: stretch;
+  }
 
-.field-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-}
+  .field-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+  }
 
-.progress-row {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
+  .progress-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
 
-.circular-progress-wrap {
-  width: 3rem;
-  height: 3rem;
-}
+  .circular-progress-wrap {
+    width: 3rem;
+    height: 3rem;
+  }
 
-.select-wrap {
-  min-width: 12.5rem;
-}
+  .select-wrap {
+    min-width: 12.5rem;
+  }
 
-.theme-settings-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  background-color: var(--md-sys-color-surface-container);
-  border-radius: 1rem;
-}
+  .theme-settings-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background-color: var(--md-sys-color-surface-container);
+    border-radius: 1rem;
+  }
 
-.theme-settings-header {
-  font-size: 1rem;
-  margin: 0 0 0.5rem 0;
-  font-family: var(--md-sys-typescale-title-medium-font);
-  font-weight: 500;
-}
+  .theme-settings-header {
+    font-size: 1rem;
+    margin: 0 0 0.5rem 0;
+    font-family: var(--md-sys-typescale-title-medium-font);
+    font-weight: 500;
+  }
 
-/* Beta Page Styles */
-.catalog-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 2rem;
-  width: 100%;
-}
+  /* Beta Page Styles */
+  .catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    width: 100%;
+  }
 
-.catalog-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1rem;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: 12px;
-  background: var(--md-sys-color-surface);
-}
+  .catalog-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 12px;
+    background: var(--md-sys-color-surface);
+  }
 
-.card-example {
-  width: 100px;
-  height: 100px;
-  padding: 1rem;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-size: 0.8rem;
-}
+  .card-example {
+    width: 100px;
+    height: 100px;
+    padding: 1rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 0.8rem;
+  }
 
-.card-elevated {
-  background: var(--md-sys-color-surface-container-low);
-  box-shadow:
-    0px 1px 3px 1px rgba(0, 0, 0, 0.15),
-    0px 1px 2px 0px rgba(0, 0, 0, 0.3);
-}
+  .card-elevated {
+    background: var(--md-sys-color-surface-container-low);
+    box-shadow:
+      0px 1px 3px 1px rgba(0, 0, 0, 0.15),
+      0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+  }
 
-.card-filled {
-  background: var(--md-sys-color-surface-variant);
-}
+  .card-filled {
+    background: var(--md-sys-color-surface-variant);
+  }
 
-.card-outlined {
-  background: var(--md-sys-color-surface);
-  border: 1px solid var(--md-sys-color-outline);
-}
+  .card-outlined {
+    background: var(--md-sys-color-surface);
+    border: 1px solid var(--md-sys-color-outline);
+  }
 
-.badge-dot {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--md-sys-color-error);
-}
+  .badge-dot {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--md-sys-color-error);
+  }
 
-.badge-num {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  height: 16px;
-  border-radius: 8px;
-  background: var(--md-sys-color-error);
-  color: var(--md-sys-color-on-error);
-  font-size: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+  .badge-num {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    height: 16px;
+    border-radius: 8px;
+    background: var(--md-sys-color-error);
+    color: var(--md-sys-color-on-error);
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-/* ── Import Preview Dialog: enlarged size ── */
-md-dialog.import-xl-dialog {
-  --md-dialog-container-max-block-size: 92vh;
-  --md-dialog-container-max-inline-size: min(1280px, 92vw);
-  --md-dialog-container-min-inline-size: min(1280px, 92vw);
-}
-/* ── Global Scrollbar Styling ── */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
+  /* ── Import Preview Dialog: enlarged size ── */
+  md-dialog.import-xl-dialog {
+    --md-dialog-container-max-block-size: 92vh;
+    --md-dialog-container-max-inline-size: min(1280px, 92vw);
+    --md-dialog-container-min-inline-size: min(1280px, 92vw);
+  }
+  /* ── Global Scrollbar Styling ── */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
 
-::-webkit-scrollbar-track {
-  background: var(--md-sys-color-surface-container-low);
-  border-radius: 5px;
-}
+  ::-webkit-scrollbar-track {
+    background: var(--md-sys-color-surface-container-low);
+    border-radius: 5px;
+  }
 
-::-webkit-scrollbar-thumb {
-  background: var(--md-sys-color-outline-variant);
-  border-radius: 5px;
-  border: 2px solid var(--md-sys-color-surface-container-low);
-}
+  ::-webkit-scrollbar-thumb {
+    background: var(--md-sys-color-outline-variant);
+    border-radius: 5px;
+    border: 2px solid var(--md-sys-color-surface-container-low);
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--md-sys-color-outline);
-}
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--md-sys-color-outline);
+  }
 
-/* Firefox support */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--md-sys-color-outline-variant) var(--md-sys-color-surface-container-low);
+  /* Firefox support */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--md-sys-color-outline-variant) var(--md-sys-color-surface-container-low);
+  }
+
+  /* ── Culqi Checkout v4: fix white overlay & z-index issue ── */
+  /* El dialog de Store Lite tiene z-index: 10000. Culqi suele inyectar su modal
+   con z-index bajo. Lo forzamos por encima, y cambiamos el fondo de blanco
+   a semi-transparente para integrarlo fluido. */
+  #culqi-container,
+  .culqi_checkout,
+  div#culqi_checkout,
+  [id^='culqi'] > div:first-child,
+  body > div[style*='z-index'] > iframe[src*='culqi'],
+  div[style*='z-index'][style*='background-color: rgb(255, 255, 255)'],
+  div[style*='z-index'][style*='background-color: #ffffff'],
+  div[style*='z-index'][style*='background-color:white'] {
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  /* Forzar el contenedor principal por encima de todo */
+  body > div[style*='z-index']:has(iframe[src*='culqi']),
+  .culqi_checkout,
+  #culqi-container {
+    z-index: 99999 !important;
+  }
 }

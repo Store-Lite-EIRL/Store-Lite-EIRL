@@ -1,3 +1,4 @@
+import { resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { businesses } from '@/core/database/schema';
 import { getMemberPermissions } from '@/lib/permissions';
@@ -34,10 +35,7 @@ export async function GET(request: Request) {
   let resolvedBusinessId = businessId;
 
   if (!resolvedBusinessId && slug) {
-    const business = await db.query.businesses.findFirst({
-      where: eq(businesses.slug, slug),
-      columns: { id: true },
-    });
+    const business = (await resolveBusinessSlug(slug))?.business;
 
     if (!business) {
       return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });

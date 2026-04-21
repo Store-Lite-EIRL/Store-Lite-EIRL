@@ -78,11 +78,13 @@ export function ProductsOverview({ products, slug }: ProductsOverviewProps) {
                         {statusInfo.label}
                       </span>
                     )}
-                    {!product.isAvailable || product.stock === 0 ? (
-                      <span className={`${styles.badge} ${styles.badgeOutOfStock}`}>Sin stock</span>
-                    ) : (
-                      <span className={`${styles.badge} ${styles.badgeAvailable}`}>Disponible</span>
-                    )}
+{product.stock === 0 ? (
+                       <span className={`${styles.badge} ${styles.badgeOutOfStock} text-red-500`}>AGOTADO</span>
+                     ) : !product.isAvailable ? (
+                       <span className={`${styles.badge} ${styles.badgeOutOfStock}`}>Sin stock</span>
+                     ) : (
+                       <span className={`${styles.badge} ${styles.badgeAvailable}`}>Disponible</span>
+                     )}
                   </div>
                 </div>
               </div>

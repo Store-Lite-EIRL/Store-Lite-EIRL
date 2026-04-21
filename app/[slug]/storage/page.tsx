@@ -1,8 +1,6 @@
-import { db } from '@/core/database/client';
-import { businesses } from '@/core/database/schema';
-import { eq } from 'drizzle-orm';
+import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { env } from '@/config/env';
@@ -15,10 +13,7 @@ interface StoragePageProps {
 
 export async function generateMetadata({ params }: StoragePageProps): Promise<Metadata> {
   const { slug } = await params;
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-    columns: { name: true },
-  });
+  const business = (await resolveBusinessSlug(slug))?.business;
 
   return {
     title: business ? `Almacén — ${business.name}` : 'Almacén | Store Lite',
@@ -30,13 +25,15 @@ export async function generateMetadata({ params }: StoragePageProps): Promise<Me
 export default async function StoragePage({ params }: StoragePageProps) {
   const { slug } = await params;
 
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-    columns: { id: true, ownerId: true },
-  });
+  const resolvedBusiness = await resolveBusinessSlug(slug);
+  const business = resolvedBusiness?.business;
 
   if (!business) {
     return notFound();
+  }
+
+  if (resolvedBusiness.matchedAlias) {
+    redirect(replaceSlugInPath(`/${slug}/storage`, slug, resolvedBusiness.canonicalSlug));
   }
 
   // --- Auth & Ownership Guard ---
@@ -58,5 +55,11 @@ export default async function StoragePage({ params }: StoragePageProps) {
     return notFound();
   }
 
-  return <StorageClient businessSlug={slug} isOwner={isOwner} permissions={permissions} />;
+  return (
+    <StorageClient
+      businessSlug={resolvedBusiness.canonicalSlug}
+      isOwner={isOwner}
+      permissions={permissions}
+    />
+  );
 }

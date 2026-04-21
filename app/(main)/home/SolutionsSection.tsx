@@ -1,4 +1,4 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 
 export default function SolutionsSection() {
   const problems = [
@@ -48,9 +48,9 @@ export default function SolutionsSection() {
       icon: 'credit_card',
     },
     {
-      name: 'Shalom',
+      name: 'Urbano',
       category: 'Envíos',
-      description: 'Envíos a todo el Perú',
+      description: 'Envíos rápidos a todo el Perú',
       icon: 'local_shipping',
     },
     {

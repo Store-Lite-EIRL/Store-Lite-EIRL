@@ -9,7 +9,14 @@ interface ProductItemProps {
   isOwner?: boolean;
   onPreviewOpen?: (index: number) => void;
   hasPaymentGateway?: boolean;
+  culqiPublicKey?: string;
   onContactClick?: () => void;
+  // Props del negocio para el checkout
+  businessName?: string;
+  businessRuc?: string;
+  businessAddress?: string;
+  businessId?: string;
+  businessLogoUrl?: string;
 }
 
 export default function ProductItem({
@@ -17,7 +24,13 @@ export default function ProductItem({
   isOwner = false,
   onPreviewOpen,
   hasPaymentGateway = true,
+  culqiPublicKey,
   onContactClick,
+  businessName,
+  businessRuc,
+  businessAddress,
+  businessId,
+  businessLogoUrl,
 }: ProductItemProps) {
   const controller = useProductItemController(product, isOwner, hasPaymentGateway, onContactClick);
 
@@ -70,6 +83,12 @@ export default function ProductItem({
       onPaymentModalClose={controller.handlePaymentModalClose}
       onBuyNow={controller.handleBuyNow}
       hasPaymentGateway={hasPaymentGateway}
+      culqiPublicKey={culqiPublicKey}
+      businessName={businessName}
+      businessRuc={businessRuc}
+      businessAddress={businessAddress}
+      businessId={businessId}
+      businessLogoUrl={businessLogoUrl}
     />
   );
 }

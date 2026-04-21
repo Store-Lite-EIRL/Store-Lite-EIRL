@@ -144,9 +144,21 @@
   gap: 0.125rem;
 }
 
+.itemPrices {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .itemPrice {
   color: var(--md-sys-color-primary);
   font-weight: 600;
+}
+
+.oldPrice {
+  text-decoration: line-through;
+  color: var(--md-sys-color-outline);
+  font-size: 0.85rem;
 }
 
 .itemStock {
@@ -196,6 +208,14 @@
   min-width: 1.5rem;
   text-align: center;
   color: var(--md-sys-color-on-surface);
+}
+
+.stockWarning {
+  font-size: 0.7rem;
+  color: var(--md-sys-color-error);
+  font-weight: 500;
+  margin-top: 0.25rem;
+  animation: fadeIn 0.2s ease-out;
 }
 
 .removeBtn {

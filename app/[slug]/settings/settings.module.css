@@ -1152,3 +1152,96 @@
 .rotatingIcon {
   animation: spin 3s linear infinite;
 }
+
+/* ── Status Indicator (Industrial Style) ────────────────────────────────── */
+.statusIndicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--md-sys-color-surface-container-high);
+  padding: 8px 16px;
+  border-radius: 99px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  width: fit-content;
+}
+
+.statusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  position: relative;
+}
+
+.statusDotActive {
+  background-color: #2e7d32; /* Green 800 */
+  box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7);
+  animation: pulse-green 2.5s infinite ease-in-out;
+}
+
+.statusDotInactive {
+  background-color: #d32f2f; /* Red 800 */
+  box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.7);
+  animation: pulse-red 2.5s infinite ease-in-out;
+}
+
+.statusText {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--md-sys-color-on-surface);
+}
+
+@keyframes pulse-green {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(46, 125, 50, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(46, 125, 50, 0);
+  }
+}
+
+@keyframes pulse-red {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(211, 47, 47, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(211, 47, 47, 0);
+  }
+}
+
+/* ── Key Display ────────────────────────────────────────────────────────── */
+.keyRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.keyLabelGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.keyValueGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.keyValue {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface);
+}

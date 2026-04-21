@@ -1,58 +1,58 @@
-﻿# BACKLOG — Implementación de Compra Escrow / Marketplace
+﻿# BACKLOG â€” ImplementaciÃ³n de Compra Escrow / Marketplace
 
 ## Objetivo
 
 Este backlog traduce `docs/README_PURCHASE_ESCROW_FLOW.md` en trabajo ejecutable.
 
-La idea no es tirar tareas sueltas. La idea es respetar dependencias, reducir retrabajo y evitar que volvamos a meter todo dentro de `payments`.
+La idea no es tirar tareas sueltas. La idea es respetar dependencias, reducir retrabajo y evitar que vUrbanomos a meter todo dentro de `payments`.
 
 ---
 
 ## Principios del backlog
 
-1. **Primero decisiones de dominio, después migraciones.**
-2. **Primero fuente de verdad, después integraciones.**
-3. **Primero trazabilidad, después automatización.**
-4. **No tocar producción sin cerrar estados, invariantes y reglas de refund/payout.**
+1. **Primero decisiones de dominio, despuÃ©s migraciones.**
+2. **Primero fuente de verdad, despuÃ©s integraciones.**
+3. **Primero trazabilidad, despuÃ©s automatizaciÃ³n.**
+4. **No tocar producciÃ³n sin cerrar estados, invariantes y reglas de refund/payout.**
 
 ---
 
-## Definición de Done global
+## DefiniciÃ³n de Done global
 
-Una épica se considera terminada cuando:
+Una Ã©pica se considera terminada cuando:
 
-- tiene reglas funcionales explícitas
+- tiene reglas funcionales explÃ­citas
 - tiene modelo de datos consistente
 - tiene manejo de errores definido
-- tiene observabilidad mínima
-- tiene criterios de aceptación verificables
-- no rompe el flujo actual sin plan de transición
+- tiene observabilidad mÃ­nima
+- tiene criterios de aceptaciÃ³n verificables
+- no rompe el flujo actual sin plan de transiciÃ³n
 
 ---
 
 # Roadmap recomendado
 
-1. Épica 01 — Dominio y contratos
-2. Épica 02 — Modelo de datos y migraciones
-3. Épica 03 — Creación de orden y checkout
-4. Épica 04 — Integración Culqi y webhooks
-5. Épica 05 — Confirmación de entrega
-6. Épica 06 — Escrow y payout al vendedor
-7. Épica 07 — Expiración, refunds y disputas
-8. Épica 08 — Backoffice, soporte y conciliación
-9. Épica 09 — Seguridad, hardening y rollout
+1. Ã‰pica 01 â€” Dominio y contratos
+2. Ã‰pica 02 â€” Modelo de datos y migraciones
+3. Ã‰pica 03 â€” CreaciÃ³n de orden y checkout
+4. Ã‰pica 04 â€” IntegraciÃ³n Culqi y webhooks
+5. Ã‰pica 05 â€” ConfirmaciÃ³n de entrega
+6. Ã‰pica 06 â€” Escrow y payout al vendedor
+7. Ã‰pica 07 â€” ExpiraciÃ³n, refunds y disputas
+8. Ã‰pica 08 â€” Backoffice, soporte y conciliaciÃ³n
+9. Ã‰pica 09 â€” Seguridad, hardening y rollout
 
 ---
 
-# Épica 01 — Dominio y contratos
+# Ã‰pica 01 â€” Dominio y contratos
 
 ## Objetivo
 
-Cerrar el lenguaje del negocio y dejar definidos estados, transiciones y reglas. Sin esto, cualquier implementación va a nacer inconsistente.
+Cerrar el lenguaje del negocio y dejar definidos estados, transiciones y reglas. Sin esto, cualquier implementaciÃ³n va a nacer inconsistente.
 
 ## Tareas
 
-### E01-T01 — Definir estados finales por agregado
+### E01-T01 â€” Definir estados finales por agregado
 - Definir estados oficiales para:
   - `orders`
   - `payment_transactions`
@@ -61,61 +61,61 @@ Cerrar el lenguaje del negocio y dejar definidos estados, transiciones y reglas.
   - `escrow_ledgers`
   - `seller_payouts`
   - `refunds`
-- Documentar cuáles son terminales y cuáles intermedios.
+- Documentar cuÃ¡les son terminales y cuÃ¡les intermedios.
 
-### E01-T02 — Definir transiciones permitidas
-- Especificar matriz de transición por entidad.
+### E01-T02 â€” Definir transiciones permitidas
+- Especificar matriz de transiciÃ³n por entidad.
 - Ejemplo: `awaiting_payment -> payment_processing -> paid_in_escrow`.
-- Definir cuáles transiciones son automáticas y cuáles manuales.
+- Definir cuÃ¡les transiciones son automÃ¡ticas y cuÃ¡les manuales.
 
-### E01-T03 — Definir reglas de expiración
+### E01-T03 â€” Definir reglas de expiraciÃ³n
 - Tiempo de vida de orden no pagada.
-- Tiempo de vida del código de aceptación.
-- Tiempo máximo de espera para confirmación.
-- Reglas de auto-refund vs revisión manual.
+- Tiempo de vida del cÃ³digo de aceptaciÃ³n.
+- Tiempo mÃ¡ximo de espera para confirmaciÃ³n.
+- Reglas de auto-refund vs revisiÃ³n manual.
 
-### E01-T04 — Definir política de refund
+### E01-T04 â€” Definir polÃ­tica de refund
 - Refund total
 - Refund parcial
 - Refund manual
-- Refund automático
-- Motivos válidos
-- Quién puede iniciarlo
+- Refund automÃ¡tico
+- Motivos vÃ¡lidos
+- QuiÃ©n puede iniciarlo
 
-### E01-T05 — Definir política de payout
-- Cuándo nace el payout
-- Cuándo se agenda
-- Cuándo se ejecuta
-- Cuándo se bloquea
+### E01-T05 â€” Definir polÃ­tica de payout
+- CuÃ¡ndo nace el payout
+- CuÃ¡ndo se agenda
+- CuÃ¡ndo se ejecuta
+- CuÃ¡ndo se bloquea
 - Casos de reproceso
 
-### E01-T06 — Definir checkout invitado vs autenticado
+### E01-T06 â€” Definir checkout invitado vs autenticado
 - Confirmar si `buyer_user_id` puede ser nullable.
-- Definir qué pasa cuando compra un usuario no logueado.
+- Definir quÃ© pasa cuando compra un usuario no logueado.
 
-### E01-T07 — Definir fórmula financiera oficial
+### E01-T07 â€” Definir fÃ³rmula financiera oficial
 - subtotal
 - descuentos
 - impuestos
-- comisión gateway
-- comisión plataforma
+- comisiÃ³n gateway
+- comisiÃ³n plataforma
 - retenciones
 - neto vendedor
 
 ## Entregables
 - documento de estados y transiciones
 - documento de reglas financieras
-- decisiones aprobadas para expiración/refund/payout
+- decisiones aprobadas para expiraciÃ³n/refund/payout
 
 ## Dependencias
 - ninguna
 
 ## Riesgos
-- arrancar migraciones antes de cerrar esta épica
+- arrancar migraciones antes de cerrar esta Ã©pica
 
 ---
 
-# Épica 02 — Modelo de datos y migraciones
+# Ã‰pica 02 â€” Modelo de datos y migraciones
 
 ## Objetivo
 
@@ -123,7 +123,7 @@ Traducir el dominio a un esquema consistente en Drizzle/Supabase.
 
 ## Tareas
 
-### E02-T01 — Diseñar esquema lógico final
+### E02-T01 â€” DiseÃ±ar esquema lÃ³gico final
 - Diagramar relaciones entre:
   - `orders`
   - `order_items`
@@ -135,83 +135,83 @@ Traducir el dominio a un esquema consistente en Drizzle/Supabase.
   - `seller_payouts`
   - `refunds`
 
-### E02-T02 — Diseñar estrategia de transición desde `payments`
+### E02-T02 â€” DiseÃ±ar estrategia de transiciÃ³n desde `payments`
 - decidir si `payments`:
   - se depreca
   - se migra parcialmente
   - se mantiene temporalmente como compatibilidad
 - definir plan de convivencia temporal
 
-### E02-T03 — Agregar enums/constraints/índices
+### E02-T03 â€” Agregar enums/constraints/Ã­ndices
 - checks de montos
-- checks de expiración
+- checks de expiraciÃ³n
 - unicidad de `order_number`
 - unicidad de `provider_charge_id`
-- índice de consultas operativas
+- Ã­ndice de consultas operativas
 
-### E02-T04 — Diseñar migraciones incrementales
-- migración 1: tablas nuevas
-- migración 2: constraints/índices
-- migración 3: backfill o compatibilidad
-- migración 4: limpieza/deprecación
+### E02-T04 â€” DiseÃ±ar migraciones incrementales
+- migraciÃ³n 1: tablas nuevas
+- migraciÃ³n 2: constraints/Ã­ndices
+- migraciÃ³n 3: backfill o compatibilidad
+- migraciÃ³n 4: limpieza/deprecaciÃ³n
 
-### E02-T05 — Actualizar `schema.ts`
+### E02-T05 â€” Actualizar `schema.ts`
 - modelar nuevas tablas
 - modelar relaciones
 - modelar tipos inferidos
 
-### E02-T06 — Regenerar `database.types.ts`
+### E02-T06 â€” Regenerar `database.types.ts`
 - validar que Supabase types reflejen el nuevo esquema
-- dejarlo como requisito de cierre técnico
+- dejarlo como requisito de cierre tÃ©cnico
 
-### E02-T07 — Definir datos legacy y backfill
-- qué campos de `payments` sirven para backfill
-- qué campos no son confiables
-- qué registros quedan incompatibles
+### E02-T07 â€” Definir datos legacy y backfill
+- quÃ© campos de `payments` sirven para backfill
+- quÃ© campos no son confiables
+- quÃ© registros quedan incompatibles
 
 ## Entregables
-- modelo lógico aprobado
+- modelo lÃ³gico aprobado
 - migraciones versionadas
 - `schema.ts` alineado
 - `database.types.ts` regenerado
 
 ## Dependencias
-- Épica 01 cerrada
+- Ã‰pica 01 cerrada
 
 ## Riesgos
 - drift entre schema, migraciones y tipos
 
 ---
 
-# Épica 03 — Creación de orden y checkout
+# Ã‰pica 03 â€” CreaciÃ³n de orden y checkout
 
 ## Objetivo
 
-Separar la creación de orden del pago y dejar el inicio del flujo correctamente modelado.
+Separar la creaciÃ³n de orden del pago y dejar el inicio del flujo correctamente modelado.
 
 ## Tareas
 
-### E03-T01 — Crear servicio de creación de orden
+### E03-T01 â€” Crear servicio de creaciÃ³n de orden
 - validar producto
 - validar stock
 - congelar precio
 - guardar snapshot de producto
 - calcular montos base
 
-### E03-T02 — Crear `order_items`
+### E03-T02 â€” Crear `order_items`
 - soportar 1 item hoy
-- diseñar para múltiples items mañana
+- diseÃ±ar para mÃºltiples items maÃ±ana
 
-### E03-T03 — Reservar o validar stock
-- decidir si habrá reserva dura o validación al pagar
+### E03-T03 â€” Reservar o validar stock
+- decidir si habrÃ¡ reserva dura o validaciÃ³n al pagar
 - registrar estrategia elegida
 
-### E03-T04 — Exponer endpoint/server action para iniciar checkout
+### E03-T04 â€” Exponer endpoint/server action para iniciar checkout
 - recibir orden
 - crear intento de pago
 - devolver datos necesarios al frontend
 
-### E03-T05 — Registrar metadata de correlación
+### E03-T05 â€” Registrar metadata de correlaciÃ³n
 - order id
 - business id
 - product id
@@ -219,51 +219,51 @@ Separar la creación de orden del pago y dejar el inicio del flujo correctamente
 
 ## Entregables
 - orden persistida antes del pago
-- cálculo de montos consistente
-- correlación order/payment definida
+- cÃ¡lculo de montos consistente
+- correlaciÃ³n order/payment definida
 
 ## Dependencias
-- Épica 02
+- Ã‰pica 02
 
 ---
 
-# Épica 04 — Integración Culqi y webhooks
+# Ã‰pica 04 â€” IntegraciÃ³n Culqi y webhooks
 
 ## Objetivo
 
-Hacer confiable el cobro con Culqi y la sincronización de estados.
+Hacer confiable el cobro con Culqi y la sincronizaciÃ³n de estados.
 
 ## Tareas
 
-### E04-T01 — Formalizar servicio de creación de cargo/transacción
+### E04-T01 â€” Formalizar servicio de creaciÃ³n de cargo/transacciÃ³n
 - crear `payment_transactions`
 - registrar request/response relevantes
 - guardar tracking ids
 
-### E04-T02 — Implementar idempotencia
+### E04-T02 â€” Implementar idempotencia
 - generar `idempotency_key`
 - evitar doble cargo por reintentos
 
-### E04-T03 — Diseñar metadata oficial enviada a Culqi
+### E04-T03 â€” DiseÃ±ar metadata oficial enviada a Culqi
 - `order_id`
 - `business_id`
 - `buyer_reference`
-- versión del flujo
+- versiÃ³n del flujo
 
-### E04-T04 — Implementar webhook seguro
+### E04-T04 â€” Implementar webhook seguro
 - validar autenticidad
 - evitar eventos duplicados
 - registrar evento en `payment_events`
-- actualizar transacción y orden
+- actualizar transacciÃ³n y orden
 
-### E04-T05 — Manejar errores y reintentos
+### E04-T05 â€” Manejar errores y reintentos
 - charge fallido
 - timeout
-- webhook tardío
+- webhook tardÃ­o
 - evento duplicado
-- inconsistencia entre respuesta síncrona y webhook
+- inconsistencia entre respuesta sÃ­ncrona y webhook
 
-### E04-T06 — Registrar auditoría completa
+### E04-T06 â€” Registrar auditorÃ­a completa
 - payload crudo sanitizado
 - estado previo
 - estado nuevo
@@ -272,166 +272,166 @@ Hacer confiable el cobro con Culqi y la sincronización de estados.
 ## Entregables
 - cargos trazables
 - webhooks idempotentes
-- orden y transacción sincronizadas
+- orden y transacciÃ³n sincronizadas
 
 ## Dependencias
-- Épica 03
+- Ã‰pica 03
 
 ---
 
-# Épica 05 — Confirmación de entrega
+# Ã‰pica 05 â€” ConfirmaciÃ³n de entrega
 
 ## Objetivo
 
-Construir el mecanismo de aceptación por código sin agujeros de seguridad.
+Construir el mecanismo de aceptaciÃ³n por cÃ³digo sin agujeros de seguridad.
 
 ## Tareas
 
-### E05-T01 — Generar código de aceptación
-- generar código aleatorio
+### E05-T01 â€” Generar cÃ³digo de aceptaciÃ³n
+- generar cÃ³digo aleatorio
 - almacenar hash
-- definir expiración
-- guardar últimos 4 dígitos si hace falta soporte
+- definir expiraciÃ³n
+- guardar Ãºltimos 4 dÃ­gitos si hace falta soporte
 
-### E05-T02 — Diseñar UX/flujo operativo
-- dónde ve el código el comprador
-- cómo lo ingresa el vendedor
+### E05-T02 â€” DiseÃ±ar UX/flujo operativo
+- dÃ³nde ve el cÃ³digo el comprador
+- cÃ³mo lo ingresa el vendedor
 - mensajes de error
 - intentos permitidos
 
-### E05-T03 — Implementar validación de código
+### E05-T03 â€” Implementar validaciÃ³n de cÃ³digo
 - verificar hash
-- verificar expiración
+- verificar expiraciÃ³n
 - bloquear por excesos de intento
 - registrar evento
 
-### E05-T04 — Registrar fulfillment
-- pickup / delivery / shipment
+### E05-T04 â€” Registrar fulfillment
+- pickup / delivery / shipment (Urbano)
 - fechas operativas
 - usuario responsable
 - evidencia si aplica
 
-### E05-T05 — Actualizar orden tras confirmación
+### E05-T05 â€” Actualizar orden tras confirmaciÃ³n
 - `delivery_confirmed`
 - `completed`
-- disparar cola/acción de payout
+- disparar cola/acciÃ³n de payout
 
 ## Entregables
-- confirmación segura
+- confirmaciÃ³n segura
 - trazabilidad de intentos
-- vínculo correcto entre entrega y payout
+- vÃ­nculo correcto entre entrega y payout
 
 ## Dependencias
-- Épica 04
+- Ã‰pica 04
 
 ---
 
-# Épica 06 — Escrow y payout al vendedor
+# Ã‰pica 06 â€” Escrow y payout al vendedor
 
 ## Objetivo
 
-Modelar y ejecutar la liberación del dinero al vendedor después de la confirmación.
+Modelar y ejecutar la liberaciÃ³n del dinero al vendedor despuÃ©s de la confirmaciÃ³n.
 
 ## Tareas
 
-### E06-T01 — Crear ledger de escrow
+### E06-T01 â€” Crear ledger de escrow
 - registrar monto retenido
 - registrar monto liberable
 - registrar monto liberado
 - registrar monto refundado
 
-### E06-T02 — Formalizar cálculo neto al vendedor
-- comisión gateway
-- comisión plataforma
+### E06-T02 â€” Formalizar cÃ¡lculo neto al vendedor
+- comisiÃ³n gateway
+- comisiÃ³n plataforma
 - impuestos/retenciones
 - ajustes manuales si existieran
 
-### E06-T03 — Crear servicio de payout
+### E06-T03 â€” Crear servicio de payout
 - crear `seller_payouts`
 - asociar cuenta de payout
-- programar ejecución
+- programar ejecuciÃ³n
 
-### E06-T04 — Implementar estados de payout
+### E06-T04 â€” Implementar estados de payout
 - `pending`
 - `scheduled`
 - `processing`
 - `paid`
 - `failed`
 
-### E06-T05 — Manejar fallas operativas
-- cuenta bancaria inválida
+### E06-T05 â€” Manejar fallas operativas
+- cuenta bancaria invÃ¡lida
 - rechazo bancario
 - payout duplicado
 - payout bloqueado por disputa/refund
 
-### E06-T06 — Notificar al vendedor
+### E06-T06 â€” Notificar al vendedor
 - payout creado
 - payout pagado
 - payout fallido
 
 ## Entregables
 - dinero retenido y liberado de forma trazable
-- cálculo neto consistente
+- cÃ¡lculo neto consistente
 - payout desacoplado del pago inicial
 
 ## Dependencias
-- Épica 05
+- Ã‰pica 05
 
 ---
 
-# Épica 07 — Expiración, refunds y disputas
+# Ã‰pica 07 â€” ExpiraciÃ³n, refunds y disputas
 
 ## Objetivo
 
-Resolver los casos donde la compra no termina bien. Acá es donde los sistemas flojos se rompen, así que hay que ponerse las pilas.
+Resolver los casos donde la compra no termina bien. AcÃ¡ es donde los sistemas flojos se rompen, asÃ­ que hay que ponerse las pilas.
 
 ## Tareas
 
-### E07-T01 — Automatizar expiración de confirmación
-- detectar órdenes vencidas
+### E07-T01 â€” Automatizar expiraciÃ³n de confirmaciÃ³n
+- detectar Ã³rdenes vencidas
 - marcar estado correspondiente
-- decidir auto refund o revisión
+- decidir auto refund o revisiÃ³n
 
-### E07-T02 — Crear entidad y servicio de refunds
+### E07-T02 â€” Crear entidad y servicio de refunds
 - registrar solicitud
-- registrar aprobación
-- registrar ejecución
+- registrar aprobaciÃ³n
+- registrar ejecuciÃ³n
 - registrar respuesta del proveedor
 
-### E07-T03 — Integrar refund con Culqi
+### E07-T03 â€” Integrar refund con Culqi
 - refund total
 - refund parcial
 - tracking de respuesta
 
-### E07-T04 — Sincronizar refund con order/escrow/payout
+### E07-T04 â€” Sincronizar refund con order/escrow/payout
 - actualizar orden
 - actualizar ledger
 - evitar payout si el refund avanza
 - revertir payout pendiente si aplica
 
-### E07-T05 — Diseñar base de disputas
-- aunque inicialmente sea mínimo, dejar contrato
+### E07-T05 â€” DiseÃ±ar base de disputas
+- aunque inicialmente sea mÃ­nimo, dejar contrato
 - actor que abre disputa
-- razón
+- razÃ³n
 - evidencia
 - resultado
 
-### E07-T06 — Notificaciones y soporte
+### E07-T06 â€” Notificaciones y soporte
 - avisos al comprador
 - avisos al vendedor
 - acciones para soporte/admin
 
 ## Entregables
-- expiración operativa
+- expiraciÃ³n operativa
 - refunds trazables
 - base preparada para disputas
 
 ## Dependencias
-- Épica 06
+- Ã‰pica 06
 
 ---
 
-# Épica 08 — Backoffice, soporte y conciliación
+# Ã‰pica 08 â€” Backoffice, soporte y conciliaciÃ³n
 
 ## Objetivo
 
@@ -439,90 +439,90 @@ Dar visibilidad y herramientas operativas. Porque si todo vive enterrado en tabl
 
 ## Tareas
 
-### E08-T01 — Panel de órdenes
+### E08-T01 â€” Panel de Ã³rdenes
 - buscar por order id
 - ver estados
 - ver montos
 - ver comprador/vendedor
 
-### E08-T02 — Panel de pagos/transacciones
+### E08-T02 â€” Panel de pagos/transacciones
 - ver charge id
 - ver tracking id
 - ver eventos
 - ver reintentos
 
-### E08-T03 — Panel de confirmaciones
-- estado del código
-- expiración
+### E08-T03 â€” Panel de confirmaciones
+- estado del cÃ³digo
+- expiraciÃ³n
 - intentos fallidos
 
-### E08-T04 — Panel de payouts
+### E08-T04 â€” Panel de payouts
 - pendientes
 - en proceso
 - pagados
 - fallidos
 
-### E08-T05 — Panel de refunds
+### E08-T05 â€” Panel de refunds
 - solicitados
 - aprobados
 - ejecutados
 - fallidos
 
-### E08-T06 — Conciliación operativa
-- comparar orden vs transacción vs escrow vs payout vs refund
+### E08-T06 â€” ConciliaciÃ³n operativa
+- comparar orden vs transacciÃ³n vs escrow vs payout vs refund
 - detectar huecos o inconsistencias
 
 ## Entregables
-- herramientas mínimas de soporte
-- conciliación visible
+- herramientas mÃ­nimas de soporte
+- conciliaciÃ³n visible
 - trazabilidad de punta a punta
 
 ## Dependencias
-- Épicas 04, 05, 06 y 07
+- Ã‰picas 04, 05, 06 y 07
 
 ---
 
-# Épica 09 — Seguridad, hardening y rollout
+# Ã‰pica 09 â€” Seguridad, hardening y rollout
 
 ## Objetivo
 
-Cerrar el sistema para producción sin dejar ventanas tontas.
+Cerrar el sistema para producciÃ³n sin dejar ventanas tontas.
 
 ## Tareas
 
-### E09-T01 — Hardening de datos sensibles
-- cifrado o protección de cuentas bancarias
-- sanitización de logs
+### E09-T01 â€” Hardening de datos sensibles
+- cifrado o protecciÃ³n de cuentas bancarias
+- sanitizaciÃ³n de logs
 - acceso por rol
 
-### E09-T02 — RLS / permisos
-- quién puede ver órdenes
-- quién puede ver payouts
-- quién puede confirmar entrega
-- quién puede iniciar refunds
+### E09-T02 â€” RLS / permisos
+- quiÃ©n puede ver Ã³rdenes
+- quiÃ©n puede ver payouts
+- quiÃ©n puede confirmar entrega
+- quiÃ©n puede iniciar refunds
 
-### E09-T03 — Alertas y monitoreo
+### E09-T03 â€” Alertas y monitoreo
 - webhook fallido
 - payout fallido
 - refund fallido
-- órdenes expiradas acumuladas
+- Ã³rdenes expiradas acumuladas
 
-### E09-T04 — Plan de rollout
+### E09-T04 â€” Plan de rollout
 - feature flags si aplica
 - convivencia con flujo actual
-- migración gradual
+- migraciÃ³n gradual
 - rollback strategy
 
-### E09-T05 — QA funcional y técnica
+### E09-T05 â€” QA funcional y tÃ©cnica
 - casos felices
 - casos de error
 - reintentos
 - expiraciones
-- reconciliación
+- reconciliaciÃ³n
 
 ## Entregables
 - rollout seguro
-- monitoreo mínimo
+- monitoreo mÃ­nimo
 - permisos cerrados
 
 ## Dependencias
@@ -532,72 +532,72 @@ Cerrar el sistema para producción sin dejar ventanas tontas.
 
 # Backlog priorizado inmediato
 
-## Sprint / Lote 1 — Obligatorio antes de tocar pagos
+## Sprint / Lote 1 â€” Obligatorio antes de tocar pagos
 
 - E01-T01 Definir estados finales por agregado
 - E01-T02 Definir transiciones permitidas
-- E01-T03 Definir reglas de expiración
-- E01-T04 Definir política de refund
-- E01-T05 Definir política de payout
+- E01-T03 Definir reglas de expiraciÃ³n
+- E01-T04 Definir polÃ­tica de refund
+- E01-T05 Definir polÃ­tica de payout
 - E01-T06 Definir checkout invitado vs autenticado
-- E01-T07 Definir fórmula financiera oficial
+- E01-T07 Definir fÃ³rmula financiera oficial
 
-## Sprint / Lote 2 — Base técnica
+## Sprint / Lote 2 â€” Base tÃ©cnica
 
-- E02-T01 Diseñar esquema lógico final
-- E02-T02 Diseñar estrategia de transición desde `payments`
-- E02-T03 Agregar enums/constraints/índices
-- E02-T04 Diseñar migraciones incrementales
+- E02-T01 DiseÃ±ar esquema lÃ³gico final
+- E02-T02 DiseÃ±ar estrategia de transiciÃ³n desde `payments`
+- E02-T03 Agregar enums/constraints/Ã­ndices
+- E02-T04 DiseÃ±ar migraciones incrementales
 - E02-T05 Actualizar `schema.ts`
 - E02-T06 Regenerar `database.types.ts`
 
-## Sprint / Lote 3 — Flujo mínimo end-to-end
+## Sprint / Lote 3 â€” Flujo mÃ­nimo end-to-end
 
-- E03-T01 Crear servicio de creación de orden
-- E04-T01 Formalizar servicio de creación de cargo/transacción
+- E03-T01 Crear servicio de creaciÃ³n de orden
+- E04-T01 Formalizar servicio de creaciÃ³n de cargo/transacciÃ³n
 - E04-T02 Implementar idempotencia
 - E04-T04 Implementar webhook seguro
-- E05-T01 Generar código de aceptación
-- E05-T03 Implementar validación de código
+- E05-T01 Generar cÃ³digo de aceptaciÃ³n
+- E05-T03 Implementar validaciÃ³n de cÃ³digo
 - E06-T01 Crear ledger de escrow
 - E06-T03 Crear servicio de payout
-- E07-T01 Automatizar expiración de confirmación
+- E07-T01 Automatizar expiraciÃ³n de confirmaciÃ³n
 - E07-T02 Crear entidad y servicio de refunds
 
 ---
 
-# Riesgos de ejecución
+# Riesgos de ejecuciÃ³n
 
 1. Empezar por Culqi sin haber cerrado estados.
 2. Migrar tablas sin plan de compatibilidad con `payments`.
 3. No regenerar `database.types.ts`.
-4. No modelar idempotencia desde el día uno.
-5. Hacer payout sin ledger o sin conciliación.
-6. Diseñar refund como simple cambio de status.
+4. No modelar idempotencia desde el dÃ­a uno.
+5. Hacer payout sin ledger o sin conciliaciÃ³n.
+6. DiseÃ±ar refund como simple cambio de status.
 
 ---
 
-# Criterio para arrancar implementación
+# Criterio para arrancar implementaciÃ³n
 
-Podemos empezar a implementar cuando estén cerrados estos mínimos:
+Podemos empezar a implementar cuando estÃ©n cerrados estos mÃ­nimos:
 
 - estados y transiciones aprobados
 - estrategia de convivencia con `payments`
-- fórmula financiera aprobada
-- política de expiración/refund/payout aprobada
+- fÃ³rmula financiera aprobada
+- polÃ­tica de expiraciÃ³n/refund/payout aprobada
 
-Sin eso, programar sería correr sin plano. Y ya sabés cómo termina eso: parche arriba de parche.
+Sin eso, programar serÃ­a correr sin plano. Y ya sabÃ©s cÃ³mo termina eso: parche arriba de parche.
 
 ---
 
-# Próximo paso recomendado
+# PrÃ³ximo paso recomendado
 
-Convertir el **Lote 1** en tareas técnicas detalladas con:
+Convertir el **Lote 1** en tareas tÃ©cnicas detalladas con:
 
 - owner
 - prioridad
-- estimación
+- estimaciÃ³n
 - dependencias
-- criterio de aceptación
+- criterio de aceptaciÃ³n
 
-Ese debería ser el siguiente documento o la siguiente sesión.
+Ese deberÃ­a ser el siguiente documento o la siguiente sesiÃ³n.

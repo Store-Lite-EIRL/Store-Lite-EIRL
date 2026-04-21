@@ -1,0 +1,82 @@
+.card {
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 20px;
+  overflow: hidden;
+  margin-top: 1rem;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  display: flex;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  transition: background 0.2s ease;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.iconWrap {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.content {
+  flex: 1;
+}
+
+.title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+  color: var(--md-sys-color-on-surface);
+}
+
+.message {
+  font-size: 0.85rem;
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ─── Types ─── */
+.error {
+  border-left: 4px solid #ef4444;
+}
+.error .title { color: #b91c1c; }
+
+.warning {
+  border-left: 4px solid #f59e0b;
+}
+.warning .title { color: #b45309; }
+
+.info {
+  border-left: 4px solid #3b82f6;
+}
+.info .title { color: #1d4ed8; }
+
+/* ─── Empty ─── */
+.empty {
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.emptyText {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.95rem;
+  margin: 0;
+}

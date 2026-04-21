@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(), payment=()',
+            value: 'camera=(), microphone=(), geolocation=(), payment=(self)',
           },
           {
             key: 'Content-Security-Policy-Report-Only',
@@ -25,9 +25,10 @@ const nextConfig: NextConfig = {
               "frame-ancestors 'none'",
               "form-action 'self'",
               "img-src 'self' data: https:",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.culqi.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.culqi.com https://*.culqi.com",
               "style-src 'self' 'unsafe-inline'",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.culqi.com",
+              "frame-src 'self' https://checkout.culqi.com https://*.culqi.com",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.culqi.com https://checkout.culqi.com https://*.culqi.com https://*.posthog.com",
             ].join('; '),
           },
           {

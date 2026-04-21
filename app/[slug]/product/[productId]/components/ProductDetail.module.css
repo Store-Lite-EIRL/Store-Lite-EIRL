@@ -9,6 +9,7 @@
   background-color: var(--md-sys-color-surface);
   min-height: 100vh;
   box-sizing: border-box;
+  position: relative;
 }
 
 .modalContent {
@@ -20,10 +21,21 @@
 }
 
 .backButtonWrapper {
-  position: absolute;
-  top: 2rem;
-  left: 2rem;
+  position: sticky;
+  top: 1rem;
+  left: 0;
   z-index: 10;
+  align-self: flex-start;
+  justify-self: start;
+}
+
+@media (max-width: 600px) {
+  .backButtonWrapper {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 100;
+  }
 }
 
 @media (min-width: 1150px) {
@@ -124,11 +136,25 @@
 }
 
 .productPrice {
-  font-size: 1.875rem; /* text-3xl */
-  line-height: 2.25rem;
-  font-weight: 700; /* font-bold */
-  margin-top: 0.25rem;
-}
+   font-size: 1.875rem; /* text-3xl */
+   line-height: 2.25rem;
+   font-weight: 700; /* font-bold */
+   margin-top: 0.25rem;
+ }
+
+ .stockStatusOutOfStock {
+   color: #dc2626; /* Red color for out of stock */
+   font-weight: 600;
+   font-size: 0.875rem;
+   margin-top: 0.5rem;
+ }
+
+ .stockStatusLowStock {
+   color: #d97706; /* Amber color for low stock */
+   font-weight: 500;
+   font-size: 0.875rem;
+   margin-top: 0.5rem;
+ }
 
 .ratingCompact {
   display: flex;

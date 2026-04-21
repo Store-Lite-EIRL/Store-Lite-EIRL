@@ -12,9 +12,21 @@ interface ProductCardProps {
     media?: { mediaUrl: string; displayOrder: number }[];
     category?: ProductCategory | null;
   };
+  businessName?: string;
+  businessRuc?: string;
+  businessAddress?: string;
+  businessCity?: string;
+  businessLogoUrl?: string;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ 
+  product, 
+  businessName, 
+  businessRuc, 
+  businessAddress, 
+  businessCity, 
+  businessLogoUrl 
+}: ProductCardProps) {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   const mainImage = product.media?.[0]?.mediaUrl || 'https://via.placeholder.com/220';
@@ -82,15 +94,15 @@ export default function ProductCard({ product }: ProductCardProps) {
           <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
             {categoryName}
           </span>
-          {product.isAvailable && product.stock > 0 ? (
-            <span className="bg-[#e6f4ea] text-[#137333] text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
-              Stock: {product.stock}
-            </span>
-          ) : (
-            <span className="bg-[#fce8e6] text-[#c5221f] text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
-              Agotado
-            </span>
-          )}
+{product.stock === 0 ? (
+             <span className="bg-[#fce8e6] text-[#c5221f] text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
+               AGOTADO
+             </span>
+           ) : (
+             <span className="bg-[#e6f4ea] text-[#137333] text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
+               Stock: {product.stock}
+             </span>
+           )}
         </div>
         <h2
           className="text-[#0f172a] text-[1.15rem] font-extrabold leading-snug line-clamp-2 transition-colors group-hover:text-blue-600 mb-1"
@@ -165,6 +177,12 @@ export default function ProductCard({ product }: ProductCardProps) {
               quantity: 1,
             },
           ]}
+          businessId={product.businessId}
+          businessName={businessName}
+          businessRuc={businessRuc}
+          businessAddress={businessAddress}
+          businessCity={businessCity}
+          businessLogoUrl={businessLogoUrl}
           onSuccess={() => setIsCheckoutOpen(false)}
           onCancel={() => setIsCheckoutOpen(false)}
         />

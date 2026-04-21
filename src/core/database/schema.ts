@@ -8,7 +8,6 @@
 import { relations, sql } from 'drizzle-orm';
 import {
   boolean,
-  check,
   decimal,
   index,
   integer,
@@ -55,6 +54,14 @@ export const subscriptionStatusEnum = pgEnum('subscription_status', [
   'expired',
   'trialing',
 ]);
+export const shippingTypeEnum = pgEnum('shipping_type', ['agencia', 'domicilio', 'recojo']);
+export const planPaymentStatusEnum = pgEnum('plan_payment_status', [
+  'pending',
+  'paid',
+  'failed',
+  'refunded',
+  'disputed',
+]);
 
 // =====================================================
 // AUTH SCHEMA (Supabase)
@@ -87,7 +94,7 @@ export const profiles = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    ageCheck: check('age_check', sql`${table.age} >= 13 AND ${table.age} <= 120`),
+    // ageCheck: check('age_check', sql`${table.age} >= 13 AND ${table.age} <= 120`),
     emailIdx: index('idx_profiles_email').on(table.email),
     fullNameIdx: index('idx_profiles_full_name').on(table.fullName),
   }),
@@ -135,32 +142,57 @@ export const businesses = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    nameCheck: check(
-      'name_length_check',
-      sql`char_length(${table.name}) >= 3 AND char_length(${table.name}) <= 100`,
-    ),
-    slugCheck: check(
-      'slug_format_check',
-      sql`char_length(${table.slug}) >= 3 AND char_length(${table.slug}) <= 50 AND ${table.slug} ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'`,
-    ),
-    descriptionCheck: check(
-      'description_length_check',
-      sql`char_length(${table.description}) <= 1000`,
-    ),
-    whatsappCheck: check(
-      'whatsapp_format_check',
-      sql`${table.whatsappNumber} ~ '^\\+?[1-9]\\d{1,14}$'`,
-    ),
-    paymentFlowCheck: check(
-      'payment_flow_length_check',
-      sql`coalesce(array_length(${table.paymentFlow}, 1), 0) <= 5`,
-    ),
+    // nameCheck: check(
+    //   'name_length_check',
+    //   sql`char_length(${table.name}) >= 3 AND char_length(${table.name}) <= 100`,
+    // ),
+    // slugCheck: check(
+    //   'slug_format_check',
+    //   sql`char_length(${table.slug}) >= 3 AND char_length(${table.slug}) <= 50 AND ${table.slug} ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'`,
+    // ),
+    // descriptionCheck: check(
+    //   'description_length_check',
+    //   sql`char_length(${table.description}) <= 1000`,
+    // ),
+    // whatsappCheck: check(
+    //   'whatsapp_format_check',
+    //   sql`${table.whatsappNumber} ~ '^\\+?[1-9]\\d{1,14}$'`,
+    // ),
+    // paymentFlowCheck: check(
+    //   'payment_flow_length_check',
+    //   sql`coalesce(array_length(${table.paymentFlow}, 1), 0) <= 5`,
+    // ),
     ownerIdIdx: index('idx_businesses_owner_id').on(table.ownerId),
     slugIdx: index('idx_businesses_slug').on(table.slug),
     isActiveIdx: index('idx_businesses_is_active')
       .on(table.isActive)
       .where(sql`${table.isActive} = true`),
     createdAtIdx: index('idx_businesses_created_at').on(table.createdAt.desc()),
+  }),
+);
+
+// =====================================================
+// TABLE: business_slug_aliases
+// =====================================================
+
+export const businessSlugAliases = pgTable(
+  'business_slug_aliases',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    businessId: uuid('business_id')
+      .notNull()
+      .references(() => businesses.id, { onDelete: 'cascade' }),
+    slug: text('slug').notNull().unique(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    // slugCheck: check(
+    //   'business_slug_aliases_slug_format_check',
+    //   sql`char_length(${table.slug}) >= 3 AND char_length(${table.slug}) <= 50 AND ${table.slug} ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'`,
+    // ),
+    businessIdIdx: index('idx_business_slug_aliases_business_id').on(table.businessId),
+    slugIdx: index('idx_business_slug_aliases_slug').on(table.slug),
+    createdAtIdx: index('idx_business_slug_aliases_created_at').on(table.createdAt.desc()),
   }),
 );
 
@@ -183,15 +215,15 @@ export const formMessages = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => ({
-    senderNameCheck: check('sender_name_check', sql`char_length(${table.senderName}) >= 2`),
-    senderEmailCheck: check(
-      'sender_email_check',
-      sql`${table.senderEmail} ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$'`,
-    ),
-    messageTextCheck: check(
-      'message_text_check',
-      sql`char_length(${table.messageText}) >= 10 AND char_length(${table.messageText}) <= 1000`,
-    ),
+    // senderNameCheck: check('sender_name_check', sql`char_length(${table.senderName}) >= 2`),
+    // senderEmailCheck: check(
+    //   'sender_email_check',
+    //   sql`${table.senderEmail} ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$'`,
+    // ),
+    // messageTextCheck: check(
+    //   'message_text_check',
+    //   sql`char_length(${table.messageText}) >= 10 AND char_length(${table.messageText}) <= 1000`,
+    // ),
     businessIdIdx: index('idx_form_messages_business_id').on(table.businessId),
     isReadIdx: index('idx_form_messages_is_read')
       .on(table.businessId, table.isRead)
@@ -227,6 +259,7 @@ export const businessSubscriptions = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
+    uniqueBusinessSubscription: unique('unique_business_subscription').on(table.businessId),
     businessIdIdx: index('idx_business_subscriptions_business_id').on(table.businessId),
     gatewaySubIdIdx: index('idx_business_subscriptions_gateway_sub_id').on(
       table.gatewaySubscriptionId,
@@ -285,10 +318,10 @@ export const productCategories = pgTable(
   },
   (table) => ({
     uniqueBusinessCategory: unique('unique_business_category').on(table.businessId, table.slug),
-    nameCheck: check(
-      'category_name_check',
-      sql`char_length(${table.name}) >= 2 AND char_length(${table.name}) <= 50`,
-    ),
+    // nameCheck: check(
+    //   'category_name_check',
+    //   sql`char_length(${table.name}) >= 2 AND char_length(${table.name}) <= 50`,
+    // ),
     businessIdIdx: index('idx_categories_business_id').on(table.businessId),
     businessSlugIdx: index('idx_categories_slug').on(table.businessId, table.slug),
     displayOrderIdx: index('idx_categories_display_order').on(table.businessId, table.displayOrder),
@@ -332,17 +365,17 @@ export const products = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    titleCheck: check(
-      'title_length_check',
-      sql`char_length(${table.title}) >= 3 AND char_length(${table.title}) <= 200`,
-    ),
-    descriptionCheck: check(
-      'description_length_check',
-      sql`char_length(${table.description}) <= 2000`,
-    ),
-    priceCheck: check('price_check', sql`${table.price} >= 0`),
-    stockCheck: check('stock_check', sql`${table.stock} >= 0`),
-    currencyCheck: check('currency_check', sql`char_length(${table.currency}) = 3`),
+    // titleCheck: check(
+    //   'title_length_check',
+    //   sql`char_length(${table.title}) >= 3 AND char_length(${table.title}) <= 200`,
+    // ),
+    // descriptionCheck: check(
+    //   'description_length_check',
+    //   sql`char_length(${table.description}) <= 2000`,
+    // ),
+    // priceCheck: check('price_check', sql`${table.price} >= 0`),
+    // stockCheck: check('stock_check', sql`${table.stock} >= 0`),
+    // currencyCheck: check('currency_check', sql`char_length(${table.currency}) = 3`),
     businessIdIdx: index('idx_products_business_id').on(table.businessId),
     categoryIdIdx: index('idx_products_category_id').on(table.categoryId),
     isAvailableIdx: index('idx_products_is_available')
@@ -495,6 +528,18 @@ export const payments = pgTable(
       .default('pending'),
     deliveryCodeHash: text('delivery_code_hash'),
     deliveryCodeExpiresAt: timestamp('delivery_code_expires_at', { withTimezone: true }),
+    // Logistics & Shipping
+    orderNumber: text('order_number'),
+    shippingType: shippingTypeEnum('shipping_type'),
+    shippingDepartment: text('shipping_department'),
+    shippingProvince: text('shipping_province'),
+    shippingDistrict: text('shipping_district'),
+    shippingAddress: text('shipping_address'),
+    shippingAgency: text('shipping_agency'),
+    shippingReference: text('shipping_reference'),
+    shippingPhone: text('shipping_phone'),
+    shippingCost: decimal('shipping_cost', { precision: 10, scale: 2 }),
+    ticketUrl: text('ticket_url'),
     metadata: jsonb('metadata').default({}),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -615,6 +660,107 @@ export const businessTeamRoles = pgTable(
 );
 
 // =====================================================
+// TABLE: saas_issuer_config
+// =====================================================
+
+/**
+ * Singleton con los datos fiscales del emisor SaaS (PN con Negocio).
+ * Siempre tiene 1 sola fila con id = 1.
+ * Actualizar directamente en BD cuando cambien datos fiscales.
+ */
+export const saasIssuerConfig = pgTable(
+  'saas_issuer_config',
+  {
+    id: integer('id').primaryKey().default(1),
+    ruc: text('ruc').notNull(),
+    razonSocial: text('razon_social').notNull(),
+    direccion: text('direccion').notNull(),
+    distrito: text('distrito').notNull(),
+    provincia: text('provincia').notNull(),
+    departamento: text('departamento').notNull(),
+    ubigeo: text('ubigeo'),
+    logoUrl: text('logo_url'),
+    igvRate: decimal('igv_rate', { precision: 5, scale: 4 }).notNull().default('0.18'),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    // singleton: check('saas_issuer_singleton', sql`${table.id} = 1`),
+  }),
+);
+
+// =====================================================
+// TABLE: plan_payments
+// =====================================================
+
+/**
+ * Pagos de planes SaaS — completamente separado de payments (productos).
+ * Incluye campos SUNAT: serie B001, correlativo secuencial, montos con/sin IGV.
+ * Los precios base son SIN IGV. El IGV (18%) se calcula y almacena por separado.
+ */
+export const planPayments = pgTable(
+  'plan_payments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    businessId: uuid('business_id')
+      .notNull()
+      .references(() => businesses.id, { onDelete: 'restrict' }),
+
+    // Plan comprado
+    planType: subscriptionPlanEnum('plan_type').notNull(),
+    period: text('period', { enum: ['monthly', 'annual'] })
+      .notNull()
+      .default('monthly'),
+
+    // Montos — SIN IGV base, IGV calculado encima
+    amountSubtotal: decimal('amount_subtotal', { precision: 10, scale: 2 }).notNull(),
+    amountIgv: decimal('amount_igv', { precision: 10, scale: 2 }).notNull(),
+    amountTotal: decimal('amount_total', { precision: 10, scale: 2 }).notNull(),
+    currency: text('currency').notNull().default('PEN'),
+
+    // Pasarela de pago
+    paymentMethod: paymentMethodEnum('payment_method').notNull(),
+    culqiChargeId: text('culqi_charge_id').unique(),
+    culqiReferenceCode: text('culqi_reference_code'),
+    status: planPaymentStatusEnum('status').notNull().default('pending'),
+
+    // Datos del comprador (merchant) para SUNAT
+    buyerEmail: text('buyer_email').notNull(),
+    buyerFullName: text('buyer_full_name'),
+    buyerDocumentType: text('buyer_document_type'), // 'DNI' | 'RUC'
+    buyerDocumentNumber: text('buyer_document_number'),
+    buyerAddress: text('buyer_address'),
+
+    // Comprobante SUNAT — serie B001 + correlativo secuencial
+    ticketSeries: text('ticket_series').notNull().default('B001'),
+    ticketCorrelative: integer('ticket_correlative')
+      .notNull()
+      .default(sql`nextval('seq_plan_payment_b001')`),
+    // ticket_number se computa en query: ticketSeries || '-' || LPAD(ticketCorrelative, 8, '0')
+    ticketUrl: text('ticket_url'),
+    ticketIssuedAt: timestamp('ticket_issued_at', { withTimezone: true }),
+
+    // Período de suscripción activado
+    planStartDate: timestamp('plan_start_date', { withTimezone: true }),
+    planEndDate: timestamp('plan_end_date', { withTimezone: true }),
+
+    metadata: jsonb('metadata').default({}),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    businessIdIdx: index('idx_plan_payments_business_id').on(table.businessId),
+    statusIdx: index('idx_plan_payments_status').on(table.status),
+    culqiChargeIdIdx: index('idx_plan_payments_culqi_charge').on(table.culqiChargeId),
+    ticketIssuedAtIdx: index('idx_plan_payments_ticket_issued').on(table.ticketIssuedAt.desc()),
+    createdAtIdx: index('idx_plan_payments_created_at').on(table.createdAt.desc()),
+    uniqueCorrelative: unique('unique_plan_payment_correlative').on(
+      table.ticketSeries,
+      table.ticketCorrelative,
+    ),
+  }),
+);
+
+// =====================================================
 // RELATIONS
 // =====================================================
 
@@ -627,6 +773,7 @@ export const businessesRelations = relations(businesses, ({ one, many }) => ({
     fields: [businesses.ownerId],
     references: [profiles.id],
   }),
+  slugAliases: many(businessSlugAliases),
   settings: one(businessSettings, {
     fields: [businesses.id],
     references: [businessSettings.businessId],
@@ -638,6 +785,13 @@ export const businessesRelations = relations(businesses, ({ one, many }) => ({
   invitations: many(businessInvitations),
   teamMembers: many(businessTeamMembers),
   teamRoles: many(businessTeamRoles),
+}));
+
+export const businessSlugAliasesRelations = relations(businessSlugAliases, ({ one }) => ({
+  business: one(businesses, {
+    fields: [businessSlugAliases.businessId],
+    references: [businesses.id],
+  }),
 }));
 
 export const businessSettingsRelations = relations(businessSettings, ({ one }) => ({
@@ -763,6 +917,13 @@ export const businessTeamRolesRelations = relations(businessTeamRoles, ({ one })
   }),
 }));
 
+export const planPaymentsRelations = relations(planPayments, ({ one }) => ({
+  business: one(businesses, {
+    fields: [planPayments.businessId],
+    references: [businesses.id],
+  }),
+}));
+
 // =====================================================
 // TYPE EXPORTS
 // =====================================================
@@ -812,3 +973,18 @@ export type NewBusinessTeamMember = typeof businessTeamMembers.$inferInsert;
 
 export type BusinessTeamRole = typeof businessTeamRoles.$inferSelect;
 export type NewBusinessTeamRole = typeof businessTeamRoles.$inferInsert;
+
+export type SubscriptionPlan = (typeof subscriptionPlanEnum.enumValues)[number];
+export type SubscriptionStatus = (typeof subscriptionStatusEnum.enumValues)[number];
+
+// Plan payments types
+export type SaasIssuerConfig = typeof saasIssuerConfig.$inferSelect;
+export type NewSaasIssuerConfig = typeof saasIssuerConfig.$inferInsert;
+
+export type PlanPayment = typeof planPayments.$inferSelect;
+export type NewPlanPayment = typeof planPayments.$inferInsert;
+
+// Helper: ticket number formatter (usar donde se necesite mostrar el número)
+export function formatTicketNumber(series: string, correlative: number): string {
+  return `${series}-${String(correlative).padStart(8, '0')}`;
+}

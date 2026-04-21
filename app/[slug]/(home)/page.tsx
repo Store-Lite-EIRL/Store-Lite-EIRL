@@ -1,8 +1,9 @@
 'use server';
 
 import { env } from '@/config/env';
+import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
-import { businesses, businessSettings, productCategories } from '@/core/database/schema';
+import { businessSettings, productCategories } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { getStorefrontLayoutFromPreferences, getStorefrontThemeFromPreferences, hasCustomStorefrontTheme } from '@/core/storefront';
 import { getMemberPermissions } from '@/lib/permissions';
@@ -10,7 +11,7 @@ import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import BusinessPageContent from '../BusinessPageContent';
 
 interface Props {
@@ -19,9 +20,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-  });
+  const business = (await resolveBusinessSlug(slug))?.business;
 
   if (!business) {
     return {
@@ -65,12 +64,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BusinessPage({ params }: Props) {
   const { slug } = await params;
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-  });
+  const resolvedBusiness = await resolveBusinessSlug(slug);
+  const business = resolvedBusiness?.business;
 
   if (!business) {
     return notFound();
+  }
+
+  if (resolvedBusiness.matchedAlias) {
+    redirect(replaceSlugInPath(`/${slug}`, slug, resolvedBusiness.canonicalSlug));
   }
 
   const categories = await db.query.productCategories.findMany({
@@ -151,6 +153,10 @@ export default async function BusinessPage({ params }: Props) {
     },
   });
 
+  const savedStorefrontTheme = hasCustomStorefrontTheme(settings?.preferences)
+    ? getStorefrontThemeFromPreferences(settings?.preferences)
+    : undefined;
+
   return (
     <>
       {jsonLd && (
@@ -167,13 +173,15 @@ export default async function BusinessPage({ params }: Props) {
         categories={categories}
         products={allProducts}
         hasPaymentGateway={hasPaymentGateway}
+        isPaymentConfigured={entitlements.isPaymentConfigured}
+        culqiPublicKey={entitlements.culqiPublicKey}
         chatEnabled={chatEnabled}
         storefrontLayout={getStorefrontLayoutFromPreferences(settings?.preferences)}
-        storefrontTheme={
-          canCustomizeStorefront && hasCustomStorefrontTheme(settings?.preferences)
-            ? getStorefrontThemeFromPreferences(settings?.preferences)
-            : undefined
-        }
+        storefrontTheme={canCustomizeStorefront ? savedStorefrontTheme : undefined}
+        previewCardTheme={savedStorefrontTheme}
+        businessName={business.name}
+        businessRuc={business.taxId ?? undefined}
+        businessAddress={business.address ?? undefined}
       />
     </>
   );

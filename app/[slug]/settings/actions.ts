@@ -1,20 +1,20 @@
 'use server';
 
-
+import { isBusinessSlugTaken } from '@/core/business/slug';
 import { db } from '@/core/database/client';
-import { businesses, businessSettings } from '@/core/database/schema';
+import { businesses, businessSettings, businessSlugAliases } from '@/core/database/schema';
 import {
   type StorefrontLayout,
   type StorefrontTheme,
+  clearStorefrontThemeFromPreferences,
   createDefaultStorefrontLayout,
   createDefaultStorefrontTheme,
-  normalizeStorefrontLayout,
-  normalizeStorefrontTheme,
   mergeStorefrontLayoutIntoPreferences,
   mergeStorefrontThemeIntoPreferences,
-  clearStorefrontThemeFromPreferences,
+  normalizeStorefrontLayout,
+  normalizeStorefrontTheme,
 } from '@/core/storefront';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { requireAccessOnId } from '../storage/actions/authz';
 
@@ -44,33 +44,67 @@ export async function updateBusinessSlug(
   }
 
   if (plan === 'basico') {
-    return { success: false, error: 'Función disponible solo para planes superiores.' };
+    return { success: false, error: 'Funcion disponible solo para planes superiores.' };
   }
 
   if (newSlug.length < 10 || newSlug.length > 30) {
     return { success: false, error: 'El slug debe tener entre 10 y 30 caracteres.' };
   }
 
-  // Verifica que no tenga espacios, tenga solo minúsculas, números y guiones, sin terminar en guión
   if (!/^[a-z0-9][a-z0-9-]*$/.test(newSlug) || newSlug.endsWith('-')) {
-    return { success: false, error: 'El slug no admite espacios. Solo puede contener letras minúsculas, números y guiones.' };
+    return {
+      success: false,
+      error:
+        'El slug no admite espacios. Solo puede contener letras minusculas, numeros y guiones.',
+    };
   }
 
-  const existing = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, newSlug),
-    columns: { id: true },
+  const currentBusiness = await db.query.businesses.findFirst({
+    where: eq(businesses.id, businessId),
+    columns: { id: true, slug: true },
   });
 
-  if (existing && existing.id !== businessId) {
-    return { success: false, error: 'Este slug ya está en uso por otro negocio.' };
+  if (!currentBusiness) {
+    return { success: false, error: 'Negocio no encontrado.' };
+  }
+
+  if (currentBusiness.slug === newSlug) {
+    return { success: true, newSlug };
+  }
+
+  if (await isBusinessSlugTaken(newSlug, { excludeBusinessId: businessId })) {
+    return {
+      success: false,
+      error: 'Este slug ya esta¡ en uso por otro negocio o reservado por un redirect previo.',
+    };
   }
 
   try {
-    await db
-      .update(businesses)
-      .set({ slug: newSlug, updatedAt: new Date() })
-      .where(eq(businesses.id, businessId));
+    await db.transaction(async (tx) => {
+      await tx
+        .insert(businessSlugAliases)
+        .values({ businessId, slug: currentBusiness.slug })
+        .onConflictDoNothing();
 
+      await tx
+        .update(businesses)
+        .set({ slug: newSlug, updatedAt: new Date() })
+        .where(eq(businesses.id, businessId));
+
+      await tx
+        .delete(businessSlugAliases)
+        .where(
+          and(
+            eq(businessSlugAliases.businessId, businessId),
+            eq(businessSlugAliases.slug, newSlug),
+          ),
+        );
+    });
+
+    revalidatePath(`/${currentBusiness.slug}`);
+    revalidatePath(`/${currentBusiness.slug}/settings`);
+    revalidatePath(`/${newSlug}`);
+    revalidatePath(`/${newSlug}/settings`);
     revalidatePath('/', 'layout');
     return { success: true, newSlug };
   } catch (error) {
@@ -91,7 +125,7 @@ export async function toggleBusinessActive(
   }
 
   if (plan === 'basico') {
-    return { success: false, error: 'Función disponible solo para planes superiores.' };
+    return { success: false, error: 'Funcion disponible solo para planes superiores.' };
   }
 
   try {
@@ -140,7 +174,7 @@ export async function updateBusinessSEO(
   }
 
   if (plan === 'basico') {
-    return { success: false, error: 'Función disponible solo para planes superiores.' };
+    return { success: false, error: 'Funcion disponible solo para planes superiores.' };
   }
 
   try {
@@ -159,10 +193,10 @@ export async function updateBusinessSEO(
       .where(eq(businesses.id, businessId));
 
     revalidatePath('/', 'layout');
-    return { success: true, message: 'Configuración SEO actualizada correctamente.' };
+    return { success: true, message: 'Configuracion SEO actualizada correctamente.' };
   } catch (error) {
     console.error('Error updating business SEO:', error);
-    return { success: false, error: 'Error inesperado al actualizar la configuración SEO.' };
+    return { success: false, error: 'Error inesperado al actualizar la configuracion SEO.' };
   }
 }
 
@@ -179,7 +213,10 @@ export async function updateStorefrontLayout(
   }
 
   if (plan === 'basico' || plan === 'emprendedor') {
-    return { success: false, error: 'Función disponible solo para planes con personalización de storefront.' };
+    return {
+      success: false,
+      error: 'Funcion disponible solo para planes con personalizacion de storefront.',
+    };
   }
 
   const normalizedLayout = normalizeStorefrontLayout(layout);
@@ -249,7 +286,7 @@ export async function updateStorefrontTheme(
   if (plan === 'basico' || plan === 'emprendedor') {
     return {
       success: false,
-      error: 'Función disponible solo para planes con personalización de storefront.',
+      error: 'Funcion disponible solo para planes con personalizacion de storefront.',
     };
   }
 
@@ -295,14 +332,14 @@ export async function updateStorefrontTheme(
 
     return {
       success: true,
-      message: 'Apariencia pública actualizada correctamente.',
+      message: 'Apariencia publica actualizada correctamente.',
       storefrontTheme: normalizedTheme,
     };
   } catch (error) {
     console.error('Error updating storefront theme:', error);
     return {
       success: false,
-      error: 'Error inesperado al actualizar la apariencia pública.',
+      error: 'Error inesperado al actualizar la apariencia publica.',
       storefrontTheme: createDefaultStorefrontTheme(),
     };
   }
@@ -322,7 +359,7 @@ export async function clearStorefrontTheme(
   if (plan === 'basico' || plan === 'emprendedor') {
     return {
       success: false,
-      error: 'Función disponible solo para planes con personalización de storefront.',
+      error: 'Funcion disponible solo para planes con personalizacion de storefront.',
     };
   }
 
@@ -336,12 +373,10 @@ export async function clearStorefrontTheme(
     });
 
     if (!existingSettings) {
-      return { success: true, message: 'La apariencia pública ya usaba los colores por defecto.' };
+      return { success: true, message: 'La apariencia publica ya usaba los colores por defecto.' };
     }
 
-    const nextPreferences = clearStorefrontThemeFromPreferences(
-      existingSettings.preferences ?? {},
-    );
+    const nextPreferences = clearStorefrontThemeFromPreferences(existingSettings.preferences ?? {});
 
     // Quitamos los customColors de las settings para limpiar la metadata
     await db
@@ -359,13 +394,13 @@ export async function clearStorefrontTheme(
 
     return {
       success: true,
-      message: 'Apariencia pública restablecida a los colores de la plataforma.',
+      message: 'Apariencia publica restablecida a los colores de la plataforma.',
     };
   } catch (error) {
     console.error('Error clearing storefront theme:', error);
     return {
       success: false,
-      error: 'Error inesperado al restablecer la apariencia pública.',
+      error: 'Error inesperado al restablecer la apariencia publica.',
     };
   }
 }
@@ -374,21 +409,41 @@ export async function updateCulqiCredentials(
   businessId: string,
   publicKey: string,
   secretKey: string,
+  plan: string,
 ): Promise<ActionState> {
   try {
-    // Reutilizamos el permiso de edición de negocio para las credenciales
     await requireAccessOnId(businessId, 'business.edit');
   } catch (error: any) {
     return { success: false, error: error.message || 'No autorizado' };
   }
-
-  // Validaciones básicas de formato Culqi
+  if (plan !== 'business_pro' && plan !== 'enterprise_ai') {
+    return {
+      success: false,
+      error: 'La configuracion de pagos solo esta disponible en planes premium.',
+    };
+  }
   if (publicKey && !publicKey.startsWith('pk_')) {
-    return { success: false, error: 'La llave pública debe comenzar con pk_' };
+    return { success: false, error: 'La llave publica debe comenzar con pk_' };
   }
   if (secretKey && !secretKey.startsWith('sk_')) {
     return { success: false, error: 'La llave secreta debe comenzar con sk_' };
   }
+
+  // Validate keys format
+  const { z } = await import('zod');
+  const keySchema = z.object({
+    publicKey: z.string().startsWith('pk_'),
+    secretKey: z.string().startsWith('sk_'),
+  });
+
+  const validation = keySchema.safeParse({ publicKey, secretKey });
+  if (!validation.success) {
+    return { success: false, error: 'Formato de llave Culqi inválido. Debe empezar con pk_ y sk_.' };
+  }
+
+  // 🔥 SECURITY: Encrypt the secret key before DB storage
+  const { encrypt } = await import('@/utils/crypto');
+  const encryptedSecretKey = encrypt(secretKey);
 
   try {
     const existingSettings = await db.query.businessSettings.findFirst({
@@ -401,7 +456,7 @@ export async function updateCulqiCredentials(
         .update(businessSettings)
         .set({
           culqiPublicKey: publicKey,
-          culqiSecretKey: secretKey,
+          culqiSecretKey: encryptedSecretKey,
           updatedAt: new Date(),
         })
         .where(eq(businessSettings.businessId, businessId));
@@ -409,9 +464,10 @@ export async function updateCulqiCredentials(
       await db.insert(businessSettings).values({
         businessId,
         culqiPublicKey: publicKey,
-        culqiSecretKey: secretKey,
+        culqiSecretKey: encryptedSecretKey,
       });
     }
+
 
     revalidatePath('/', 'layout');
     return { success: true, message: 'Credenciales de Culqi actualizadas correctamente.' };

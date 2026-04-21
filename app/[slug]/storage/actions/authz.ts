@@ -1,5 +1,6 @@
 'use server';
 
+import { resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { businesses, businessTeamMembers } from '@/core/database/schema';
 import { checkPermission, type Permission } from '@/lib/permissions';
@@ -29,10 +30,7 @@ export async function requireAccess(
 ): Promise<{ businessId: string; userId: string; isOwner: boolean }> {
   const userId = await requireAuthenticatedUserId();
 
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-    columns: { id: true, ownerId: true },
-  });
+  const business = (await resolveBusinessSlug(slug))?.business;
 
   if (!business) {
     throw new Error('Negocio no encontrado');
@@ -106,10 +104,7 @@ export async function requireAccessOnId(
 export async function requireOwnedBusinessBySlug(slug: string) {
   const userId = await requireAuthenticatedUserId();
 
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-    columns: { id: true, ownerId: true, slug: true },
-  });
+  const business = (await resolveBusinessSlug(slug))?.business;
 
   if (!business) {
     throw new Error('Negocio no encontrado');

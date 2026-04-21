@@ -90,7 +90,7 @@
 .headerTitle {
   font-size: 1.05rem;
   font-weight: 700;
-  line-height: 1.2;
+  margin-bottom: 0px;
 }
 
 .headerSubtitle {

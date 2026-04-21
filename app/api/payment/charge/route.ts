@@ -6,28 +6,10 @@
  */
 
 import { NextResponse } from 'next/server';
-
 import { db } from '@/core/database/client';
 import { businesses, businessSettings, payments, products } from '@/core/database/schema';
-import { eq } from 'drizzle-orm';
-
-interface ChargeRequestBody {
-  // Token generado por Culqi Checkout (frontend)
-  token: string; // e.g., "ype_test_xxx" o "tkn_test_xxx"
-  
-  // Datos del pedido
-  amount: number; // En céntimos (ej: 610 = S/ 6.10)
-  currency?: string;
-  email: string;
-  phone?: string;
-  
-  // Referencias
-  businessId: string;
-  productId: string;
-  
-  // Metadata opcional
-  metadata?: Record<string, unknown>;
-}
+import { eq, sql } from 'drizzle-orm';
+import { decrypt } from '@/utils/crypto';
 
 interface CulqiChargeResponse {
   object: string;
@@ -35,211 +17,145 @@ interface CulqiChargeResponse {
   amount: number;
   currency_code: string;
   email: string;
-  status: string;
+  paid?: boolean;
+  user_message?: string;
+  merchant_message?: string;
+  outcome?: {
+    type: string;
+    user_message: string;
+    merchant_message: string;
+  };
   description?: string;
   reference_code?: string;
   metadata?: Record<string, unknown>;
   creation_date?: number;
+  status: string;
 }
 
 export async function POST(request: Request) {
   try {
-    const body: ChargeRequestBody = await request.json();
-    
-    console.log('[payment/charge] Received body:', JSON.stringify(body, null, 2));
-    
-    // Validar campos requeridos
-    const { token, amount, email, businessId, productId, currency = 'PEN', phone, metadata } = body;
-    
-    console.log('[payment/charge] Validating - token:', token, 'amount:', amount, 'email:', email, 'businessId:', businessId, 'productId:', productId);
-    
-    // Email es opcional para Yape pero requerido para tarjeta
-    // Validar que el amount sea positivo y mayor al mínimo de Culqi (S/ 1.00)
-    if (!token || !amount || amount < 100 || !businessId || !productId) {
-      console.error('[payment/charge] Missing fields:', { token: !!token, amount: !!amount, businessId: !!businessId, productId: !!productId });
+    const rawBody = await request.json();
+
+    // 0. Validate Data using Zod
+    const { chargeRequestSchema } = await import('@/features/billing/schemas');
+    const validationResult = chargeRequestSchema.safeParse(rawBody);
+
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Faltan campos requeridos: token, amount, businessId, productId', received: { token, amount, email, businessId, productId } },
+        { error: validationResult.error.errors[0]?.message || 'Datos no válidos' },
         { status: 400 }
       );
     }
 
-    // Si es payment con tarjeta y no hay email, usar email del token de Culqi
-    const finalEmail = email || 'cliente@culqi.com';
+    const { token, amount, email, businessId, productId, currency = 'PEN', phone, metadata = {} } = validationResult.data;
 
-    // 1. Obtener las credenciales de Culqi del negocio
+    // 1. Obtener y descifrar la Secret Key
     const settings = await db.query.businessSettings.findFirst({
       where: eq(businessSettings.businessId, businessId),
       columns: { culqiSecretKey: true },
     });
 
-    console.log('[payment/charge] Settings for business:', businessId, settings ? 'found' : 'not found');
-
     if (!settings?.culqiSecretKey) {
-      return NextResponse.json(
-        { error: 'El negocio no tiene configurada la pasarela de pagos' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'El negocio no tiene configurada pasarela de pagos' }, { status: 400 });
     }
 
-    const culqiSecretKey = settings.culqiSecretKey;
+    // 🔥 SECURITY: Decrypt and Validate Key Environment
+    const culqiSecretKey = decrypt(settings.culqiSecretKey);
+    const isProd = process.env.NODE_ENV === 'production';
+    const isKeyLive = culqiSecretKey.startsWith('sk_live');
 
-    // 2. Obtener info del producto y el owner del negocio
+    if (isProd && !isKeyLive) {
+      return NextResponse.json({ error: 'Configuración inválida: Se requiere una llave de producción (sk_live).' }, { status: 400 });
+    }
+    if (!isProd && isKeyLive) {
+      return NextResponse.json({ error: 'Configuración inválida: No se permiten llaves sk_live en entorno de desarrollo.' }, { status: 400 });
+    }
+
+    // 2. Obtener info necesaria para Culqi
     const [product, business] = await Promise.all([
-      db.query.products.findFirst({
-        where: eq(products.id, productId),
-        columns: { title: true, businessId: true },
-      }),
-      db.query.businesses.findFirst({
-        where: eq(businesses.id, businessId),
-        columns: { ownerId: true },
-      }),
+      db.query.products.findFirst({ where: eq(products.id, productId), columns: { title: true } }),
+      db.query.businesses.findFirst({ where: eq(businesses.id, businessId), columns: { ownerId: true } }),
     ]);
 
-    console.log('[payment/charge] Product:', product);
-    console.log('[payment/charge] Business owner:', business?.ownerId);
-
     if (!business?.ownerId) {
-      return NextResponse.json(
-        { error: 'No se pudo obtener el propietario del negocio' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'No se pudo obtener el propietario del negocio' }, { status: 400 });
     }
 
-    // 3. Crear el cargo en Culqi con timeout
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 10 seg timeout
-
+    // 3. Crear el cargo en Culqi
     const culqiResponse = await fetch('https://api.culqi.com/v2/charges', {
-      signal: controller.signal,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${culqiSecretKey}`,
       },
       body: JSON.stringify({
-        amount: amount,
+        amount,
         currency_code: currency,
-        email: finalEmail,
-        source_id: token, // El token generado en el frontend
-        description: `Compra: ${product?.title || 'Producto'} - Tienda Online`,
-        metadata: {
-          ...metadata,
-          businessId,
-          productId,
-          platform: 'store-lite',
-        },
+        email: email || 'cliente@culqi.com',
+        source_id: token,
+        description: `Compra: ${product?.title || 'Producto'} - Store Lite`,
+        metadata: { businessId, productId, platform: 'store-lite' },
       }),
     });
 
     const culqiData: CulqiChargeResponse = await culqiResponse.json();
+    const isSuccess = culqiData.outcome?.type === 'venta_exitosa' || culqiData.paid === true;
 
-    if (!culqiResponse.ok) {
-      console.error('[payment/charge] Culqi error status:', culqiResponse.status);
-      console.error('[payment/charge] Culqi error data:', JSON.stringify(culqiData, null, 2));
-      return NextResponse.json(
-        { 
-          error: 'Error al procesar el pago en Culqi',
-          details: culqiData?.message || culqiData?.user_message || 'Error desconocido de Culqi',
-          raw: culqiData
-        },
-        { status: culqiResponse.status }
-      );
+    if (!culqiResponse.ok || !isSuccess) {
+      return NextResponse.json({ 
+        error: 'Error en Culqi', 
+        details: culqiData?.user_message || culqiData?.outcome?.user_message || 'Pago rechazado' 
+      }, { status: 400 });
     }
 
-    // 4. Determinar método de pago basado en el token
-    const paymentMethod = token.startsWith('ype_') ? 'yape' : token.startsWith('tkn_') ? 'card' : 'card';
-    
-     // 5. Guardar el payment en la base de datos
-     const metadata = body.metadata || {};
-     const shippingInfo = (metadata.shippingInfo as any) || {};
-     
-     // Mapear courier a shippingType enum
-     const shippingType = shippingInfo.courier === 'urbano_domicilio' ? 'domicilio' : 'agencia';
+    // 🔥 ATOMICITY: Transacción de Base de Datos
+    const result = await db.transaction(async (tx) => {
+      // 4. Guardar Pago
+      const shippingInfo = metadata?.shippingInfo || {};
+      const [payment] = await tx.insert(payments).values({
+        businessId,
+        productId,
+        sellerUserId: business.ownerId,
+        amount: String(amount / 100),
+        currency,
+        paymentMethod: token.startsWith('ype_') ? 'yape' : 'card',
+        culqiChargeId: culqiData.id,
+        culqiReferenceCode: culqiData.reference_code || null,
+        buyerEmail: email || 'cliente@culqi.com',
+        buyerPhone: phone || null,
+        status: 'paid',
+        orderNumber: metadata?.orderNumber as string || null,
+        shippingType: shippingInfo.courier === 'recojo' ? 'recojo' : 'domicilio',
+        shippingAddress: shippingInfo.address || null,
+        shippingCost: String(shippingInfo.cost || 0),
+        metadata: { ...metadata, culqiId: culqiData.id }
+      }).returning();
 
-     const payment = await db.insert(payments).values({
-       businessId,
-       productId,
-       sellerUserId: business.ownerId, 
-       amount: String(amount / 100), 
-       currency,
-       paymentMethod,
-       culqiChargeId: culqiData.id,
-       culqiReferenceCode: culqiData.reference_code || null,
-       buyerEmail: finalEmail,
-       buyerPhone: phone || null,
-       status: culqiData.status === 'paid' ? 'paid' : 'pending',
-       // Nuevos campos estructurados
-       orderNumber: metadata.orderNumber as string,
-       shippingType,
-       shippingDepartment: shippingInfo.department,
-       shippingProvince: shippingInfo.province,
-       shippingDistrict: shippingInfo.district,
-       shippingAddress: shippingInfo.address,
-       shippingAgency: shippingInfo.agency,
-       shippingReference: shippingInfo.reference,
-       shippingPhone: shippingInfo.phone || phone,
-       shippingCost: String(shippingInfo.cost || 0),
-       metadata: {
-         ...paymentMetadata,
-         paymentGateway: {
-           provider: 'culqi',
-           chargeId: culqiData.id,
-           createdAt: new Date(culqiData.creation_date * 1000).toISOString(),
-           rawResponse: culqiData // Guardar respuesta completa para debugging
-         },
-         platform: 'store-lite',
-         riskData: {
-           // Datos útiles para análisis de fraude
-           ip: request.headers.get('x-forwarded-for'),
-           userAgent: request.headers.get('user-agent')
-         }
-       },
-     }).returning();
+      // 5. Actualizar Stock
+      const cartItems = (metadata?.cartItems as { id: string; quantity: number }[]) || [];
+      const itemsToUpdate = cartItems.length > 0 ? cartItems : [{ id: productId, quantity: 1 }];
 
-     console.log('[payment/charge] Payment created:', payment[0]?.id);
+      for (const item of itemsToUpdate) {
+        await tx
+          .update(products)
+          .set({ stock: sql`GREATEST(${products.stock} - ${Math.max(1, item.quantity)}, 0)` })
+          .where(eq(products.id, item.id));
+      }
 
-     // 6. Actualizar el stock del producto (decrementar en 1) si el pago fue exitoso
-     if (culqiData.status === 'paid') {
-       try {
-         const result = await db
-           .update(products)
-           .set({ stock: products.stock - 1 })
-           .where(eq(products.id, productId))
-           .returning();
-         
-         console.log('[payment/charge] Stock updated for product:', productId, 'New stock:', result[0]?.stock);
-       } catch (error) {
-         console.error('[payment/charge] Error updating stock:', error);
-         // No fallamos el pago por un error en la actualización de stock
-         // Pero al menos lo loggeamos
-       }
-     } else {
-       console.log('[payment/charge] Payment not successful, skipping stock update. Status:', culqiData.status);
-     }
+      return payment;
+    });
 
-     return NextResponse.json({
-       success: true,
-       payment: payment[0],
-       charge: {
-         id: culqiData.id,
-         status: culqiData.status,
-         referenceCode: culqiData.reference_code,
-       },
-     });
+    return NextResponse.json({ 
+      success: true, 
+      payment: result, 
+      charge: {
+        id: culqiData.id,
+        status: 'paid'
+      }
+    });
 
   } catch (error) {
-    console.error('[payment/charge] Error:', error);
-    
-    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-    const statusCode = error.name === 'AbortError' ? 504 : 500;
-
-    return NextResponse.json(
-      { 
-        error: 'Error procesando el pago',
-        details: errorMessage,
-        code: statusCode
-      },
-      { status: statusCode }
-    );
+    console.error('[payment/charge] Critical Error:', error);
+    return NextResponse.json({ error: 'Error interno procesando el pago' }, { status: 500 });
   }
 }

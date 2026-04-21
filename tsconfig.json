@@ -25,6 +25,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@app/*": ["./app/*"],
       "@mweb/*": ["./node_modules/@material/web/*"],
       "@material-design/*": ["./src/styles/material-design/*"]
     }

@@ -1,8 +1,9 @@
 import { env } from '@/config/env';
+import { resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { getMemberPermissions } from '@/lib/permissions/checkPermission';
-import { businesses, productCategories, products } from '@/core/database/schema';
+import { productCategories, products } from '@/core/database/schema';
 import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
@@ -20,9 +21,7 @@ interface BusinessLayoutProps {
 export default async function BusinessLayout({ children, modal, params }: BusinessLayoutProps) {
   const { slug } = await params;
 
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-  });
+  const business = (await resolveBusinessSlug(slug))?.business;
 
   if (!business) {
     return notFound();
@@ -104,7 +103,7 @@ export default async function BusinessLayout({ children, modal, params }: Busine
 
   return (
     <BusinessProviders
-      businessSlug={slug}
+      businessSlug={business.slug}
       businessId={business.id}
       country={business.country}
       entitlements={entitlements}

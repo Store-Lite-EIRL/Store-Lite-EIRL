@@ -1,5 +1,10 @@
 # 🛒 Store Lite
 
+<!-- Logo Oficial -->
+<p align="center">
+  <img src="https://raw.githubusercontent.com/devkittpo/store-lite/main/docs/assets/logo-store-lite.svg" alt="Store Lite Logo" width="120" />
+</p>
+
 Store Lite es una solución de comercio electrónico ligera y escalable construida con **Next.js 16 (App Router)** y **React 19**. Implementa el sistema de diseño **Material Design 3** mediante Web Components nativos para una experiencia de usuario fluida y de alto rendimiento.
 
 ## 🚀 Tecnologías Core (Stack Técnico)

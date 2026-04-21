@@ -1,7 +1,5 @@
-import { db } from '@/core/database/client';
-import { businesses } from '@/core/database/schema';
+import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
 import { createClient } from '@/lib/supabase/server';
-import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { getMemberPermissions } from '@/lib/permissions/checkPermission';
@@ -13,9 +11,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-  });
+  const business = (await resolveBusinessSlug(slug))?.business;
 
   if (!business) {
     return {
@@ -31,13 +27,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ChatPage({ params }: Props) {
   const { slug } = await params;
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-    columns: { id: true, name: true, description: true, ownerId: true },
-  });
+  const resolvedBusiness = await resolveBusinessSlug(slug);
+  const business = resolvedBusiness?.business;
 
   if (!business) {
     return notFound();
+  }
+
+  if (resolvedBusiness.matchedAlias) {
+    redirect(replaceSlugInPath(`/${slug}/chat`, slug, resolvedBusiness.canonicalSlug));
   }
 
   const supabase = await createClient();
@@ -60,7 +58,7 @@ export default async function ChatPage({ params }: Props) {
 
   return (
     <ChatClient
-      slug={slug}
+      slug={resolvedBusiness.canonicalSlug}
       storeName={business.name}
       storeDescription={business.description || ''}
       businessId={business.id}

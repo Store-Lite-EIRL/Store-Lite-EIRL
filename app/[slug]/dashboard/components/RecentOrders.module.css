@@ -1,0 +1,147 @@
+/* app/[slug]/dashboard/components/RecentOrders.module.css */
+
+.card {
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 20px;
+  overflow: hidden;
+  margin-top: 1rem;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table th {
+  padding: 1rem 1.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface);
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 3%, transparent);
+}
+
+/* ─── Cell Styles ─── */
+.productTitle {
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
+  display: block;
+}
+
+.priceCell {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.addressText {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.8rem;
+  display: block;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dateCell {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: monospace;
+  white-space: nowrap;
+}
+
+/* ─── Status Badges ─── */
+.statusBadge {
+  display: inline-flex;
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: var(--md-sys-color-outline-variant);
+}
+
+.statusPaid {
+  background: #fef3c7; /* Amber 100 */
+  color: #92400e; /* Amber 800 */
+}
+
+.statusShipped {
+  background: #dbeafe; /* Blue 100 */
+  color: #1e40af; /* Blue 800 */
+}
+
+.statusDelivered {
+  background: #dcfce7; /* Green 100 */
+  color: #166534; /* Green 800 */
+}
+
+.statusCompleted {
+  background: #f0fdf4; /* Emerald 50 */
+  color: #065f46; /* Emerald 800 */
+}
+
+.statusProcessing {
+  background: #f3e8ff; /* Purple 100 */
+  color: #6b21a8; /* Purple 800 */
+}
+
+.statusPending {
+  background: #f3f4f6; /* Gray 100 */
+  color: #374151; /* Gray 800 */
+}
+
+.statusFailed {
+  background: #fee2e2; /* Red 100 */
+  color: #991b1b; /* Red 800 */
+}
+
+/* ─── Empty State ─── */
+.empty {
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.emptyText {
+  color: var(--md-sys-color-on-surface-variant);
+  font-style: italic;
+}
+
+@media (max-width: 850px) {
+  .table th:nth-child(3),
+  .table td:nth-child(3) {
+    display: none; /* Hide address on tablet */
+  }
+}
+
+@media (max-width: 600px) {
+  .table th:nth-child(2),
+  .table td:nth-child(2),
+  .table th:nth-child(5),
+  .table td:nth-child(5) {
+    display: none; /* Hide price and date on small mobile */
+  }
+}

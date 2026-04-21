@@ -1,6 +1,7 @@
 'use server';
 
 import { env } from '@/config/env';
+import { generateAvailableBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { businesses, profiles } from '@/core/database/schema';
 import { generateBusinessSlug } from '@/shared/utils/slugify';
@@ -8,11 +9,16 @@ import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { createBusinessSchema } from '@/features/business/schemas';
 
 export interface ActionState {
   error?: string;
 }
 
+/**
+ * Server Action: Creates a new business store.
+ * Validates input using Zod and enforces limits.
+ */
 export async function createBusiness(prevState: ActionState, formData: FormData) {
   const cookieStore = await cookies();
 
@@ -79,19 +85,26 @@ export async function createBusiness(prevState: ActionState, formData: FormData)
     return { error: 'Has alcanzado el límite de 3 empresas permitidas en el plan gratuito.' };
   }
 
-  // 2. Extract Data
-  const name = formData.get('name') as string;
-  const storeType = formData.get('storeType') as string;
-  const description = formData.get('description') as string;
-  const address = formData.get('address') as string;
-  const whatsappNumber = formData.get('whatsappNumber') as string;
+  // 2. Validate Data using Zod
+  const rawData = {
+    name: formData.get('name'),
+    storeType: formData.get('storeType'),
+    description: formData.get('description'),
+    address: formData.get('address'),
+    whatsappNumber: formData.get('whatsappNumber'),
+  };
 
-  if (!name || name.length < 3) {
-    return { error: 'El nombre es obligatorio y debe tener al menos 3 caracteres.' };
+  const validationResult = createBusinessSchema.safeParse(rawData);
+
+  if (!validationResult.success) {
+    const firstError = validationResult.error.errors[0]?.message;
+    return { error: firstError || 'Datos de entrada no válidos' };
   }
 
+  const { name, storeType, description, address, whatsappNumber } = validationResult.data;
+
   // 3. Generate Slug (Refactored to utility)
-  const finalSlug = generateBusinessSlug(name, storeType);
+  const finalSlug = await generateAvailableBusinessSlug(() => generateBusinessSlug(name, storeType));
 
   try {
     // 4. Insert into Database
@@ -100,9 +113,9 @@ export async function createBusiness(prevState: ActionState, formData: FormData)
       name,
       slug: finalSlug,
       storeType,
-      description,
-      address,
-      whatsappNumber,
+      description: description || null,
+      address: address || null,
+      whatsappNumber: whatsappNumber || null,
       isActive: true,
     });
   } catch (error) {

@@ -1,9 +1,10 @@
 'use client';
 
 import { AlertSnackbar, Icon, IconButton } from '@/shared/components/ui';
-import Link from 'next/link';
+import ProductPreviewSheet from '@app/[slug]/components/ProductPreviewSheet';
 import { useParams, useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
+import { usePermissions } from '../../context/PermissionsContext';
 import { useCurrency } from '../context/CurrencyContext';
 import type { Product } from '../data';
 import type { SortConfig } from '../hooks/useStorageProducts';
@@ -11,7 +12,6 @@ import { formatPrice, parsePriceValue } from '../utils/currency';
 import { EmptyState } from './product-table/EmptyState';
 import { ProductActionsMenu } from './product-table/ProductActionsMenu';
 import { TableHeader } from './product-table/TableHeader';
-import { usePermissions } from '../../context/PermissionsContext';
 
 type MaterialMenuElement = HTMLElement & {
   open: boolean;
@@ -42,6 +42,8 @@ export const ProductTable = ({
   const [menuProduct, setMenuProduct] = useState<Product | null>(null);
   const [copiedAlert, setCopiedAlert] = useState(false);
   const actionsMenuRef = useRef<MaterialMenuElement | null>(null);
+  const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
+  const [previewSignal, setPreviewSignal] = useState(0);
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>, product: Product) => {
     const menu = actionsMenuRef.current;
@@ -110,17 +112,20 @@ export const ProductTable = ({
               products.map((product) => (
                 <tr key={product.id}>
                   <td>
-                    <Link
-                      href={`/${businessSlug}/product/${product.id}`}
+                    <div
                       className="product-info"
-                      style={{ textDecoration: 'none', color: 'inherit' }}
+                      style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
+                      onClick={() => {
+                        setPreviewProduct(product);
+                        setPreviewSignal(prev => prev + 1);
+                      }}
                     >
                       <div className="product-img-container">
                         {product.image ? (
-                          <img 
-                            src={product.image} 
-                            alt={product.name} 
-                            className="product-img" 
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="product-img"
                             onError={(e) => {
                               const target = e.currentTarget;
                               target.style.display = 'none';
@@ -145,11 +150,16 @@ export const ProductTable = ({
                           <Icon style={{ fontSize: 22, opacity: 0.4 }}>image_not_supported</Icon>
                         </div>
                       </div>
-                      <span style={{ cursor: 'pointer' }}>{product.name}</span>
-                    </Link>
+                      <span>{product.name}</span>
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Ver vista previa
+                      </div>
+                    </div>
                   </td>
                   <td className="secondary-text">{product.category}</td>
-                  <td className="secondary-text">{product.stock}</td>
+                  <td className="secondary-text">{product.stock === 0 ? (
+                    <span className="text-red-500">AGOTADO</span>
+                  ) : product.stock}</td>
                   <td className="secondary-text">
                     {formatPrice(parsePriceValue(product.price), currencySymbol)}
                   </td>
@@ -193,6 +203,15 @@ export const ProductTable = ({
         onView={handleGoToProduct}
         onShare={handleShareProduct}
       />
+
+<ProductPreviewSheet
+         slug={businessSlug}
+         product={previewProduct}
+         openSignal={previewSignal}
+         isOwner={isOwner}
+         hasPaymentGateway={true}
+         culqiPublicKey={undefined} // Owners don't need to buy
+       />
 
       <AlertSnackbar
         open={copiedAlert}

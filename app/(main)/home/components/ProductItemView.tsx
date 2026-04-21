@@ -54,6 +54,7 @@ interface ProductItemViewProps {
   businessRuc?: string;
   businessAddress?: string;
   businessId?: string;
+  businessLogoUrl?: string;
   onEditOpen: () => void;
   onDeleteOpen: () => void;
   onDeleteClose: () => void;
@@ -121,6 +122,7 @@ export function ProductItemView({
   businessRuc,
   businessAddress,
   businessId,
+  businessLogoUrl,
 }: ProductItemViewProps) {
   const [copied, setCopied] = useState(false);
   const params = useParams();
@@ -473,7 +475,7 @@ export function ProductItemView({
         icon={alert.icon}
         onClose={onAlertClose}
       />
-      {!isOwner && isPaymentModalOpen && (
+      {!isOwner && isPaymentModalOpen && businessId && (
         <Checkout
           totalAmount={price}
           cartItems={[{ ...storageProduct, quantity: 1 }]}
@@ -482,6 +484,7 @@ export function ProductItemView({
           businessRuc={businessRuc}
           businessAddress={businessAddress}
           businessId={businessId}
+          businessLogoUrl={businessLogoUrl}
           onSuccess={() => onPaymentModalClose()}
           onCancel={() => onPaymentModalClose()}
         />

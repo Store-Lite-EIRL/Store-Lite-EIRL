@@ -1,9 +1,7 @@
-import { db } from '@/core/database/client';
-import { businesses } from '@/core/database/schema';
+import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { checkPermission } from '@/lib/permissions';
 import { createClient } from '@/lib/supabase/server';
-import { eq } from 'drizzle-orm';
 import { notFound, redirect } from 'next/navigation';
 
 interface DashboardLayoutProps {
@@ -14,19 +12,21 @@ interface DashboardLayoutProps {
 export default async function DashboardLayout({ children, params }: DashboardLayoutProps) {
   const { slug } = await params;
 
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-    columns: { id: true },
-  });
+  const resolvedBusiness = await resolveBusinessSlug(slug);
+  const business = resolvedBusiness?.business;
 
   if (!business) {
     return notFound();
   }
 
+  if (resolvedBusiness.matchedAlias) {
+    redirect(replaceSlugInPath(`/${slug}/dashboard`, slug, resolvedBusiness.canonicalSlug));
+  }
+
   const entitlements = await getBusinessEntitlements(business.id);
 
   if (entitlements.plan === 'basico') {
-    redirect(`/${slug}`);
+    redirect(`/${resolvedBusiness.canonicalSlug}`);
   }
 
   const supabase = await createClient();
@@ -36,7 +36,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
 
   const isAllowed = await checkPermission(business.id, user?.id, 'dashboard.view');
   if (!isAllowed) {
-    redirect(`/${slug}`);
+    redirect(`/${resolvedBusiness.canonicalSlug}`);
   }
 
   return <>{children}</>;

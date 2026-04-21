@@ -29,6 +29,9 @@
   padding: 24px 24px 16px;
   text-align: center;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .successBadge {
@@ -44,6 +47,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 16px;
+  white-space: nowrap;
 }
 
 .logo {
@@ -82,17 +86,32 @@
   height: 12px;
 }
 
+.businessInfoWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
 .businessName {
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 800;
   margin: 0;
   letter-spacing: -0.02em;
+  line-height: 1.3;
+  width: 100%;
+  word-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .ruc, .address {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--on-surface-variant);
-  margin: 2px 0 0;
+  margin: 0;
+  width: 100%;
+  word-wrap: break-word;
+  line-height: 1.4;
 }
 
 /* Order Info Grid */
@@ -190,6 +209,8 @@
   font-size: 32px;
   font-weight: 800;
   letter-spacing: -0.04em;
+  line-height: 1.1;
+  white-space: nowrap;
 }
 
 /* Details List (Payment & Customer) */
@@ -241,6 +262,56 @@
 }
 
 /* Utility */
+.defaultLogo {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: rgba(0, 97, 164, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  color: #0061A4;
+}
+
+/* Shipping Address Section */
+.shippingSection {
+  margin: 0 12px 12px;
+  padding: 12px 16px;
+  background: rgba(0, 97, 164, 0.05);
+  border-radius: 16px;
+  border: 1px solid rgba(0, 97, 164, 0.12);
+}
+
+.shippingHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #0061A4;
+  margin-bottom: 8px;
+}
+
+.shippingLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.shippingHeader svg {
+  flex-shrink: 0;
+}
+
+.shippingAddress {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--on-surface);
+  line-height: 1.5;
+}
+
 .divider {
   height: 1px;
   background: var(--outline-variant);

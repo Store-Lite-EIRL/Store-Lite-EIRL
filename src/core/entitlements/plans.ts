@@ -23,6 +23,12 @@ export interface BusinessEntitlements {
   /** Puede mostrar botón de compra (Yape, Plin, tarjeta) */
   hasPaymentGateway: boolean;
 
+  /** El negocio ha configurado sus credenciales de pago (Public/Secret Key) */
+  isPaymentConfigured: boolean;
+
+  /** API Key pública de Culqi (solo si está configurada) */
+  culqiPublicKey?: string;
+
   // ─── Productos ────────────────────────────────────────
   /** Máximo de productos permitidos (-1 = ilimitado) */
   maxProducts: number;
@@ -62,7 +68,7 @@ export interface BusinessEntitlements {
  */
 export const PLAN_ENTITLEMENTS: Record<
   PlanType,
-  Omit<BusinessEntitlements, 'plan' | 'isActive'>
+  Omit<BusinessEntitlements, 'plan' | 'isActive' | 'isPaymentConfigured' | 'culqiPublicKey'>
 > = {
   basico: {
     hasPaymentGateway: false,

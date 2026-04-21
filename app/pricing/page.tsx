@@ -9,8 +9,14 @@ import type { PricingCardProps } from './components/PricingCard';
 import { PricingCard } from './components/PricingCard';
 import './pricing.css';
 
-export default async function PricingPage() {
+export default async function PricingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const cookieStore = await cookies();
+  const searchParamsAwaited = await searchParams;
+  const slug = searchParamsAwaited.slug as string;
 
   const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
     cookies: {
@@ -42,6 +48,9 @@ export default async function PricingPage() {
       planEndDate: b.subscriptions?.[0]?.planEndDate,
     }));
   }
+
+  const preselectedBusinessId = myBusinesses.find(b => b.slug === slug)?.id;
+
   const plans: PricingCardProps[] = [
     {
       title: 'Plan Emprendedor',
@@ -74,7 +83,7 @@ export default async function PricingPage() {
         { text: 'Personalización avanzada: Edición del negocio' },
         { text: 'Colaboración élite: Equipo de trabajo con 2 usuarios adicionales' },
         { text: 'Centro de mando: Dashboard de ventas y métricas de progreso' },
-        { text: 'Servicio de envios con Shalom en tiempo real' },
+        { text: 'Servicio de envios con Urbano en tiempo real' },
       ],
     },
     {
@@ -116,7 +125,7 @@ export default async function PricingPage() {
 
       <div className="pricing-grid">
         {plans.map((plan, index) => (
-          <PricingCard key={index} {...plan} businesses={myBusinesses} />
+          <PricingCard key={index} {...plan} businesses={myBusinesses} preselectedBusinessId={preselectedBusinessId} />
         ))}
       </div>
     </div>

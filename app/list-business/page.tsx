@@ -140,12 +140,12 @@ export default async function ListBusinessPage() {
             <div className={style.sectionHeader}>
               <span className={style.sectionTitle}>
                 {displayBusinesses.length === 1
-                   ? '1 negocio encontrado'
-                   : `${displayBusinesses.length} negocios encontrados`}
+                  ? '1 negocio encontrado'
+                  : `${displayBusinesses.length} negocios encontrados`}
                 {ownedBusinesses.length > 0 && teamBusinesses.length > 0 && (
-                   <span style={{ fontSize: '0.8rem', opacity: 0.7, marginLeft: '8px' }}>
-                     ({ownedBusinesses.length} propios, {teamBusinesses.length} de equipo)
-                   </span>
+                  <span style={{ fontSize: '0.8rem', opacity: 0.7, marginLeft: '8px' }}>
+                    ({ownedBusinesses.length} propios, {teamBusinesses.length} de equipo)
+                  </span>
                 )}
               </span>
             </div>

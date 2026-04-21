@@ -13,9 +13,15 @@ interface PurchaseActionsProps {
   product: Product;
   business: Business;
   hasPaymentGateway: boolean;
+  culqiPublicKey?: string;
 }
 
-export default function PurchaseActions({ product, business, hasPaymentGateway }: PurchaseActionsProps) {
+export default function PurchaseActions({
+  product,
+  business,
+  hasPaymentGateway,
+  culqiPublicKey,
+}: PurchaseActionsProps) {
   const { addToCart } = useCart();
   const [isAdding, setIsAdding] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -53,7 +59,7 @@ export default function PurchaseActions({ product, business, hasPaymentGateway }
     addToCartText = 'Sin stock';
   }
 
-  let buyNowText = hasPaymentGateway ? 'Comprar ahora' : 'Contactar Negocio';
+  let buyNowText = hasPaymentGateway ? 'Comprar' : 'Contactar Negocio';
   if (isOutOfStock) {
     buyNowText = 'Agotado';
   }
@@ -83,10 +89,16 @@ export default function PurchaseActions({ product, business, hasPaymentGateway }
 
       {isPaymentModalOpen && (
         <Checkout
-          totalAmount={Number(product.price)}
+          totalAmount={Number(product.secondPrice || product.price)}
           cartItems={[{ ...product, quantity: 1 }]}
+          culqiPublicKey={culqiPublicKey}
           onSuccess={() => setIsPaymentModalOpen(false)}
           onCancel={() => setIsPaymentModalOpen(false)}
+          businessName={business.name}
+          businessAddress={business.address ?? undefined}
+          businessCity={business.city ?? undefined}
+          businessLogoUrl={business.logoUrl ?? undefined}
+          businessId={business.id}
         />
       )}
 

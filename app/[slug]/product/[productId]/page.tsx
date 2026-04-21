@@ -1,8 +1,9 @@
+import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
-import { businesses, products as productsTable } from '@/core/database/schema';
+import { products as productsTable } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { and, eq, or } from 'drizzle-orm';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import ProductDetailContent from './components/ProductDetailContent';
 import type { Metadata } from 'next';
 
@@ -13,9 +14,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, productId } = await params;
 
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-  });
+  const business = (await resolveBusinessSlug(slug))?.business;
 
   if (!business) return {};
 
@@ -62,12 +61,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductDetailPage({ params }: Props) {
   const { slug, productId } = await params;
 
-  const businessDetail = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-  });
+  const resolvedBusiness = await resolveBusinessSlug(slug);
+  const businessDetail = resolvedBusiness?.business;
 
   if (!businessDetail) {
     notFound();
+  }
+
+  if (resolvedBusiness.matchedAlias) {
+    redirect(replaceSlugInPath(`/${slug}/product/${productId}`, slug, resolvedBusiness.canonicalSlug));
   }
 
   const product = await db.query.products.findFirst({
@@ -121,9 +123,11 @@ export default async function ProductDetailPage({ params }: Props) {
         />
       )}
       <ProductDetailContent
-        slug={slug}
+        slug={resolvedBusiness.canonicalSlug}
         productId={productId}
         hasPaymentGateway={hasPaymentGateway}
+        isPaymentConfigured={entitlements.isPaymentConfigured}
+        culqiPublicKey={entitlements.culqiPublicKey}
       />
     </>
   );

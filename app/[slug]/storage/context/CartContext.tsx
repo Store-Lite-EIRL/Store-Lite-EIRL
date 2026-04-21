@@ -61,9 +61,17 @@ export const CartProvider = ({
     setCartItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.id === product.id);
       if (existingItem) {
+        // Prevent adding more than available stock
+        if (existingItem.quantity >= product.stock) {
+          return prevItems;
+        }
         return prevItems.map((item) =>
           item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item,
         );
+      }
+      // If product has no stock, don't add
+      if (product.stock <= 0) {
+        return prevItems;
       }
       return [...prevItems, { ...product, quantity: 1 }];
     });
@@ -86,8 +94,16 @@ export const CartProvider = ({
       removeFromCart(productId);
       return;
     }
+    
     setCartItems((prevItems) =>
-      prevItems.map((item) => (item.id === productId ? { ...item, quantity } : item)),
+      prevItems.map((item) => {
+        if (item.id === productId) {
+          // Cap quantity at stock limit
+          const newQuantity = Math.min(quantity, item.stock);
+          return { ...item, quantity: newQuantity };
+        }
+        return item;
+      }),
     );
   };
 
@@ -98,7 +114,10 @@ export const CartProvider = ({
   const clearCart = () => setCartItems([]);
 
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-  const totalPrice = cartItems.reduce((acc, item) => acc + Number(item.price) * item.quantity, 0);
+  const totalPrice = cartItems.reduce((acc, item) => {
+    const activePrice = item.secondPrice ? Number(item.secondPrice) : Number(item.price);
+    return acc + activePrice * item.quantity;
+  }, 0);
 
   return (
     <CartContext.Provider

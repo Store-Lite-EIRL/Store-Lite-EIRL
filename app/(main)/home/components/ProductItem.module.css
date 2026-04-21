@@ -217,6 +217,12 @@
   background-color: currentColor;
 }
 
+.unavailable {
+  color: #e82828; /* Success Green */
+}
+.available {
+  color: #10b981; /* Success Green */
+}
 .shippingInfo {
   display: flex;
   align-items: center;

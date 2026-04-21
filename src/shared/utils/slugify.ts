@@ -9,7 +9,7 @@ export function slugify(text: string): string {
     .replace(/[^\w-]/g, '-') // Simplified alphanumeric replacement (ReDoS safe)
     .replace(/-+/g, '-') // Collapse multiple hyphens
     .replace(/^-+/g, '') // Remove leading hyphens
-    .replace(/-{2,}/g, '-'); // Remove trailing hyphens
+    .replace(/-+$/g, ''); // Remove trailing hyphens
 }
 
 /**

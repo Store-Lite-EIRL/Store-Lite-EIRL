@@ -32,7 +32,7 @@ export default function PricingSection() {
         '🎨 Personalización completa del diseño',
         '👥 Equipo de 2 usuarios adicionales',
         '📊 Dashboard con métricas de ventas',
-        '📦 Integración con Shalom Envíos',
+        '📦 Integración con Urbano Envíos',
         '🎯 SEO avanzado incluido',
         '🔐 Seguridad avanzada',
       ],

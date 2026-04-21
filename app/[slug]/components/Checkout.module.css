@@ -3,7 +3,7 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
-  z-index: 1000;
+  z-index: 3000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -19,6 +19,9 @@
 .checkoutModal md-outlined-select {
   width: 100%;
   min-width: 0;
+  /* Limit dropdown height for long lists like departments/districts */
+  --md-menu-container-max-height: 200px;
+  --md-menu-container-max-block-size: 200px;
 }
 
 .checkoutModal {
@@ -197,6 +200,14 @@
   box-shadow: 0 0 0 3px rgba(103, 80, 164, 0.1);
 }
 
+.inputError {
+  border-color: var(--md-sys-color-error, #ed3312) !important;
+}
+
+.inputError:focus {
+  box-shadow: 0 0 0 3px rgba(237, 51, 18, 0.15);
+}
+
 .input:disabled {
   opacity: 0.6;
   background: rgba(0, 0, 0, 0.02);
@@ -343,6 +354,37 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
+.pickupInfoCard {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  padding: 1.25rem;
+  border-radius: 20px;
+  border: 1px solid var(--md-sys-color-primary);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.pickupHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 800;
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+}
+
+.pickupAddress {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.pickupCity {
+  font-size: 0.85rem;
+  margin: 0.25rem 0 0;
+  opacity: 0.8;
+}
+
 .formGrid {
   display: grid;
   grid-template-columns: 1fr;
@@ -390,6 +432,53 @@
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+}
+
+.itemListSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 150px;
+  overflow-y: auto;
+  margin-bottom: 0.5rem;
+  padding-right: 4px;
+}
+
+/* Custom scrollbar for product list */
+.itemListSummary::-webkit-scrollbar {
+  width: 4px;
+}
+.itemListSummary::-webkit-scrollbar-thumb {
+  background: var(--md-sys-color-outline-variant);
+  border-radius: 4px;
+}
+
+.summaryProductItem {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.75rem;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.productName {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.productQty {
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 500;
+  min-width: 30px;
+}
+
+.productPrice {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  text-align: right;
 }
 
 .orderSummaryCard h3 {

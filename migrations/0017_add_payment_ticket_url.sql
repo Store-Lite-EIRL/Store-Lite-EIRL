@@ -1,0 +1,1 @@
+ALTER TABLE "payments" ADD COLUMN "ticket_url" text;

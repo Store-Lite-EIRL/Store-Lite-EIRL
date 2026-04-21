@@ -50,6 +50,27 @@
       "when": 1774629896978,
       "tag": "0006_dazzling_colossus",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1776560904866,
+      "tag": "0007_shipping_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1776716558225,
+      "tag": "0008_lyrical_wilson_fisk",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1776720475455,
+      "tag": "0009_bouncy_morg",
+      "breakpoints": true
     }
   ]
 }

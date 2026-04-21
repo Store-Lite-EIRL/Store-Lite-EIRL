@@ -7,8 +7,9 @@ import type {
   StorefrontSection,
   StorefrontTheme,
 } from '@/core/storefront';
-import { getReadableTextColor } from '@/core/storefront';
+import { createDefaultStorefrontTheme, getReadableTextColor } from '@/core/storefront';
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
+import { BusinessPreviewCard } from '@/shared/components/business/BusinessPreviewCard';
 import { AlertSnackbar } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
@@ -45,9 +46,17 @@ interface BusinessPageContentProps {
   categories?: ProductCategory[];
   products?: ProductWithRelations[];
   hasPaymentGateway?: boolean;
+  isPaymentConfigured?: boolean;
+  culqiPublicKey?: string;
   chatEnabled?: boolean;
   storefrontLayout: StorefrontLayout;
   storefrontTheme?: StorefrontTheme;
+  previewCardTheme?: StorefrontTheme;
+  // Props del negocio para el checkout
+  businessName?: string;
+  businessRuc?: string;
+  businessAddress?: string;
+  businessId?: string;
 }
 
 type OwnerSheetSaveArgs = [StorageProduct, SaveProductPayload, SaveProductMediaItem[], boolean];
@@ -78,9 +87,12 @@ export default function BusinessPageContent({
   categories = [],
   products = [],
   hasPaymentGateway = true,
+  isPaymentConfigured = false,
+  culqiPublicKey,
   chatEnabled = false,
   storefrontLayout,
   storefrontTheme,
+  previewCardTheme,
 }: BusinessPageContentProps) {
   const mappedProducts: StorageProduct[] = products.map((p) => ({
     id: p.id,
@@ -119,9 +131,12 @@ export default function BusinessPageContent({
         categories={categories}
         products={products}
         hasPaymentGateway={hasPaymentGateway}
+        isPaymentConfigured={isPaymentConfigured}
+        culqiPublicKey={culqiPublicKey}
         chatEnabled={chatEnabled}
         storefrontLayout={storefrontLayout}
         storefrontTheme={storefrontTheme}
+        previewCardTheme={previewCardTheme}
       />
     </StorageProvider>
   );
@@ -135,10 +150,16 @@ function BusinessPageContentUI({
   categories = [],
   products = [],
   hasPaymentGateway = true,
+  isPaymentConfigured = false,
+  culqiPublicKey,
   chatEnabled = false,
   storefrontLayout,
   storefrontTheme,
+  previewCardTheme,
 }: BusinessPageContentProps) {
+  // Pagos habilitados para compra automática solo si plan+credenciales están listos.
+  const paymentsEnabled = hasPaymentGateway && isPaymentConfigured;
+
   const [activeTab, setActiveTab] = useState('products');
   const [currentPage, setCurrentPage] = useState(1);
   const [previewProduct, setPreviewProduct] = useState<ProductWithRelations | null>(null);
@@ -318,9 +339,13 @@ function BusinessPageContentUI({
             onPageChange={setCurrentPage}
             isOwner={isStaff}
             hasPaymentGateway={hasPaymentGateway}
+            isPaymentConfigured={isPaymentConfigured}
+            culqiPublicKey={culqiPublicKey}
             onProductPreview={handlePreviewProduct}
             onContactClick={() => setIsContactDialogOpen(true)}
             onCreateProduct={handleCreateProduct}
+            storefrontTheme={storefrontTheme}
+            previewCardTheme={previewCardTheme}
           />
         );
       default:
@@ -330,44 +355,44 @@ function BusinessPageContentUI({
 
   const themeStyles = storefrontTheme
     ? ((): CSSProperties & Record<string, string> => {
-        const ff =
-          storefrontTheme.fontFamily === 'roboto'
-            ? 'var(--font-storefront-roboto), var(--mio-theme-text-font-family), sans-serif'
-            : storefrontTheme.fontFamily === 'poppins'
-              ? 'var(--font-storefront-poppins), var(--mio-theme-text-font-family), sans-serif'
-              : 'var(--font-storefront-inter), var(--mio-theme-text-font-family), sans-serif';
-        const isDark = storefrontTheme.surfaceMode === 'dark';
-        return {
-          '--storefront-font-family': ff,
-          '--md-sys-color-primary': storefrontTheme.palette.primary,
-          '--md-sys-color-on-primary': getReadableTextColor(storefrontTheme.palette.primary),
-          '--md-sys-color-primary-container': storefrontTheme.palette.primary,
-          '--md-sys-color-on-primary-container': getReadableTextColor(
-            storefrontTheme.palette.primary,
-          ),
-          '--md-sys-color-secondary': storefrontTheme.palette.secondary,
-          '--md-sys-color-on-secondary': getReadableTextColor(storefrontTheme.palette.secondary),
-          '--md-sys-color-secondary-container': storefrontTheme.palette.secondary,
-          '--md-sys-color-on-secondary-container': getReadableTextColor(
-            storefrontTheme.palette.secondary,
-          ),
-          '--md-sys-color-tertiary': storefrontTheme.palette.accent,
-          '--md-sys-color-on-tertiary': getReadableTextColor(storefrontTheme.palette.accent),
-          '--md-sys-color-tertiary-container': storefrontTheme.palette.accent,
-          '--md-sys-color-on-tertiary-container': getReadableTextColor(
-            storefrontTheme.palette.accent,
-          ),
-          '--md-sys-color-surface': isDark ? '#0f1117' : '#ffffff',
-          '--md-sys-color-on-surface': isDark ? '#f3f4f6' : '#111827',
-          '--md-sys-color-surface-variant': isDark ? '#161b24' : '#f5f7fb',
-          '--md-sys-color-on-surface-variant': isDark ? '#cbd5e1' : '#4b5563',
-          '--md-sys-color-surface-container-low': isDark ? '#181d29' : '#f8fafc',
-          '--md-sys-color-surface-container': isDark ? '#1d2432' : '#f1f5f9',
-          '--md-sys-color-surface-container-high': isDark ? '#242d3d' : '#e9eef6',
-          '--md-sys-color-surface-container-highest': isDark ? '#2d3748' : '#dfe6f1',
-          '--md-sys-color-outline-variant': isDark ? '#475569' : '#cbd5e1',
-        };
-      })()
+      const ff =
+        storefrontTheme.fontFamily === 'roboto'
+          ? 'var(--font-storefront-roboto), var(--mio-theme-text-font-family), sans-serif'
+          : storefrontTheme.fontFamily === 'poppins'
+            ? 'var(--font-storefront-poppins), var(--mio-theme-text-font-family), sans-serif'
+            : 'var(--font-storefront-inter), var(--mio-theme-text-font-family), sans-serif';
+      const isDark = storefrontTheme.surfaceMode === 'dark';
+      return {
+        '--storefront-font-family': ff,
+        '--md-sys-color-primary': storefrontTheme.palette.primary,
+        '--md-sys-color-on-primary': getReadableTextColor(storefrontTheme.palette.primary),
+        '--md-sys-color-primary-container': storefrontTheme.palette.primary,
+        '--md-sys-color-on-primary-container': getReadableTextColor(
+          storefrontTheme.palette.primary,
+        ),
+        '--md-sys-color-secondary': storefrontTheme.palette.secondary,
+        '--md-sys-color-on-secondary': getReadableTextColor(storefrontTheme.palette.secondary),
+        '--md-sys-color-secondary-container': storefrontTheme.palette.secondary,
+        '--md-sys-color-on-secondary-container': getReadableTextColor(
+          storefrontTheme.palette.secondary,
+        ),
+        '--md-sys-color-tertiary': storefrontTheme.palette.accent,
+        '--md-sys-color-on-tertiary': getReadableTextColor(storefrontTheme.palette.accent),
+        '--md-sys-color-tertiary-container': storefrontTheme.palette.accent,
+        '--md-sys-color-on-tertiary-container': getReadableTextColor(
+          storefrontTheme.palette.accent,
+        ),
+        '--md-sys-color-surface': isDark ? '#0f1117' : '#ffffff',
+        '--md-sys-color-on-surface': isDark ? '#f3f4f6' : '#111827',
+        '--md-sys-color-surface-variant': isDark ? '#161b24' : '#f5f7fb',
+        '--md-sys-color-on-surface-variant': isDark ? '#cbd5e1' : '#4b5563',
+        '--md-sys-color-surface-container-low': isDark ? '#181d29' : '#f8fafc',
+        '--md-sys-color-surface-container': isDark ? '#1d2432' : '#f1f5f9',
+        '--md-sys-color-surface-container-high': isDark ? '#242d3d' : '#e9eef6',
+        '--md-sys-color-surface-container-highest': isDark ? '#2d3748' : '#dfe6f1',
+        '--md-sys-color-outline-variant': isDark ? '#475569' : '#cbd5e1',
+      };
+    })()
     : undefined;
 
   return (
@@ -375,20 +400,32 @@ function BusinessPageContentUI({
       <div className={`page-container ${styles.storefrontThemeRoot}`} style={themeStyles}>
         {storefrontLayout.sections.map(renderStorefrontSection)}
       </div>
-      <ProductPreviewSheet
-        slug={business.slug}
-        product={previewProduct}
-        openSignal={previewSignal}
-        isOwner={isStaff}
-        onEdit={handleEditFromPreview}
-        onDelete={handleDeleteFromPreview}
-        initialImageIndex={previewImageIndex}
-      />
-      {!isStaff && (
+<ProductPreviewSheet
+  slug={business.slug}
+  product={previewProduct}
+  openSignal={previewSignal}
+  isOwner={isStaff}
+  hasPaymentGateway={hasPaymentGateway}
+  culqiPublicKey={culqiPublicKey}
+  businessId={business.id}
+  businessName={business.name}
+  businessAddress={business.address ?? undefined}
+  businessCity={business.city ?? undefined}
+  businessLogoUrl={business.logoUrl ?? undefined}
+  onEdit={handleEditFromPreview}
+  onDelete={handleDeleteFromPreview}
+  initialImageIndex={previewImageIndex}
+/>      {!isStaff && (
         <>
           <FloatingCartButton />
           <CartDrawer
-            hasPaymentGateway={hasPaymentGateway}
+            hasPaymentGateway={paymentsEnabled}
+            culqiPublicKey={culqiPublicKey}
+            businessId={business.id}
+            businessName={business.name}
+            businessAddress={business.address ?? undefined}
+            businessCity={business.city ?? undefined}
+            businessLogoUrl={business.logoUrl ?? undefined}
             onContactClick={() => setIsContactDialogOpen(true)}
           />
           {chatEnabled && !isLoggedIn && (
@@ -463,9 +500,13 @@ interface StorefrontProductGridSectionProps {
   onPageChange: (page: number) => void;
   isOwner: boolean;
   hasPaymentGateway: boolean;
+  isPaymentConfigured: boolean;
+  culqiPublicKey?: string;
   onProductPreview: (product: ProductWithRelations, initialIndex?: number) => void;
   onContactClick: () => void;
   onCreateProduct: () => void;
+  storefrontTheme?: StorefrontTheme;
+  previewCardTheme?: StorefrontTheme;
 }
 
 function StorefrontProductGridSection({
@@ -496,11 +537,16 @@ function StorefrontProductGridSection({
   onPageChange,
   isOwner,
   hasPaymentGateway,
+  isPaymentConfigured,
+  culqiPublicKey,
   onProductPreview,
   onContactClick,
   onCreateProduct,
+  storefrontTheme,
+  previewCardTheme,
 }: StorefrontProductGridSectionProps) {
   const isGridVisible = section.visible;
+  const paymentsEnabled = hasPaymentGateway && isPaymentConfigured;
   const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
   const start = (currentPage - 1) * PAGE_SIZE;
   const paginatedProducts = filteredProducts.slice(start, start + PAGE_SIZE);
@@ -575,9 +621,26 @@ function StorefrontProductGridSection({
                 isOwner={isOwner}
                 onProductPreview={onProductPreview}
                 hasPaymentGateway={hasPaymentGateway}
+                isPaymentConfigured={isPaymentConfigured}
+                culqiPublicKey={culqiPublicKey}
                 onContactClick={onContactClick}
                 gridConfig={section.config}
+                businessName={business.name}
+                businessRuc={business.taxId ?? undefined}
+                businessAddress={business.address ?? undefined}
+                businessId={business.id}
+                businessLogoUrl={business.logoUrl ?? undefined}
               />
+              {!isOwner && !paymentsEnabled && (
+                <div className={filterStyles.infoCard}>
+                  <h3 className={filterStyles.infoTitle}>Pagos automáticos no disponibles</h3>
+                  <p className={filterStyles.description}>
+                    {hasPaymentGateway
+                      ? 'Este negocio aún no terminó de configurar sus credenciales de pago. Mientras tanto, puedes contactar al negocio para comprar.'
+                      : 'Este negocio necesita un plan premium para habilitar pagos automáticos. Mientras tanto, puedes contactar al negocio para comprar.'}
+                  </p>
+                </div>
+              )}
               <Pagination
                 totalPages={totalPages}
                 currentPage={currentPage}
@@ -613,8 +676,21 @@ function StorefrontProductGridSection({
       )}
 
       {activeTab === 'about' && (
-        <div className={filterStyles.aboutContent}>
-          <div className={filterStyles.infoCard}>
+        <div
+          className={filterStyles.aboutContent}
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: '2.5rem',
+            justifyContent: 'center',
+            alignItems: 'flex-start',
+            paddingTop: '2rem',
+            maxWidth: '1200px',
+            margin: '0 auto',
+          }}
+        >
+          <div className={filterStyles.infoCard} style={{ flex: '1 1 500px', margin: 0 }}>
             <h2 className={filterStyles.infoTitle}>Sobre nosotros</h2>
             <p className={filterStyles.description}>
               {business.description || 'No hay descripción disponible.'}
@@ -634,6 +710,26 @@ function StorefrontProductGridSection({
                 </div>
               )}
             </div>
+          </div>
+
+          <div style={{ flex: '0 1 440px' }}>
+            <BusinessPreviewCard
+              commercialName={business.name}
+              sector={business.storeType || ''}
+              country={business.country || ''}
+              city={business.city || ''}
+              address={business.address || ''}
+              email={business.email || ''}
+              description={business.description || ''}
+              taxId={business.taxId || ''}
+              legalRepName={business.legalRepName || ''}
+              legalRepRole={business.legalRepRole || ''}
+              logoPreview={business.logoUrl}
+              storefrontTheme={
+                previewCardTheme || storefrontTheme || createDefaultStorefrontTheme()
+              }
+              showDownloadButton={false}
+            />
           </div>
         </div>
       )}

@@ -12,7 +12,6 @@ import {
   startChatSession,
 } from '../chat/actions/chatActions';
 import styles from './ChatDialog.module.css';
-import Checkout from './Checkout';
 
 const DEBUG_ABORTS = process.env.NEXT_PUBLIC_DEBUG_ABORTS === '1';
 
@@ -58,7 +57,6 @@ export function ChatDialog({ businessName, businessId, businessLogo, onClose }: 
   const [isStarting, setIsStarting] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isLoadingSession, setIsLoadingSession] = useState(true);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -252,13 +250,13 @@ export function ChatDialog({ businessName, businessId, businessLogo, onClose }: 
           prev.map((m) =>
             m.id === tempId
               ? {
-                  id: result.message!.id,
-                  text: result.message!.content,
-                  isFromStore: !!result.message!.isFromStore,
-                  createdAt: result.message!.createdAt
-                    ? new Date(result.message!.createdAt)
-                    : new Date(),
-                }
+                id: result.message!.id,
+                text: result.message!.content,
+                isFromStore: !!result.message!.isFromStore,
+                createdAt: result.message!.createdAt
+                  ? new Date(result.message!.createdAt)
+                  : new Date(),
+              }
               : m,
           ),
         );
@@ -278,50 +276,6 @@ export function ChatDialog({ businessName, businessId, businessLogo, onClose }: 
     }
   }, [newMessage, sessionId, isSending, guestId]);
 
-  const handlePaymentSuccess = useCallback(async () => {
-    setIsCheckoutOpen(false);
-
-    if (!sessionId) return;
-
-    const alertMsg = '✅ Pago completado con éxito. En breve un asesor confirmará tu pedido.';
-
-    // Optimistic message
-    const tempId = `temp-pay-${Date.now()}`;
-    const userMsg: Message = {
-      id: tempId,
-      text: alertMsg,
-      isFromStore: false,
-      createdAt: new Date(),
-    };
-    setMessages((prev) => [...prev, userMsg]);
-
-    try {
-      const result = await sendMessage({
-        sessionId,
-        guestId,
-        content: alertMsg,
-      });
-
-      if (result.success && result.message) {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === tempId
-              ? {
-                  id: result.message!.id,
-                  text: result.message!.content,
-                  isFromStore: !!result.message!.isFromStore,
-                  createdAt: result.message!.createdAt
-                    ? new Date(result.message!.createdAt)
-                    : new Date(),
-                }
-              : m,
-          ),
-        );
-      }
-    } catch (error) {
-      console.error('Error recording payment success message:', error);
-    }
-  }, [sessionId, guestId]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -351,16 +305,6 @@ export function ChatDialog({ businessName, businessId, businessLogo, onClose }: 
                 : 'Paso ' + (step === 'intro-name' ? '1/2' : '2/2')}
           </p>
         </div>
-        {step === 'chat' && (
-          <button
-            className={styles.payHeaderBtn}
-            onClick={() => setIsCheckoutOpen(true)}
-            aria-label="Pagar"
-          >
-            <span className="material-symbols-outlined">credit_card</span>
-            <span className={styles.payHeaderBtnText}>Pagar</span>
-          </button>
-        )}
         <button className={styles.closeBtn} onClick={onClose} aria-label="Cerrar chat">
           <span className="material-symbols-outlined">close</span>
         </button>
@@ -385,9 +329,8 @@ export function ChatDialog({ businessName, businessId, businessLogo, onClose }: 
                 messages.map((msg) => (
                   <div key={msg.id}>
                     <div
-                      className={`${styles.bubble} ${
-                        msg.isFromStore ? styles.bubbleStore : styles.bubbleUser
-                      }`}
+                      className={`${styles.bubble} ${msg.isFromStore ? styles.bubbleStore : styles.bubbleUser
+                        }`}
                     >
                       {msg.text}
                     </div>
@@ -502,16 +445,6 @@ export function ChatDialog({ businessName, businessId, businessLogo, onClose }: 
           </div>
         )}
       </div>
-
-      {/* Checkout Modal */}
-      {isCheckoutOpen && (
-        <Checkout
-          totalAmount={99.9} // Mock value for demo purposes
-          cartItems={[]} // Empty cart for quick pay demo
-          onSuccess={handlePaymentSuccess}
-          onCancel={() => setIsCheckoutOpen(false)}
-        />
-      )}
     </div>
   );
 }

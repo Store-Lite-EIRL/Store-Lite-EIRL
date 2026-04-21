@@ -83,6 +83,12 @@ export default function AppLayout({
   const showNavbar =
     showNavbarByDefault && pathname !== '/list-business' && !pathname?.startsWith('/auth');
 
+  const contentWrapperClass = !showNavbar
+    ? 'content-wrapper--hidden'
+    : isCollapsed
+      ? 'content-wrapper--collapsed'
+      : 'content-wrapper--expanded';
+
   // If session was killed from another tab (user closed business there), redirect to list
   useEffect(() => {
     if (sessionKilledFromOtherTab && !pathname?.startsWith('/list-business')) {
@@ -104,9 +110,7 @@ export default function AppLayout({
           <Navbar isCollapsed={isCollapsed} onToggle={toggleNavbar} planName={navbarPlanName} />
         )}
 
-        <div
-          className={`content-wrapper ${isCollapsed || !showNavbar ? 'content-wrapper--collapsed' : ''}`}
-        >
+        <div className={`content-wrapper ${contentWrapperClass}`}>
           <main className={`main-area ${isChatPage ? 'main-area--chat' : ''}`}>{children}</main>
         </div>
 

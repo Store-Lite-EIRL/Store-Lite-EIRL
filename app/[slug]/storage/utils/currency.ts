@@ -38,8 +38,8 @@ export function parsePriceValue(price: string): number {
  * Formatea un valor numérico con el símbolo de moneda.
  */
 export function formatPrice(value: number, currencySymbol: string): string {
-  const formatted = Number.isInteger(value)
-    ? value.toString()
-    : value.toFixed(2).replace(/\.?0+$/, '');
-  return `${currencySymbol}${formatted}`;
+  // Siempre mostrar 2 decimales y forzar el uso de punto como separador decimal
+  const formatted = value.toFixed(2);
+  // Agregamos un espacio entre el símbolo y el monto para mejor legibilidad
+  return `${currencySymbol} ${formatted}`;
 }

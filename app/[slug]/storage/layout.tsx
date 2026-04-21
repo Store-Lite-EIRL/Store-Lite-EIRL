@@ -1,6 +1,4 @@
-import { db } from '@/core/database/client';
-import { businesses } from '@/core/database/schema';
-import { eq } from 'drizzle-orm';
+import { resolveBusinessSlug } from '@/core/business/slug';
 import { notFound } from 'next/navigation';
 import { CurrencyProvider } from './context/CurrencyContext';
 import { getCurrencyByCountry } from './utils/currency';
@@ -12,10 +10,7 @@ interface StorageLayoutProps {
 
 export default async function StorageLayout({ children, params }: StorageLayoutProps) {
   const { slug } = await params;
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-    columns: { country: true },
-  });
+  const business = (await resolveBusinessSlug(slug))?.business;
 
   if (!business) {
     notFound();

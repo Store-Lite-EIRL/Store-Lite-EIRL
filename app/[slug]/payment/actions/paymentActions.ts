@@ -1,7 +1,8 @@
 'use server';
 
+import { resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
-import { businesses, payments, products } from '@/core/database/schema';
+import { payments, products } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { createClient } from '@/lib/supabase/server';
 import { and, eq, gt, sql } from 'drizzle-orm';
@@ -64,10 +65,7 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
     return { success: false, error: 'Payment gateway not configured (missing CULQI_SK).' };
   }
 
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, businessSlug),
-    columns: { id: true, ownerId: true, isActive: true },
-  });
+  const business = (await resolveBusinessSlug(businessSlug))?.business;
 
   if (!business) {
     return { success: false, error: 'Negocio no encontrado.' };
@@ -141,7 +139,7 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
         capture: true,
         metadata: {
           product_id: productId,
-          business_slug: businessSlug,
+          business_slug: business.slug,
           buyer_phone: buyerPhone || '',
         },
       }),
@@ -228,7 +226,7 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
     };
   }
 
-  revalidatePath(`/${businessSlug}`);
+  revalidatePath(`/${business.slug}`);
 
   return {
     success: true,

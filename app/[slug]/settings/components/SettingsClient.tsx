@@ -5,7 +5,6 @@ import {
   createDefaultStorefrontLayout,
   createDefaultStorefrontTheme,
   createRandomStorefrontTheme,
-  getReadableTextColor,
   normalizeStorefrontLayout,
   normalizeStorefrontTheme,
   type GridGap,
@@ -16,6 +15,7 @@ import {
 } from '@/core/storefront';
 import type { Permission } from '@/lib/permissions/definitions';
 import { DEFAULT_ROLE_PERMISSIONS } from '@/lib/permissions/definitions';
+import { BusinessPreviewCard } from '@/shared/components/business/BusinessPreviewCard';
 import {
   AlertSnackbar,
   Button,
@@ -35,7 +35,7 @@ import {
 } from '@/shared/components/ui';
 import { Dialog } from '@/shared/components/ui/surfaces/Dialog';
 import { ThemeSettings } from '@/shared/components/ui/ThemeSettings';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import React, {
   useCallback,
   useEffect,
@@ -250,72 +250,7 @@ function CopyableValue({ value }: { value: string }) {
   );
 }
 
-function StorefrontThemePreview({
-  businessName,
-  storefrontTheme,
-}: {
-  businessName: string;
-  storefrontTheme?: StorefrontTheme;
-}) {
-  // Si no hay tema, usamos uno por defecto (colores de la plataforma)
-  const theme = storefrontTheme || createDefaultStorefrontTheme();
-  const titleColor = getReadableTextColor(theme.palette.primary);
-  const accentTextColor = getReadableTextColor(theme.palette.accent);
 
-  return (
-    <div
-      className={styles.themePreviewCard}
-      style={
-        {
-          background: `linear-gradient(135deg, ${theme.palette.primary}, ${theme.palette.secondary}, ${theme.palette.accent})`,
-          '--storefront-font-family':
-            theme.fontFamily === 'roboto'
-              ? 'var(--font-storefront-roboto), var(--mio-theme-text-font-family), sans-serif'
-              : theme.fontFamily === 'poppins'
-                ? 'var(--font-storefront-poppins), var(--mio-theme-text-font-family), sans-serif'
-                : 'var(--font-storefront-inter), var(--mio-theme-text-font-family), sans-serif',
-        } as CSSProperties & Record<string, string>
-      }
-    >
-      <div className={styles.themePreviewHeader}>
-        <span className={styles.themePreviewBadge}>
-          {theme.surfaceMode === 'dark' ? 'Fondo oscuro' : 'Fondo claro'}
-        </span>
-        <span className={styles.themePreviewBadge}>
-          {STOREFRONT_FONT_OPTIONS.find((option) => option.value === theme.fontFamily)
-            ?.description ?? 'Inter'}
-        </span>
-      </div>
-      <div className={styles.themePreviewSurface}>
-        <p className={styles.themePreviewEyebrow}>Vista previa pública</p>
-        <h3 className={styles.themePreviewTitle}>{businessName}</h3>
-        <p className={styles.themePreviewText}>
-          Así se van a sentir los colores y la tipografía principal en tu storefront.
-        </p>
-        <div className={styles.themePreviewActions}>
-          <span
-            className={styles.themePreviewPrimary}
-            style={{
-              backgroundColor: theme.palette.primary,
-              color: titleColor,
-            }}
-          >
-            Comprar
-          </span>
-          <span
-            className={styles.themePreviewSecondary}
-            style={{
-              backgroundColor: theme.palette.accent,
-              color: accentTextColor,
-            }}
-          >
-            Destacado
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function BusinessSection({
   business,
@@ -481,7 +416,7 @@ function BusinessSection({
         <div className={styles.slugEditContent}>
           {!isEditingSlug ? (
             <div className={styles.slugDisplayContainer}>
-              <CopyableValue value={`https://app.com/${business.slug}`} />
+              <CopyableValue value={`https://store.lite.com/${business.slug}`} />
             </div>
           ) : (
             <div className={styles.slugEditor}>
@@ -769,9 +704,21 @@ function AppearanceSection({
             <div
               className={`${styles.themePreviewWrap} ${usePlatformColors ? styles.disabledCard : ''}`}
             >
-              <StorefrontThemePreview
-                businessName={business.name}
-                storefrontTheme={usePlatformColors ? undefined : storefrontTheme}
+              <BusinessPreviewCard
+                commercialName={business.name}
+                sector={business.storeType || ''}
+                country={business.country || ''}
+                city={business.city || ''}
+                address={business.address || ''}
+                email={business.email || ''}
+                description={business.description || ''}
+                taxId={business.taxId || ''}
+                legalRepName={business.legalRepName || ''}
+                legalRepRole={business.legalRepRole || ''}
+                logoPreview={business.logoUrl}
+                storefrontTheme={usePlatformColors ? createDefaultStorefrontTheme() : storefrontTheme}
+                onStorefrontThemeChange={(theme) => setStorefrontTheme(theme)}
+                showDownloadButton={false}
               />
             </div>
 
@@ -937,6 +884,9 @@ function PlanSection({
   entitlements: Entitlements;
   isOwner: boolean;
 }) {
+  const router = useRouter();
+  const params = useParams();
+  const slug = params.slug as string;
   const planKey = entitlements.plan;
   const config = PLAN_CONFIG[planKey as keyof typeof PLAN_CONFIG] ?? PLAN_CONFIG.basico;
 
@@ -1039,8 +989,8 @@ function PlanSection({
       </Card>
 
       <div className={styles.actionRow}>
-        <Button variant="filled">
-          <Icon slot="icon" size={20}>
+        <Button variant="filled" onClick={() => router.push(`/pricing?slug=${slug}`)}>
+          <Icon slot="icon" size={21}>
             upgrade
           </Icon>
           Cambiar plan
@@ -1330,12 +1280,12 @@ function StorefrontSectionEditor({
       updateSection(prev, 'product_grid', (section) =>
         section.type === 'product_grid'
           ? {
-              ...section,
-              config: {
-                ...section.config,
-                [key]: value,
-              },
-            }
+            ...section,
+            config: {
+              ...section.config,
+              [key]: value,
+            },
+          }
           : section,
       ),
     );
@@ -2013,7 +1963,7 @@ function TeamSection({
 
   const handleCopyCode = () => {
     if (invitationCode) {
-      navigator.clipboard.writeText(invitationCode).catch(() => {});
+      navigator.clipboard.writeText(invitationCode).catch(() => { });
     }
   };
 
@@ -2189,8 +2139,8 @@ function TeamSection({
                                     handleChangeRole(
                                       member.userId,
                                       (e.target?.value || e.currentTarget?.value) as
-                                        | 'admin'
-                                        | 'member',
+                                      | 'admin'
+                                      | 'member',
                                     )
                                   }
                                   style={{ minWidth: '130px' }}
@@ -2401,10 +2351,12 @@ function TeamSection({
 
 function PaymentsSection({
   business,
+  entitlements,
   isOwner,
   permissions,
 }: {
   business: SettingsBusiness;
+  entitlements: Entitlements;
   isOwner: boolean;
   permissions: Permission[];
 }) {
@@ -2413,6 +2365,12 @@ function PaymentsSection({
   const [publicKey, setPublicKey] = useState(business.culqiPublicKey || '');
   const [secretKey, setSecretKey] = useState(business.culqiSecretKey || '');
   const [error, setError] = useState<string | null>(null);
+
+  // Estados para visibilidad de llaves
+  const [showPublicKeyPreview, setShowPublicKeyPreview] = useState(false);
+  const [showSecretKeyPreview, setShowSecretKeyPreview] = useState(false);
+  const [showSecretKeyInput, setShowSecretKeyInput] = useState(false);
+
   const [feedback, setFeedback] = useState<{
     open: boolean;
     description: string;
@@ -2433,7 +2391,12 @@ function PaymentsSection({
 
     startTransition(async () => {
       setError(null);
-      const result = await updateCulqiCredentials(business.id, publicKey, secretKey);
+      const result = await updateCulqiCredentials(
+        business.id,
+        publicKey,
+        secretKey,
+        entitlements.plan,
+      );
       if (result.success) {
         setFeedback({
           open: true,
@@ -2456,6 +2419,34 @@ function PaymentsSection({
   };
 
   const isConfigured = business.culqiPublicKey && business.culqiSecretKey;
+
+  const isPremiumPlan = ['business_pro', 'enterprise_ai'].includes(entitlements.plan);
+  const router = useRouter();
+
+  if (!isPremiumPlan) {
+    return (
+      <div className={styles.sectionArea}>
+        <SectionHeader title="Pagos" subtitle="Configurá cómo recibís el dinero de tus ventas." />
+        <Card variant="outlined" className={styles.upgradeBanner}>
+          <div className={styles.upgradeBannerContent}>
+            <Icon size={24} style={{ color: 'var(--md-sys-color-primary)' } as React.CSSProperties}>
+              lock
+            </Icon>
+            <div>
+              <p className={styles.upgradeBannerTitle}>Pasarela de pagos premium</p>
+              <p className={styles.upgradeBannerText}>
+                La integración con Culqi para recibir cobros automáticos está disponible en planes
+                Business Pro o superior.
+              </p>
+            </div>
+          </div>
+          <Button variant="filled" onClick={() => router.push('/pricing')}>
+            Sube de nivel
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.sectionArea}>
@@ -2500,77 +2491,99 @@ function PaymentsSection({
             </div>
           </div>
 
-          {isConfigured ? (
+          <div
+            style={{
+              backgroundColor: 'var(--md-sys-color-surface-container-low)',
+              borderRadius: '12px',
+              padding: '20px',
+              marginBottom: '16px',
+              border: '1px solid var(--md-sys-color-outline-variant)',
+            }}
+          >
             <div
               style={{
-                backgroundColor: 'var(--md-sys-color-surface-container-low)',
-                borderRadius: '8px',
-                padding: '16px',
-                marginBottom: '16px',
-                border: '1px solid var(--md-sys-color-outline-variant)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px',
               }}
             >
-              <div
+              <span
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '8px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: 'var(--md-sys-color-on-surface-variant)',
+                  textTransform: 'uppercase',
                 }}
               >
-                <span
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: 'var(--md-sys-color-on-surface-variant)',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Estado
+                Estado del Servicio
+              </span>
+              <div className={styles.statusIndicator}>
+                <div
+                  className={`${styles.statusDot} ${isConfigured ? styles.statusDotActive : styles.statusDotInactive}`}
+                />
+                <span className={styles.statusText}>
+                  {isConfigured ? 'Conectado' : 'Desconectado'}
                 </span>
-                <Chips label="Conectado" variant="filter" selected />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span
-                    style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)' }}
-                  >
-                    Public Key
-                  </span>
-                  <code style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface)' }}>
-                    {maskKey(business.culqiPublicKey)}
-                  </code>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span
-                    style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface-variant)' }}
-                  >
-                    Secret Key
-                  </span>
-                  <code style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface)' }}>
-                    {maskKey(business.culqiSecretKey)}
-                  </code>
-                </div>
               </div>
             </div>
-          ) : (
-            <div
-              style={{
-                padding: '16px',
-                backgroundColor: 'var(--md-sys-color-error-container)',
-                color: 'var(--md-sys-color-on-error-container)',
-                borderRadius: '8px',
-                marginBottom: '16px',
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-              }}
-            >
-              <Icon size={20}>info</Icon>
-              Aún no has configurado tus credenciales. Los pagos con tarjeta no estarán disponibles.
-            </div>
-          )}
+
+            {isConfigured ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className={styles.keyRow}>
+                  <div className={styles.keyLabelGroup}>
+                    <span
+                      style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}
+                    >
+                      Public Key
+                    </span>
+                    <span className={styles.keyValue}>
+                      {showPublicKeyPreview
+                        ? business.culqiPublicKey
+                        : maskKey(business.culqiPublicKey)}
+                    </span>
+                  </div>
+                  <IconButton onClick={() => setShowPublicKeyPreview(!showPublicKeyPreview)}>
+                    <Icon size={20}>{showPublicKeyPreview ? 'visibility_off' : 'visibility'}</Icon>
+                  </IconButton>
+                </div>
+
+                <div className={styles.keyRow}>
+                  <div className={styles.keyLabelGroup}>
+                    <span
+                      style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}
+                    >
+                      Secret Key
+                    </span>
+                    <span className={styles.keyValue}>
+                      {showSecretKeyPreview
+                        ? business.culqiSecretKey
+                        : maskKey(business.culqiSecretKey)}
+                    </span>
+                  </div>
+                  <IconButton onClick={() => setShowSecretKeyPreview(!showSecretKeyPreview)}>
+                    <Icon size={20}>{showSecretKeyPreview ? 'visibility_off' : 'visibility'}</Icon>
+                  </IconButton>
+                </div>
+              </div>
+            ) : (
+              <div
+                style={{
+                  padding: '12px',
+                  backgroundColor: 'var(--md-sys-color-error-container)',
+                  color: 'var(--md-sys-color-on-error-container)',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                }}
+              >
+                <Icon size={18}>info</Icon>
+                Acción requerida: Configura tus llaves para activar los pagos.
+              </div>
+            )}
+          </div>
 
           <Button
             variant={isConfigured ? 'outlined' : 'filled'}
@@ -2590,7 +2603,7 @@ function PaymentsSection({
         <div slot="content">
           <p
             style={{
-              marginBottom: '24px',
+              marginBottom: '16px',
               fontSize: '14px',
               color: 'var(--md-sys-color-on-surface-variant)',
             }}
@@ -2598,6 +2611,52 @@ function PaymentsSection({
             Ingresá tus API Keys de Culqi. Podés encontrarlas en tu panel de Culqi {'>'} Desarrollo{' '}
             {'>'} API Keys.
           </p>
+
+          {/* Información sobre métodos de pago */}
+          <div
+            style={{
+              backgroundColor: 'var(--md-sys-color-surface-container-low)',
+              borderRadius: '8px',
+              padding: '16px',
+              marginBottom: '20px',
+              border: '1px solid var(--md-sys-color-outline-variant)',
+            }}
+          >
+            <p
+              style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                color: 'var(--md-sys-color-on-surface)',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <Icon size={16}>info</Icon>
+              Métodos de pago disponibles
+            </p>
+            <ul
+              style={{
+                fontSize: '12px',
+                color: 'var(--md-sys-color-on-surface-variant)',
+                margin: 0,
+                paddingLeft: '20px',
+                lineHeight: 1.8,
+              }}
+            >
+              <li>
+                <strong>Tarjetas:</strong> Crédito y débito (Visa, Mastercard, American Express)
+              </li>
+              <li>
+                <strong>Yape:</strong> Monto mínimo S/ 6.00 — Si el pago es menor, solo aparecerá tarjeta
+              </li>
+              <li>
+                <strong>Nota:</strong> Los métodos de pago se muestran automáticamente según el monto de la compra.
+                Yape requiere un monto mínimo de S/ 6.00.
+              </li>
+            </ul>
+          </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <TextField
@@ -2607,16 +2666,27 @@ function PaymentsSection({
               placeholder="pk_live_..."
               error={!!error && !publicKey.startsWith('pk_')}
               disabled={isPending}
-            />
+            >
+              <Icon slot="leading-icon">key</Icon>
+            </TextField>
             <TextField
               label="Secret Key"
               value={secretKey}
               onInput={(e: any) => setSecretKey(e.target.value)}
               placeholder="sk_live_..."
-              type="password"
+              type={showSecretKeyInput ? 'text' : 'password'}
               error={!!error && !secretKey.startsWith('sk_')}
               disabled={isPending}
-            />
+            >
+              <Icon slot="leading-icon">lock</Icon>
+              <IconButton
+                slot="trailing-icon"
+                onClick={() => setShowSecretKeyInput(!showSecretKeyInput)}
+                disabled={isPending}
+              >
+                <Icon>{showSecretKeyInput ? 'visibility_off' : 'visibility'}</Icon>
+              </IconButton>
+            </TextField>
             {error && (
               <p style={{ color: 'var(--md-sys-color-error)', fontSize: '12px', margin: 0 }}>
                 {error}
@@ -2682,9 +2752,11 @@ export function SettingsClient({
           case 'legal':
             hasAccess = permissions.includes('legal.edit');
             break;
-          case 'payments':
-            hasAccess = permissions.includes('business.edit');
+          case 'payments': {
+            const isPremiumPlan = ['business_pro', 'enterprise_ai'].includes(entitlements.plan);
+            hasAccess = isPremiumPlan && (isOwner || permissions.includes('business.edit'));
             break;
+          }
         }
       }
       return { ...item, hasAccess };
@@ -2817,7 +2889,12 @@ export function SettingsClient({
                 <LegalSection business={business} isOwner={isOwner} permissions={permissions} />
               )}
               {active === 'payments' && (
-                <PaymentsSection business={business} isOwner={isOwner} permissions={permissions} />
+                <PaymentsSection
+                  business={business}
+                  entitlements={entitlements}
+                  isOwner={isOwner}
+                  permissions={permissions}
+                />
               )}
             </>
           )}

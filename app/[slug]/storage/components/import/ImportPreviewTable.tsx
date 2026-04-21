@@ -67,7 +67,7 @@ export function ImportPreviewTable({ rows }: ImportPreviewTableProps) {
                 >
                   {r.description || '—'}
                 </td>
-                <td style={{ textAlign: 'center' }}>{r.stock}</td>
+                 <td style={{ textAlign: 'center' }}>{r.stock === 0 ? 'AGOTADO' : r.stock}</td>
                 <td
                   style={{
                     textAlign: 'right',

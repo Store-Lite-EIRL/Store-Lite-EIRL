@@ -1,6 +1,8 @@
 import { env } from '@/config/env';
+import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
-import { businesses, businessSettings } from '@/core/database/schema';
+import { businessSettings } from '@/core/database/schema';
+import { eq } from 'drizzle-orm';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import {
   getStorefrontLayoutFromPreferences,
@@ -9,10 +11,9 @@ import {
 } from '@/core/storefront';
 import { getMemberPermissions } from '@/lib/permissions/checkPermission';
 import { createServerClient } from '@supabase/ssr';
-import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { SettingsClient, type SettingsBusiness } from './components/SettingsClient';
 
 interface SettingsPageProps {
@@ -21,10 +22,7 @@ interface SettingsPageProps {
 
 export async function generateMetadata({ params }: SettingsPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-    columns: { name: true },
-  });
+  const business = (await resolveBusinessSlug(slug))?.business;
 
   return {
     title: business ? `Ajustes — ${business.name}` : 'Ajustes | Store Lite',
@@ -36,12 +34,15 @@ export async function generateMetadata({ params }: SettingsPageProps): Promise<M
 export default async function SettingsPage({ params }: SettingsPageProps) {
   const { slug } = await params;
 
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-  });
+  const resolvedBusiness = await resolveBusinessSlug(slug);
+  const business = resolvedBusiness?.business;
 
   if (!business) {
     return notFound();
+  }
+
+  if (resolvedBusiness.matchedAlias) {
+    redirect(replaceSlugInPath(`/${slug}/settings`, slug, resolvedBusiness.canonicalSlug));
   }
 
   // --- Auth & Permission Guard ---
