@@ -3,9 +3,10 @@
 .card {
   background: var(--md-sys-color-surface-container-high);
   border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: 20px;
+  border-radius: 24px;
   overflow: hidden;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .tableWrapper {
@@ -20,14 +21,13 @@
 }
 
 .table th {
-  padding: 1rem 1.5rem;
-  font-size: 0.8rem;
-  font-weight: 600;
+  padding: 1.25rem 1.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
   color: var(--md-sys-color-on-surface-variant);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   border-bottom: 1px solid var(--md-sys-color-outline-variant);
-  white-space: nowrap;
 }
 
 .table td {
@@ -38,19 +38,31 @@
   vertical-align: middle;
 }
 
-.table tr:last-child td {
-  border-bottom: none;
-}
-
 .table tr:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface) 3%, transparent);
+  background: color-mix(in srgb, var(--md-sys-color-primary) 5%, transparent);
 }
 
 /* ─── Cell Styles ─── */
-.productTitle {
-  font-weight: 600;
+.orderNumber {
+  font-family: 'Google Sans', monospace;
+  font-weight: 700;
   color: var(--md-sys-color-primary);
-  display: block;
+  background: var(--md-sys-color-primary-container);
+  padding: 0.25rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+}
+
+.productTableLink {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.productTableLink:hover {
+  color: var(--md-sys-color-primary);
+  text-decoration: underline;
 }
 
 .priceCell {
@@ -58,90 +70,457 @@
   white-space: nowrap;
 }
 
-.addressText {
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.8rem;
-  display: block;
-  max-width: 250px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .dateCell {
   color: var(--md-sys-color-on-surface-variant);
-  font-family: monospace;
+  font-size: 0.8rem;
   white-space: nowrap;
+}
+
+/* ─── Tracking Visualizer ─── */
+.trackingContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 280px;
+  padding: 0.75rem 0.5rem;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.trackingContainer:hover {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.iconWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--md-sys-color-surface-container-lowest);
+  border: 1.5px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-outline);
+  transition: all 0.3s;
+}
+
+.iconWrapper.active {
+  background: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.inlineLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+  margin-left: 0.5rem;
+}
+
+/* ─── Dots Logic ─── */
+.dotsWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0 0.25rem;
+  max-width: 80px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--md-sys-color-outline-variant);
+}
+
+.activeDot {
+  background: var(--md-sys-color-primary);
+}
+
+.glowingDot {
+  background: var(--md-sys-color-primary);
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--md-sys-color-primary) 60%, transparent);
+  }
+  70% {
+    transform: scale(1.4);
+    box-shadow: 0 0 0 6px transparent;
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 transparent;
+  }
 }
 
 /* ─── Status Badges ─── */
 .statusBadge {
   display: inline-flex;
-  padding: 0.35rem 0.85rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  white-space: nowrap;
-  background: var(--md-sys-color-outline-variant);
+  padding: 0.4rem 1rem;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .statusPaid {
-  background: #fef3c7; /* Amber 100 */
-  color: #92400e; /* Amber 800 */
+  background: #fef3c7;
+  color: #92400e;
 }
-
 .statusShipped {
-  background: #dbeafe; /* Blue 100 */
-  color: #1e40af; /* Blue 800 */
+  background: #dbeafe;
+  color: #1e40af;
 }
-
 .statusDelivered {
-  background: #dcfce7; /* Green 100 */
-  color: #166534; /* Green 800 */
+  background: #dcfce7;
+  color: #166534;
 }
-
 .statusCompleted {
-  background: #f0fdf4; /* Emerald 50 */
-  color: #065f46; /* Emerald 800 */
+  background: #f0fdf4;
+  color: #065f46;
 }
-
 .statusProcessing {
-  background: #f3e8ff; /* Purple 100 */
-  color: #6b21a8; /* Purple 800 */
+  background: #f3e8ff;
+  color: #6b21a8;
 }
-
 .statusPending {
-  background: #f3f4f6; /* Gray 100 */
-  color: #374151; /* Gray 800 */
+  background: #f3f4f6;
+  color: #374151;
 }
-
 .statusFailed {
-  background: #fee2e2; /* Red 100 */
-  color: #991b1b; /* Red 800 */
+  background: #fee2e2;
+  color: #991b1b;
+}
+.statusRefunded {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+.statusDisputed {
+  background: #ffedd5;
+  color: #c2410c;
 }
 
-/* ─── Empty State ─── */
-.empty {
-  padding: 4rem 2rem;
-  text-align: center;
+/* ─── Filters MD3 ─── */
+.filtersHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
 
-.emptyText {
+.searchWrapper {
+  flex: 1;
+  min-width: 250px;
+}
+
+.searchInputMD3,
+.statusSelectMD3,
+.limitSelectMD3 {
+  width: 100%;
+}
+
+.filterGroup {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* ─── MODAL STYLES ─── */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1.5rem;
+}
+
+.modalContent {
+  background: var(--md-sys-color-surface-container-highest);
+  border-radius: 32px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.modalHeaderTitle h2 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
   color: var(--md-sys-color-on-surface-variant);
-  font-style: italic;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
 }
 
-@media (max-width: 850px) {
-  .table th:nth-child(3),
-  .table td:nth-child(3) {
-    display: none; /* Hide address on tablet */
+.closeButton:hover {
+  background: var(--md-sys-color-surface-variant);
+}
+
+.modalBody {
+  padding: 2rem;
+}
+
+.modalStatusHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.statusBadgeLarge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 16px;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.dateTime {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.modalGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.infoSection {
+  margin-bottom: 2rem;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--md-sys-color-outline);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 1rem;
+}
+
+.productCard {
+  display: flex;
+  gap: 1rem;
+  background: var(--md-sys-color-surface-container-low);
+  padding: 1rem;
+  border-radius: 20px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.productImageWrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.productImg {
+  object-fit: contain;
+}
+
+.productLink {
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 1rem;
+}
+
+.itemPrice {
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.95rem;
+}
+
+.paymentDetails {
+  background: var(--md-sys-color-surface-container-low);
+  padding: 1.25rem;
+  border-radius: 20px;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.totalRow {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin-top: 0.5rem;
+}
+
+.totalRow span:last-child {
+  color: var(--md-sys-color-primary);
+}
+
+.customerCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dataItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.shippingPath {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: relative;
+  padding-left: 0.5rem;
+}
+
+.shippingPath::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: var(--md-sys-color-outline-variant);
+}
+
+.pathItem {
+  display: flex;
+  gap: 1rem;
+  position: relative;
+}
+
+.pathIcon {
+  width: 24px;
+  height: 24px;
+  padding: 4px;
+  border-radius: 6px;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.pathLabel {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--md-sys-color-outline);
+  margin: 0;
+}
+.pathValue {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+.pathSubValue {
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0.2rem 0 0 0;
+}
+
+.modalFooter {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.primaryButton {
+  padding: 0.75rem 2.5rem;
+  border-radius: 100px;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border: none;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+  gap: 1.5rem;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.pageButton {
+  padding: 0.6rem 1.5rem;
+  border-radius: 100px;
+  border: 1px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 1100px) {
+  .trackingCell {
+    display: none;
   }
 }
 
-@media (max-width: 600px) {
-  .table th:nth-child(2),
-  .table td:nth-child(2),
-  .table th:nth-child(5),
-  .table td:nth-child(5) {
-    display: none; /* Hide price and date on small mobile */
+@media (max-width: 768px) {
+  .modalGrid {
+    grid-template-columns: 1fr;
   }
 }

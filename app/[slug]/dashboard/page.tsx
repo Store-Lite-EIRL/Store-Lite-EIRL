@@ -1,35 +1,48 @@
-import { notFound, redirect } from 'next/navigation';
-import { eq, and, count, desc, sql, gte, lt, sum, lte, gt } from 'drizzle-orm';
 import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
-import { 
-  products, 
-  productCategories, 
-  formMessages, 
-  productLikes,
+import {
   businessSubscriptions,
+  formMessages,
+  messages,
   payments,
-  messages
+  productCategories,
+  productLikes,
+  productMedia,
+  products,
 } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
+import { and, count, desc, eq, gt, gte, lt, lte, sql, sum } from 'drizzle-orm';
+import { notFound, redirect } from 'next/navigation';
 
 import { DashboardHeader } from './components/DashboardHeader';
-import { StatCards } from './components/StatCards';
 import { EarningsStats } from './components/EarningsStats';
-import { MarketInsights } from './components/MarketInsights';
 import { InventoryAlerts } from './components/InventoryAlerts';
+import { MarketInsights } from './components/MarketInsights';
 import { NotificationsPreview } from './components/NotificationsPreview';
 import { PlanStatusBar } from './components/PlanStatusBar';
 import { RecentOrders } from './components/RecentOrders';
+import { StatCards } from './components/StatCards';
 
 import styles from './dashboard.module.css';
 
 interface DashboardProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{
+    page?: string;
+    limit?: string;
+    status?: string;
+    search?: string;
+  }>;
 }
 
-export default async function Dashboard({ params }: DashboardProps) {
+export default async function Dashboard({ params, searchParams }: DashboardProps) {
   const { slug } = await params;
+  const { page, limit, status, search } = await searchParams;
+
+  const currentPage = Math.max(1, parseInt(page || '1'));
+  const currentLimit = Math.max(1, Math.min(100, parseInt(limit || '10')));
+  const offset = (currentPage - 1) * currentLimit;
+
   const lastUpdatedAt = new Date().toISOString();
 
   // 1. Fetch business core data
@@ -46,7 +59,7 @@ export default async function Dashboard({ params }: DashboardProps) {
 
   // ─── Time Period Definitions ───
   const now = new Date();
-  
+
   // Today vs Yesterday
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const startOfYesterday = new Date(startOfToday);
@@ -64,45 +77,76 @@ export default async function Dashboard({ params }: DashboardProps) {
   const sixtyDaysAgo = new Date(now);
   sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
 
+  // ─── Filters for Recent Orders ───
+  const orderFilters = [eq(payments.businessId, business.id)];
+
+  if (status && status !== 'all') {
+    orderFilters.push(eq(payments.status, status as any));
+  }
+
+  if (search) {
+    const searchTerm = `%${search}%`;
+    orderFilters.push(sql`${payments.shippingAddress} ILIKE ${searchTerm}`);
+  }
+
+  const orderWhere = and(...orderFilters);
+
   // 2. Resolve entitlements & plan
   const [entitlements, subscription] = await Promise.all([
     getBusinessEntitlements(business.id),
     db.query.businessSubscriptions.findFirst({
       where: and(
         eq(businessSubscriptions.businessId, business.id),
-        eq(businessSubscriptions.planStatus, 'active')
+        eq(businessSubscriptions.planStatus, 'active'),
       ),
       orderBy: [desc(businessSubscriptions.createdAt)],
-    })
+    }),
   ]);
 
   // 3. Parallel fetching for stats & financial analysis
-  const [
-    counts,
-    inventoryData,
-    financialMetrics,
-    recentOrdersData
-  ] = await Promise.all([
+  const [counts, inventoryData, financialMetrics, recentOrdersResult] = await Promise.all([
     // Group 1: General Counts & Alerts Prep
     Promise.all([
       db.select({ count: count() }).from(products).where(eq(products.businessId, business.id)),
-      db.select({ count: count() }).from(productCategories).where(eq(productCategories.businessId, business.id)),
+      db
+        .select({ count: count() })
+        .from(productCategories)
+        .where(eq(productCategories.businessId, business.id)),
       // Unread Form Messages + Unread Chat Messages
-      db.select({ count: count() }).from(formMessages).where(and(eq(formMessages.businessId, business.id), eq(formMessages.isRead, false))),
-      db.select({ count: count() })
+      db
+        .select({ count: count() })
+        .from(formMessages)
+        .where(and(eq(formMessages.businessId, business.id), eq(formMessages.isRead, false))),
+      db
+        .select({ count: count() })
         .from(messages)
         .innerJoin(products, eq(products.businessId, business.id))
         .where(and(eq(messages.isRead, false), eq(messages.isFromStore, false))),
-      db.select({ count: count() })
+      db
+        .select({ count: count() })
         .from(productLikes)
         .innerJoin(products, eq(productLikes.productId, products.id))
         .where(eq(products.businessId, business.id)),
-      db.select({ count: count() }).from(payments).where(and(eq(payments.businessId, business.id), eq(payments.status, 'paid'))),
+      db
+        .select({ count: count() })
+        .from(payments)
+        .where(and(eq(payments.businessId, business.id), eq(payments.status, 'paid'))),
       // Out of Stock & Low Stock Counts
-      db.select({ count: count() }).from(products).where(and(eq(products.businessId, business.id), eq(products.stock, 0))),
-      db.select({ count: count() }).from(products).where(and(eq(products.businessId, business.id), gt(products.stock, 0), lte(products.stock, 5))),
+      db
+        .select({ count: count() })
+        .from(products)
+        .where(and(eq(products.businessId, business.id), eq(products.stock, 0))),
+      db
+        .select({ count: count() })
+        .from(products)
+        .where(
+          and(eq(products.businessId, business.id), gt(products.stock, 0), lte(products.stock, 5)),
+        ),
       // Added this week
-      db.select({ count: count() }).from(products).where(and(eq(products.businessId, business.id), gte(products.createdAt, sevenDaysAgo)))
+      db
+        .select({ count: count() })
+        .from(products)
+        .where(and(eq(products.businessId, business.id), gte(products.createdAt, sevenDaysAgo))),
     ]),
 
     // Group 2: Inventory Lists
@@ -121,43 +165,146 @@ export default async function Dashboard({ params }: DashboardProps) {
       }),
       // Low Stock
       db.query.products.findMany({
-        where: and(eq(products.businessId, business.id), gt(products.stock, 0), lte(products.stock, 5)),
+        where: and(
+          eq(products.businessId, business.id),
+          gt(products.stock, 0),
+          lte(products.stock, 5),
+        ),
         limit: 4,
         orderBy: [desc(products.stock)],
-      })
+      }),
     ]),
 
     // Group 3: Financials
     Promise.all([
       // Daily Earnings
-      db.select({ sum: sum(payments.amount) }).from(payments).where(and(eq(payments.businessId, business.id), eq(payments.status, 'paid'), gte(payments.createdAt, startOfToday))),
-      db.select({ sum: sum(payments.amount) }).from(payments).where(and(eq(payments.businessId, business.id), eq(payments.status, 'paid'), gte(payments.createdAt, startOfYesterday), lt(payments.createdAt, startOfToday))),
-      
+      db
+        .select({ sum: sum(payments.amount) })
+        .from(payments)
+        .where(
+          and(
+            eq(payments.businessId, business.id),
+            eq(payments.status, 'paid'),
+            gte(payments.createdAt, startOfToday),
+          ),
+        ),
+      db
+        .select({ sum: sum(payments.amount) })
+        .from(payments)
+        .where(
+          and(
+            eq(payments.businessId, business.id),
+            eq(payments.status, 'paid'),
+            gte(payments.createdAt, startOfYesterday),
+            lt(payments.createdAt, startOfToday),
+          ),
+        ),
+
       // Weekly Earnings
-      db.select({ sum: sum(payments.amount) }).from(payments).where(and(eq(payments.businessId, business.id), eq(payments.status, 'paid'), gte(payments.createdAt, sevenDaysAgo))),
-      db.select({ sum: sum(payments.amount) }).from(payments).where(and(eq(payments.businessId, business.id), eq(payments.status, 'paid'), gte(payments.createdAt, fourteenDaysAgo), lt(payments.createdAt, sevenDaysAgo))),
+      db
+        .select({ sum: sum(payments.amount) })
+        .from(payments)
+        .where(
+          and(
+            eq(payments.businessId, business.id),
+            eq(payments.status, 'paid'),
+            gte(payments.createdAt, sevenDaysAgo),
+          ),
+        ),
+      db
+        .select({ sum: sum(payments.amount) })
+        .from(payments)
+        .where(
+          and(
+            eq(payments.businessId, business.id),
+            eq(payments.status, 'paid'),
+            gte(payments.createdAt, fourteenDaysAgo),
+            lt(payments.createdAt, sevenDaysAgo),
+          ),
+        ),
 
       // Monthly Earnings
-      db.select({ sum: sum(payments.amount) }).from(payments).where(and(eq(payments.businessId, business.id), eq(payments.status, 'paid'), gte(payments.createdAt, thirtyDaysAgo))),
-      db.select({ sum: sum(payments.amount) }).from(payments).where(and(eq(payments.businessId, business.id), eq(payments.status, 'paid'), gte(payments.createdAt, sixtyDaysAgo), lt(payments.createdAt, thirtyDaysAgo))),
+      db
+        .select({ sum: sum(payments.amount) })
+        .from(payments)
+        .where(
+          and(
+            eq(payments.businessId, business.id),
+            eq(payments.status, 'paid'),
+            gte(payments.createdAt, thirtyDaysAgo),
+          ),
+        ),
+      db
+        .select({ sum: sum(payments.amount) })
+        .from(payments)
+        .where(
+          and(
+            eq(payments.businessId, business.id),
+            eq(payments.status, 'paid'),
+            gte(payments.createdAt, sixtyDaysAgo),
+            lt(payments.createdAt, thirtyDaysAgo),
+          ),
+        ),
 
       // Top Products by Sales
-      db.select({ name: products.title, count: count(payments.id) }).from(payments).innerJoin(products, eq(payments.productId, products.id)).where(and(eq(payments.businessId, business.id), eq(payments.status, 'paid'))).groupBy(products.title).orderBy(desc(count(payments.id))).limit(5),
+      db
+        .select({ name: products.title, count: count(payments.id) })
+        .from(payments)
+        .innerJoin(products, eq(payments.productId, products.id))
+        .where(and(eq(payments.businessId, business.id), eq(payments.status, 'paid')))
+        .groupBy(products.title)
+        .orderBy(desc(count(payments.id)))
+        .limit(5),
 
       // Top Categories by Sales
-      db.select({ name: productCategories.name, count: count(payments.id) }).from(payments).innerJoin(products, eq(payments.productId, products.id)).innerJoin(productCategories, eq(products.categoryId, productCategories.id)).where(and(eq(payments.businessId, business.id), eq(payments.status, 'paid'))).groupBy(productCategories.name).orderBy(desc(count(payments.id))).limit(5),
+      db
+        .select({ name: productCategories.name, count: count(payments.id) })
+        .from(payments)
+        .innerJoin(products, eq(payments.productId, products.id))
+        .innerJoin(productCategories, eq(products.categoryId, productCategories.id))
+        .where(and(eq(payments.businessId, business.id), eq(payments.status, 'paid')))
+        .groupBy(productCategories.name)
+        .orderBy(desc(count(payments.id)))
+        .limit(5),
 
       // Best Days
-      db.select({ day: sql<number>`EXTRACT(DOW FROM ${payments.createdAt})`, count: count(payments.id) }).from(payments).where(and(eq(payments.businessId, business.id), eq(payments.status, 'paid'), gte(payments.createdAt, sevenDaysAgo))).groupBy(sql`EXTRACT(DOW FROM ${payments.createdAt})`)
+      db
+        .select({
+          day: sql<number>`EXTRACT(DOW FROM ${payments.createdAt})`,
+          count: count(payments.id),
+        })
+        .from(payments)
+        .where(
+          and(
+            eq(payments.businessId, business.id),
+            eq(payments.status, 'paid'),
+            gte(payments.createdAt, sevenDaysAgo),
+          ),
+        )
+        .groupBy(sql`EXTRACT(DOW FROM ${payments.createdAt})`),
     ]),
 
-    // Group 4: Recent Orders
-    db.query.payments.findMany({
-      where: eq(payments.businessId, business.id),
-      limit: 10,
-      orderBy: [desc(payments.createdAt)],
-      with: { product: { columns: { title: true } } }
-    })
+    // Group 4: Recent Orders (Filtered & Paginated)
+    Promise.all([
+      db.query.payments.findMany({
+        where: orderWhere,
+        limit: currentLimit,
+        offset: offset,
+        orderBy: [desc(payments.createdAt)],
+        with: {
+          product: {
+            columns: { title: true, slug: true },
+            with: {
+              media: {
+                limit: 1,
+                orderBy: [desc(productMedia.displayOrder)],
+              },
+            },
+          },
+        },
+      }),
+      db.select({ count: count() }).from(payments).where(orderWhere),
+    ]),
   ]);
 
   // ─── Extract Results ───
@@ -175,7 +322,10 @@ export default async function Dashboard({ params }: DashboardProps) {
   const lowStock = inventoryData[2];
 
   const financialData = financialMetrics;
-  
+  const recentOrdersData = recentOrdersResult[0];
+  const totalOrdersCount = recentOrdersResult[1][0]?.count || 0;
+  const totalPages = Math.ceil(totalOrdersCount / currentLimit);
+
   // ─── Formatting Helpers ───
   const getAmount = (res: any) => parseFloat(res[0]?.sum || '0');
   const calcChange = (current: number, previous: number) => {
@@ -184,103 +334,118 @@ export default async function Dashboard({ params }: DashboardProps) {
   };
 
   const earnings = {
-    daily: { label: 'Hoy', amount: `S/ ${getAmount(financialData[0]).toFixed(2)}`, percentage: calcChange(getAmount(financialData[0]), getAmount(financialData[1])), isPositive: getAmount(financialData[0]) >= getAmount(financialData[1]), color: 'blue' as const },
-    weekly: { label: 'Semanal', amount: `S/ ${getAmount(financialData[2]).toFixed(2)}`, percentage: calcChange(getAmount(financialData[2]), getAmount(financialData[3])), isPositive: getAmount(financialData[2]) >= getAmount(financialData[3]), color: 'green' as const },
-    monthly: { label: 'Mensual', amount: `S/ ${getAmount(financialData[4]).toFixed(2)}`, percentage: calcChange(getAmount(financialData[4]), getAmount(financialData[5])), isPositive: getAmount(financialData[4]) >= getAmount(financialData[5]), color: 'purple' as const },
+    daily: {
+      label: 'Hoy',
+      amount: `S/ ${getAmount(financialData[0]).toFixed(2)}`,
+      percentage: calcChange(getAmount(financialData[0]), getAmount(financialData[1])),
+      isPositive: getAmount(financialData[0]) >= getAmount(financialData[1]),
+      color: 'blue' as const,
+    },
+    weekly: {
+      label: 'Semanal',
+      amount: `S/ ${getAmount(financialData[2]).toFixed(2)}`,
+      percentage: calcChange(getAmount(financialData[2]), getAmount(financialData[3])),
+      isPositive: getAmount(financialData[2]) >= getAmount(financialData[3]),
+      color: 'green' as const,
+    },
+    monthly: {
+      label: 'Mensual',
+      amount: `S/ ${getAmount(financialData[4]).toFixed(2)}`,
+      percentage: calcChange(getAmount(financialData[4]), getAmount(financialData[5])),
+      isPositive: getAmount(financialData[4]) >= getAmount(financialData[5]),
+      color: 'purple' as const,
+    },
   };
 
   // Format Market Insights
-  const maxProductSales = Math.max(...financialData[6].map(p => Number(p.count)), 1);
-  const topProducts = financialData[6].map(p => ({ name: p.name, count: Number(p.count), progress: Math.round((Number(p.count) / maxProductSales) * 100) }));
-  const maxCategorySales = Math.max(...financialData[7].map(c => Number(c.count)), 1);
-  const topCategories = financialData[7].map(c => ({ name: c.name, count: Number(c.count), progress: Math.round((Number(c.count) / maxCategorySales) * 100) }));
-  const dayMap: Record<number, string> = { 0: 'Dom', 1: 'Lun', 2: 'Mar', 3: 'Mie', 4: 'Jue', 5: 'Vie', 6: 'Sab' };
-  const maxDaySales = Math.max(...financialData[8].map(d => Number(d.count)), 1);
-  const bestDays = [1, 2, 3, 4, 5, 6, 0].map(dayNum => {
-    const found = financialData[8].find(d => Number(d.day) === dayNum);
-    return { day: dayMap[dayNum], intensity: found ? Math.round((Number(found.count) / maxDaySales) * 100) : 0 };
+  const maxProductSales = Math.max(...financialData[6].map((p) => Number(p.count)), 1);
+  const topProducts = financialData[6].map((p) => ({
+    name: p.name,
+    count: Number(p.count),
+    progress: Math.round((Number(p.count) / maxProductSales) * 100),
+  }));
+  const maxCategorySales = Math.max(...financialData[7].map((c) => Number(c.count)), 1);
+  const topCategories = financialData[7].map((c) => ({
+    name: c.name,
+    count: Number(c.count),
+    progress: Math.round((Number(c.count) / maxCategorySales) * 100),
+  }));
+  const dayMap: Record<number, string> = {
+    0: 'Dom',
+    1: 'Lun',
+    2: 'Mar',
+    3: 'Mie',
+    4: 'Jue',
+    5: 'Vie',
+    6: 'Sab',
+  };
+  const maxDaySales = Math.max(...financialData[8].map((d) => Number(d.count)), 1);
+  const bestDays = [1, 2, 3, 4, 5, 6, 0].map((dayNum) => {
+    const found = financialData[8].find((d) => Number(d.day) === dayNum);
+    return {
+      day: dayMap[dayNum],
+      intensity: found ? Math.round((Number(found.count) / maxDaySales) * 100) : 0,
+    };
   });
-
-  // ─── Generate Notifications ───
-  const notifications = [];
-  
-  // Plan Expiry Notification
-  if (subscription?.planEndDate) {
-    const daysLeft = Math.ceil((new Date(subscription.planEndDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    if (daysLeft <= 7) {
-      notifications.push({
-        id: 'plan-expiry',
-        type: daysLeft <= 3 ? 'error' : 'warning',
-        title: 'Plan próximo a vencer',
-        message: daysLeft <= 0 ? 'Tu plan ha vencido. Renueva para mantener el servicio.' : `Tu plan vence en ${daysLeft} día${daysLeft > 1 ? 's' : ''}.`,
-      });
-    }
-  }
-
-  // Stock Notifications
-  if (outOfStockCount > 0) {
-    notifications.push({
-      id: 'out-of-stock',
-      type: 'error',
-      title: 'Productos agotados',
-      message: `Tenés ${outOfStockCount} producto${outOfStockCount > 1 ? 's' : ''} sin stock actualmente.`,
-    });
-  } else if (lowStockCount > 0) {
-    notifications.push({
-      id: 'low-stock',
-      type: 'warning',
-      title: 'Stock bajo',
-      message: `${lowStockCount} producto${lowStockCount > 1 ? 's' : ''} tienen menos de 5 unidades.`,
-    });
-  }
-
-  // Unread Messages Notification
-  if (unreadMessagesCount > 0) {
-    notifications.push({
-      id: 'unread-messages',
-      type: 'info',
-      title: 'Mensajes pendientes',
-      message: `Tenés ${unreadMessagesCount} mensaje${unreadMessagesCount > 1 ? 's' : ''} sin leer.`,
-    });
-  }
-
-  // New Products Info
-  if (addedThisWeekCount > 0) {
-    notifications.push({
-      id: 'new-products',
-      type: 'info',
-      title: 'Actividad semanal',
-      message: `Agregaste ${addedThisWeekCount} producto${addedThisWeekCount > 1 ? 's' : ''} esta semana.`,
-    });
-  }
 
   // Format orders for Urbano Component
   const formattedOrders = recentOrdersData.map((order) => ({
     id: order.id,
+    orderNumber: order.orderNumber,
     productTitle: order.product?.title || 'Producto desconocido',
+    productSlug: order.product?.slug || '',
+    productImage: order.product?.media?.[0]?.mediaUrl || null,
     amount: order.amount.toString(),
+    shippingCost: order.shippingCost?.toString() || '0',
     currency: order.currency,
+    paymentMethod: order.paymentMethod,
     status: order.status as any,
     shippingAddress: order.shippingAddress,
     shippingDistrict: order.shippingDistrict,
     shippingProvince: order.shippingProvince,
+    shippingDepartment: order.shippingDepartment,
+    shippingType: order.shippingType,
+    shippingAgency: order.shippingAgency,
+    shippingReference: order.shippingReference,
+    shippingPhone: order.shippingPhone,
+    buyerEmail: order.buyerEmail,
+    metadata: order.metadata as any,
     createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : order.createdAt,
   }));
 
-  const planStartDate = subscription?.planStartDate instanceof Date ? subscription.planStartDate.toISOString() : subscription?.planStartDate;
-  const planEndDate = subscription?.planEndDate instanceof Date ? subscription.planEndDate.toISOString() : subscription?.planEndDate;
+  const planStartDate =
+    subscription?.planStartDate instanceof Date
+      ? subscription.planStartDate.toISOString()
+      : subscription?.planStartDate;
+  const planEndDate =
+    subscription?.planEndDate instanceof Date
+      ? subscription.planEndDate.toISOString()
+      : subscription?.planEndDate;
 
   return (
     <main className={styles.dashboardRoot}>
-      <DashboardHeader businessName={business.name} logoUrl={business.logoUrl} entitlements={entitlements} planEndDate={planEndDate} />
+      <DashboardHeader
+        businessName={business.name}
+        businessId={business.id}
+        logoUrl={business.logoUrl}
+        entitlements={entitlements}
+        planEndDate={planEndDate}
+      />
 
-      <StatCards totalProducts={productsCount} totalCategories={categoriesCount} unreadMessages={unreadMessagesCount} totalLikes={totalLikes} totalSold={totalSold} entitlements={entitlements} />
+      <StatCards
+        totalProducts={productsCount}
+        totalCategories={categoriesCount}
+        unreadMessages={unreadMessagesCount}
+        totalLikes={totalLikes}
+        totalSold={totalSold}
+        entitlements={entitlements}
+      />
 
       <div className={styles.sectionHeader}>
         <h2 className={styles.sectionTitle}>Notificaciones y Alertas</h2>
       </div>
 
-      <NotificationsPreview notifications={notifications} />
+      <NotificationsPreview businessId={business.id} />
 
       <div className={styles.sectionHeader}>
         <h2 className={styles.sectionTitle}>Análisis de Ventas</h2>
@@ -294,19 +459,33 @@ export default async function Dashboard({ params }: DashboardProps) {
         <h2 className={styles.sectionTitle}>Estado de Inventario</h2>
       </div>
 
-      <InventoryAlerts 
-        topLiked={topLiked.map(p => ({ id: p.id, title: p.title, stars: p.stars || 0 }))}
-        outOfStock={outOfStock.map(p => ({ id: p.id, title: p.title }))}
-        lowStock={lowStock.map(p => ({ id: p.id, title: p.title, stock: p.stock }))}
+      <InventoryAlerts
+        topLiked={topLiked.map((p) => ({ id: p.id, title: p.title, stars: p.stars || 0 }))}
+        outOfStock={outOfStock.map((p) => ({ id: p.id, title: p.title }))}
+        lowStock={lowStock.map((p) => ({ id: p.id, title: p.title, stock: p.stock }))}
       />
 
       <div className={styles.sectionHeader}>
         <h2 className={styles.sectionTitle}>Estado de pedidos Recientes </h2>
       </div>
 
-      <RecentOrders orders={formattedOrders} />
+      <RecentOrders
+        orders={formattedOrders}
+        totalPages={totalPages}
+        currentPage={currentPage}
+        currentLimit={currentLimit}
+        currentStatus={status || 'all'}
+        currentSearch={search || ''}
+      />
 
-      <PlanStatusBar entitlements={entitlements} currentProducts={productsCount} currentCategories={categoriesCount} planStartDate={planStartDate} planEndDate={planEndDate} lastUpdatedAt={lastUpdatedAt} />
+      <PlanStatusBar
+        entitlements={entitlements}
+        currentProducts={productsCount}
+        currentCategories={categoriesCount}
+        planStartDate={planStartDate}
+        planEndDate={planEndDate}
+        lastUpdatedAt={lastUpdatedAt}
+      />
     </main>
   );
 }

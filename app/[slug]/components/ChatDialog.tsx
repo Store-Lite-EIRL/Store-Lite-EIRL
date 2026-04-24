@@ -4,6 +4,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { Icon } from '@/shared';
+import type { RealtimePostgresInsertPayload } from '@supabase/supabase-js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   fetchMessages,
@@ -146,7 +147,15 @@ export function ChatDialog({ businessName, businessId, businessLogo, onClose }: 
             table: 'messages',
             filter: `session_id=eq.${sessionId}`,
           },
-          (payload: any) => {
+          (
+            payload: RealtimePostgresInsertPayload<{
+              id: string;
+              session_id: string;
+              content: string;
+              is_from_store: boolean | null;
+              created_at: string | null;
+            }>,
+          ) => {
             const newMessage = payload.new;
             chatDialogDebug('channel:insert', {
               sessionId: String(newMessage.session_id),
@@ -166,7 +175,13 @@ export function ChatDialog({ businessName, businessId, businessLogo, onClose }: 
             });
           },
         )
-        .subscribe();
+        .subscribe((status: string, err?: Error) => {
+          chatDialogDebug('channel:status', {
+            sessionId,
+            status,
+            error: err?.message,
+          });
+        });
 
       return () => {
         chatDialogDebug('messagesEffect:cleanup', { sessionId });
@@ -250,13 +265,13 @@ export function ChatDialog({ businessName, businessId, businessLogo, onClose }: 
           prev.map((m) =>
             m.id === tempId
               ? {
-                id: result.message!.id,
-                text: result.message!.content,
-                isFromStore: !!result.message!.isFromStore,
-                createdAt: result.message!.createdAt
-                  ? new Date(result.message!.createdAt)
-                  : new Date(),
-              }
+                  id: result.message!.id,
+                  text: result.message!.content,
+                  isFromStore: !!result.message!.isFromStore,
+                  createdAt: result.message!.createdAt
+                    ? new Date(result.message!.createdAt)
+                    : new Date(),
+                }
               : m,
           ),
         );
@@ -275,7 +290,6 @@ export function ChatDialog({ businessName, businessId, businessLogo, onClose }: 
       setIsSending(false);
     }
   }, [newMessage, sessionId, isSending, guestId]);
-
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -329,8 +343,9 @@ export function ChatDialog({ businessName, businessId, businessLogo, onClose }: 
                 messages.map((msg) => (
                   <div key={msg.id}>
                     <div
-                      className={`${styles.bubble} ${msg.isFromStore ? styles.bubbleStore : styles.bubbleUser
-                        }`}
+                      className={`${styles.bubble} ${
+                        msg.isFromStore ? styles.bubbleStore : styles.bubbleUser
+                      }`}
                     >
                       {msg.text}
                     </div>

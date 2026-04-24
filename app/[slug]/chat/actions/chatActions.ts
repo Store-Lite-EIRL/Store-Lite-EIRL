@@ -2,6 +2,7 @@
 
 import { db } from '@/core/database/client';
 import { businesses, businessTeamMembers, chatSessions, messages } from '@/core/database/schema';
+import { notifyNewMessage } from '@/lib/notifications';
 import { checkPermission } from '@/lib/permissions';
 import { createClient } from '@/lib/supabase/server';
 import { and, eq } from 'drizzle-orm';
@@ -34,7 +35,12 @@ async function resolveSessionActor(sessionId: string, guestId?: string) {
 
     // Check if user is owner
     if (business?.ownerId === userId) {
-      return { allowed: true as const, role: 'store' as const, session, permissions: { canView: true, canRespond: true } };
+      return {
+        allowed: true as const,
+        role: 'store' as const,
+        session,
+        permissions: { canView: true, canRespond: true },
+      };
     }
 
     // Check if user is team member with chat permission
@@ -48,13 +54,13 @@ async function resolveSessionActor(sessionId: string, guestId?: string) {
     if (membership) {
       const canView = await checkPermission(session.businessId, userId, 'chat.view');
       const canRespond = await checkPermission(session.businessId, userId, 'chat.respond');
-      
+
       if (canView || canRespond) {
-        return { 
-          allowed: true as const, 
-          role: 'store' as const, 
+        return {
+          allowed: true as const,
+          role: 'store' as const,
           session,
-          permissions: { canView, canRespond }
+          permissions: { canView, canRespond },
         };
       }
     }
@@ -155,6 +161,23 @@ export async function sendMessage(data: {
       })
       .returning();
 
+    // ─── Notificar al negocio si es mensaje de un cliente (guest) ───
+    if (actor.role === 'guest') {
+      const session = await db.query.chatSessions.findFirst({
+        where: eq(chatSessions.id, data.sessionId),
+        columns: { businessId: true, guestName: true },
+      });
+
+      if (session) {
+        notifyNewMessage(session.businessId, {
+          customerName: session.guestName,
+          preview: data.content,
+        }).catch((notifyErr) => {
+          console.error('[notifyNewMessage] Error:', notifyErr);
+        });
+      }
+    }
+
     return { success: true, message: newMessage };
   } catch (error) {
     console.error('Error sending message:', error);
@@ -217,7 +240,7 @@ export async function fetchChatSessions(businessId: string) {
     }
 
     const isOwner = business.ownerId === userId;
-    const hasPermission = isOwner || await checkPermission(businessId, userId, 'chat.view');
+    const hasPermission = isOwner || (await checkPermission(businessId, userId, 'chat.view'));
 
     if (!hasPermission) {
       return { success: false, error: 'No autorizado', sessions: [] };
@@ -251,7 +274,8 @@ export async function deleteChatSession(sessionId: string) {
     });
 
     const isOwner = business?.ownerId === userId;
-    const hasDeletePermission = isOwner || await checkPermission(actor.session.businessId, userId, 'chat.delete');
+    const hasDeletePermission =
+      isOwner || (await checkPermission(actor.session.businessId, userId, 'chat.delete'));
 
     if (!hasDeletePermission) {
       return { success: false, error: 'No tienes permiso para eliminar chats' };

@@ -250,8 +250,6 @@ function CopyableValue({ value }: { value: string }) {
   );
 }
 
-
-
 function BusinessSection({
   business,
   entitlements,
@@ -716,7 +714,9 @@ function AppearanceSection({
                 legalRepName={business.legalRepName || ''}
                 legalRepRole={business.legalRepRole || ''}
                 logoPreview={business.logoUrl}
-                storefrontTheme={usePlatformColors ? createDefaultStorefrontTheme() : storefrontTheme}
+                storefrontTheme={
+                  usePlatformColors ? createDefaultStorefrontTheme() : storefrontTheme
+                }
                 onStorefrontThemeChange={(theme) => setStorefrontTheme(theme)}
                 showDownloadButton={false}
               />
@@ -1280,12 +1280,12 @@ function StorefrontSectionEditor({
       updateSection(prev, 'product_grid', (section) =>
         section.type === 'product_grid'
           ? {
-            ...section,
-            config: {
-              ...section.config,
-              [key]: value,
-            },
-          }
+              ...section,
+              config: {
+                ...section.config,
+                [key]: value,
+              },
+            }
           : section,
       ),
     );
@@ -1963,7 +1963,7 @@ function TeamSection({
 
   const handleCopyCode = () => {
     if (invitationCode) {
-      navigator.clipboard.writeText(invitationCode).catch(() => { });
+      navigator.clipboard.writeText(invitationCode).catch(() => {});
     }
   };
 
@@ -2139,8 +2139,8 @@ function TeamSection({
                                     handleChangeRole(
                                       member.userId,
                                       (e.target?.value || e.currentTarget?.value) as
-                                      | 'admin'
-                                      | 'member',
+                                        | 'admin'
+                                        | 'member',
                                     )
                                   }
                                   style={{ minWidth: '130px' }}
@@ -2649,11 +2649,12 @@ function PaymentsSection({
                 <strong>Tarjetas:</strong> Crédito y débito (Visa, Mastercard, American Express)
               </li>
               <li>
-                <strong>Yape:</strong> Monto mínimo S/ 6.00 — Si el pago es menor, solo aparecerá tarjeta
+                <strong>Yape:</strong> Monto mínimo S/ 6.00 — Si el pago es menor, solo aparecerá
+                tarjeta
               </li>
               <li>
-                <strong>Nota:</strong> Los métodos de pago se muestran automáticamente según el monto de la compra.
-                Yape requiere un monto mínimo de S/ 6.00.
+                <strong>Nota:</strong> Los métodos de pago se muestran automáticamente según el
+                monto de la compra. Yape requiere un monto mínimo de S/ 6.00.
               </li>
             </ul>
           </div>
@@ -2754,14 +2755,14 @@ export function SettingsClient({
             break;
           case 'payments': {
             const isPremiumPlan = ['business_pro', 'enterprise_ai'].includes(entitlements.plan);
-            hasAccess = isPremiumPlan && (isOwner || permissions.includes('business.edit'));
+            hasAccess = isPremiumPlan && permissions.includes('business.edit');
             break;
           }
         }
       }
       return { ...item, hasAccess };
     });
-  }, [isOwner, permissions]);
+  }, [isOwner, permissions, entitlements]);
 
   const accessibleItems = navItemsWithAccess.filter((i) => i.hasAccess);
   const [active, setActive] = useState<Section>(

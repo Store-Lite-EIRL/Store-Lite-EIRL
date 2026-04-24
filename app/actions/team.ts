@@ -155,7 +155,7 @@ export async function generateInvitationCode(
   const { businessIdParamSchema } = await import('@/features/team/schemas');
   const validation = businessIdParamSchema.safeParse({ businessId });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message };
+    return { success: false, error: validation.error.issues[0]?.message };
   }
 
   // 1. Verify ownership
@@ -241,7 +241,7 @@ export async function getTeamMembers(
   const { businessIdParamSchema } = await import('@/features/team/schemas');
   const validation = businessIdParamSchema.safeParse({ businessId });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message };
+    return { success: false, error: validation.error.issues[0]?.message };
   }
 
   // 1. Verify ownership or membership
@@ -339,7 +339,7 @@ export async function getInvitationCode(
   const { businessIdParamSchema } = await import('@/features/team/schemas');
   const validation = businessIdParamSchema.safeParse({ businessId });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message };
+    return { success: false, error: validation.error.issues[0]?.message };
   }
 
   // Only owner can see the code
@@ -383,7 +383,7 @@ export async function revokeInvitationCode(
   const { revokeInvitationSchema } = await import('@/features/team/schemas');
   const validation = revokeInvitationSchema.safeParse({ businessId, invitationId });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message };
+    return { success: false, error: validation.error.issues[0]?.message };
   }
 
   const ownership = await assertOwnership(businessId);
@@ -422,7 +422,7 @@ export async function removeTeamMember(
   const { memberActionSchema } = await import('@/features/team/schemas');
   const validation = memberActionSchema.safeParse({ businessId, memberUserId });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message };
+    return { success: false, error: validation.error.issues[0]?.message };
   }
 
   const ownership = await assertOwnership(businessId);
@@ -462,7 +462,7 @@ export async function leaveTeam(businessId: string): Promise<ActionState> {
   const { businessIdParamSchema } = await import('@/features/team/schemas');
   const validation = businessIdParamSchema.safeParse({ businessId });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message };
+    return { success: false, error: validation.error.issues[0]?.message };
   }
 
   const supabase = await createUserAuthClient();
@@ -511,7 +511,7 @@ export async function joinTeam(
   const { joinTeamSchema } = await import('@/features/team/schemas');
   const validation = joinTeamSchema.safeParse({ slug, code: code.toUpperCase() });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message };
+    return { success: false, error: validation.error.issues[0]?.message };
   }
 
   // 1. Verify user is authenticated
@@ -637,7 +637,7 @@ export async function confirmJoinTeam(code: string, ownBusinessId: string): Prom
   const { confirmJoinTeamSchema } = await import('@/features/team/schemas');
   const validation = confirmJoinTeamSchema.safeParse({ code: code.toUpperCase(), ownBusinessId });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message };
+    return { success: false, error: validation.error.issues[0]?.message };
   }
 
   // 1. Verify user is authenticated
@@ -763,7 +763,7 @@ export async function updateMemberRole(
   const { updateMemberRoleSchema } = await import('@/features/team/schemas');
   const validation = updateMemberRoleSchema.safeParse({ businessId, memberUserId, newRole });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message };
+    return { success: false, error: validation.error.issues[0]?.message };
   }
 
   const ownership = await assertOwnership(businessId);
@@ -809,9 +809,13 @@ export async function updateMemberPermissions(
 ): Promise<ActionState> {
   // 0. Validate input
   const { updateMemberPermissionsSchema } = await import('@/features/team/schemas');
-  const validation = updateMemberPermissionsSchema.safeParse({ businessId, memberUserId, permissions });
+  const validation = updateMemberPermissionsSchema.safeParse({
+    businessId,
+    memberUserId,
+    permissions,
+  });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message };
+    return { success: false, error: validation.error.issues[0]?.message };
   }
 
   const ownership = await assertOwnership(businessId);
@@ -868,7 +872,7 @@ export async function updateRolePermissions(
   const { updateRolePermissionsSchema } = await import('@/features/team/schemas');
   const validation = updateRolePermissionsSchema.safeParse({ businessId, role, permissions });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message };
+    return { success: false, error: validation.error.issues[0]?.message };
   }
 
   const ownership = await assertOwnership(businessId);
@@ -924,7 +928,7 @@ export async function removeMemberPermissionsOverride(
   const { memberActionSchema } = await import('@/features/team/schemas');
   const validation = memberActionSchema.safeParse({ businessId, memberUserId });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message };
+    return { success: false, error: validation.error.issues[0]?.message };
   }
 
   const ownership = await assertOwnership(businessId);

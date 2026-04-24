@@ -1,5 +1,6 @@
 import type { BusinessEntitlements } from '@/core/entitlements/plans';
 import styles from './DashboardHeader.module.css';
+import { NotificationBell } from './NotificationBell';
 
 const PLAN_LABELS: Record<string, string> = {
   emprendedor: 'Emprendedor',
@@ -17,6 +18,7 @@ const PLAN_COLORS: Record<string, string> = {
 
 interface DashboardHeaderProps {
   businessName: string;
+  businessId: string;
   logoUrl: string | null;
   entitlements: BusinessEntitlements;
   /** ISO date string — si hay vencimiento próximo */
@@ -25,6 +27,7 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({
   businessName,
+  businessId,
   logoUrl,
   entitlements,
   planEndDate,
@@ -77,16 +80,20 @@ export function DashboardHeader({
         </div>
       </div>
 
-      {showExpiryWarning && (
-        <div className={styles.expiryWarning}>
-          <span className={styles.expiryIcon}>⚠️</span>
-          <span className={styles.expiryText}>
-            {daysUntilExpiry === 0
-              ? 'Tu plan vence hoy'
-              : `Tu plan vence en ${daysUntilExpiry} día${daysUntilExpiry === 1 ? '' : 's'}`}
-          </span>
-        </div>
-      )}
+      <div className={styles.actions}>
+        <NotificationBell businessId={businessId} />
+
+        {showExpiryWarning && (
+          <div className={styles.expiryWarning}>
+            <span className={styles.expiryIcon}>⚠️</span>
+            <span className={styles.expiryText}>
+              {daysUntilExpiry === 0
+                ? 'Tu plan vence hoy'
+                : `Tu plan vence en ${daysUntilExpiry} día${daysUntilExpiry === 1 ? '' : 's'}`}
+            </span>
+          </div>
+        )}
+      </div>
     </header>
   );
 }

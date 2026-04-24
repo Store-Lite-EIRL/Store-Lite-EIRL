@@ -3,15 +3,17 @@
 import { db } from '@/core/database/client';
 import { productCategories, productLikes, productMedia, products } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements';
+import { logError } from '@/lib/errorHandling';
+import { notifyLowStock, notifyOutOfStock } from '@/lib/notifications';
 import { getUniqueCategorySlug } from '@/shared/utils/categorySlug';
 import { getUniqueProductSlug } from '@/shared/utils/productSlug';
 import { and, eq, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
-import { logError } from '@/lib/errorHandling';
 import { requireAccess } from './authz';
 
 export type SaleStatus = 'NORMAL' | 'MAS_VENDIDO' | 'NUEVO_PRODUCTO';
+const LOW_STOCK_THRESHOLD = 5;
 
 interface ProductActionInput {
   name: string;
@@ -292,6 +294,25 @@ export async function createProduct(businessSlug: string, productData: ProductAc
       await db.insert(productMedia).values(mediaValues);
     }
 
+    // ─── Notificar stock bajo si aplica ───
+    if (normalizedProduct.stock === 0) {
+      notifyOutOfStock(businessId, {
+        productId: newProduct.id,
+        productName: normalizedProduct.name,
+      }).catch((notifyErr) => {
+        console.error('[notifyOutOfStock] Error:', notifyErr);
+      });
+    } else if (normalizedProduct.stock <= LOW_STOCK_THRESHOLD) {
+      notifyLowStock(businessId, {
+        productId: newProduct.id,
+        productName: normalizedProduct.name,
+        currentStock: normalizedProduct.stock,
+        minStock: LOW_STOCK_THRESHOLD,
+      }).catch((notifyErr) => {
+        console.error('[notifyLowStock] Error:', notifyErr);
+      });
+    }
+
     revalidatePath(`/${businessSlug}`);
     revalidatePath(`/${businessSlug}/storage`);
 
@@ -317,7 +338,7 @@ export async function updateProduct(
 
     const existingProduct = await db.query.products.findFirst({
       where: (table, { and, eq }) => and(eq(table.id, productId), eq(table.businessId, businessId)),
-      columns: { id: true },
+      columns: { id: true, stock: true, title: true },
     });
 
     if (!existingProduct) {
@@ -391,6 +412,29 @@ export async function updateProduct(
       }));
 
       await db.insert(productMedia).values(mediaValues);
+    }
+
+    // ─── Notificar stock bajo si aplica ───
+    if (existingProduct.stock > 0 && normalizedProduct.stock === 0) {
+      notifyOutOfStock(businessId, {
+        productId,
+        productName: normalizedProduct.name,
+      }).catch((notifyErr) => {
+        console.error('[notifyOutOfStock] Error:', notifyErr);
+      });
+    } else if (
+      existingProduct.stock > LOW_STOCK_THRESHOLD &&
+      normalizedProduct.stock <= LOW_STOCK_THRESHOLD &&
+      normalizedProduct.stock > 0
+    ) {
+      notifyLowStock(businessId, {
+        productId,
+        productName: normalizedProduct.name,
+        currentStock: normalizedProduct.stock,
+        minStock: LOW_STOCK_THRESHOLD,
+      }).catch((notifyErr) => {
+        console.error('[notifyLowStock] Error:', notifyErr);
+      });
     }
 
     revalidatePath(`/${businessSlug}`);

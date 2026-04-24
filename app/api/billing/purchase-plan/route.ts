@@ -58,6 +58,8 @@ interface CulqiChargeResponse {
   currency_code: string;
   email: string;
   paid?: boolean;
+  user_message?: string;
+  merchant_message?: string;
   outcome?: { type: string; user_message: string; merchant_message: string };
   reference_code?: string;
   creation_date?: number;
@@ -164,7 +166,10 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             error: 'Error al procesar el pago',
-            details: culqiData?.user_message || culqiData?.outcome?.user_message || 'Error desconocido de Culqi',
+            details:
+              culqiData?.user_message ||
+              culqiData?.outcome?.user_message ||
+              'Error desconocido de Culqi',
           },
           { status: culqiResponse.ok ? 400 : culqiResponse.status },
         );
@@ -208,6 +213,7 @@ export async function POST(request: Request) {
         buyerDocumentNumber: buyerDocumentNumber || null,
         buyerAddress: buyerAddress || null,
         ticketSeries: 'B001',
+        ticketCorrelative: undefined as any,
         ticketIssuedAt: new Date(),
         planStartDate,
         planEndDate,

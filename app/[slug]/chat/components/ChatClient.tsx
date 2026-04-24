@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
+import type { RealtimePostgresInsertPayload } from '@supabase/supabase-js';
 import { useEffect, useRef, useState } from 'react';
 import {
   deleteChatSession,
@@ -168,7 +169,7 @@ export function ChatClient({
           table: 'chat_sessions',
           filter: `business_id=eq.${businessId}`,
         },
-        (payload: { new: Record<string, unknown> }) => {
+        (payload: RealtimePostgresInsertPayload<Record<string, unknown>>) => {
           const newSession = payload.new;
           chatDebug('sessionChannel:insert', { sessionId: String(newSession.id) });
           const newChat: Chat = {
@@ -186,7 +187,13 @@ export function ChatClient({
           });
         },
       )
-      .subscribe();
+      .subscribe((status: string, err?: Error) => {
+        chatDebug('sessionChannel:status', {
+          businessId,
+          status,
+          error: err?.message,
+        });
+      });
 
     // Subscribe to messages
     const messageChannel = supabase
@@ -198,7 +205,7 @@ export function ChatClient({
           schema: 'public',
           table: 'messages',
         },
-        async (payload: { new: Record<string, unknown> }) => {
+        async (payload: RealtimePostgresInsertPayload<Record<string, unknown>>) => {
           const newMessage = payload.new;
           chatDebug('messageChannel:insert', {
             sessionId: String(newMessage.session_id),
@@ -237,7 +244,13 @@ export function ChatClient({
           );
         },
       )
-      .subscribe();
+      .subscribe((status: string, err?: Error) => {
+        chatDebug('messageChannel:status', {
+          businessId,
+          status,
+          error: err?.message,
+        });
+      });
 
     return () => {
       chatDebug('subscriptions:cleanup', { businessId });

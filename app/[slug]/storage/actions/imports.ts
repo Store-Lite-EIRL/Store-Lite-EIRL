@@ -2,10 +2,11 @@
 
 import { db } from '@/core/database/client';
 import { productCategories, productMedia, products } from '@/core/database/schema';
+import { logError } from '@/lib/errorHandling';
+import { notifyLowStock, notifyOutOfStock } from '@/lib/notifications';
 import { getUniqueCategorySlug } from '@/shared/utils/categorySlug';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
-import { logError } from '@/lib/errorHandling';
 import { requireOwnedBusinessBySlug } from './authz';
 
 interface ImportProductInput {
@@ -17,6 +18,8 @@ interface ImportProductInput {
   status: string;
   imageUrl?: string;
 }
+
+const LOW_STOCK_THRESHOLD = 5;
 
 export async function importProductsBatch(
   businessSlug: string,
@@ -109,6 +112,28 @@ export async function importProductsBatch(
 
       if (mediaValues.length > 0) {
         await db.insert(productMedia).values(mediaValues);
+      }
+
+      // ─── Notificar stock bajo para productos importados ───
+      for (const [idx, inserted] of insertedProducts.entries()) {
+        const importedStock = normalizedProductsList[idx]?.stock ?? 0;
+        if (importedStock === 0) {
+          notifyOutOfStock(businessId, {
+            productId: inserted.id,
+            productName: normalizedProductsList[idx].name,
+          }).catch((notifyErr) => {
+            console.error('[notifyOutOfStock] Error:', notifyErr);
+          });
+        } else if (importedStock <= LOW_STOCK_THRESHOLD) {
+          notifyLowStock(businessId, {
+            productId: inserted.id,
+            productName: normalizedProductsList[idx].name,
+            currentStock: importedStock,
+            minStock: LOW_STOCK_THRESHOLD,
+          }).catch((notifyErr) => {
+            console.error('[notifyLowStock] Error:', notifyErr);
+          });
+        }
       }
     }
 

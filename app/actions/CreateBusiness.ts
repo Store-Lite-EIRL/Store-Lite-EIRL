@@ -4,12 +4,12 @@ import { env } from '@/config/env';
 import { generateAvailableBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { businesses, profiles } from '@/core/database/schema';
+import { createBusinessSchema } from '@/features/business/schemas';
 import { generateBusinessSlug } from '@/shared/utils/slugify';
 import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { createBusinessSchema } from '@/features/business/schemas';
 
 export interface ActionState {
   error?: string;
@@ -97,14 +97,17 @@ export async function createBusiness(prevState: ActionState, formData: FormData)
   const validationResult = createBusinessSchema.safeParse(rawData);
 
   if (!validationResult.success) {
-    const firstError = validationResult.error.errors[0]?.message;
+    const firstError = validationResult.error.issues[0]?.message;
     return { error: firstError || 'Datos de entrada no válidos' };
   }
 
-  const { name, storeType, description, address, whatsappNumber } = validationResult.data;
+  const data = validationResult.data as any;
+  const { name, storeType, description, address, whatsappNumber } = data;
 
   // 3. Generate Slug (Refactored to utility)
-  const finalSlug = await generateAvailableBusinessSlug(() => generateBusinessSlug(name, storeType));
+  const finalSlug = await generateAvailableBusinessSlug(() =>
+    generateBusinessSlug(name, storeType),
+  );
 
   try {
     // 4. Insert into Database

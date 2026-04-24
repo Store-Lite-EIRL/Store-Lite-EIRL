@@ -13,7 +13,6 @@ import {
   integer,
   jsonb,
   pgEnum,
-  pgSchema,
   pgTable,
   text,
   timestamp,
@@ -64,14 +63,37 @@ export const planPaymentStatusEnum = pgEnum('plan_payment_status', [
 ]);
 
 // =====================================================
-// AUTH SCHEMA (Supabase)
+// NOTIFICATION ENUMS
 // =====================================================
 
-const authSchema = pgSchema('auth');
+// Tipos de notificación - acción específica que ocurrió
+export const notificationTypeEnum = pgEnum('notification_type', [
+  // Chat
+  'message_new',
+  'message_unread',
+  // Almacén (stock)
+  'stock_low',
+  'stock_out',
+  // Plan
+  'plan_expiring',
+  'plan_expired',
+  'plan_upgraded',
+  // Pedidos
+  'order_created',
+  'order_status_changed',
+  'order_shipped',
+  // Sistema
+  'system',
+]);
 
-const authUsers = authSchema.table('users', {
-  id: uuid('id').primaryKey(),
-});
+// Categorías de notificación - para filtrado en UI
+export const notificationCategoryEnum = pgEnum('notification_category', [
+  'chat',
+  'almacen',
+  'plan',
+  'pedidos',
+  'sistema',
+]);
 
 // =====================================================
 // TABLE: profiles
@@ -80,9 +102,7 @@ const authUsers = authSchema.table('users', {
 export const profiles = pgTable(
   'profiles',
   {
-    id: uuid('id')
-      .primaryKey()
-      .references(() => authUsers.id, { onDelete: 'cascade' }),
+    id: uuid('id').primaryKey(), // Removed .references(() => authUsers.id) to fix drizzle-kit hangs
     email: text('email').notNull().unique(),
     fullName: text('full_name').notNull(),
     avatarUrl: text('avatar_url'),
@@ -511,6 +531,7 @@ export const payments = pgTable(
     culqiTrackingId: text('culqi_tracking_id'),
     buyerEmail: text('buyer_email').notNull(),
     buyerPhone: text('buyer_phone'),
+    buyerDni: text('buyer_dni'),
     status: text('status', {
       enum: [
         'pending',
@@ -732,9 +753,11 @@ export const planPayments = pgTable(
 
     // Comprobante SUNAT — serie B001 + correlativo secuencial
     ticketSeries: text('ticket_series').notNull().default('B001'),
-    ticketCorrelative: integer('ticket_correlative')
-      .notNull()
-      .default(sql`nextval('seq_plan_payment_b001')`),
+    // ticketCorrelative: integer('ticket_correlative')
+    //   .notNull()
+    //   .default(sql`nextval('seq_plan_payment_b001')`),
+    ticketCorrelative: integer('ticket_correlative').notNull(),
+
     // ticket_number se computa en query: ticketSeries || '-' || LPAD(ticketCorrelative, 8, '0')
     ticketUrl: text('ticket_url'),
     ticketIssuedAt: timestamp('ticket_issued_at', { withTimezone: true }),
@@ -757,6 +780,50 @@ export const planPayments = pgTable(
       table.ticketSeries,
       table.ticketCorrelative,
     ),
+  }),
+);
+
+// =====================================================
+// TABLE: notifications
+// =====================================================
+
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    businessId: uuid('business_id')
+      .notNull()
+      .references(() => businesses.id, { onDelete: 'cascade' }),
+
+    // Tipo de notificación (acción específica)
+    type: notificationTypeEnum('type').notNull(),
+    // Categoría para filtrado en UI
+    category: notificationCategoryEnum('category').notNull(),
+
+    // Contenido
+    title: text('title').notNull(),
+    message: text('message').notNull(),
+    // Datos adicionales (orderId, productId, etc)
+    data: jsonb('data').default({}),
+
+    // Estado
+    isRead: boolean('is_read').default(false).notNull(),
+    isDismissed: boolean('is_dismissed').default(false).notNull(),
+
+    // Timestamps
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    readAt: timestamp('read_at', { withTimezone: true }),
+  },
+  (table) => ({
+    businessIdIdx: index('idx_notifications_business_id').on(table.businessId),
+    businessIdCreatedAtIdx: index('idx_notifications_business_created').on(
+      table.businessId,
+      table.createdAt.desc(),
+    ),
+    unreadIdx: index('idx_notifications_unread')
+      .on(table.businessId, table.isRead)
+      .where(sql`${table.isRead} = false AND ${table.isDismissed} = false`),
+    categoryIdx: index('idx_notifications_category').on(table.businessId, table.category),
   }),
 );
 
@@ -785,6 +852,7 @@ export const businessesRelations = relations(businesses, ({ one, many }) => ({
   invitations: many(businessInvitations),
   teamMembers: many(businessTeamMembers),
   teamRoles: many(businessTeamRoles),
+  notifications: many(notifications),
 }));
 
 export const businessSlugAliasesRelations = relations(businessSlugAliases, ({ one }) => ({
@@ -924,6 +992,13 @@ export const planPaymentsRelations = relations(planPayments, ({ one }) => ({
   }),
 }));
 
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  business: one(businesses, {
+    fields: [notifications.businessId],
+    references: [businesses.id],
+  }),
+}));
+
 // =====================================================
 // TYPE EXPORTS
 // =====================================================
@@ -983,6 +1058,13 @@ export type NewSaasIssuerConfig = typeof saasIssuerConfig.$inferInsert;
 
 export type PlanPayment = typeof planPayments.$inferSelect;
 export type NewPlanPayment = typeof planPayments.$inferInsert;
+
+// Notification types
+export type NotificationType = (typeof notificationTypeEnum.enumValues)[number];
+export type NotificationCategory = (typeof notificationCategoryEnum.enumValues)[number];
+
+export type Notification = typeof notifications.$inferSelect;
+export type NewNotification = typeof notifications.$inferInsert;
 
 // Helper: ticket number formatter (usar donde se necesite mostrar el número)
 export function formatTicketNumber(series: string, correlative: number): string {

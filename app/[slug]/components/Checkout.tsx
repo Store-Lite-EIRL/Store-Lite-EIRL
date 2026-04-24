@@ -76,8 +76,8 @@ export default function Checkout({
     try {
       setLoading(true);
 
-      // Esperar a que todo cargue (fuentes, imágenes, SVGs)
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Esperar a que finalice la carga de recursos (fuentes, imágenes, SVGs)
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
       // Alta resolución para ticket nítido usando toBlob
       // skipFonts evita que html-to-image intente leer cssRules de stylesheets
@@ -115,19 +115,19 @@ export default function Checkout({
       const supabase = createClient();
 
       const fileName = `${orderNumber}.png`;
-      const { error: uploadError } = await supabase.storage
-        .from('tickets')
-        .upload(fileName, blob, {
-          contentType: 'image/png',
-          upsert: true
-        });
+      const { error: uploadError } = await supabase.storage.from('tickets').upload(fileName, blob, {
+        contentType: 'image/png',
+        upsert: true,
+      });
 
       if (!uploadError) {
-        const { data: { publicUrl } } = supabase.storage.from('tickets').getPublicUrl(fileName);
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from('tickets').getPublicUrl(fileName);
         await fetch('/api/payment/update-ticket', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderNumber, ticketUrl: publicUrl })
+          body: JSON.stringify({ orderNumber, ticketUrl: publicUrl }),
         });
       }
 
@@ -171,7 +171,7 @@ export default function Checkout({
     district: '',
     phone: '',
     dni: '',
-    cost: 10.00, // Costo base para domicilio
+    cost: 10.0, // Costo base para domicilio
   });
 
   // Payment State
@@ -237,10 +237,10 @@ export default function Checkout({
 
         const paymentMethod = tokenType === 'yape' || token.startsWith('ype_') ? 'Yape' : 'Tarjeta';
         const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
-        
+
         // Mostrar indicador de procesamiento mientras se verifica el pago
         setIsPaymentProcessing(true);
-        
+
         try {
           const response = await fetch('/api/payment/charge', {
             method: 'POST',
@@ -256,7 +256,7 @@ export default function Checkout({
               metadata: {
                 orderNumber,
                 dni: shippingInfo.dni,
-                cartItems: cartItems.map(item => ({
+                cartItems: cartItems.map((item) => ({
                   id: item.id,
                   name: item.name,
                   quantity: item.quantity,
@@ -264,9 +264,11 @@ export default function Checkout({
                 })),
                 shippingInfo: {
                   ...shippingInfo,
-                  address: shippingInfo.courier === 'recojo' ? businessAddress : shippingInfo.address,
-                  district: shippingInfo.courier === 'recojo' ? businessCity : shippingInfo.district,
-                  dni: shippingInfo.dni
+                  address:
+                    shippingInfo.courier === 'recojo' ? businessAddress : shippingInfo.address,
+                  district:
+                    shippingInfo.courier === 'recojo' ? businessCity : shippingInfo.district,
+                  dni: shippingInfo.dni,
                 },
               },
             }),
@@ -278,8 +280,8 @@ export default function Checkout({
           if (!response.ok || !paymentResult?.success) {
             throw new Error(
               paymentResult?.details ||
-              paymentResult?.error ||
-              'No se pudo procesar el pago con Culqi.'
+                paymentResult?.error ||
+                'No se pudo procesar el pago con Culqi.',
             );
           }
 
@@ -332,7 +334,16 @@ export default function Checkout({
       setIsCulqiProcessing(false);
       setIsPaymentProcessing(false);
     };
-  }, [culqiReady, finalTotal, businessId, cartItems, email, shippingInfo, businessAddress, businessCity]);
+  }, [
+    culqiReady,
+    finalTotal,
+    businessId,
+    cartItems,
+    email,
+    shippingInfo,
+    businessAddress,
+    businessCity,
+  ]);
 
   const handleDepartmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setShippingInfo((prev) => ({
@@ -365,7 +376,7 @@ export default function Checkout({
     setShippingInfo((prev) => ({
       ...prev,
       courier: type,
-      cost: type === 'recojo' ? 0 : type === 'urbano_agencia' ? 7.50 : 10.00,
+      cost: type === 'recojo' ? 0 : type === 'urbano_agencia' ? 7.5 : 10.0,
       // Limpiar campos si es recojo
       department: type === 'recojo' ? '' : prev.department,
       province: type === 'recojo' ? '' : prev.province,
@@ -405,7 +416,8 @@ export default function Checkout({
         ) {
           setAlert({
             open: true,
-            description: 'Por favor, completá todos los campos de ubicación y un teléfono de 9 dígitos.',
+            description:
+              'Por favor, completá todos los campos de ubicación y un teléfono de 9 dígitos.',
             color: 'warning',
             icon: 'contact_support',
           });
@@ -486,7 +498,7 @@ export default function Checkout({
       });
 
       Culqi.open();
-      
+
       // El loading se mantiene hasta que Culqi responda (success o error)
       // El callback de Culqi se encarga de setear loading(false)
     } catch (error) {
@@ -506,7 +518,7 @@ export default function Checkout({
   // SUCCESS VIEW
   if (showReceipt && completedOrder) {
     const receiptItems = cartItems.map((item) => ({
-      label: `${item.name}${item.quantity > 1 ? ` x${item.quantity}` : ''}`,
+      label: item.name + (item.quantity > 1 ? ` x${item.quantity}` : ''),
       value: Number(item.secondPrice || item.price) * (item.quantity || 1),
     }));
 
@@ -519,43 +531,87 @@ export default function Checkout({
 
     return createPortal(
       <>
-        <Confetti
-          show={showConfetti}
-          particleCount={80}
-          duration={4000}
-        />
-        <style jsx global>{`
+        <Confetti show={showConfetti} particleCount={80} duration={4000} />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
           @keyframes spin {
             to { transform: rotate(360deg); }
           }
-        `}</style>
-        <div className={styles.checkoutOverlay} onClick={() => { setShowReceipt(false); onSuccess(); }}>
-          <div className={styles.checkoutModal} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '450px', padding: '0', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
-
+        `,
+          }}
+        />
+        <div
+          className={styles.checkoutOverlay}
+          onClick={() => {
+            setShowReceipt(false);
+            onSuccess();
+          }}
+        >
+          <div
+            className={styles.checkoutModal}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '450px',
+              padding: '0',
+              maxHeight: '92vh',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
             {/* Success Header */}
-            <div style={{ padding: '24px 24px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-              <div style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                background: '#4caf50',
+            <div
+              style={{
+                padding: '24px 24px 16px',
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'center'
-              }}>
+                gap: '12px',
+                flexShrink: 0,
+              }}
+            >
+              <div
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  background: '#4caf50',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 {/* SVG inline — Material Symbols no funciona en html-to-image */}
                 <svg width={32} height={32} viewBox="0 0 24 24" fill="white">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5-4-4 1.41-1.41L10 13.67l6.59-6.59L18 8.5l-8 8z"/>
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5-4-4 1.41-1.41L10 13.67l6.59-6.59L18 8.5l-8 8z" />
                 </svg>
               </div>
-              <h2 style={{ margin: 0, textAlign: 'center', fontSize: '22px', fontWeight: '800' }}>¡Pago Exitoso!</h2>
-              <p style={{ margin: 0, color: 'var(--md-sys-color-on-surface-variant)', textAlign: 'center', fontSize: '14px' }}>
+              <h2 style={{ margin: 0, textAlign: 'center', fontSize: '22px', fontWeight: '800' }}>
+                ¡Pago Exitoso!
+              </h2>
+              <p
+                style={{
+                  margin: 0,
+                  color: 'var(--md-sys-color-on-surface-variant)',
+                  textAlign: 'center',
+                  fontSize: '14px',
+                }}
+              >
                 Tu pedido ha sido procesado correctamente
               </p>
             </div>
 
             {/* Scrollable Receipt Area */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '0 24px 20px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+              }}
+            >
               <div ref={receiptRef} style={{ width: '100%', padding: '4px' }}>
                 <Receipt
                   businessName={businessName}
@@ -582,22 +638,38 @@ export default function Checkout({
                     shippingInfo.courier === 'recojo'
                       ? [businessAddress, businessCity].filter(Boolean).join(', ')
                       : shippingInfo.courier === 'urbano_agencia'
-                        ? [shippingInfo.agency, shippingInfo.district, shippingInfo.province, shippingInfo.department].filter(Boolean).join(', ')
-                        : [shippingInfo.address, shippingInfo.district, shippingInfo.province, shippingInfo.department].filter(Boolean).join(', ')
+                        ? [
+                            shippingInfo.agency,
+                            shippingInfo.district,
+                            shippingInfo.province,
+                            shippingInfo.department,
+                          ]
+                            .filter(Boolean)
+                            .join(', ')
+                        : [
+                            shippingInfo.address,
+                            shippingInfo.district,
+                            shippingInfo.province,
+                            shippingInfo.department,
+                          ]
+                            .filter(Boolean)
+                            .join(', ')
                   }
                 />
               </div>
             </div>
 
             {/* Fixed Action Footer */}
-            <div style={{
-              padding: '16px 24px 24px',
-              borderTop: '1px solid var(--md-sys-color-outline-variant)',
-              background: 'var(--md-sys-color-surface)',
-              borderBottomLeftRadius: '28px',
-              borderBottomRightRadius: '28px',
-              flexShrink: 0
-            }}>
+            <div
+              style={{
+                padding: '16px 24px 24px',
+                borderTop: '1px solid var(--md-sys-color-outline-variant)',
+                background: 'var(--md-sys-color-surface)',
+                borderBottomLeftRadius: '28px',
+                borderBottomRightRadius: '28px',
+                flexShrink: 0,
+              }}
+            >
               <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <Button
                   variant="filled"
@@ -613,19 +685,35 @@ export default function Checkout({
                   }}
                 >
                   {loading ? (
-                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                      <span style={{
-                        width: '18px',
-                        height: '18px',
-                        border: '2px solid rgba(255,255,255,0.3)',
-                        borderTopColor: 'white',
-                        borderRadius: '50%',
-                        animation: 'spin 0.8s linear infinite'
-                      }} />
+                    <span
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          border: '2px solid rgba(255,255,255,0.3)',
+                          borderTopColor: 'white',
+                          borderRadius: '50%',
+                          animation: 'spin 0.8s linear infinite',
+                        }}
+                      />
                       Descargando imagen...
                     </span>
                   ) : (
-                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    <span
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                      }}
+                    >
                       <Icon size={20}>download</Icon>
                       Descargar Ticket (PNG)
                     </span>
@@ -647,13 +735,13 @@ export default function Checkout({
           </div>
         </div>
       </>,
-      document.body
+      document.body,
     );
   }
 
   // STANDARD CHECKOUT FLOW
   const isLoading = isCulqiProcessing || isPaymentProcessing;
-  const loadingMessage = isPaymentProcessing 
+  const loadingMessage = isPaymentProcessing
     ? { title: 'Procesando pago', subtitle: 'Verificando con el banco...' }
     : { title: 'Abriendo pasarela de pagos', subtitle: 'Serás redirigido a Culqi de forma segura' };
 
@@ -661,26 +749,30 @@ export default function Checkout({
     <div className={styles.checkoutOverlay} onClick={onCancel}>
       {/* Loading Overlay cuando se procesa el pago o se abre Culqi */}
       {isLoading && (
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'rgba(255,255,255,0.95)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 100,
-          borderRadius: '28px',
-          gap: '16px'
-        }}>
-          <div style={{
-            width: '64px',
-            height: '64px',
-            border: '4px solid #E5E7EB',
-            borderTopColor: '#0061A4',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }} />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(255,255,255,0.95)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+            borderRadius: '28px',
+            gap: '16px',
+          }}
+        >
+          <div
+            style={{
+              width: '64px',
+              height: '64px',
+              border: '4px solid #E5E7EB',
+              borderTopColor: '#0061A4',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+            }}
+          />
           <div style={{ textAlign: 'center' }}>
             <p style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#111827' }}>
               {loadingMessage.title}
@@ -689,15 +781,18 @@ export default function Checkout({
               {loadingMessage.subtitle}
             </p>
           </div>
-          <style jsx>{`
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
             @keyframes spin {
               to { transform: rotate(360deg); }
             }
-          `}</style>
+          `,
+            }}
+          />
         </div>
       )}
       <div className={styles.checkoutModal} onClick={(e) => e.stopPropagation()}>
-
         {/* Header with Back/Close Buttons */}
         <div className={styles.header}>
           <div className={styles.headerTitleGroup}>
@@ -727,8 +822,12 @@ export default function Checkout({
           {step === 1 ? (
             <div className={styles.stepContent}>
               <div className={styles.orderMiniSummary}>
-                <p>Estas comprando <strong>{cartItems?.length || 0} productos</strong></p>
-                <p>Subtotal: <strong>S/ {totalAmount.toFixed(2)}</strong></p>
+                <p>
+                  Estas comprando <strong>{cartItems?.length || 0} productos</strong>
+                </p>
+                <p>
+                  Subtotal: <strong>S/ {totalAmount.toFixed(2)}</strong>
+                </p>
               </div>
 
               <div className={styles.courierToggle}>
@@ -761,7 +860,9 @@ export default function Checkout({
                     <Icon>location_on</Icon>
                     <span>Direccion del Local</span>
                   </div>
-                  <p className={styles.pickupAddress}>{businessAddress || 'Dirección no especificada'}</p>
+                  <p className={styles.pickupAddress}>
+                    {businessAddress || 'Dirección no especificada'}
+                  </p>
                   <p className={styles.pickupCity}>{businessCity || ''}</p>
                   <div style={{ marginTop: '12px' }}>
                     <input
@@ -770,7 +871,8 @@ export default function Checkout({
                       value={shippingInfo.phone}
                       onChange={(e) => {
                         const value = e.target.value.replace(/\D/g, '');
-                        if (value.length <= 9) setShippingInfo(prev => ({ ...prev, phone: value }));
+                        if (value.length <= 9)
+                          setShippingInfo((prev) => ({ ...prev, phone: value }));
                       }}
                       className={`${styles.input} ${shippingInfo.phone.length > 0 && shippingInfo.phone.length !== 9 ? styles.inputError : ''}`}
                       required
@@ -781,13 +883,33 @@ export default function Checkout({
                 <>
                   <div className={styles.formGrid}>
                     <div className={styles.formGroup}>
-                      <Select label="Departamento" outlined value={shippingInfo.department} onChange={handleDepartmentChange} options={departments} />
+                      <Select
+                        label="Departamento"
+                        outlined
+                        value={shippingInfo.department}
+                        onChange={handleDepartmentChange}
+                        options={departments}
+                      />
                     </div>
                     <div className={styles.formGroup}>
-                      <Select label="Provincia" outlined value={shippingInfo.province} onChange={handleProvinceChange} options={provinces} disabled={!shippingInfo.department} />
+                      <Select
+                        label="Provincia"
+                        outlined
+                        value={shippingInfo.province}
+                        onChange={handleProvinceChange}
+                        options={provinces}
+                        disabled={!shippingInfo.department}
+                      />
                     </div>
                     <div className={styles.formGroup}>
-                      <Select label="Distrito" outlined value={shippingInfo.district} onChange={handleDistrictChange} options={districts} disabled={!shippingInfo.province} />
+                      <Select
+                        label="Distrito"
+                        outlined
+                        value={shippingInfo.district}
+                        onChange={handleDistrictChange}
+                        options={districts}
+                        disabled={!shippingInfo.province}
+                      />
                     </div>
                     <div className={styles.formGroup}>
                       <input
@@ -796,7 +918,8 @@ export default function Checkout({
                         value={shippingInfo.phone}
                         onChange={(e) => {
                           const value = e.target.value.replace(/\D/g, '');
-                          if (value.length <= 9) setShippingInfo(prev => ({ ...prev, phone: value }));
+                          if (value.length <= 9)
+                            setShippingInfo((prev) => ({ ...prev, phone: value }));
                         }}
                         className={`${styles.input} ${shippingInfo.phone.length > 0 && shippingInfo.phone.length !== 9 ? styles.inputError : ''}`}
                         required
@@ -811,13 +934,15 @@ export default function Checkout({
                         outlined
                         value={shippingInfo.agency}
                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                          setShippingInfo(prev => ({ ...prev, agency: e.target.value }))
+                          setShippingInfo((prev) => ({ ...prev, agency: e.target.value }))
                         }
                         options={availableAgencies}
                         disabled={!shippingInfo.district}
                       />
                       {availableAgencies.length === 0 && shippingInfo.district && (
-                        <p className={styles.errorText}>No se encontraron agencias en este distrito.</p>
+                        <p className={styles.errorText}>
+                          No se encontraron agencias en este distrito.
+                        </p>
                       )}
                     </div>
                   ) : (
@@ -826,7 +951,9 @@ export default function Checkout({
                         type="text"
                         placeholder="Direccion exacta de entrega"
                         value={shippingInfo.address}
-                        onChange={(e) => setShippingInfo(prev => ({ ...prev, address: e.target.value }))}
+                        onChange={(e) =>
+                          setShippingInfo((prev) => ({ ...prev, address: e.target.value }))
+                        }
                         className={styles.input}
                         required
                       />
@@ -847,31 +974,44 @@ export default function Checkout({
           ) : (
             <div className={styles.stepContent}>
               <div className={styles.orderSummaryCard}>
-                <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '800' }}>Resumen Final</h3>
+                <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '800' }}>
+                  Resumen Final
+                </h3>
                 <div className={styles.itemListSummary}>
                   {cartItems.map((item) => (
                     <div key={item.id} className={styles.summaryProductItem}>
                       <span className={styles.productName}>{item.name}</span>
                       <span className={styles.productQty}>x{item.quantity}</span>
-                      <span className={styles.productPrice}>S/ {(Number(item.secondPrice || item.price) * item.quantity).toFixed(2)}</span>
+                      <span className={styles.productPrice}>
+                        S/ {(Number(item.secondPrice || item.price) * item.quantity).toFixed(2)}
+                      </span>
                     </div>
                   ))}
                 </div>
-                <div className={styles.summaryTotalFinal} style={{ marginTop: '8px', borderTop: '1px dashed var(--md-sys-color-outline-variant)', paddingTop: '12px' }}>
+                <div
+                  className={styles.summaryTotalFinal}
+                  style={{
+                    marginTop: '8px',
+                    borderTop: '1px dashed var(--md-sys-color-outline-variant)',
+                    paddingTop: '12px',
+                  }}
+                >
                   <span>Total a Pagar</span>
                   <span>S/ {finalTotal.toFixed(2)}</span>
                 </div>
               </div>
 
               <div className={styles.formGroup}>
-                <p className={styles.helpText} style={{ marginBottom: '8px' }}>Verificación de Entrega:</p>
+                <p className={styles.helpText} style={{ marginBottom: '8px' }}>
+                  Verificación de Entrega:
+                </p>
                 <input
                   type="text"
                   placeholder="DNI (8 digitos)"
                   value={shippingInfo.dni}
                   onChange={(e) => {
                     const value = e.target.value.replace(/\D/g, '');
-                    if (value.length <= 8) setShippingInfo(prev => ({ ...prev, dni: value }));
+                    if (value.length <= 8) setShippingInfo((prev) => ({ ...prev, dni: value }));
                   }}
                   className={`${styles.input} ${shippingInfo.dni.length > 0 && shippingInfo.dni.length !== 8 ? styles.inputError : ''}`}
                   disabled={loading}
@@ -891,9 +1031,23 @@ export default function Checkout({
                 />
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', backgroundColor: 'rgba(103, 80, 164, 0.05)', borderRadius: '12px', border: '1px solid var(--md-sys-color-primary)' }}>
-                <Icon size={24} style={{ color: 'var(--md-sys-color-primary)' }}>security</Icon>
-                <p style={{ margin: 0, fontSize: '12px', lineHeight: '1.4' }}>Al pagar, se abrirá la pasarela segura de <strong>Culqi</strong>.</p>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px',
+                  backgroundColor: 'rgba(103, 80, 164, 0.05)',
+                  borderRadius: '12px',
+                  border: '1px solid var(--md-sys-color-primary)',
+                }}
+              >
+                <Icon size={24} style={{ color: 'var(--md-sys-color-primary)' }}>
+                  security
+                </Icon>
+                <p style={{ margin: 0, fontSize: '12px', lineHeight: '1.4' }}>
+                  Al pagar, se abrirá la pasarela segura de <strong>Culqi</strong>.
+                </p>
               </div>
             </div>
           )}
@@ -906,7 +1060,11 @@ export default function Checkout({
               Continuar <Icon>arrow_forward</Icon>
             </button>
           ) : (
-            <button className={styles.payBtn} onClick={handlePayment} disabled={loading || isCulqiProcessing || isPaymentProcessing}>
+            <button
+              className={styles.payBtn}
+              onClick={handlePayment}
+              disabled={loading || isCulqiProcessing || isPaymentProcessing}
+            >
               {loading || isCulqiProcessing || isPaymentProcessing ? (
                 <>
                   <span className={styles.spinner} />
@@ -933,4 +1091,3 @@ export default function Checkout({
     document.body,
   );
 }
-

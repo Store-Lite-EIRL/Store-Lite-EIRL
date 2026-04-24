@@ -4,9 +4,11 @@ import { z } from 'zod';
 const businessIdSchema = z.string().uuid('ID de negocio inválido');
 const userIdSchema = z.string().uuid('ID de usuario inválido');
 const roleSchema = z.enum(['admin', 'member'], {
-  errorMap: () => ({ message: 'Rol inválido. Debe ser admin o member' }),
+  error: 'Rol inválido. Debe ser admin o member',
 });
-const codeSchema = z.string().regex(/^[A-Z0-9]{4}-[A-Z0-9]{4}$/, 'Formato de código inválido (XXXX-XXXX)');
+const codeSchema = z
+  .string()
+  .regex(/^[A-Z0-9]{4}-[A-Z0-9]{4}$/, 'Formato de código inválido (XXXX-XXXX)');
 
 export const businessIdParamSchema = z.object({
   businessId: businessIdSchema,

@@ -4,12 +4,14 @@ import { resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { payments, products } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
+// removed unused imports
 import { createClient } from '@/lib/supabase/server';
 import { and, eq, gt, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { createHash, randomBytes } from 'node:crypto';
 
 const CULQI_CHARGE_URL = 'https://api.culqi.com/v2/charges';
+const LOW_STOCK_THRESHOLD = 5;
 
 export type PaymentMethod = 'card' | 'yape';
 
@@ -78,7 +80,6 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
     };
   }
 
-  // 1.5. Check entitlements
   const entitlements = await getBusinessEntitlements(business.id);
   if (!entitlements.hasPaymentGateway) {
     return {
@@ -102,14 +103,6 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
   }
 
   const currency = product.currency || 'PEN';
-  if (requestedAmountSoles !== authoritativeAmountSoles) {
-    console.warn('[processPayment] Client amount mismatch ignored', {
-      requestedAmountSoles,
-      authoritativeAmountSoles,
-      productId,
-      businessSlug,
-    });
-  }
 
   const [reservedStock] = await db
     .update(products)
@@ -149,19 +142,17 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
       .update(products)
       .set({ stock: sql`${products.stock} + 1`, updatedAt: new Date() })
       .where(eq(products.id, product.id));
-    console.error('[processPayment] Network error calling Culqi:', networkError);
     return { success: false, error: 'Error de conexion al procesar el pago. Intenta de nuevo.' };
   }
 
   let chargeData;
   try {
     chargeData = await culqiResponse.json();
-  } catch (parseError) {
+  } catch {
     await db
       .update(products)
       .set({ stock: sql`${products.stock} + 1`, updatedAt: new Date() })
       .where(eq(products.id, product.id));
-    console.error('[processPayment] Error parsing Culqi response:', parseError);
     return { success: false, error: 'Error inesperado en la pasarela de pago.' };
   }
 
@@ -174,7 +165,6 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
       chargeData.user_message ||
       chargeData.merchant_message ||
       'El pago fue rechazado. Verifica tus datos e intenta de nuevo.';
-    console.error('[processPayment] Culqi charge error:', chargeData);
     return { success: false, error: message };
   }
 

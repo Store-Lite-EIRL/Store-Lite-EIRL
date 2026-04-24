@@ -3,6 +3,7 @@ import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlem
 import { checkPermission } from '@/lib/permissions';
 import { createClient } from '@/lib/supabase/server';
 import { notFound, redirect } from 'next/navigation';
+import { RealtimeToast } from './components/RealtimeToast';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -39,5 +40,10 @@ export default async function DashboardLayout({ children, params }: DashboardLay
     redirect(`/${resolvedBusiness.canonicalSlug}`);
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <RealtimeToast businessId={business.id} />
+      {children}
+    </>
+  );
 }

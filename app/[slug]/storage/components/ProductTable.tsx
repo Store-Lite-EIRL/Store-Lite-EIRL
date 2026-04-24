@@ -117,7 +117,7 @@ export const ProductTable = ({
                       style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
                       onClick={() => {
                         setPreviewProduct(product);
-                        setPreviewSignal(prev => prev + 1);
+                        setPreviewSignal((prev) => prev + 1);
                       }}
                     >
                       <div className="product-img-container">
@@ -151,15 +151,17 @@ export const ProductTable = ({
                         </div>
                       </div>
                       <span>{product.name}</span>
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        Ver vista previa
-                      </div>
+                      <div className="mt-2 text-xs text-muted-foreground">Ver vista previa</div>
                     </div>
                   </td>
                   <td className="secondary-text">{product.category}</td>
-                  <td className="secondary-text">{product.stock === 0 ? (
-                    <span className="text-red-500">AGOTADO</span>
-                  ) : product.stock}</td>
+                  <td className="secondary-text">
+                    {product.stock === 0 ? (
+                      <span className="text-red-500">AGOTADO</span>
+                    ) : (
+                      product.stock
+                    )}
+                  </td>
                   <td className="secondary-text">
                     {formatPrice(parsePriceValue(product.price), currencySymbol)}
                   </td>
@@ -204,14 +206,14 @@ export const ProductTable = ({
         onShare={handleShareProduct}
       />
 
-<ProductPreviewSheet
-         slug={businessSlug}
-         product={previewProduct}
-         openSignal={previewSignal}
-         isOwner={isOwner}
-         hasPaymentGateway={true}
-         culqiPublicKey={undefined} // Owners don't need to buy
-       />
+      <ProductPreviewSheet
+        slug={businessSlug}
+        product={previewProduct as any}
+        openSignal={previewSignal}
+        isOwner={isOwner}
+        hasPaymentGateway={true}
+        culqiPublicKey={undefined} // Owners don't need to buy
+      />
 
       <AlertSnackbar
         open={copiedAlert}

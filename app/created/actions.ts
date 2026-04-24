@@ -1,7 +1,5 @@
 'use server';
 
-
-
 import { env } from '@/config/env';
 import { generateAvailableBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
@@ -94,7 +92,7 @@ export async function createBusinessAction(formData: FormData) {
   const validationResult = createBusinessSchema.safeParse(rawData);
 
   if (!validationResult.success) {
-    const firstError = validationResult.error.errors[0]?.message;
+    const firstError = validationResult.error.issues[0]?.message;
     return { error: firstError || 'Datos de entrada no válidos' };
   }
 
@@ -124,7 +122,10 @@ export async function createBusinessAction(formData: FormData) {
     try {
       storefrontTheme = normalizeStorefrontTheme(JSON.parse(rawStorefrontTheme));
     } catch (error) {
-      console.warn('[createBusinessAction] Invalid storefront theme payload, using default.', error);
+      console.warn(
+        '[createBusinessAction] Invalid storefront theme payload, using default.',
+        error,
+      );
     }
   }
 
@@ -227,10 +228,7 @@ export async function createBusinessAction(formData: FormData) {
 
       console.warn('[createBusinessAction] Final logo URL:', publicUrl);
 
-      await db
-        .update(businesses)
-        .set({ logoUrl: publicUrl })
-        .where(eq(businesses.id, businessId));
+      await db.update(businesses).set({ logoUrl: publicUrl }).where(eq(businesses.id, businessId));
     }
 
     console.warn('[createBusinessAction] Creation fully completed for slug:', finalSlug);
