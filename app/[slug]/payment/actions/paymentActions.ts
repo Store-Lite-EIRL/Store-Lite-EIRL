@@ -23,6 +23,7 @@ export interface ProcessPaymentInput {
   paymentMethod: PaymentMethod;
   buyerEmail: string;
   buyerPhone?: string;
+  buyerDni?: string; // ← Agregado para tracking
   amountSoles: number;
   currency?: string;
 }
@@ -189,6 +190,7 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
         culqiTrackingId: chargeData.outcome?.type || null,
         buyerEmail,
         buyerPhone: buyerPhone || null,
+        buyerDni: input.buyerDni || null, // ← Agregado para tracking
         status: 'paid',
         deliveryCodeHash,
         deliveryCodeExpiresAt: codeExpiresAt,

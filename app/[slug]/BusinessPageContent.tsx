@@ -29,6 +29,7 @@ import { BasicContactDialog } from './components/BasicContactDialog';
 import { CartDrawer } from './components/CartDrawer';
 import { FloatingCartButton } from './components/FloatingCartButton';
 import { FloatingChatFab } from './components/FloatingChatFab';
+import { LookupOrderModal } from './components/LookupOrderModal';
 import ProductPreviewSheet from './components/ProductPreviewSheet';
 import { DeleteProductDialog } from './storage/components/DeleteProductDialog';
 import { CreateProductSheet } from './storage/components/createProduct/CreateProductSheet';
@@ -169,6 +170,7 @@ function BusinessPageContentUI({
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [showLookupModal, setShowLookupModal] = useState(false);
   const [alert, setAlert] = useState<{
     open: boolean;
     description: string;
@@ -613,6 +615,21 @@ function StorefrontProductGridSection({
                       add_circle
                     </Icon>
                     Agregar Producto
+                  </Button>
+                </div>
+              )}
+
+              {!isOwner && (
+                <div className={styles.ownerActionRow}>
+                  <Button
+                    variant="filled"
+                    onClick={() => setShowLookupModal(true)}
+                    className={styles.addProductButton}
+                  >
+                    <Icon slot="icon" size={21}>
+                      search
+                    </Icon>
+                    Ver Pedido
                   </Button>
                 </div>
               )}
