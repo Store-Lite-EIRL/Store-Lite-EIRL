@@ -1,0 +1,114 @@
+'use client';
+
+import { Icon } from '@/shared/components/ui';
+import { useState } from 'react';
+import { updateOrderStatus } from './actions';
+
+interface ActionModalsProps {
+  paymentId: string;
+  trackingToken: string;
+  orderNumber: string | null;
+}
+
+export default function ActionModals({ paymentId, trackingToken, orderNumber }: ActionModalsProps) {
+  const [loading, setLoading] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+
+  const handleAccept = async () => {
+    setLoading(true);
+    try {
+      const res = await updateOrderStatus(paymentId, trackingToken, 'aceptado');
+      if (res.success) {
+        window.location.hash = ''; // Cerrar modal
+      } else {
+        alert(res.error);
+      }
+    } catch (error) {
+      alert('Error al confirmar. Inténtalo de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReport = async () => {
+    if (!reportReason.trim()) {
+      alert('Por favor, indica el motivo del reporte.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await updateOrderStatus(paymentId, trackingToken, 'rechazado', {
+        rejectionReason: reportReason,
+      });
+      if (res.success) {
+        window.location.hash = ''; // Cerrar modal
+      } else {
+        alert(res.error);
+      }
+    } catch (error) {
+      alert('Error al enviar el reporte. Inténtalo de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      {/* POPUP REPORTAR */}
+      <div id="report-form" className="modal-overlay">
+        <div className="modal-box">
+          <h3 style={{ margin: '0 0 1rem 0', fontWeight: 900 }}>Reportar Observación</h3>
+          <p style={{ fontSize: '0.85rem', opacity: 0.7, marginBottom: '1.5rem' }}>
+            Indica el motivo por el cual el ticket de envío no es válido o tiene errores.
+          </p>
+          <textarea
+            value={reportReason}
+            onChange={(e) => setReportReason(e.target.value)}
+            placeholder="Ej: El número de seguimiento no existe en la web de Olva..."
+            style={{
+              width: '100%',
+              height: '120px',
+              borderRadius: '16px',
+              border: '1px solid #ccc',
+              padding: '1rem',
+              fontSize: '0.9rem',
+              marginBottom: '1.5rem',
+              outline: 'none',
+              fontFamily: 'inherit',
+            }}
+          />
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+            <a href="#" className="btn-action btn-outline" style={{ opacity: loading ? 0.5 : 1 }}>
+              Cancelar
+            </a>
+            <button onClick={handleReport} className="btn-action btn-report" disabled={loading}>
+              {loading ? 'ENVIANDO...' : 'Enviar Reporte'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* MODAL: ACCEPT CONFIRMATION */}
+      <div id="accept-confirm" className="modal-overlay">
+        <div className="modal-box" style={{ textAlign: 'center' }}>
+          <Icon size={48} style={{ color: '#4CAF50', marginBottom: '1.5rem' }}>
+            check_circle
+          </Icon>
+          <h3 style={{ margin: '0 0 1rem 0', fontWeight: 900 }}>¿Confirmar el Envío?</h3>
+          <p style={{ fontSize: '0.85rem', opacity: 0.7, marginBottom: '2rem' }}>
+            Al confirmar, el pedido pasará a <b>EN CAMINO</b> y declaras que has verificado los
+            datos del courier.
+          </p>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <a href="#" className="btn-action btn-outline" style={{ opacity: loading ? 0.5 : 1 }}>
+              Volver
+            </a>
+            <button onClick={handleAccept} className="btn-action btn-confirm" disabled={loading}>
+              {loading ? 'CONFIRMANDO...' : 'SÍ, CONFIRMAR'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

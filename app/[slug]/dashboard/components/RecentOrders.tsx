@@ -4,24 +4,32 @@ import { Select, SelectOption } from '@/shared/components/ui/inputs/Select';
 import { TextField } from '@/shared/components/ui/inputs/TextField';
 import {
   Calendar,
+  CheckCircle,
+  Clock,
+  Copy,
   CreditCard,
   ExternalLink,
   Hash,
+  HelpCircle,
   Home,
   IdCard,
   MapPin,
   Phone,
+  Receipt,
+  RefreshCw,
+  Send,
   ShoppingBag,
   Store,
-  Timer,
   Truck,
+  Upload,
   User,
   X,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { uploadTicketAndUpdatePayment, type UploadTicketResult } from '../actions/ticketActions';
 import styles from './RecentOrders.module.css';
 
 interface OrderItem {
@@ -45,7 +53,12 @@ interface OrderItem {
     | 'refund_requested'
     | 'refunded'
     | 'shipped'
-    | 'processing';
+    | 'processing'
+    | 'analizando'
+    | 'aceptado'
+    | 'esperando_confirmacion'
+    | 'finalizado'
+    | 'rechazado';
   shippingAddress: string | null;
   shippingDistrict: string | null;
   shippingProvince: string | null;
@@ -55,8 +68,12 @@ interface OrderItem {
   shippingReference: string | null;
   shippingPhone: string | null;
   buyerEmail: string | null;
+  trackingToken: string | null;
+  ticketImageUrl: string | null;
+  finalizationDeadline: string | null;
   metadata: any;
   createdAt: string;
+  businessId: string;
 }
 
 interface RecentOrdersProps {
@@ -68,16 +85,56 @@ interface RecentOrdersProps {
   currentSearch: string;
 }
 
-const URBANO_STATUS_MAP: Record<string, { label: string; className: string; progress: number }> = {
-  paid: { label: 'Pagado', className: 'statusPaid', progress: 20 },
-  processing: { label: 'En preparación', className: 'statusProcessing', progress: 40 },
-  shipped: { label: 'En camino', className: 'statusShipped', progress: 70 },
-  delivered: { label: 'Entregado', className: 'statusDelivered', progress: 90 },
-  completed: { label: 'Finalizado', className: 'statusCompleted', progress: 100 },
-  pending: { label: 'Pendiente', className: 'statusPending', progress: 10 },
-  failed: { label: 'Fallido', className: 'statusFailed', progress: 0 },
-  disputed: { label: 'Disputa', className: 'statusDisputed', progress: 0 },
-  refunded: { label: 'Reembolsado', className: 'statusRefunded', progress: 0 },
+const URBANO_STATUS_MAP: Record<
+  string,
+  { label: string; className: string; progress: number; icon: string }
+> = {
+  paid: { label: 'Pagado', className: 'statusPaid', progress: 10, icon: 'payments' },
+  processing: {
+    label: 'En preparación',
+    className: 'statusProcessing',
+    progress: 20,
+    icon: 'hourglass_top',
+  },
+  analizando: {
+    label: 'Validando envío',
+    className: 'statusAnalyzing',
+    progress: 30,
+    icon: 'fact_check',
+  },
+  aceptado: { label: 'Aceptado', className: 'statusAccepted', progress: 40, icon: 'check_circle' },
+  shipped: { label: 'En camino', className: 'statusShipped', progress: 60, icon: 'local_shipping' },
+  delivered: { label: 'Entregado', className: 'statusDelivered', progress: 80, icon: 'home' },
+  completed: { label: 'Finalizado', className: 'statusCompleted', progress: 100, icon: 'verified' },
+  finalizado: {
+    label: 'Finalizado',
+    className: 'statusCompleted',
+    progress: 100,
+    icon: 'verified',
+  },
+  pending: { label: 'Pendiente', className: 'statusPending', progress: 5, icon: 'schedule' },
+  esperando_confirmacion: {
+    label: 'Esperando confirmación',
+    className: 'statusWaiting',
+    progress: 90,
+    icon: 'hourglass_empty',
+  },
+  rechazado: {
+    label: 'Observado',
+    className: 'statusRejected',
+    progress: 0,
+    icon: 'report_problem',
+  },
+  not_delivered: { label: 'No entregado', className: 'statusFailed', progress: 0, icon: 'error' },
+  failed: { label: 'Fallido', className: 'statusFailed', progress: 0, icon: 'error' },
+  disputed: { label: 'Disputa', className: 'statusDisputed', progress: 0, icon: 'gavel' },
+  refund_requested: {
+    label: 'Reembolso solicitado',
+    className: 'statusRefunded',
+    progress: 0,
+    icon: 'receipt_long',
+  },
+  refunded: { label: 'Reembolsado', className: 'statusRefunded', progress: 0, icon: 'money_off' },
 };
 
 const PAYMENT_METHOD_MAP: Record<string, string> = {
@@ -85,6 +142,8 @@ const PAYMENT_METHOD_MAP: Record<string, string> = {
   yape: 'Yape',
   plin: 'Plin',
 };
+
+type ModalTab = 'detalles' | 'ticket' | 'ayuda';
 
 export function RecentOrders({
   orders,
@@ -95,11 +154,23 @@ export function RecentOrders({
   currentSearch,
 }: RecentOrdersProps) {
   const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
+  const [activeTab, setActiveTab] = useState<ModalTab>('detalles');
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [ticketFile, setTicketFile] = useState<File | null>(null);
+  const [ticketPreview, setTicketPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<UploadTicketResult | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    open: boolean;
+    action: (() => void) | null;
+  }>({ open: false, action: null });
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Disable scroll when modal is open
   useEffect(() => {
     if (selectedOrder) {
       document.body.style.overflow = 'hidden';
@@ -109,6 +180,14 @@ export function RecentOrders({
     return () => {
       document.body.style.overflow = 'auto';
     };
+  }, [selectedOrder]);
+
+  useEffect(() => {
+    setTicketFile(null);
+    setTicketPreview(null);
+    setUploadResult(null);
+    setUploading(false);
+    setActiveTab('detalles');
   }, [selectedOrder]);
 
   const updateFilters = (updates: Record<string, string | null>) => {
@@ -125,6 +204,56 @@ export function RecentOrders({
     const params = new URLSearchParams(searchParams.toString());
     params.set('page', newPage.toString());
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch {
+      // Fallback
+    }
+  };
+
+  const handleTicketFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setTicketFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setTicketPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadTicket = async () => {
+    if (!ticketPreview || !selectedOrder) return;
+    setUploading(true);
+    try {
+      const result = await uploadTicketAndUpdatePayment(
+        selectedOrder.id,
+        ticketPreview,
+        selectedOrder.businessId,
+      );
+      setUploadResult(result);
+      if (result.success) {
+        setTimeout(() => {
+          router.refresh();
+          setSelectedOrder(null);
+        }, 1500);
+      }
+    } catch {
+      setUploadResult({ success: false, error: 'Error inesperado al subir el ticket' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleCancelUpload = () => {
+    setTicketFile(null);
+    setTicketPreview(null);
+    setUploadResult(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const renderDots = (segmentProgress: number) => {
@@ -159,20 +288,19 @@ export function RecentOrders({
         >
           <Store size={18} />
         </div>
-
         {type === 'recojo' || !type ? (
           <span className={styles.inlineLabel}>Recojo en Tienda</span>
         ) : type === 'agencia' ? (
           <>
             {renderDots(totalProgress)}
             <div
-              className={`${styles.iconWrapper} ${totalProgress >= 70 ? styles.active : ''}`}
+              className={`${styles.iconWrapper} ${totalProgress >= 60 ? styles.active : ''}`}
               data-tooltip={`DISTRIBUCIÓN: ${order.shippingAgency || 'Agencia'}`}
             >
               <Truck size={18} />
             </div>
             <span className={styles.inlineLabel}>
-              {totalProgress >= 70 ? 'En Agencia' : 'En camino'}
+              {totalProgress >= 60 ? 'En Agencia' : 'En camino'}
             </span>
           </>
         ) : (
@@ -197,8 +325,578 @@ export function RecentOrders({
     );
   };
 
+  const getTimelineSteps = (order: OrderItem) => {
+    const statusInfo = URBANO_STATUS_MAP[order.status] || { progress: 0 };
+    const progress = statusInfo.progress;
+    return [
+      {
+        label: 'PEDIDO',
+        state: progress >= 10 ? (progress >= 20 ? 'completed' : 'current') : 'pending',
+      },
+      {
+        label: 'VALIDANDO',
+        state: progress >= 30 ? (progress >= 40 ? 'completed' : 'current') : 'pending',
+      },
+      {
+        label: 'ENVÍO',
+        state: progress >= 60 ? (progress >= 80 ? 'completed' : 'current') : 'pending',
+      },
+      {
+        label: 'CERRADO',
+        state: progress >= 100 ? 'completed' : progress >= 80 ? 'current' : 'pending',
+      },
+    ];
+  };
+
+  const renderTimeline = (order: OrderItem) => {
+    const steps = getTimelineSteps(order);
+    return (
+      <div className={styles.timelineWrapper}>
+        <div className={styles.timeline}>
+          {steps.map((step, i) => {
+            const isLast = i === steps.length - 1;
+            return (
+              <div
+                key={i}
+                className={`${styles.timelineStep} ${step.state === 'completed' ? styles.stepCompleted : ''} ${step.state === 'current' ? styles.stepCurrent : ''}`}
+              >
+                {!isLast && (
+                  <div
+                    className={`${styles.timelineLine} ${step.state === 'completed' ? styles.lineCompleted : ''}`}
+                  />
+                )}
+                <div className={styles.timelineIndicator}>
+                  {step.state === 'completed' ? (
+                    <CheckCircle size={16} />
+                  ) : (
+                    <div className={styles.timelineDot} />
+                  )}
+                </div>
+                <span className={styles.timelineLabel}>{step.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const renderShippingPathModal = (order: OrderItem) => {
+    const type = order.shippingType?.toLowerCase();
+    const statusInfo = URBANO_STATUS_MAP[order.status] || { progress: 0 };
+    return (
+      <section className={styles.infoSection}>
+        <h3 className={styles.sectionTitle}>
+          <MapPin size={16} /> Ruta de Entrega
+        </h3>
+        <div className={styles.shippingPath}>
+          <div className={styles.pathItem}>
+            <div
+              className={`${styles.pathIcon} ${statusInfo.progress >= 10 ? styles.pathIconActive : ''}`}
+            >
+              <Store size={18} />
+            </div>
+            <div className={styles.pathContent}>
+              <p className={styles.pathLabel}>Inicio</p>
+              <p className={styles.pathValue}>Almacén Central (Lima)</p>
+            </div>
+          </div>
+          {type !== 'recojo' && (
+            <>
+              <div className={styles.pathConnector} />
+              <div className={styles.pathItem}>
+                <div
+                  className={`${styles.pathIcon} ${statusInfo.progress >= 40 ? styles.pathIconActive : ''}`}
+                >
+                  <Truck size={18} />
+                </div>
+                <div className={styles.pathContent}>
+                  <p className={styles.pathLabel}>Agencia</p>
+                  <p className={styles.pathValue}>{order.shippingAgency || 'Distribución local'}</p>
+                </div>
+              </div>
+            </>
+          )}
+          {type === 'domicilio' && (
+            <>
+              <div className={styles.pathConnector} />
+              <div className={styles.pathItem}>
+                <div
+                  className={`${styles.pathIcon} ${statusInfo.progress >= 80 ? styles.pathIconActive : ''}`}
+                >
+                  <Home size={18} />
+                </div>
+                <div className={styles.pathDetails}>
+                  <p className={styles.pathLabel}>Destino</p>
+                  <p className={styles.pathValue}>
+                    {order.shippingDistrict}, {order.shippingProvince}
+                  </p>
+                  <p className={styles.pathSubValue}>{order.shippingAddress}</p>
+                  {order.shippingReference && (
+                    <p className={styles.refText}>Ref: {order.shippingReference}</p>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+        <div className={styles.progressBarContainer}>
+          <div className={styles.progressBarTrack}>
+            <div className={styles.progressBarFill} style={{ width: `${statusInfo.progress}%` }} />
+          </div>
+          <span className={styles.progressText}>{statusInfo.progress}% completado</span>
+        </div>
+      </section>
+    );
+  };
+
+  const renderTicketSection = (order: OrderItem) => {
+    const hasTicket = !!order.ticketImageUrl;
+    const statusInfo = URBANO_STATUS_MAP[order.status] || { progress: 0 };
+    return (
+      <section className={styles.ticketSection}>
+        <div className={styles.ticketHeader}>
+          <h3 className={styles.sectionTitle}>
+            <Receipt size={16} /> Comprobante de Envío
+          </h3>
+          {hasTicket && (
+            <span className={`${styles.ticketStatusBadge} ${styles.statusBadgeGreen}`}>
+              <CheckCircle size={14} /> Subido
+            </span>
+          )}
+        </div>
+        {hasTicket ? (
+          <div className={styles.ticketCard}>
+            <div className={styles.ticketImageContainer}>
+              <Image
+                src={order.ticketImageUrl || ''}
+                alt="Ticket"
+                width={300}
+                height={200}
+                className={styles.ticketImage}
+              />
+              <div className={styles.ticketImageOverlay}>
+                <span>Vista previa del comprobante</span>
+              </div>
+            </div>
+            <div className={styles.ticketInfo}>
+              <p className={styles.ticketInfoTextSuccess}>✓ Ticket subido correctamente</p>
+              {order.trackingToken && (
+                <div className={styles.trackingTokenInfo}>
+                  Token: <code>{order.trackingToken}</code>
+                </div>
+              )}
+            </div>
+            <div className={styles.ticketActions}>
+              <button
+                className={styles.copyButton}
+                onClick={() => copyToClipboard(order.trackingToken || '', 'token')}
+              >
+                <Copy size={14} />
+                {copiedField === 'token' ? 'Copiado!' : 'Copiar Token'}
+              </button>
+            </div>
+          </div>
+        ) : statusInfo.progress >= 20 ? (
+          <div className={styles.ticketUploadCard}>
+            {!ticketPreview ? (
+              <>
+                <div className={styles.ticketUploadIcon}>
+                  <Upload size={32} />
+                </div>
+                <p className={styles.ticketUploadTitle}>Subir comprobante de envío</p>
+                <p className={styles.ticketUploadHint}>
+                  Adjuntá la foto del ticket de courier para que el cliente pueda seguir su pedido
+                </p>
+                <label className={styles.uploadLabel}>
+                  <Upload size={18} /> Seleccionar Imagen
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className={styles.fileInput}
+                    onChange={handleTicketFileSelect}
+                  />
+                </label>
+                <p className={styles.hint}>Formatos: JPG, PNG, WebP</p>
+              </>
+            ) : uploadResult?.success ? (
+              <div className={styles.ticketPreview}>
+                <p className={styles.ticketUploaded}>
+                  <CheckCircle size={18} /> Ticket subido exitosamente
+                </p>
+                <p className={styles.ticketHint}>Redirigiendo...</p>
+              </div>
+            ) : (
+              <div className={styles.ticketPreview}>
+                <div className={styles.ticketImageWrapper}>
+                  <Image
+                    src={ticketPreview}
+                    alt="Preview"
+                    width={280}
+                    height={200}
+                    className={`${styles.ticketImage} ${styles.ticketBlurred}`}
+                  />
+                  <div className={styles.ticketOverlay}>Click para confirmar</div>
+                </div>
+                <div className={styles.ticketActions}>
+                  <button
+                    className={styles.sendButton}
+                    onClick={handleUploadTicket}
+                    disabled={uploading}
+                  >
+                    {uploading ? <RefreshCw size={18} /> : <Send size={18} />}
+                    {uploading ? 'Subiendo...' : 'Enviar Ticket'}
+                  </button>
+                  <button className={styles.cancelButton} onClick={handleCancelUpload}>
+                    <X size={18} /> Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+            <button className={styles.helpToggle} onClick={() => setHelpOpen(!helpOpen)}>
+              <HelpCircle size={16} />
+              {helpOpen ? 'Ocultar instrucciones' : '¿Cómo funciona?'}
+            </button>
+            {helpOpen && (
+              <div className={styles.helpDetails}>
+                <details open>
+                  <summary className={styles.helpSummary}>Flujo de envío</summary>
+                  <div className={styles.helpFlow}>
+                    <div className={styles.helpStep}>
+                      <div className={styles.helpStepNumber}>1</div>
+                      <span>Generá el envío con la agencia</span>
+                    </div>
+                    <div className={styles.helpArrow}>↓</div>
+                    <div className={styles.helpStep}>
+                      <div className={styles.helpStepNumber}>2</div>
+                      <span>Fotografiá el comprobante/ticket</span>
+                    </div>
+                    <div className={styles.helpArrow}>↓</div>
+                    <div className={styles.helpStep}>
+                      <div className={styles.helpStepNumber}>3</div>
+                      <span>Subilo acá — el cliente recibe el token</span>
+                    </div>
+                    <div className={styles.helpArrow}>↓</div>
+                    <div className={styles.helpStep}>
+                      <div className={styles.helpStepNumber}>4</div>
+                      <span>El cliente valida y acepta el envío</span>
+                    </div>
+                    <p className={`${styles.helpNote} ${styles.warning}`}>
+                      ⚠️ El ticket se difumina hasta que el cliente confirme
+                    </p>
+                  </div>
+                </details>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className={styles.ticketCard}>
+            <p className={styles.ticketInfoText}>
+              El ticket de envío estará disponible cuando el pedido sea despachado.
+            </p>
+          </div>
+        )}
+      </section>
+    );
+  };
+
+  const renderHelpTab = () => (
+    <div className={styles.tabContent}>
+      <div className={styles.helpBox}>
+        <h3 className={styles.sectionTitle}>
+          <HelpCircle size={16} /> Guía de Estados
+        </h3>
+        {Object.entries(URBANO_STATUS_MAP)
+          .slice(0, 8)
+          .map(([key, info]) => (
+            <div key={key} className={styles.helpStep}>
+              <div className={styles.helpStepNumber}>{info.progress}%</div>
+              <span>{info.label}</span>
+            </div>
+          ))}
+      </div>
+      <div className={styles.helpBox}>
+        <h3 className={styles.sectionTitle}>
+          <Truck size={16} /> Tipos de Envío
+        </h3>
+        <div className={styles.helpStep}>
+          <div className={styles.helpStepNumber}>A</div>
+          <span>
+            <strong>Agencia:</strong> El cliente retira en punto de recogida
+          </span>
+        </div>
+        <div className={styles.helpStep}>
+          <div className={styles.helpStepNumber}>D</div>
+          <span>
+            <strong>Domicilio:</strong> Entrega directa a la dirección
+          </span>
+        </div>
+        <div className={styles.helpStep}>
+          <div className={styles.helpStepNumber}>R</div>
+          <span>
+            <strong>Recojo:</strong> El cliente retira en tu local
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderModalContent = (order: OrderItem) => {
+    const statusInfo = URBANO_STATUS_MAP[order.status] || {
+      label: order.status,
+      className: '',
+      progress: 0,
+      icon: 'info',
+    };
+    return (
+      <>
+        <div className={styles.modalHero}>
+          <button className={styles.modalHeroClose} onClick={() => setSelectedOrder(null)}>
+            <X size={20} />
+          </button>
+          <div className={styles.modalHeroOrderNumber}>
+            <Hash size={24} />
+            <h2>#{order.orderNumber || order.id.slice(0, 8).toUpperCase()}</h2>
+          </div>
+          <div className={styles.statusHeroBadge}>
+            {statusInfo.icon && (
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+                {statusInfo.icon}
+              </span>
+            )}
+            {statusInfo.label}
+          </div>
+          <div className={styles.modalHeroMeta}>
+            <Calendar size={16} />
+            {new Date(order.createdAt).toLocaleDateString('es-PE', {
+              dateStyle: 'medium',
+              timeStyle: 'short',
+            })}
+          </div>
+        </div>
+        {renderTimeline(order)}
+        <div className={styles.modalTabs}>
+          <button
+            className={`${styles.tabButton} ${activeTab === 'detalles' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('detalles')}
+          >
+            <Receipt size={16} /> Detalles
+          </button>
+          <button
+            className={`${styles.tabButton} ${activeTab === 'ticket' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('ticket')}
+          >
+            <Receipt size={16} /> Ticket
+          </button>
+          <button
+            className={`${styles.tabButton} ${activeTab === 'ayuda' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('ayuda')}
+          >
+            <HelpCircle size={16} /> Ayuda
+          </button>
+        </div>
+        {activeTab === 'detalles' && (
+          <div className={styles.modalBodyNew}>
+            <div className={styles.modalInfoGrid}>
+              <section className={styles.infoSection}>
+                <h3 className={styles.sectionTitle}>
+                  <ShoppingBag size={16} /> Producto
+                </h3>
+                <div className={styles.productCard}>
+                  <div className={styles.productImageWrapper}>
+                    {order.productImage ? (
+                      <Image
+                        src={order.productImage}
+                        alt={order.productTitle}
+                        width={60}
+                        height={60}
+                        className={styles.productImg}
+                      />
+                    ) : (
+                      <div className={styles.productPlaceholder}>
+                        <ShoppingBag size={24} />
+                      </div>
+                    )}
+                  </div>
+                  <div className={styles.productInfo}>
+                    <Link
+                      href={`/product/${order.productSlug}`}
+                      target="_blank"
+                      className={styles.productLink}
+                    >
+                      {order.productTitle} <ExternalLink size={14} />
+                    </Link>
+                    <p className={styles.itemPrice}>
+                      {new Intl.NumberFormat('es-PE', {
+                        style: 'currency',
+                        currency: order.currency,
+                      }).format(Number(order.amount) - Number(order.shippingCost))}
+                    </p>
+                  </div>
+                </div>
+              </section>
+              <section className={styles.infoSection}>
+                <h3 className={styles.sectionTitle}>
+                  <CreditCard size={16} /> Pago
+                </h3>
+                <div className={styles.paymentDetails}>
+                  <div className={styles.detailRow}>
+                    <span className={styles.detailLabel}>Método:</span>
+                    <span className={styles.capitalizeText}>
+                      {PAYMENT_METHOD_MAP[order.paymentMethod] || order.paymentMethod}
+                    </span>
+                  </div>
+                  <div className={styles.divider} />
+                  <div className={styles.detailRow}>
+                    <span className={styles.detailLabel}>Subtotal:</span>
+                    <span>
+                      {new Intl.NumberFormat('es-PE', {
+                        style: 'currency',
+                        currency: order.currency,
+                      }).format(Number(order.amount) - Number(order.shippingCost))}
+                    </span>
+                  </div>
+                  <div className={styles.detailRow}>
+                    <span className={styles.detailLabel}>Envío:</span>
+                    <span>
+                      {new Intl.NumberFormat('es-PE', {
+                        style: 'currency',
+                        currency: order.currency,
+                      }).format(Number(order.shippingCost))}
+                    </span>
+                  </div>
+                  <div className={`${styles.detailRow} ${styles.totalRow}`}>
+                    <span className={styles.detailLabel}>Total:</span>
+                    <span className={styles.totalValue}>
+                      {new Intl.NumberFormat('es-PE', {
+                        style: 'currency',
+                        currency: order.currency,
+                      }).format(Number(order.amount))}
+                    </span>
+                  </div>
+                </div>
+              </section>
+              <section className={styles.infoSection}>
+                <h3 className={styles.sectionTitle}>
+                  <User size={16} /> Cliente
+                </h3>
+                <div className={styles.customerCard}>
+                  <div className={styles.customerHeader}>
+                    <div className={styles.customerAvatar}>
+                      <User size={24} />
+                    </div>
+                    <div className={styles.customerBasicInfo}>
+                      <p className={styles.customerLabel}>Comprador</p>
+                      <p className={styles.customerEmail}>{order.buyerEmail || 'No registrado'}</p>
+                    </div>
+                  </div>
+                  <div className={styles.dataItem}>
+                    <IdCard size={16} />
+                    <span>DNI: {order.metadata?.buyerDni || 'No registrado'}</span>
+                  </div>
+                  <div className={styles.dataItem}>
+                    <Phone size={16} />
+                    <span>Tel: {order.shippingPhone || 'Sin teléfono'}</span>
+                  </div>
+                </div>
+              </section>
+              {renderShippingPathModal(order)}
+            </div>
+            <div className={styles.quickActions}>
+              {order.trackingToken && (
+                <button
+                  className={`${styles.actionButton} ${styles.copyButton}`}
+                  onClick={() => copyToClipboard(order.trackingToken, 'token')}
+                >
+                  <Copy size={16} />
+                  {copiedField === 'token' ? 'Token copiado!' : 'Copiar Token'}
+                </button>
+              )}
+              <button
+                className={styles.actionButton}
+                onClick={() =>
+                  copyToClipboard(
+                    `${order.shippingAddress || ''}, ${order.shippingDistrict || ''}, ${order.shippingProvince || ''}`,
+                    'address',
+                  )
+                }
+              >
+                <MapPin size={16} />
+                {copiedField === 'address' ? 'Dirección copiada!' : 'Copiar Dirección'}
+              </button>
+            </div>
+            {order.status === 'esperando_confirmacion' && order.finalizationDeadline && (
+              <div className={styles.finalizationPending}>
+                <div className={styles.finalizationIcon}>
+                  <Clock size={20} />
+                </div>
+                <div className={styles.finalizationText}>
+                  <strong>Esperando confirmación del cliente</strong>
+                  <span>
+                    El vendedor ha solicitado la finalización. El cliente tiene un plazo para
+                    confirmar.
+                  </span>
+                  <div className={styles.finalizationDeadline}>
+                    Deadline:{' '}
+                    {new Date(order.finalizationDeadline).toLocaleDateString('es-PE', {
+                      dateStyle: 'long',
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+            {(order.status === 'completed' || order.status === 'finalizado') && (
+              <div className={styles.permanentSeal}>
+                <div className={styles.sealIconWrapper}>
+                  <CheckCircle size={20} />
+                </div>
+                <div className={styles.sealText}>
+                  <strong>Pedido Finalizado</strong>
+                  <span>Esta operación ha sido completada exitosamente.</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        {activeTab === 'ticket' && (
+          <div className={styles.modalBodyNew}>{renderTicketSection(order)}</div>
+        )}
+        {activeTab === 'ayuda' && <div className={styles.modalBodyNew}>{renderHelpTab()}</div>}
+      </>
+    );
+  };
+
   return (
     <article className={styles.card}>
+      {confirmAction.open && (
+        <div
+          className={styles.confirmOverlay}
+          onClick={() => setConfirmAction({ open: false, action: null })}
+        >
+          <div className={styles.confirmContent} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.confirmTitle}>¿Estás seguro?</h3>
+            <p className={styles.confirmDesc}>Esta acción no se puede deshacer.</p>
+            <div className={styles.confirmActions}>
+              <button
+                className={styles.cancelButton}
+                onClick={() => setConfirmAction({ open: false, action: null })}
+              >
+                Cancelar
+              </button>
+              <button
+                className={styles.primaryButton}
+                onClick={() => {
+                  confirmAction.action?.();
+                  setConfirmAction({ open: false, action: null });
+                }}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className={styles.filtersHeader}>
         <div className={styles.searchWrapper}>
           <TextField
@@ -226,7 +924,6 @@ export function RecentOrders({
               </SelectOption>
             ))}
           </Select>
-
           <Select
             label="Límite"
             outlined
@@ -240,7 +937,6 @@ export function RecentOrders({
           </Select>
         </div>
       </div>
-
       <div className={styles.tableWrapper}>
         <table className={styles.table}>
           <thead>
@@ -309,7 +1005,6 @@ export function RecentOrders({
           </tbody>
         </table>
       </div>
-
       {totalPages > 1 && (
         <div className={styles.pagination}>
           <button
@@ -331,197 +1026,10 @@ export function RecentOrders({
           </button>
         </div>
       )}
-
-      {/* --- Order Detail Modal --- */}
       {selectedOrder && (
         <div className={styles.modalOverlay} onClick={() => setSelectedOrder(null)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <header className={styles.modalHeader}>
-              <div className={styles.modalHeaderTitle}>
-                <Hash size={20} />
-                <h2>
-                  Detalle del Pedido #
-                  {selectedOrder.orderNumber || selectedOrder.id.slice(0, 8).toUpperCase()}
-                </h2>
-              </div>
-              <button className={styles.closeButton} onClick={() => setSelectedOrder(null)}>
-                <X size={24} />
-              </button>
-            </header>
-
-            <div className={styles.modalBody}>
-              <div className={styles.modalStatusHeader}>
-                <div
-                  className={`${styles.statusBadgeLarge} ${styles[URBANO_STATUS_MAP[selectedOrder.status]?.className]}`}
-                >
-                  <Timer size={18} />
-                  {URBANO_STATUS_MAP[selectedOrder.status]?.label}
-                </div>
-                <div className={styles.dateTime}>
-                  <Calendar size={14} />
-                  {new Date(selectedOrder.createdAt).toLocaleString('es-PE', {
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                  })}
-                </div>
-              </div>
-
-              <div className={styles.modalGrid}>
-                <div className={styles.modalColumn}>
-                  <section className={styles.infoSection}>
-                    <h3 className={styles.sectionTitle}>
-                      <ShoppingBag size={16} /> Producto
-                    </h3>
-                    <div className={styles.productCard}>
-                      <div className={styles.productImageWrapper}>
-                        {selectedOrder.productImage ? (
-                          <Image
-                            src={selectedOrder.productImage}
-                            alt={selectedOrder.productTitle}
-                            width={80}
-                            height={80}
-                            className={styles.productImg}
-                          />
-                        ) : (
-                          <div className={styles.productPlaceholder}>
-                            <ShoppingBag size={32} />
-                          </div>
-                        )}
-                      </div>
-                      <div className={styles.productInfo}>
-                        <Link
-                          href={`/product/${selectedOrder.productSlug}`}
-                          target="_blank"
-                          className={styles.productLink}
-                        >
-                          {selectedOrder.productTitle} <ExternalLink size={14} />
-                        </Link>
-                        <p className={styles.itemPrice}>
-                          Precio:{' '}
-                          {new Intl.NumberFormat('es-PE', {
-                            style: 'currency',
-                            currency: selectedOrder.currency,
-                          }).format(
-                            Number(selectedOrder.amount) - Number(selectedOrder.shippingCost),
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  </section>
-
-                  <section className={styles.infoSection}>
-                    <h3 className={styles.sectionTitle}>
-                      <CreditCard size={16} /> Pago
-                    </h3>
-                    <div className={styles.paymentDetails}>
-                      <div className={styles.detailRow}>
-                        <span>Método:</span>
-                        <span className={styles.capitalizeText}>
-                          {PAYMENT_METHOD_MAP[selectedOrder.paymentMethod] ||
-                            selectedOrder.paymentMethod}
-                        </span>
-                      </div>
-                      <div className={styles.divider} />
-                      <div className={styles.detailRow}>
-                        <span>Subtotal:</span>
-                        <span>
-                          {new Intl.NumberFormat('es-PE', {
-                            style: 'currency',
-                            currency: selectedOrder.currency,
-                          }).format(
-                            Number(selectedOrder.amount) - Number(selectedOrder.shippingCost),
-                          )}
-                        </span>
-                      </div>
-                      <div className={styles.detailRow}>
-                        <span>Envío:</span>
-                        <span>
-                          {new Intl.NumberFormat('es-PE', {
-                            style: 'currency',
-                            currency: selectedOrder.currency,
-                          }).format(Number(selectedOrder.shippingCost))}
-                        </span>
-                      </div>
-                      <div className={`${styles.detailRow} ${styles.totalRow}`}>
-                        <span>Total:</span>
-                        <span>
-                          {new Intl.NumberFormat('es-PE', {
-                            style: 'currency',
-                            currency: selectedOrder.currency,
-                          }).format(Number(selectedOrder.amount))}
-                        </span>
-                      </div>
-                    </div>
-                  </section>
-                </div>
-
-                <div className={styles.modalColumn}>
-                  <section className={styles.infoSection}>
-                    <h3 className={styles.sectionTitle}>
-                      <User size={16} /> Cliente
-                    </h3>
-                    <div className={styles.customerCard}>
-                      <div className={styles.dataItem}>
-                        <IdCard size={16} />
-                        <span>DNI: {selectedOrder.metadata?.buyerDni || 'No registrado'}</span>
-                      </div>
-                      <div className={styles.dataItem}>
-                        <Timer size={16} />
-                        <span>Email: {selectedOrder.buyerEmail}</span>
-                      </div>
-                      <div className={styles.dataItem}>
-                        <Phone size={16} />
-                        <span>Tel: {selectedOrder.shippingPhone || 'Sin teléfono'}</span>
-                      </div>
-                    </div>
-                  </section>
-
-                  <section className={styles.infoSection}>
-                    <h3 className={styles.sectionTitle}>
-                      <MapPin size={16} /> Ruta de Entrega
-                    </h3>
-                    <div className={styles.shippingPath}>
-                      <div className={styles.pathItem}>
-                        <Store size={16} className={styles.pathIcon} />
-                        <div>
-                          <p className={styles.pathLabel}>Inicio</p>
-                          <p className={styles.pathValue}>Almacén Central (Lima)</p>
-                        </div>
-                      </div>
-                      {selectedOrder.shippingType !== 'recojo' && (
-                        <div className={styles.pathItem}>
-                          <Truck size={16} className={styles.pathIcon} />
-                          <div>
-                            <p className={styles.pathLabel}>Agencia</p>
-                            <p className={styles.pathValue}>
-                              {selectedOrder.shippingAgency || 'Distribución local'}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                      {selectedOrder.shippingType === 'domicilio' && (
-                        <div className={styles.pathItem}>
-                          <Home size={16} className={styles.pathIcon} />
-                          <div>
-                            <p className={styles.pathLabel}>Destino</p>
-                            <p className={styles.pathValue}>
-                              {selectedOrder.shippingDistrict}, {selectedOrder.shippingProvince}
-                            </p>
-                            <p className={styles.pathSubValue}>{selectedOrder.shippingAddress}</p>
-                            {selectedOrder.shippingReference && (
-                              <p className={styles.refText}>
-                                Ref: {selectedOrder.shippingReference}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </section>
-                </div>
-              </div>
-            </div>
-
+            {renderModalContent(selectedOrder)}
             <footer className={styles.modalFooter}>
               <button className={styles.primaryButton} onClick={() => setSelectedOrder(null)}>
                 Cerrar
