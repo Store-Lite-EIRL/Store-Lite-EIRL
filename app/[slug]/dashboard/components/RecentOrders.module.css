@@ -2005,10 +2005,60 @@
 /* ─── MODAL HERO HEADER COMPACTO ─── */
 .modalHero {
   background: linear-gradient(135deg, var(--md-sys-color-primary) 0%, color-mix(in srgb, var(--md-sys-color-primary) 85%, black) 100%);
-  padding: 1.25rem 1.5rem;
+  padding: 1.5rem 2rem;
   border-radius: 28px 28px 0 0;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.modalHeroOrderNumber {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 1rem;
+}
+
+.modalHeroOrderNumber h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.statusHeroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 100px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  color: white;
+  margin-bottom: 0.75rem;
+}
+
+.modalHeroMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.modalHeroMeta svg {
+  width: 16px;
+  height: 16px;
+  opacity: 0.9;
 }
 
 .modalHero::before {
@@ -2103,10 +2153,45 @@
 
 /* ─── MODAL BODY NUEVO LAYOUT ─── */
 .modalBodyNew {
-  padding: 1.25rem 1.5rem;
+  padding: 2rem;
   flex: 1;
   overflow-y: auto;
   background: var(--md-sys-color-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.modalInfoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .modalInfoGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--md-sys-color-outline);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+
+.sectionTitle svg {
+  width: 16px;
+  height: 16px;
+  color: var(--md-sys-color-primary);
 }
 
 /* Layout: 2 columnas para info */
@@ -2159,11 +2244,74 @@
 /* ─── PRODUCT CARD COMPACTO ─── */
 .productCard {
   display: flex;
-  gap: 0.75rem;
+  gap: 1rem;
   background: var(--md-sys-color-surface-container-lowest);
-  padding: 0.75rem;
-  border-radius: 12px;
+  padding: 1rem;
+  border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+  transition: all 0.2s ease;
+}
+
+.productCard:hover {
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.productImageWrapper {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--md-sys-color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.productImg {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+}
+
+.productPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--md-sys-color-outline);
+  font-size: 1.5rem;
+}
+
+.productInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.productLink {
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.productLink:hover {
+  text-decoration: underline;
+}
+
+.itemPrice {
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+  font-size: 0.9rem;
+  margin: 0;
 }
 
 .productImageWrapper {
@@ -2314,9 +2462,77 @@
   gap: 0;
   position: relative;
   background: var(--md-sys-color-surface-container-lowest);
-  padding: 0.75rem;
-  border-radius: 12px;
+  padding: 1rem;
+  border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.pathItem {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  position: relative;
+  padding: 0.5rem 0;
+}
+
+.pathItem:not(:last-child) {
+  padding-bottom: 1.5rem;
+}
+
+.pathIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--md-sys-color-surface);
+  border: 1.5px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-outline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.pathIconActive,
+.pathItem:last-child .pathIcon {
+  background: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.pathItem:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 17px;
+  top: 40px;
+  width: 2px;
+  height: calc(100% + 8px);
+  background: linear-gradient(to bottom, var(--md-sys-color-primary), transparent);
+  border-radius: 2px;
+}
+
+.pathLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--md-sys-color-outline);
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
+.pathValue {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  margin: 0.25rem 0 0 0;
+  line-height: 1.3;
+}
+
+.pathSubValue {
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0.2rem 0 0 0;
 }
 
 .shippingPath .pathItem {
