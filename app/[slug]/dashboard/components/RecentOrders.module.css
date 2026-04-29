@@ -44,7 +44,7 @@
 
 /* ─── Cell Styles ─── */
 .orderNumber {
-  font-family: 'Google Sans', monospace;
+  font-family: var(--md-sys-typescale-body-small-font, monospace);
   font-weight: 700;
   color: var(--md-sys-color-primary);
   background: var(--md-sys-color-primary-container);
@@ -76,7 +76,9 @@
   white-space: nowrap;
 }
 
-/* ─── Tracking Visualizer ─── */
+/* Estas clases fueron sobrescrita por las versiones del modal */
+/* TABLE TRACKING (originnal) - NO TOCAR */
+
 .trackingContainer {
   display: flex;
   align-items: center;
@@ -172,40 +174,52 @@
 }
 
 .statusPaid {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
 }
-.statusShipped {
-  background: #dbeafe;
-  color: #1e40af;
+.statusAnalyzing {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
 }
-.statusDelivered {
-  background: #dcfce7;
-  color: #166534;
+.statusAccepted {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
 }
 .statusCompleted {
-  background: #f0fdf4;
-  color: #065f46;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+.statusReported {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+.statusVerifying {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+.statusRejected {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
 }
 .statusProcessing {
-  background: #f3e8ff;
-  color: #6b21a8;
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
 }
 .statusPending {
-  background: #f3f4f6;
-  color: #374151;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
 }
 .statusFailed {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
 }
 .statusRefunded {
-  background: #e0f2fe;
-  color: #0369a1;
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
 }
 .statusDisputed {
-  background: #ffedd5;
-  color: #c2410c;
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
 }
 
 /* ─── Filters MD3 ─── */
@@ -237,45 +251,109 @@
 }
 
 /* ─── MODAL STYLES ─── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUpModal {
+  from { opacity: 0; transform: translateY(40px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .modalOverlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2000;
   padding: 1.5rem;
+  animation: fadeIn 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 
 .modalContent {
-  background: var(--md-sys-color-surface-container-highest);
-  border-radius: 32px;
+  background: var(--md-sys-color-surface);
+  border-radius: 28px;
   width: 100%;
-  max-width: 800px;
+  max-width: 700px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.12), 0 0 0 1px color-mix(in srgb, var(--md-sys-color-outline-variant) 40%, transparent);
   display: flex;
   flex-direction: column;
+  animation: slideUpModal 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  position: relative;
 }
 
+/* Header mejorado */
+/* Header mejorado */
 .modalHeader {
-  padding: 1.5rem 2rem;
+  padding: 2rem 2.5rem;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  align-items: flex-start;
+  border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 50%, transparent);
+  background: linear-gradient(180deg, var(--md-sys-color-surface-container-lowest) 0%, var(--md-sys-color-surface) 100%);
+  border-radius: 32px 32px 0 0;
 }
 
-.modalHeaderTitle h2 {
+.modalHeaderTop {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.orderTitleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.orderHashIcon {
+  color: var(--md-sys-color-primary);
+}
+
+.orderTitle {
   font-size: 1.25rem;
   font-weight: 800;
   margin: 0;
+  font-family: var(--md-sys-typescale-title-large-font, system-ui);
+  color: var(--md-sys-color-on-surface);
+}
+
+.orderMetaHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* statusBadgeLarge variants for modal */
+.statusBadgeLarge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.dateTimeBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .closeButton {
@@ -285,72 +363,279 @@
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .closeButton:hover {
   background: var(--md-sys-color-surface-variant);
 }
 
-.modalBody {
-  padding: 2rem;
+.modalHeaderTop {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.modalStatusHeader {
+.orderTitleWrapper {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  gap: 0.5rem;
+}
+
+.orderHashIcon {
+  color: var(--md-sys-color-primary);
+}
+
+.orderTitle {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0;
+  font-family: var(--md-sys-typescale-title-large-font, system-ui);
+  color: var(--md-sys-color-on-surface);
+}
+
+.orderMetaHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .statusBadgeLarge {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 16px;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 100px;
+  font-size: 0.75rem;
   font-weight: 800;
   text-transform: uppercase;
-  font-size: 0.85rem;
 }
 
-.dateTime {
+.dateTimeBadge {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
 }
 
-.modalGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+.closeButton {
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeButton:hover {
+  background: var(--md-sys-color-surface-variant);
+}
+
+/* Tabs de navegación */
+.modalTabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  margin: 1.5rem 2.5rem 0;
+  background: var(--md-sys-color-surface-container-lowest);
+  border-radius: 100px;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 40%, transparent);
+  width: fit-content;
+  align-self: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.tabButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: transparent;
+  border-radius: 100px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.tabButton:hover:not(.tabActive) {
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface);
+}
+
+.tabActive {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
+}
+
+/* Timeline */
+.timelineWrapper {
+  padding: 2rem 2.5rem;
+  background: var(--md-sys-color-surface);
+  border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 40%, transparent);
+  margin-top: 1rem;
+}
+
+.timeline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.timelineStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  flex: 1;
+}
+
+.timelineIndicator {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-sys-color-surface-container-high);
+  border: 2px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-outline);
+  transition: all 0.3s;
+  position: relative; /* Necesario para que z-index funcione */
+  z-index: 1;         /* Siempre por encima de la timelineLine (z-index: 0) */
+}
+
+.stepCompleted .timelineIndicator {
+  background: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.stepCurrent .timelineIndicator {
+  background: var(--md-sys-color-primary);
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  animation: pulse 2s infinite;
+  box-shadow: 0 0 16px var(--md-sys-color-primary);
+}
+
+.stepFailed .timelineIndicator {
+  background: var(--md-sys-color-error-container);
+  border-color: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.timelineDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--md-sys-color-outline);
+}
+
+.timelineLine {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  width: 100%;
+  height: 3px;
+  background: var(--md-sys-color-outline-variant);
+  z-index: 0;
+  border-radius: 2px;
+}
+
+.lineCompleted {
+  background: var(--md-sys-color-primary);
+  box-shadow: 0 0 12px var(--md-sys-color-primary);
+  animation: timelineGlow 2s ease-in-out infinite;
+}
+
+@keyframes timelineGlow {
+  0%, 100% {
+    box-shadow: 0 0 8px var(--md-sys-color-primary);
+  }
+  50% {
+    box-shadow: 0 0 16px var(--md-sys-color-primary);
+  }
+}
+
+.timelineLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--md-sys-color-outline);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.stepCompleted .timelineLabel {
+  color: var(--md-sys-color-primary);
+}
+
+.stepCurrent .timelineLabel {
+  color: var(--md-sys-color-primary);
+  font-weight: 800;
+}
+
+/* Modal Body */
+.modalBody {
+  padding: 2rem 2.5rem;
+  flex: 1;
+  overflow-y: auto;
+  background: var(--md-sys-color-surface);
+}
+
+.tabContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .infoSection {
-  margin-bottom: 2rem;
+  margin-bottom: 0;
 }
 
 .sectionTitle {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 800;
   color: var(--md-sys-color-outline);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 1rem;
+  font-family: var(--md-sys-typescale-label-large-font, system-ui);
 }
 
+/* Product Card */
 .productCard {
   display: flex;
-  gap: 1rem;
-  background: var(--md-sys-color-surface-container-low);
-  padding: 1rem;
+  gap: 1.25rem;
+  background: var(--md-sys-color-surface-container-lowest);
+  padding: 1.25rem;
   border-radius: 20px;
-  border: 1px solid var(--md-sys-color-outline-variant);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+  transition: all 0.3s ease;
+}
+
+.productCard:hover {
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
 }
 
 .productImageWrapper {
@@ -358,14 +643,33 @@
   height: 80px;
   border-radius: 12px;
   overflow: hidden;
-  background: #fff;
+  background: var(--md-sys-color-surface);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .productImg {
   object-fit: contain;
+  width: 100%;
+  height: 100%;
+}
+
+.productPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--md-sys-color-outline);
+}
+
+.productInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
 }
 
 .productLink {
@@ -375,85 +679,134 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.productLink:hover {
+  text-decoration: underline;
 }
 
 .itemPrice {
-  font-weight: 700;
+  font-weight: 800;
   color: var(--md-sys-color-on-surface);
-  font-size: 0.95rem;
+  font-size: 1rem;
+  margin: 0;
 }
 
+.priceLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--md-sys-color-outline);
+}
+
+/* Payment Details */
 .paymentDetails {
-  background: var(--md-sys-color-surface-container-low);
-  padding: 1.25rem;
+  background: var(--md-sys-color-surface-container-lowest);
+  padding: 1.5rem;
   border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
 }
 
 .detailRow {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.6rem;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--md-sys-color-on-surface-variant);
+  align-items: center;
 }
 
-.totalRow {
-  font-size: 1.15rem;
-  font-weight: 800;
-  margin-top: 0.5rem;
-}
-
-.totalRow span:last-child {
-  color: var(--md-sys-color-primary);
-}
-
-.customerCard {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.dataItem {
+.detailLabel {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  font-weight: 600;
+  gap: 0.4rem;
+  color: var(--md-sys-color-outline);
+}
+
+.detailValue {
+  font-weight: 700;
   color: var(--md-sys-color-on-surface);
 }
 
+.totalRow {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin-top: 0.25rem;
+}
+
+.totalValue {
+  color: var(--md-sys-color-primary);
+  font-size: 1.2rem;
+}
+
+.divider {
+  height: 1px;
+  background: var(--md-sys-color-outline-variant);
+}
+
+/* Quick Copy */
+.quickCopyWrapper {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.copyButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Shipping Path */
 .shippingPath {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0;
   position: relative;
-  padding-left: 0.5rem;
-}
-
-.shippingPath::before {
-  content: '';
-  position: absolute;
-  left: 12px;
-  top: 10px;
-  bottom: 10px;
-  width: 2px;
-  background: var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-lowest);
+  padding: 1.5rem;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
 }
 
 .pathItem {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem; /* Aumentado para separar el icono del texto */
+  align-items: center; /* Centrado verticalmente respecto al contenido */
   position: relative;
+  padding: 0; /* Ajuste para manejar la distancia con el conector */
 }
 
-.pathIcon {
-  width: 24px;
-  height: 24px;
-  padding: 4px;
-  border-radius: 6px;
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
+.pathIconWrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-sys-color-surface);
+  border: 1.5px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-outline);
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.pathIconActive {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-primary);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent);
+}
+
+.pathDetails {
+  flex: 1;
+  min-width: 0;
 }
 
 .pathLabel {
@@ -462,34 +815,423 @@
   text-transform: uppercase;
   color: var(--md-sys-color-outline);
   margin: 0;
+  letter-spacing: 0.08em;
 }
+
 .pathValue {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--md-sys-color-on-surface);
-  margin: 0;
-}
-.pathSubValue {
-  font-size: 0.8rem;
-  color: var(--md-sys-color-on-surface-variant);
   margin: 0.2rem 0 0 0;
 }
 
-.modalFooter {
-  padding: 1.5rem 2rem;
-  border-top: 1px solid var(--md-sys-color-outline-variant);
-  display: flex;
-  justify-content: flex-end;
+.pathSubValue {
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0.25rem 0 0 0;
 }
 
-.primaryButton {
-  padding: 0.75rem 2.5rem;
+.refText {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--md-sys-color-outline);
+  margin: 0.5rem 0 0 0;
+}
+
+.pathConnector {
+  width: 2px;
+  min-height: 28px;
+  background: color-mix(in srgb, var(--md-sys-color-outline-variant) 80%, transparent);
+  margin-left: 21px; /* Centrado exacto: (44px ancho del wrapper / 2) - (2px ancho de linea / 2) = 21px */
+  margin-top: 0.4rem;
+  margin-bottom: 0.4rem;
+  border-radius: 2px;
+}
+
+.copyPathButton {
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-outline);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  align-self: center;
+}
+
+.copyPathButton:hover {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-primary);
+}
+
+/* Shipping Data Card */
+.shippingDataCard {
+  background: var(--md-sys-color-surface-container-lowest);
+  padding: 1.5rem;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+}
+
+.dataGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.dataItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dataLabel {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--md-sys-color-outline);
+  letter-spacing: 0.05em;
+}
+
+.dataValue {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Customer Card */
+.customerCard {
+  background: var(--md-sys-color-surface-container-lowest);
+  padding: 1.5rem;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+}
+
+/* Data Item en customer card */
+.customerCard .dataItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.customerCard .dataItem svg {
+  color: var(--md-sys-color-primary);
+  flex-shrink: 0;
+}
+
+.customerCard .dataItem span {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.customerHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.customerAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--md-sys-color-secondary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-on-secondary-container);
+  flex-shrink: 0;
+}
+
+.customerBasicInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.customerLabel {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--md-sys-color-outline);
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
+.customerEmail {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  margin: 0.25rem 0 0 0;
+  word-break: break-all;
+}
+
+/* Quick Actions */
+.quickActions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Ticket Upload Styles */
+.ticketUploadCard {
+  background: var(--md-sys-color-surface-container-lowest);
+  padding: 1.5rem;
+  border-radius: 20px;
+  border: 2px solid var(--md-sys-color-primary);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent);
+}
+
+.ticketUpload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  border: 2px dashed var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+  background: var(--md-sys-color-surface);
+}
+
+.ticketUploadText {
+  font-size: 0.9rem;
+  color: var(--md-sys-color-on-surface-variant);
+  text-align: center;
+}
+
+.uploadButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
   border-radius: 100px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 1rem;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
+}
+
+.uploadButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent);
+}
+
+.fileInput {
+  display: none;
+}
+
+.ticketPreview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.ticketImageWrapper {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.ticketImage {
+  border-radius: 16px;
+  object-fit: cover;
+  max-width: 280px;
+  max-height: 200px;
+  display: block;
+}
+
+.ticketBlurred {
+  filter: blur(8px);
+  transition: filter 0.3s ease;
+}
+
+.ticketOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  backdrop-filter: blur(2px);
+}
+
+.ticketActions {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.sendButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
   background: var(--md-sys-color-primary);
   color: var(--md-sys-color-on-primary);
   border: none;
-  font-weight: 800;
+  border-radius: 100px;
+  font-weight: 700;
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sendButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.cancelButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 100px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelButton:hover {
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.ticketUploaded {
+  color: var(--md-sys-color-primary);
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ticketHint {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-outline);
+  text-align: center;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+  border-radius: 12px;
+}
+
+/* Help Panel */
+.helpToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+  width: 100%;
+  transition: all 0.2s;
+}
+
+.helpToggle:hover {
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.helpPanel {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: var(--md-sys-color-surface-container-highest);
+  border-radius: 16px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.helpStep {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.helpStep:not(:last-child) {
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.stepNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.helpNote {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-tertiary);
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Modal Footer */
+.modalFooter {
+  padding: 1.5rem 2.5rem;
+  border-top: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 40%, transparent);
+  display: flex;
+  justify-content: flex-end;
+  background: var(--md-sys-color-surface);
+  border-radius: 0 0 32px 32px;
+}
+
+.primaryButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 100px;
+  border: none;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.primaryButton:hover {
+  background: var(--md-sys-color-primary-darken-1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .pagination {
@@ -513,6 +1255,12 @@
   cursor: pointer;
 }
 
+.pageInfo {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Media Queries */
 @media (max-width: 1100px) {
   .trackingCell {
     display: none;
@@ -520,7 +1268,1564 @@
 }
 
 @media (max-width: 768px) {
+  .modalContent {
+    max-width: 100%;
+    border-radius: 28px 28px 0 0;
+    max-height: 95vh;
+  }
+
+  .modalTabs {
+    padding: 0.5rem 1rem;
+    overflow-x: auto;
+  }
+
+  .tabButton {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  .timelineWrapper {
+    padding: 1rem;
+    overflow-x: auto;
+  }
+
+  .timeline {
+    min-width: 400px;
+  }
+
+  .modalBody {
+    padding: 1rem;
+  }
+
+  .quickActions {
+    flex-direction: column;
+  }
+
+  .actionButton {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Ticket Upload Styles */
+.ticketPreviewWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  width: 100%;
+}
+
+.ticketImageBlur {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.ticketFullImage {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  max-height: 300px;
+  object-fit: contain;
+  filter: blur(8px);
+  transition: filter 0.3s;
+}
+
+.ticketImageBlur span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-weight: 600;
+  background: rgba(0,0,0,0.6);
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-size: 1rem;
+}
+
+.ticketButtons {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.trackingToken {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--success);
+}
+
+.trackingToken code {
+  background: var(--surface-container-high);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.sendBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border: none;
+  border-radius: 100px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cancelBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 100px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ticketUploadZone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 2px dashed var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+}
+
+.uploadLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-radius: 100px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-outline);
+}
+
+.helpToggle {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.helpBox {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: var(--md-sys-color-surface-container-highest);
+  border-radius: 12px;
+}
+
+.helpBox p {
+  margin: 0.25rem 0;
+  font-size: 0.85rem;
+}
+
+.warning {
+  color: var(--md-sys-color-tertiary);
+  background: var(--md-sys-color-tertiary-container);
+  padding: 0.5rem;
+  border-radius: 8px;
+  margin-top: 0.5rem !important;
+}
+
+/* ─── Ticket Section Mejorado ─── */
+.ticketSection {
+  margin-top: 1.5rem;
+}
+
+.ticketHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ticketStatusBadge {
+  font-size: 0.8rem;
+}
+
+.statusBadgeYellow {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-tertiary);
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.statusBadgeGray {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.statusBadgeGreen {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.ticketCard {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ticketImageContainer {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ticketImage {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.ticketImageOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+  padding: 1rem 0.5rem 0.5rem;
+  text-align: center;
+}
+
+.ticketImageOverlay span {
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.ticketInfo {
+  text-align: center;
+}
+
+.ticketInfoText {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.9rem;
+}
+
+.ticketInfoTextSuccess {
+  color: var(--md-sys-color-primary);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.trackingTokenInfo {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.trackingTokenInfo code {
+  background: var(--md-sys-color-surface-container-high);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: 700;
+}
+
+.ticketActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.ticketUploadCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.ticketUploadIcon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--md-sys-color-surface-container-high);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-primary);
+}
+
+.ticketUploadTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.ticketUploadHint {
+  font-size: 0.85rem;
+  color: var(--md-sys-color-on-surface-variant);
+  max-width: 250px;
+}
+
+.helpDetails {
+  margin-top: 1rem;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.helpSummary {
+  padding: 0.75rem 1rem;
+  background: var(--md-sys-color-surface-container-high);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.helpSummary:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.helpFlow {
+  padding: 1rem;
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.helpStep {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+}
+
+.helpStepNumber {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.helpArrow {
+  text-align: center;
+  color: var(--md-sys-color-outline);
+  font-size: 1.25rem;
+}
+
+/* ─── FALTANTES: Modal Header Title ─── */
+.modalHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--md-sys-color-primary);
+}
+
+.modalHeaderTitle h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface);
+}
+
+/* ─── Modal Status Header ─── */
+.modalStatusHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Status Badge Large variants */
+.statusBadgeLarge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.statusBadgeLarge.statusPaid {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-tertiary);
+}
+
+.statusBadgeLarge.statusProcessing {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.statusBadgeLarge.statusShipped {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.statusBadgeLarge.statusDelivered {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.statusBadgeLarge.statusCompleted {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.statusBadgeLarge.statusPending {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.statusBadgeLarge.statusAnalyzing {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.statusBadgeLarge.statusNotDelivered,
+.statusBadgeLarge.statusFailed {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+/* DateTime */
+.dateTime {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 500;
+}
+
+/* ─── Modal Grid Layout ─── */
+.modalGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
   .modalGrid {
     grid-template-columns: 1fr;
   }
+}
+
+.modalColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Capitalize helper */
+.capitalizeText {
+  text-transform: capitalize;
+}
+
+/* ─── Shipping Path Enhanced ─── */
+.shippingPath {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  background: var(--md-sys-color-surface-container-lowest);
+  padding: 1.5rem;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+}
+
+/* Path Item con conector visual */
+.pathItem {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  position: relative;
+  padding: 0;
+}
+
+.pathItem:not(:last-child) {
+  padding-bottom: 2rem;
+}
+
+/* Icono con estado activo */
+.pathIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--md-sys-color-surface);
+  border: 2px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-outline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.pathIconActive,
+.pathItem:last-child .pathIcon {
+  background: var(--md-sys-color-primary);
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
+}
+
+/* Conector entre puntos */
+.pathItem:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 21px;
+  top: 48px;
+  width: 2px;
+  height: calc(100% + 8px);
+  background: linear-gradient(to bottom, var(--md-sys-color-primary), transparent);
+  border-radius: 2px;
+}
+
+.pathItem.completed:not(:last-child)::after {
+  background: var(--md-sys-color-primary);
+}
+
+/* Labels */
+.pathLabel {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--md-sys-color-outline);
+  margin: 0;
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pathValue {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin: 0.25rem 0 0 0;
+  line-height: 1.4;
+}
+
+.pathSubValue {
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0.2rem 0 0 0;
+}
+
+.refText {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--md-sys-color-outline);
+  margin: 0.5rem 0 0 0;
+  padding: 0.4rem 0.75rem;
+  background: var(--md-sys-color-surface-container-high);
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.pathItem:not(:last-child) {
+  padding-bottom: 1.5rem;
+}
+
+.pathIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--md-sys-color-surface);
+  border: 1.5px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-outline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.pathIconActive {
+  background: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.pathItem:last-child .pathIcon {
+  background: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.pathItem:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 19px;
+  top: 44px;
+  width: 2px;
+  height: calc(100% + 12px);
+  background: linear-gradient(to bottom, var(--md-sys-color-outline-variant), transparent);
+  border-radius: 2px;
+}
+
+/* ─── Primary Button ─── */
+.primaryButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 100px;
+  border: none;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.primaryButton:hover {
+  background: var(--md-sys-color-primary-darken-1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ─── Tracking Visualizer Enhanced (Table cell) ─── */
+.trackingCell {
+  min-width: 200px;
+}
+
+.trackingContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.trackingContainer:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.iconWrapper {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-sys-color-surface-container-low);
+  border: 1.5px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-outline);
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.iconWrapper.active {
+  background: var(--md-sys-color-primary);
+  border-color: var(--md-sys-color-primary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.dotsWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 1;
+  max-width: 60px;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--md-sys-color-outline-variant);
+}
+
+.activeDot {
+  background: var(--md-sys-color-primary);
+}
+
+.glowingDot {
+  background: var(--md-sys-color-primary);
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* ─── Tracking Table Cell Override (for modal) ─── */
+.trackingCell {
+  min-width: 200px;
+}
+
+/* ─── MODAL HERO HEADER COMPACTO ─── */
+.modalHero {
+  background: linear-gradient(135deg, var(--md-sys-color-primary) 0%, color-mix(in srgb, var(--md-sys-color-primary) 85%, black) 100%);
+  padding: 1.25rem 1.5rem;
+  border-radius: 28px 28px 0 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.modalHero::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  right: -10%;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.modalHeroOrderNumber {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.modalHeroOrderNumber svg {
+  color: var(--md-sys-color-on-primary);
+  opacity: 0.9;
+}
+
+.modalHeroOrderNumber h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-primary);
+  letter-spacing: 0.02em;
+}
+
+/* Status Hero Badge */
+.statusHeroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  color: white;
+}
+
+.statusHeroBadge svg {
+  width: 16px;
+  height: 16px;
+}
+
+.modalHeroMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+}
+
+.modalHeroMeta svg {
+  opacity: 0.8;
+}
+
+/* Close button sobre el hero */
+.modalHeroClose {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.modalHeroClose:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+/* ─── MODAL BODY NUEVO LAYOUT ─── */
+.modalBodyNew {
+  padding: 1.25rem 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+  background: var(--md-sys-color-surface);
+}
+
+/* Layout: 2 columnas para info */
+.modalInfoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .modalInfoGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Ticket Section - Ocupa 2 columnas */
+.ticketSectionFull {
+  grid-column: 1 / -1;
+  background: var(--md-sys-color-surface-container-lowest);
+  border-radius: 20px;
+  padding: 1.25rem;
+  border: 2px solid var(--md-sys-color-outline-variant);
+}
+
+/* ─── SECTION Titles ─── */
+.infoSection {
+  margin-bottom: 0.75rem;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--md-sys-color-outline);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+  font-family: var(--md-sys-typescale-label-large-font, system-ui);
+}
+
+.sectionTitle svg {
+  color: var(--md-sys-color-primary);
+  width: 14px;
+  height: 14px;
+}
+
+/* ─── PRODUCT CARD COMPACTO ─── */
+.productCard {
+  display: flex;
+  gap: 0.75rem;
+  background: var(--md-sys-color-surface-container-lowest);
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+}
+
+.productImageWrapper {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--md-sys-color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.productImg {
+  object-fit: contain;
+  width: 100%;
+  height: 100%;
+}
+
+.productPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--md-sys-color-outline);
+  font-size: 1.5rem;
+}
+
+.productInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.productLink {
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.productLink:hover {
+  text-decoration: underline;
+}
+
+.itemPrice {
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* ─── PAYMENT DETAILS COMPACTO ─── */
+.paymentDetails {
+  background: var(--md-sys-color-surface-container-lowest);
+  padding: 0.75rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+  align-items: center;
+}
+
+.detailLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--md-sys-color-outline);
+}
+
+.detailValue {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.totalRow {
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-top: 0.15rem;
+}
+
+.totalValue {
+  color: var(--md-sys-color-primary);
+  font-size: 0.95rem;
+}
+
+.divider {
+  height: 1px;
+  background: var(--md-sys-color-outline-variant);
+}
+
+.capitalizeText {
+  text-transform: capitalize;
+}
+
+/* ─── CUSTOMER CARD COMPACTO ─── */
+.customerCard {
+  background: var(--md-sys-color-surface-container-lowest);
+  padding: 0.75rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+}
+
+.customerCard .dataItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.customerCard .dataItem svg {
+  color: var(--md-sys-color-primary);
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.customerCard .dataItem span {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ─── SHIPPING PATH COMPACTO ─── */
+.shippingPath {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  background: var(--md-sys-color-surface-container-lowest);
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+}
+
+.shippingPath .pathItem {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  position: relative;
+  padding: 0;
+}
+
+.shippingPath .pathItem:not(:last-child) {
+  padding-bottom: 0.75rem;
+}
+
+.pathIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--md-sys-color-surface);
+  border: 1.5px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-outline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.pathIconActive,
+.pathItem:last-child .pathIcon {
+  background: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.pathItem:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 30px;
+  width: 2px;
+  height: calc(100% + 4px);
+  background: linear-gradient(to bottom, var(--md-sys-color-primary), transparent);
+  border-radius: 2px;
+}
+
+.pathLabel {
+  font-size: 0.55rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--md-sys-color-outline);
+  margin: 0;
+  letter-spacing: 0.08em;
+}
+
+.pathValue {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  margin: 0.15rem 0 0 0;
+  line-height: 1.2;
+}
+
+.pathSubValue {
+  font-size: 0.65rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0.1rem 0 0 0;
+}
+
+.refText {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.6rem;
+  color: var(--md-sys-color-outline);
+  margin: 0.3rem 0 0 0;
+  padding: 0.2rem 0.5rem;
+  background: var(--md-sys-color-surface-container-high);
+  border-radius: 4px;
+  width: fit-content;
+}
+
+/* ─── TICKET SECTION COMPACTO ─── */
+.ticketSection {
+  margin-top: 0;
+}
+
+.ticketHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ticketStatusBadge {
+  font-size: 0.7rem;
+}
+
+.statusBadgeYellow {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-tertiary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.statusBadgeGray {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.statusBadgeGreen {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.ticketCard {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ticketImageContainer {
+  position: relative;
+  width: 100%;
+  max-width: 180px;
+  margin: 0 auto;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ticketImage {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.ticketImageOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+  padding: 0.5rem 0.25rem 0.25rem;
+  text-align: center;
+}
+
+.ticketImageOverlay span {
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.ticketInfo {
+  text-align: center;
+}
+
+.ticketInfoText {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.75rem;
+}
+
+.ticketInfoTextSuccess {
+  color: var(--md-sys-color-primary);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.trackingTokenInfo {
+  margin-top: 0.3rem;
+  font-size: 0.7rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.trackingTokenInfo code {
+  background: var(--md-sys-color-surface-container-high);
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: 700;
+}
+
+.ticketActions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Ticket Upload Card */
+.ticketUploadCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 0.5rem;
+  text-align: center;
+}
+
+.ticketUploadIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--md-sys-color-surface-container-high);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-primary);
+}
+
+.ticketUploadTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.ticketUploadHint {
+  font-size: 0.7rem;
+  color: var(--md-sys-color-on-surface-variant);
+  max-width: 180px;
+}
+
+/* Help Details */
+.helpDetails {
+  margin-top: 0.5rem;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.helpSummary {
+  padding: 0.5rem 0.75rem;
+  background: var(--md-sys-color-surface-container-high);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.helpSummary:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.helpFlow {
+  padding: 0.5rem;
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.helpStep {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  font-size: 0.7rem;
+}
+
+.helpStepNumber {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.7rem;
+}
+
+.helpArrow {
+  text-align: center;
+  color: var(--md-sys-color-outline);
+  font-size: 1rem;
+}
+
+.ticketHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ticketStatusBadge {
+  font-size: 0.8rem;
+}
+
+.statusBadgeYellow {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-tertiary);
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.statusBadgeGray {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.statusBadgeGreen {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.ticketCard {
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ticketImageContainer {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ticketImage {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.ticketImageOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+  padding: 1rem 0.5rem 0.5rem;
+  text-align: center;
+}
+
+.ticketImageOverlay span {
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.ticketInfo {
+  text-align: center;
+}
+
+.ticketInfoText {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.9rem;
+}
+
+.ticketInfoTextSuccess {
+  color: var(--md-sys-color-primary);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.trackingTokenInfo {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.trackingTokenInfo code {
+  background: var(--md-sys-color-surface-container-high);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: 700;
+}
+
+.ticketActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Ticket Upload Card */
+.ticketUploadCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.ticketUploadIcon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--md-sys-color-surface-container-high);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-primary);
+}
+
+.ticketUploadTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.ticketUploadHint {
+  font-size: 0.85rem;
+  color: var(--md-sys-color-on-surface-variant);
+  max-width: 250px;
+}
+
+/* Help Details */
+.helpDetails {
+  margin-top: 1rem;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.helpSummary {
+  padding: 0.75rem 1rem;
+  background: var(--md-sys-color-surface-container-high);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.helpSummary:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.helpFlow {
+  padding: 1rem;
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.helpStep {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+}
+
+.helpStepNumber {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.helpArrow {
+  text-align: center;
+  color: var(--md-sys-color-outline);
+  font-size: 1.25rem;
+}
+
+/* ─── MODAL FOOTER ─── */
+.modalFooter {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 40%, transparent);
+  display: flex;
+  justify-content: flex-end;
+  background: var(--md-sys-color-surface);
+  border-radius: 0 0 28px 28px;
+}
+
+.primaryButton {
+  padding: 0.5rem 1rem;
+  border-radius: 100px;
+  border: none;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.primaryButton:hover {
+  background: var(--md-sys-color-primary-darken-1);
+  transform: translateY(-1px);
 }
