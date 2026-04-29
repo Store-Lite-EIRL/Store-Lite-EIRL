@@ -42,6 +42,7 @@ export function PaymentModal({
     phone,
     otp,
     yapeEmail,
+    buyerDni,
     handleCardNumberChange,
     handleExpiryChange,
     handleCvvChange,
@@ -50,6 +51,7 @@ export function PaymentModal({
     setCardName,
     setEmail,
     setYapeEmail,
+    handleBuyerDniChange,
     handleSubmit,
     resetForm,
   } = usePaymentForm({
@@ -120,22 +122,23 @@ export function PaymentModal({
               </div>
 
               <div className="p-8 pt-4 flex flex-col gap-10">
-                <div className="flex flex-col gap-6">
-                  <AmountSection
-                    currency={currency}
-                    price={price}
-                    currentMethodLabel={currentMethodLabel}
-                  />
-                  <OrderSummary
-                    productName={productName}
-                    price={price}
-                    currency={currency}
-                    onClose={handleClose}
+
+                {/* DNI Field for Order Tracking */}
+                <div className="flex flex-col gap-3">
+                  <label className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                    DNI (para seguimiento)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ingresa tu DNI (8 dígitos)"
+                    value={buyerDni}
+                    onChange={handleBuyerDniChange}
+                    maxLength={8}
+                    className="w-full p-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-slate-600 focus:outline-none focus:border-[#135bec]/50 transition-all"
                   />
                 </div>
 
-                <div className="flex flex-col gap-8">
-                  <PaymentMethodSelector
+                <PaymentMethodSelector
                     paymentMethods={paymentMethods}
                     activeTab={activeTab}
                     onSelect={setActiveTab}

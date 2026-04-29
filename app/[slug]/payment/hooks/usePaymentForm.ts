@@ -39,6 +39,9 @@ export function usePaymentForm({
   const [otp, setOtp] = useState('');
   const [yapeEmail, setYapeEmail] = useState('');
 
+  // DNI field (for order tracking)
+  const [buyerDni, setBuyerDni] = useState('');
+
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '').substring(0, 16);
     setCardNumber(value.match(/.{1,4}/g)?.join(' ') || value);
@@ -59,6 +62,10 @@ export function usePaymentForm({
 
   const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setOtp(e.target.value.replace(/\D/g, '').substring(0, 6));
+  };
+
+  const handleBuyerDniChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBuyerDni(e.target.value.replace(/\D/g, '').substring(0, 8));
   };
 
   const resetForm = () => {
@@ -177,6 +184,7 @@ export function usePaymentForm({
     phone,
     otp,
     yapeEmail,
+    buyerDni,
     handleCardNumberChange,
     handleExpiryChange,
     handleCvvChange,
@@ -185,6 +193,7 @@ export function usePaymentForm({
     setCardName,
     setEmail,
     setYapeEmail,
+    handleBuyerDniChange,
     resetForm,
     handleSubmit,
   };
