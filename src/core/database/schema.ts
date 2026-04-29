@@ -82,6 +82,10 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'order_created',
   'order_status_changed',
   'order_shipped',
+  'order_finalization_requested',
+  'order_finalization_confirmed',
+  'order_finalization_rejected',
+  'order_auto_finalized',
   // Sistema
   'system',
 ]);
@@ -532,6 +536,7 @@ export const payments = pgTable(
     buyerEmail: text('buyer_email').notNull(),
     buyerPhone: text('buyer_phone'),
     buyerDni: text('buyer_dni'),
+    trackingToken: text('tracking_token').notNull().unique(),
     status: text('status', {
       enum: [
         'pending',
@@ -561,6 +566,13 @@ export const payments = pgTable(
     shippingPhone: text('shipping_phone'),
     shippingCost: decimal('shipping_cost', { precision: 10, scale: 2 }),
     ticketUrl: text('ticket_url'),
+    ticketImageUrl: text('ticket_image_url'),
+    rejectionReason: text('rejection_reason'),
+    rejectionImage: text('rejection_image'),
+    finalizationDeadline: timestamp('finalization_deadline', { withTimezone: true }),
+    finalizationRequestedAt: timestamp('finalization_requested_at', { withTimezone: true }),
+    finalizationConfirmedAt: timestamp('finalization_confirmed_at', { withTimezone: true }),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
     metadata: jsonb('metadata').default({}),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

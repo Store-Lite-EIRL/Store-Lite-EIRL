@@ -5,7 +5,8 @@ import { db } from '@/core/database/client';
 import { payments } from '@/core/database/schema';
 import { createClient } from '@supabase/supabase-js';
 import { eq } from 'drizzle-orm';
-import { randomUUID } from 'node:crypto';
+// removed randomUUID import - we don't generate new tokens here
+// import { randomUUID } from 'node:crypto';
 
 const BUCKET_NAME = 'tickets';
 
@@ -34,7 +35,7 @@ export async function uploadTicketAndUpdatePayment(
   businessId: string,
 ): Promise<UploadTicketResult> {
   try {
-    // 1. Convertir base64 a Uint8Array (compatible con Edge runtime)
+    // 1. Convert base64 to Uint8Array (compatible with Edge runtime)
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
     const binaryString = atob(base64Data);
     const bytes = new Uint8Array(binaryString.length);
@@ -42,18 +43,11 @@ export async function uploadTicketAndUpdatePayment(
       bytes[i] = binaryString.charCodeAt(i);
     }
 
-    console.log('[uploadTicket] base64 length:', imageBase64.length);
-    console.log('[uploadTicket] bytes length:', bytes.length);
-    console.log('[uploadTicket] businessId:', businessId);
-    console.log('[uploadTicket] paymentId:', paymentId);
-
-    // 2. Generar nombre único
+    // 2. Generate unique filename
     const fileName = `ticket_${paymentId}_${randomUUID()}.jpg`;
     const filePath = `${businessId}/${fileName}`;
 
-    console.log('[uploadTicket] filePath:', filePath);
-
-    // 3. Subir a Supabase Storage
+    // 3. Upload to Supabase Storage
     const adminClient = createAdminClient();
     const { error: uploadError, data } = await adminClient.storage
       .from(BUCKET_NAME)
@@ -67,32 +61,33 @@ export async function uploadTicketAndUpdatePayment(
       return { success: false, error: uploadError.message };
     }
 
-    console.log('[uploadTicket] Upload success, data:', data);
-
-    // 4. Obtener URL pública
+    // 4. Get public URL
     const { data: urlData } = adminClient.storage.from(BUCKET_NAME).getPublicUrl(filePath);
 
     const ticketImageUrl = urlData.publicUrl;
-    console.log('[uploadTicket] ticketImageUrl:', ticketImageUrl);
 
-    // 5. Generar tracking token
-    const trackingToken = randomUUID().slice(0, 8).toUpperCase();
-    console.log('[uploadTicket] trackingToken:', trackingToken);
+    // 5. Get existing payment to retrieve trackingToken
+    const [existingPayment] = await db
+      .select({ trackingToken: payments.trackingToken })
+      .from(payments)
+      .where(eq(payments.id, paymentId))
+      .limit(1);
 
-    // 6. Actualizar payment
-    console.log('[uploadTicket] Updating payment with status: analizando');
+    if (!existingPayment) {
+      return { success: false, error: 'Payment not found' };
+    }
+
+    // 6. Update payment (do NOT overwrite trackingToken)
     await db
       .update(payments)
       .set({
         ticketImageUrl,
-        trackingToken,
-        status: 'analizando',
+        status: 'not_delivered', // Valid enum value from schema
         updatedAt: new Date(),
       })
       .where(eq(payments.id, paymentId));
 
-    console.log('[uploadTicket] Success!');
-    return { success: true, ticketImageUrl, trackingToken };
+    return { success: true, ticketImageUrl, trackingToken: existingPayment.trackingToken };
   } catch (error) {
     console.error('[uploadTicket] Catch error:', error);
     return { success: false, error: 'Error al procesar el ticket' };

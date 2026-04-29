@@ -9,6 +9,7 @@ import { db } from '@/core/database/client';
 import { businesses, businessSettings, payments, products } from '@/core/database/schema';
 import { notifyLowStock, notifyNewOrder, notifyOutOfStock } from '@/lib/notifications';
 import { decrypt } from '@/utils/crypto';
+import { generateTrackingToken } from '@/core/utils/trackingToken';
 import { eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
@@ -179,6 +180,7 @@ export async function POST(request: Request) {
           shippingCost: String((shippingInfo as any).cost || 0),
           shippingReference: (shippingInfo as any).reference || null,
           metadata: { ...metadata, culqiId: culqiData.id },
+          trackingToken: generateTrackingToken(),
         })
         .returning();
 

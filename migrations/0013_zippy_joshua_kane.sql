@@ -1,0 +1,11 @@
+-- =====================================================
+-- Migration already applied manually in Supabase
+-- Changes applied:
+--   - tracking_token column (populated with generated tokens)
+--   - rejection_reason column
+--   - rejection_image column
+--   - UNIQUE constraint on tracking_token
+-- No-op: Drizzle Kit tracking only
+-- =====================================================
+
+-- Intentionally empty: schema changes already applied in Supabase

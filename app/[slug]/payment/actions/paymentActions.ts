@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/server';
 import { and, eq, gt, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { createHash, randomBytes } from 'node:crypto';
+import { generateTrackingToken } from '@/core/utils/trackingToken';
 
 const CULQI_CHARGE_URL = 'https://api.culqi.com/v2/charges';
 const LOW_STOCK_THRESHOLD = 5;
@@ -191,6 +192,7 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
         status: 'paid',
         deliveryCodeHash,
         deliveryCodeExpiresAt: codeExpiresAt,
+        trackingToken: generateTrackingToken(),
         metadata: {
           culqi_outcome: chargeData.outcome,
           product_title: product.title,
