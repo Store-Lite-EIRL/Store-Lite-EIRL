@@ -17,7 +17,7 @@ export default function ActionModals({ paymentId, trackingToken, orderNumber }: 
   const handleAccept = async () => {
     setLoading(true);
     try {
-      const res = await updateOrderStatus(paymentId, trackingToken, 'aceptado');
+      const res = await updateOrderStatus(paymentId, trackingToken, 'delivered');
       if (res.success) {
         window.location.hash = ''; // Cerrar modal
       } else {
@@ -37,7 +37,7 @@ export default function ActionModals({ paymentId, trackingToken, orderNumber }: 
     }
     setLoading(true);
     try {
-      const res = await updateOrderStatus(paymentId, trackingToken, 'rechazado', {
+      const res = await updateOrderStatus(paymentId, trackingToken, 'disputed', {
         rejectionReason: reportReason,
       });
       if (res.success) {

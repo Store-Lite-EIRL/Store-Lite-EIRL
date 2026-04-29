@@ -54,27 +54,27 @@ export async function requestFinalization(
       return { success: false, error: 'Pago no encontrado o no tienes permisos.' };
     }
 
-    // 2. Check if status is 'aceptado'
-    if (payment.status !== 'aceptado') {
+    // 2. Check if status is 'delivered'
+    if (payment.status !== 'delivered') {
       console.error('[requestFinalization] Invalid status:', payment.status);
       return {
         success: false,
-        error: `El pago debe estar en estado "aceptado". Estado actual: ${payment.status}`,
+        error: `El pago debe estar en estado "delivered". Estado actual: ${payment.status}`,
       };
     }
 
-    // 3. Check if 24 hours have passed since "aceptado" (REMOVED FOR FLEXIBILITY)
+    // 3. Check if 24 hours have passed since "delivered" (REMOVED FOR FLEXIBILITY)
     /*
-    const acceptedAt = payment.verifiedAt || payment.updatedAt;
-    if (!acceptedAt) {
-      console.error('[requestFinalization] No accepted timestamp found');
-      return { success: false, error: 'No se encontró la fecha de aceptación del pedido.' };
+    const deliveredAt = payment.verifiedAt || payment.updatedAt;
+    if (!deliveredAt) {
+      console.error('[requestFinalization] No delivered timestamp found');
+      return { success: false, error: 'No se encontró la fecha de entrega del pedido.' };
     }
 
-    const hoursSinceAccepted = (Date.now() - new Date(acceptedAt).getTime()) / (1000 * 60 * 60);
-    if (hoursSinceAccepted < HOURS_BEFORE_SELLER_CAN_REQUEST) {
-      const remainingHours = Math.ceil(HOURS_BEFORE_SELLER_CAN_REQUEST - hoursSinceAccepted);
-      console.warn('[requestFinalization] Too early to request. Hours since accepted:', hoursSinceAccepted);
+    const hoursSinceDelivered = (Date.now() - new Date(deliveredAt).getTime()) / (1000 * 60 * 60);
+    if (hoursSinceDelivered < HOURS_BEFORE_SELLER_CAN_REQUEST) {
+      const remainingHours = Math.ceil(HOURS_BEFORE_SELLER_CAN_REQUEST - hoursSinceDelivered);
+      console.warn('[requestFinalization] Too early to request. Hours since delivered:', hoursSinceDelivered);
       return { 
         success: false, 
         error: `Debes esperar ${remainingHours} hora(s) más antes de solicitar la finalización.` 
@@ -97,7 +97,7 @@ export async function requestFinalization(
     deadline.setDate(deadline.getDate() + DAYS_FOR_CUSTOMER_TO_CONFIRM);
 
     console.log(
-      '[requestFinalization] Updating payment to esperando_confirmacion, deadline:',
+      '[requestFinalization] Updating payment to not_delivered (waiting for confirmation), deadline:',
       deadline,
     );
 
@@ -105,7 +105,7 @@ export async function requestFinalization(
     await db
       .update(payments)
       .set({
-        status: 'esperando_confirmacion' as any,
+        status: 'not_delivered' as any, // Waiting for customer confirmation
         finalizationRequestedAt: now,
         finalizationDeadline: deadline,
         updatedAt: now,
@@ -206,7 +206,7 @@ export async function confirmFinalization(
       return { success: false, error: 'Pedido no encontrado o token inválido.' };
     }
 
-    if (payment.status !== 'esperando_confirmacion') {
+    if (payment.status !== 'not_delivered') {
       console.error('[confirmFinalization] Invalid status:', payment.status);
       return {
         success: false,
@@ -218,11 +218,11 @@ export async function confirmFinalization(
 
     console.log('[confirmFinalization] Confirming finalization...');
 
-    // 2. Update payment to 'finalizado'
+    // 2. Update payment to 'completed'
     await db
       .update(payments)
       .set({
-        status: 'finalizado' as any,
+        status: 'completed' as any,
         finalizationConfirmedAt: now,
         completedAt: now,
         updatedAt: now,
@@ -235,7 +235,7 @@ export async function confirmFinalization(
       type: 'order_finalization_confirmed',
       category: 'pedidos',
       title: '¡Pedido finalizado!',
-      message: `El cliente ha confirmado la recepción satisfactoria del pedido ${payment.orderNumber || paymentId.slice(0, 8)}.`,
+      message: `El cliente ha confirmado la recepción satisfactoria del pedido ${payment.orderNumber || payment.id.slice(0, 8)}.`,
       data: {
         paymentId,
         orderNumber: payment.orderNumber,
@@ -317,7 +317,7 @@ export async function rejectFinalization(
       return { success: false, error: 'Pedido no encontrado o token inválido.' };
     }
 
-    if (payment.status !== 'esperando_confirmacion') {
+    if (payment.status !== 'not_delivered') {
       console.error('[rejectFinalization] Invalid status:', payment.status);
       return {
         success: false,
@@ -327,12 +327,11 @@ export async function rejectFinalization(
 
     console.log('[rejectFinalization] Rejecting with reason:', reason);
 
-    // 2. Update payment to 'reporte' (or keep 'esperando_confirmacion' with note)
-    // We'll set to 'reporte' so the seller knows there's an issue
+    // 2. Update payment to 'disputed' (complaint filed)
     await db
       .update(payments)
       .set({
-        status: 'reporte' as any,
+        status: 'disputed' as any,
         rejectionReason: reason,
         updatedAt: new Date(),
       })
@@ -344,7 +343,7 @@ export async function rejectFinalization(
       type: 'order_finalization_rejected',
       category: 'pedidos',
       title: 'Problema reportado en pedido',
-      message: `El cliente ha reportado un problema con el pedido ${payment.orderNumber || paymentId.slice(0, 8)}: ${reason}`,
+      message: `El cliente ha reportado un problema con el pedido ${payment.orderNumber || payment.id.slice(0, 8)}: ${reason}`,
       data: {
         paymentId,
         orderNumber: payment.orderNumber,
@@ -403,8 +402,8 @@ export async function rejectFinalization(
 // 4. CRON JOB: Auto-Finalize Expired Requests
 // =====================================================
 // This function should be called periodically (e.g., every 24h)
-// It finds all payments in 'esperando_confirmacion' with expired deadlines
-// and automatically sets them to 'finalizado'
+// It finds all payments in 'not_delivered' with expired deadlines
+// and automatically sets them to 'completed'
 
 export async function autoFinalizeExpiredPayments(): Promise<{
   success: boolean;
@@ -416,7 +415,7 @@ export async function autoFinalizeExpiredPayments(): Promise<{
 
     const now = new Date();
 
-    // 1. Find payments in 'esperando_confirmacion' with expired deadlines
+    // 1. Find payments in 'not_delivered' with expired deadlines
     const expiredPayments = await db
       .select({
         id: payments.id,
@@ -428,7 +427,7 @@ export async function autoFinalizeExpiredPayments(): Promise<{
       .from(payments)
       .where(
         and(
-          eq(payments.status, 'esperando_confirmacion' as any),
+          eq(payments.status, 'not_delivered' as any),
           lt(payments.finalizationDeadline, now), // Deadline has passed
         ),
       );
@@ -439,14 +438,14 @@ export async function autoFinalizeExpiredPayments(): Promise<{
       return { success: true, processedCount: 0 };
     }
 
-    // 2. Update each payment to 'finalizado'
+    // 2. Update each payment to 'completed'
     let processedCount = 0;
     for (const payment of expiredPayments) {
       try {
         await db
           .update(payments)
           .set({
-            status: 'finalizado' as any,
+            status: 'completed' as any,
             completedAt: now,
             updatedAt: now,
           })

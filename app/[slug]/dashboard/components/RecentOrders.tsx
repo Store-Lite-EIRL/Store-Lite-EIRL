@@ -669,7 +669,7 @@ export function RecentOrders({
           </div>
           <div className={styles.modalHeroMeta}>
             <Calendar size={16} />
-            {new Date(order.createdAt).toLocaleDateString('es-PE', {
+            {new Date(order.createdAt).toLocaleString('es-PE', {
               dateStyle: 'medium',
               timeStyle: 'short',
             })}
