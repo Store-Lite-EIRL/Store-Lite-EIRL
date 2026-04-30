@@ -389,6 +389,9 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
   });
 
   // Format orders for Urbano Component
+  // NOTE: trackingToken is NOT exposed to the seller dashboard.
+  // It is only used internally by server actions (fetched directly from DB).
+  // This prevents sellers from accessing the customer order portal.
   const formattedOrders = recentOrdersData.map((order) => ({
     id: order.id,
     orderNumber: order.orderNumber,
@@ -409,9 +412,33 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
     shippingReference: order.shippingReference,
     shippingPhone: order.shippingPhone,
     buyerEmail: order.buyerEmail,
-    metadata: order.metadata as any,
+    // ⚠️ trackingToken NO se envía al cliente — se obtiene directo de la DB en server actions
+    // ⚠️ buyerDni se enmascara para evitar que el seller acceda al portal del customer
+    maskedDni: maskDni(order.buyerDni),
+    ticketImageUrl: order.ticketImageUrl,
+    finalizationDeadline: order.finalizationDeadline
+      ? order.finalizationDeadline instanceof Date
+        ? order.finalizationDeadline.toISOString()
+        : order.finalizationDeadline
+      : null,
+    // ⚠️ metadata NO incluye buyerDni — se sanitiza para seguridad
+    metadata: sanitizeMetadata(order.metadata),
     createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : order.createdAt,
+    businessId: order.businessId,
   }));
+
+  // Helper functions for security sanitization
+  function maskDni(dni: string | null): string {
+    if (!dni || dni.length < 4) return '****';
+    return '****' + dni.slice(-4);
+  }
+
+  function sanitizeMetadata(metadata: any): any {
+    if (!metadata) return metadata;
+    const sanitized = { ...metadata };
+    delete sanitized.buyerDni; // Never expose full DNI to seller client
+    return sanitized;
+  }
 
   const planStartDate =
     subscription?.planStartDate instanceof Date

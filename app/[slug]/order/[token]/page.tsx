@@ -1,20 +1,18 @@
 import { db } from '@/core/database/client';
-import { payments } from '@/core/database/schema';
+import { businesses, businessTeamMembers, payments } from '@/core/database/schema';
 import { Icon } from '@/shared/components/ui';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { type FormData } from 'react';
-import {
-  confirmFinalization,
-  rejectFinalization,
-} from '../../dashboard/actions/finalizationActions';
 import ActionModals from './ActionModals';
+import ConfirmationFlow from './ConfirmationFlow';
 import DownloadButton from './DownloadButton';
 import OrderAuthGate from './OrderAuthGate';
 import OrderChatSection from './OrderChatSection';
 import OrderGuide from './OrderGuide';
 import OrderRealtimeHandler from './OrderRealtimeHandler';
+import ReportFlow from './ReportFlow';
+import { createClient } from '@/lib/supabase/server';
 
 interface OrderTrackingPageProps {
   params: Promise<{
@@ -36,6 +34,19 @@ export async function generateMetadata({ params }: OrderTrackingPageProps): Prom
   };
 }
 
+/** Format a Date or ISO string to a readable Spanish format */
+function formatDate(date: Date | string | null): string {
+  if (!date) return '—';
+  const d = date instanceof Date ? date : new Date(date);
+  return d.toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export default async function OrderTrackingPage({ params }: OrderTrackingPageProps) {
   const { token, slug } = await params;
   if (!token || token.length < 5) notFound();
@@ -54,13 +65,76 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
     notFound();
   }
 
+  // 🔒 SECURITY: Block sellers and team members from accessing customer order pages.
+  // Even if they somehow obtain the trackingToken, they cannot self-confirm.
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    // Check if user is the owner
+    const sellerBusiness = await db.query.businesses.findFirst({
+      where: eq(businesses.ownerId, user.id),
+      columns: { id: true },
+    });
+
+    // Check if user is a team member of this business
+    const teamMembership = sellerBusiness
+      ? null // Already found as owner, skip team check
+      : await db.query.businessTeamMembers.findFirst({
+          where: and(
+            eq(businessTeamMembers.userId, user.id),
+            eq(businessTeamMembers.businessId, order.businessId),
+          ),
+          columns: { id: true },
+        });
+
+    if ((sellerBusiness && sellerBusiness.id === order.businessId) || teamMembership) {
+      return (
+        <div style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'var(--md-sys-color-surface)',
+          padding: '2rem',
+        }}>
+          <div style={{
+            maxWidth: '440px',
+            width: '100%',
+            background: 'var(--md-sys-color-error-container)',
+            borderRadius: '32px',
+            padding: '3rem 2rem',
+            textAlign: 'center',
+            border: '1px solid var(--md-sys-color-outline-variant)',
+          }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: '20px',
+              background: 'var(--md-sys-color-error)',
+              color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 1.5rem', fontSize: 32,
+            }}>
+              🚫
+            </div>
+            <h2 style={{ margin: '0 0 1rem', fontSize: '1.5rem', fontWeight: 950, color: 'var(--md-sys-color-on-error-container)' }}>
+              Acceso No Permitido
+            </h2>
+            <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.5, color: 'var(--md-sys-color-on-error-container)', opacity: 0.8 }}>
+              Esta página es exclusiva para el <b>comprador</b>. Como vendedor, no puedes acceder al portal de seguimiento de tu propia orden.
+            </p>
+          </div>
+        </div>
+      );
+    }
+  }
+
   const getStep = () => {
     if (order.status === 'pending') return 0;
-    if (order.status === 'not_delivered' && order.ticketImageUrl) return 1;
+    if (order.status === 'validando') return 1;
     if (order.status === 'delivered') return 2;
-    if (order.status === 'not_delivered') return 3; // Waiting for confirmation
+    if (order.status === 'en_reparto') return 3; // Pedido llegó, customer debe confirmar recepción
+    if (order.status === 'disputed') return order.ticketImageUrl ? 1 : 0;
     if (order.status === 'completed') return 4;
-    if (order.status === 'disputed') return 1; // Rejected complaint
+    if (order.status === 'not_delivered') return order.ticketImageUrl ? 1 : 0;
     return 0;
   };
 
@@ -77,15 +151,19 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
       bgColor: 'var(--md-sys-color-warning-container)',
       desc: 'El vendedor ha recibido tu pedido y está alistando los productos para el despacho.',
     },
-    not_delivered: {
-      label: order.ticketImageUrl ? 'Validar Comprobante' : 'En Espera de Ticket',
-      icon: order.ticketImageUrl ? 'fact_check' : 'hourglass_top',
+    validando: {
+      label: '¡Ticket Listo! Verificalo',
+      icon: 'fact_check',
       color: 'var(--md-sys-color-on-primary-container)',
       bgColor: 'var(--md-sys-color-primary-container)',
-      desc: order.ticketImageUrl
-        ? '¡Buenas noticias! El vendedor ya gestionó el despacho. Por favor, verificá el ticket adjunto.'
-        : 'El despacho está en proceso. En cuanto el vendedor suba el ticket de la agencia, aparecerá aquí.',
-      actionLabel: order.ticketImageUrl ? 'REVISAR TICKET' : undefined
+      desc: 'El vendedor subió el comprobante de envío. Revisá los datos del courier y confirmá si todo está correcto.',
+    },
+    not_delivered: {
+      label: 'En Espera de Despacho',
+      icon: 'hourglass_top',
+      color: 'var(--md-sys-color-on-surface-variant)',
+      bgColor: 'var(--md-sys-color-surface-variant)',
+      desc: 'El despacho está en proceso. En cuanto el vendedor suba el ticket de la agencia, aparecerá aquí.',
     },
     delivered: {
       label: 'Pedido en Camino',
@@ -93,6 +171,13 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
       color: 'var(--md-sys-color-on-tertiary-container)',
       bgColor: 'var(--md-sys-color-tertiary-container)',
       desc: '¡Todo listo! Tu paquete ya fue entregado al courier y se encuentra en ruta hacia tu destino.',
+    },
+    en_reparto: {
+      label: '¡Tu Pedido Llegó!',
+      icon: 'home',
+      color: 'var(--md-sys-color-on-secondary-container)',
+      bgColor: 'var(--md-sys-color-secondary-container)',
+      desc: 'El vendedor notificó que el producto ya llegó. Confirmá que lo recibiste correctamente.',
     },
     completed: {
       label: 'Compra Finalizada',
@@ -102,11 +187,11 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
       desc: '¡Excelente! La transacción se completó exitosamente. ¡Gracias por confiar en nosotros!',
     },
     disputed: {
-      label: 'Observación en Ticket',
+      label: 'Ticket Rechazado',
       icon: 'report_problem',
       color: 'var(--md-sys-color-on-error-container)',
       bgColor: 'var(--md-sys-color-error-container)',
-      desc: 'Has reportado un inconveniente con el comprobante. El vendedor debe corregirlo para continuar.',
+      desc: 'Reportaste un inconveniente con el comprobante. El vendedor debe corregirlo y subir uno nuevo.',
     },
   };
 
@@ -127,7 +212,7 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
   ];
 
   return (
-    <OrderAuthGate token={token} businessName={order.business.name}>
+    <OrderAuthGate token={token} businessName={order.business.name} orderNumber={order.orderNumber || ''}>
       <div className="order-root">
         <OrderRealtimeHandler orderId={order.id} />
         <ActionModals paymentId={order.id} trackingToken={token} orderNumber={order.orderNumber} />
@@ -260,7 +345,17 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
           .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 2000; align-items: center; justify-content: center; padding: 1rem; }
           .modal-overlay:target { display: flex; }
           .m-box { background: var(--md-sys-color-surface); border-radius: 40px; width: 100%; max-width: 700px; overflow: hidden; position: relative; animation: m-up 0.3s ease; border: 1px solid var(--md-sys-color-outline-variant); }
+          .modal-box { background: var(--md-sys-color-surface-container-highest); border-radius: 32px; width: 100%; max-width: 480px; padding: 2.5rem 2rem; position: relative; animation: m-up 0.3s ease; border: 1px solid var(--md-sys-color-outline-variant); }
           @keyframes m-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+          
+          /* ActionModals buttons */
+          .btn-action { border: none; padding: 1rem 2rem; border-radius: 100px; font-weight: 950; text-transform: uppercase; cursor: pointer; letter-spacing: 0.08em; transition: all 0.3s ease; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.85rem; }
+          .btn-action.btn-confirm { background: var(--md-sys-color-primary); color: white; box-shadow: 0 8px 24px rgba(var(--md-sys-color-primary-rgb), 0.3); }
+          .btn-action.btn-confirm:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(var(--md-sys-color-primary-rgb), 0.4); }
+          .btn-action.btn-report { background: var(--md-sys-color-error); color: white; box-shadow: 0 8px 24px rgba(var(--md-sys-color-error-rgb), 0.3); }
+          .btn-action.btn-report:hover { transform: translateY(-2px); }
+          .btn-action.btn-outline { background: var(--md-sys-color-surface-container); color: var(--md-sys-color-on-surface); border: 1px solid var(--md-sys-color-outline); }
+          .btn-action.btn-outline:hover { background: var(--md-sys-color-surface-container-high); }
         `,
           }}
         />
@@ -322,16 +417,73 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                 ))}
               </div>
 
-              {/* ACTION: Ticket View */}
-              {order.status === 'analizando' && order.ticketImageUrl && (
+              {/* COMPLETED: Order dates receipt */}
+              {order.status === 'completed' && (
+                <div
+                  style={{
+                    width: '100%',
+                    maxWidth: '500px',
+                    background: 'var(--md-sys-color-surface)',
+                    border: '1px solid var(--md-sys-color-outline-variant)',
+                    borderRadius: '24px',
+                    padding: '1.5rem',
+                    marginTop: '1rem',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginBottom: '1rem',
+                      paddingBottom: '1rem',
+                      borderBottom: '1px dashed var(--md-sys-color-outline-variant)',
+                    }}
+                  >
+                    <Icon size={18}>receipt_long</Icon>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                      Comprobante de Transacción
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--md-sys-color-on-surface-variant)', opacity: 0.6 }}>
+                        Fecha del Pedido
+                      </p>
+                      <p style={{ margin: '4px 0 0', fontSize: '0.95rem', fontWeight: 800, color: 'var(--md-sys-color-on-surface)' }}>
+                        {order.createdAt ? formatDate(order.createdAt) : '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--md-sys-color-on-surface-variant)', opacity: 0.6 }}>
+                        Fecha de Finalización
+                      </p>
+                      <p style={{ margin: '4px 0 0', fontSize: '0.95rem', fontWeight: 800, color: 'var(--md-sys-color-tertiary)' }}>
+                        {order.completedAt ? formatDate(order.completedAt) : '—'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px dashed var(--md-sys-color-outline-variant)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                    <Icon size={14} style={{ color: 'var(--md-sys-color-primary)' }}>verified</Icon>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--md-sys-color-on-surface-variant)', opacity: 0.7 }}>
+                      N° Orden: {order.orderNumber || '—'} · Pagado: {order.currency} {order.amount}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* ACTION: Ticket Verification (when seller uploads, status = 'validando') */}
+              {order.status === 'validando' && order.ticketImageUrl && (
                 <div className="despacho-card pulse-active">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'left' }}>
                     <div style={{ background: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)', width: 44, height: 44, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Icon>description</Icon>
                     </div>
                     <div>
-                      <p style={{ margin: 0, fontWeight: 950, fontSize: '0.9rem' }}>Ticket de Despacho</p>
-                      <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.6 }}>Subido por el vendedor</p>
+                      <p style={{ margin: 0, fontWeight: 950, fontSize: '0.9rem' }}>Comprobante de Envío</p>
+                      <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.6 }}>Subido por el vendedor — revisá y confirmá</p>
                     </div>
                   </div>
                   <a href="#ticket-view" className="ticket-preview">
@@ -345,10 +497,63 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                   </a>
                   <div style={{ display: 'flex', gap: '1rem' }}>
                     <a href="#accept-confirm" className="btn-hub btn-hub-p" style={{ flex: 1, justifyContent: 'center' }}>
-                      ACEPTAR ENVÍO
+                      <Icon>check_circle</Icon>
+                      CONFIRMAR ENVÍO
                     </a>
                     <a href="#report-form" className="btn-hub btn-hub-s" style={{ width: '60px', padding: '0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Icon>flag</Icon>
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {/* ACTION: Disputed - Ticket was rejected, waiting for seller to re-upload */}
+              {order.status === 'disputed' && (
+                <div className="despacho-card" style={{ borderStyle: 'solid', borderColor: 'var(--md-sys-color-error)', background: 'var(--md-sys-color-error-container)', color: 'var(--md-sys-color-on-error-container)' }}>
+                   <div style={{ display: 'flex', gap: '1rem', textAlign: 'left' }}>
+                     <Icon size={32}>report_problem</Icon>
+                     <div>
+                       <h3 style={{ margin: 0, fontWeight: 950, fontSize: '1.1rem' }}>Ticket Rechazado</h3>
+                       <p style={{ margin: '4px 0 0', fontSize: '0.9rem', opacity: 0.8 }}>El vendedor fue notificado y debe subir un nuevo comprobante.</p>
+                     </div>
+                   </div>
+                   {order.ticketImageUrl && (
+                     <>
+                       <a href="#ticket-view" className="ticket-preview" style={{ height: 150 }}>
+                         <img src={order.ticketImageUrl} alt="Ticket rechazado" style={{ filter: 'grayscale(1) brightness(0.7)' }} />
+                         <div className="ticket-overlay" style={{ opacity: 1 }}>
+                           <div style={{ textAlign: 'center' }}>
+                             <Icon size={24}>cancel</Icon>
+                             <p style={{ fontWeight: 900, fontSize: '0.75rem', marginTop: '4px' }}>TICKET RECHAZADO</p>
+                           </div>
+                         </div>
+                       </a>
+                       <a href="#ticket-view" style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.8, textAlign: 'center' }}>
+                         Ver ticket original
+                       </a>
+                     </>
+                   )}
+                </div>
+              )}
+
+              {/* ACTION: Finalization Confirm (delivery received) */}
+              {order.status === 'en_reparto' && (
+                <div className="despacho-card pulse-active" style={{ borderStyle: 'solid', borderColor: 'var(--md-sys-color-secondary)', background: 'var(--md-sys-color-secondary-container)', color: 'var(--md-sys-color-on-secondary-container)' }}>
+                   <div style={{ display: 'flex', gap: '1rem', textAlign: 'left' }}>
+                     <Icon size={32}>home</Icon>
+                     <div>
+                       <h3 style={{ margin: 0, fontWeight: 950, fontSize: '1.1rem' }}>¿Recibiste tu pedido?</h3>
+                       <p style={{ margin: '4px 0 0', fontSize: '0.9rem', opacity: 0.8 }}>Confirmá que el producto llegó en buen estado. Si hay algún problema, reportalo ahora.</p>
+                     </div>
+                   </div>
+                   <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                    <a href="#confirm-finalize" className="btn-hub btn-hub-p" style={{ flex: 1, justifyContent: 'center', background: 'var(--md-sys-color-secondary)', color: 'white' }}>
+                      <Icon>check_circle</Icon>
+                      SÍ, LO RECIBÍ
+                    </a>
+                    <a href="#report-finalize" className="btn-hub btn-hub-s" style={{ flex: 1, justifyContent: 'center' }}>
+                      <Icon>flag</Icon>
+                      TENGO UN PROBLEMA
                     </a>
                   </div>
                 </div>
@@ -376,7 +581,7 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
               )}
 
               {/* Default Buttons if no specific card */}
-              {!['analizando', 'esperando_confirmacion'].includes(order.status) && currentStatus.actionLabel && (
+              {!['validando', 'disputed', 'esperando_confirmacion', 'delivered', 'completed'].includes(order.status) && currentStatus.actionLabel && (
                 <button className="btn-hub btn-hub-p pulse-active">
                   {currentStatus.actionLabel}
                   <Icon>arrow_forward</Icon>
@@ -406,12 +611,21 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                 <span style={{ fontWeight: 950, letterSpacing: '0.1em', fontSize: '0.75rem' }}>COMPROBANTE DE ENVÍO</span>
                 <a href="#" style={{ color: 'inherit' }}><Icon>close</Icon></a>
              </div>
-             <div style={{ padding: '1rem', background: '#000', display: 'flex', justifyContent: 'center' }}>
-                <img src={order.ticketImageUrl || ''} alt="Ticket" style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: '8px' }} />
-             </div>
-             <div style={{ padding: '1.5rem', textAlign: 'center' }}>
-                <DownloadButton imageUrl={order.ticketImageUrl || ''} fileName={`ticket-${order.orderNumber}.jpg`} className="btn-hub btn-hub-p" />
-             </div>
+              <div style={{ padding: '1rem', background: '#000', display: 'flex', justifyContent: 'center' }}>
+                 {order.ticketImageUrl ? (
+                   <img src={order.ticketImageUrl} alt="Ticket" style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: '8px' }} />
+                 ) : (
+                   <div style={{ color: '#fff', padding: '2rem', textAlign: 'center' }}>
+                     <Icon>image_not_supported</Icon>
+                     <p>No hay comprobante disponible</p>
+                   </div>
+                 )}
+              </div>
+              <div style={{ padding: '1.5rem', textAlign: 'center' }}>
+                 {order.ticketImageUrl && (
+                   <DownloadButton imageUrl={order.ticketImageUrl} fileName={`ticket-${order.orderNumber}.jpg`} className="btn-hub btn-hub-p" />
+                 )}
+              </div>
           </div>
         </div>
 
@@ -458,46 +672,15 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
            </div>
         </div>
 
-        {/* MODAL: Confirm Finalization - CRITICAL WARNING */}
-        <div id="confirm-finalize" className="modal-overlay">
-          <div className="m-box" style={{ maxWidth: '500px', padding: '3rem' }}>
-            <a href="#" style={{ position: 'absolute', top: '2rem', right: '2rem', color: 'inherit' }}><Icon>close</Icon></a>
+        {/* MODAL: Confirm Finalization - with spinner & success screen */}
+        <ConfirmationFlow
+          paymentId={order.id}
+          trackingToken={token}
+          businessName={order.businessName || 'Store Lite'}
+        />
 
-            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--md-sys-color-error-container)', color: 'var(--md-sys-color-on-error-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', border: '3px solid var(--md-sys-color-error)' }}>
-                <Icon size={40}>warning</Icon>
-              </div>
-              <h2 style={{ margin: '0', fontSize: '1.5rem', fontWeight: 950, color: 'var(--md-sys-color-error)' }}>¡ATENCIÓN!</h2>
-            </div>
-
-            <p style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1.5rem', textAlign: 'center' }}>¿Confirmás que ya tenés el producto y todo está correcto?</p>
-            
-            <div style={{ background: 'var(--md-sys-color-surface-container-highest)', padding: '1.5rem', borderRadius: '24px', marginBottom: '2rem', fontSize: '0.9rem', lineHeight: 1.5 }}>
-               <p style={{ margin: 0 }}>Al confirmar, el pedido se marcará como <b>Finalizado</b> y el vendedor recibirá su pago. Esta acción no se puede revertir.</p>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <form action={async () => { 'use server'; await confirmFinalization(order.id, token); }}>
-                <button type="submit" className="btn-hub btn-hub-p" style={{ width: '100%', justifyContent: 'center' }}>SÍ, TODO CORRECTO</button>
-              </form>
-              <a href="#report-finalize" className="btn-hub btn-hub-s" style={{ width: '100%', justifyContent: 'center' }}>NO, TENGO UN PROBLEMA</a>
-            </div>
-          </div>
-        </div>
-
-        {/* MODAL: Report Problem */}
-        <div id="report-finalize" className="modal-overlay">
-           <div className="m-box" style={{ maxWidth: '500px', padding: '3rem' }}>
-              <a href="#" style={{ position: 'absolute', top: '2rem', right: '2rem', color: 'inherit' }}><Icon>close</Icon></a>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 950, marginBottom: '1rem' }}>Reportar Problema</h3>
-              <p style={{ marginBottom: '2rem', opacity: 0.7 }}>Tu reporte será enviado al vendedor para su revisión.</p>
-
-              <form action={async (formData: FormData) => { 'use server'; const reason = formData.get('reason') as string; await rejectFinalization(order.id, token, reason); }} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                 <textarea name="reason" placeholder="Describí el problema con detalle..." required style={{ width: '100%', minHeight: '150px', padding: '1.25rem', borderRadius: '20px', border: '1px solid var(--md-sys-color-outline-variant)', background: 'var(--md-sys-color-surface)', fontSize: '1rem' }} />
-                 <button type="submit" className="btn-hub btn-hub-s" style={{ width: '100%', justifyContent: 'center' }}>ENVIAR REPORTE</button>
-              </form>
-           </div>
-        </div>
+        {/* MODAL: Report Problem — with spinner & success screen */}
+        <ReportFlow paymentId={order.id} trackingToken={token} />
 
       </div>
     </OrderAuthGate>

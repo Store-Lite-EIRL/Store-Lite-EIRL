@@ -1109,6 +1109,7 @@
 
 .ticketImageWrapper {
   position: relative;
+  height: 200px; /* Altura fija para que fill funcione */
   border-radius: 16px;
   overflow: hidden;
 }
@@ -1575,6 +1576,7 @@
   position: relative;
   width: 100%;
   max-width: 300px;
+  height: 200px; /* Altura fija para fill */
   margin: 0 auto;
   border-radius: 12px;
   overflow: hidden;
@@ -2740,9 +2742,10 @@
 .ticketImageContainer {
   position: relative;
   width: 100%;
-  max-width: 180px;
+  max-width: 300px;
+  height: 200px; /* Altura fija para fill */
   margin: 0 auto;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
 }
 
@@ -2941,6 +2944,7 @@
   position: relative;
   width: 100%;
   max-width: 300px;
+  height: 200px; /* Altura fija para fill */
   margin: 0 auto;
   border-radius: 12px;
   overflow: hidden;
@@ -3153,6 +3157,12 @@
   color: var(--md-sys-color-on-secondary-container);
 }
 
+.statusEnReparto {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  animation: pulse 2s infinite;
+}
+
 /* ─── Shipping Path — Path Content Wrapper ─── */
 .pathContent {
   display: flex;
@@ -3284,4 +3294,352 @@
 
 .sealText span {
   opacity: 0.85;
+
+/* ─── Ticket Image Sizes (Ocupar todo el contenedor) ─── */
+.ticketImage {
+  width: 100% !important;
+  max-width: 100% !important; /* Que ocupe todo el ancho disponible */
+  height: auto !important;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.ticketPreview img,
+.ticketPreview image {
+  width: 100% !important;
+  max-width: 100% !important; /* Que ocupe todo el contenedor */
+  height: auto !important;
+  border-radius: 12px;
+}
+
+/* Ajuste para el contenedor de la imagen en el modal */
+.ticketImageContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+  background: #000;
+  border-radius: 12px;
+  margin: 1rem 0;
+  width: 100%;
+  min-height: 300px; /* Altura mínima para que se vea bien */
+}
+
+/* ─── Ticket Section Styles ─── */
+.ticketSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ticketHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ticketStatusBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.statusBadgeGreen {
+  background: color-mix(in srgb, var(--md-sys-color-tertiary) 15%, transparent);
+  color: var(--md-sys-color-tertiary);
+}
+
+.statusBadgeOrange {
+  background: color-mix(in srgb, var(--md-sys-color-warning, #FF9800) 15%, transparent);
+  color: var(--md-sys-color-warning, #FF9800);
+  animation: pulse 2s infinite;
+}
+
+.statusBadgeRed {
+  background: color-mix(in srgb, var(--md-sys-color-error, #F44336) 15%, transparent);
+  color: var(--md-sys-color-error, #F44336);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.ticketCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container);
+}
+
+.ticketInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ticketInfoTextSuccess {
+  color: var(--md-sys-color-tertiary);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.ticketInfoTextWarning {
+  color: var(--md-sys-color-warning, #FF9800);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.ticketBlurred {
+  filter: blur(8px);
+  transition: filter 0.3s;
+}
+
+.ticketBlurred:hover {
+  filter: blur(4px);
+}
+
+.ticketActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.copyButton, .editButton, .sendButton, .cancelButton {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copyButton {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.editButton {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.sendButton {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.cancelButton {
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface);
+}
+
+.copyButton:hover, .editButton:hover, .sendButton:hover, .cancelButton:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.ticketUploadCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  border: 2px dashed var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.ticketUploadIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ticketUploadTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.ticketUploadHint {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+  text-align: center;
+  margin: 0;
+  max-width: 300px;
+}
+
+.uploadLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.uploadLabel:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.fileInput {
+  display: none;
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-outline);
+  margin: 0;
+}
+
+.ticketPreview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.ticketImageWrapper {
+  position: relative;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ticketOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.ticketImageWrapper:hover .ticketOverlay {
+  opacity: 1;
+}
+
+.ticketUploaded {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--md-sys-color-tertiary);
+  font-weight: 600;
+}
+
+.ticketHint {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-outline);
+  animation: pulse 1.5s infinite;
+}
+
+.helpToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.helpToggle:hover {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.helpDetails {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.helpFlow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.helpStep {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.helpStepNumber {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.helpArrow {
+  text-align: center;
+  color: var(--md-sys-color-outline);
+  font-size: 0.875rem;
+}
+
+.helpNote {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+}
+
+.warning {
+  background: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
+  color: var(--md-sys-color-error);
+}
+
+.trackingTokenInfo {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+  background: var(--md-sys-color-surface-container-highest);
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-family: monospace;
+}
 }

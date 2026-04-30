@@ -8,18 +8,25 @@ import { verifyOrderAccess } from './actions';
 interface OrderAuthGateProps {
   token: string;
   businessName: string;
+  orderNumber: string;
   children: React.ReactNode;
 }
 
 const SESSION_TTL = 1 * 60 * 60 * 1000; // 1 Hora
 
-export default function OrderAuthGate({ token, businessName, children }: OrderAuthGateProps) {
+export default function OrderAuthGate({
+  token,
+  businessName,
+  orderNumber,
+  children,
+}: OrderAuthGateProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [dni, setDni] = useState('');
+  const [inputOrderNumber, setInputOrderNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,7 +43,6 @@ export default function OrderAuthGate({ token, businessName, children }: OrderAu
             setIsAuthenticated(true);
             return;
           } else {
-            // Limpiar sesión expirada
             localStorage.removeItem(storageKey);
           }
         } catch (e) {
@@ -83,8 +89,14 @@ export default function OrderAuthGate({ token, businessName, children }: OrderAu
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanDni = dni.trim();
+    const cleanOrderNumber = inputOrderNumber.trim();
+
     if (cleanDni.length < 8) {
       setError('Por favor, ingresá un DNI válido.');
+      return;
+    }
+    if (!cleanOrderNumber) {
+      setError('Por favor, ingresá el N° de orden.');
       return;
     }
 
@@ -92,16 +104,17 @@ export default function OrderAuthGate({ token, businessName, children }: OrderAu
     setError(null);
 
     try {
-      const res = await verifyOrderAccess(token, cleanDni);
+      const res = await verifyOrderAccess(token, cleanDni, cleanOrderNumber);
       if (res.success) {
         const sessionData = {
           dni: cleanDni,
+          orderNumber: cleanOrderNumber,
           expiresAt: Date.now() + SESSION_TTL,
         };
         localStorage.setItem(storageKey, JSON.stringify(sessionData));
         setIsAuthenticated(true);
       } else {
-        setError('El DNI ingresado no coincide con esta orden.');
+        setError('El DNI o N° de orden no coinciden con esta orden.');
       }
     } catch (err) {
       setError('Ocurrió un problema al verificar el acceso. Intentá nuevamente.');
@@ -166,7 +179,7 @@ export default function OrderAuthGate({ token, businessName, children }: OrderAu
       >
         <div
           style={{
-            maxWidth: '440px',
+            maxWidth: '480px',
             width: '100%',
             backgroundColor: 'var(--md-sys-color-surface-container-highest)',
             borderRadius: '48px',
@@ -215,13 +228,14 @@ export default function OrderAuthGate({ token, businessName, children }: OrderAu
             lineHeight: 1.5,
             padding: '0 1rem'
           }}>
-            Para ver los detalles de tu compra en <b>{businessName}</b>, ingresá el DNI del comprador.
+            Para ver los detalles de tu compra en <b>{businessName}</b>, ingresá el DNI del comprador y el <b>N° de orden</b>.
           </p>
 
           <form
             onSubmit={handleVerify}
-            style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}
+            style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
           >
+            {/* DNI Field */}
             <div style={{ textAlign: 'left', position: 'relative' }}>
               <label
                 style={{
@@ -263,6 +277,47 @@ export default function OrderAuthGate({ token, businessName, children }: OrderAu
               />
             </div>
 
+            {/* Order Number Field */}
+            <div style={{ textAlign: 'left', position: 'relative' }}>
+              <label
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  paddingLeft: '1.25rem',
+                  color: 'var(--md-sys-color-tertiary)',
+                  display: 'block',
+                  marginBottom: '8px',
+                  letterSpacing: '0.05em'
+                }}
+              >
+                N° de Orden
+              </label>
+              <input
+                type="text"
+                value={inputOrderNumber}
+                onChange={(e) => setInputOrderNumber(e.target.value)}
+                placeholder={orderNumber || 'Ej: ORD-001234'}
+                maxLength={30}
+                style={{
+                  width: '100%',
+                  padding: '1.25rem 1.5rem',
+                  borderRadius: '24px',
+                  border: '2px solid var(--md-sys-color-outline-variant)',
+                  background: 'var(--md-sys-color-surface)',
+                  fontSize: '1.1rem',
+                  fontWeight: 700,
+                  color: 'var(--md-sys-color-on-surface)',
+                  outline: 'none',
+                  transition: 'all 0.3s ease',
+                  textAlign: 'center',
+                  letterSpacing: '0.1em'
+                }}
+                onFocus={(e) => e.target.style.borderColor = 'var(--md-sys-color-tertiary)'}
+                onBlur={(e) => e.target.style.borderColor = 'var(--md-sys-color-outline-variant)'}
+              />
+            </div>
+
             {error && (
               <div style={{
                 background: 'var(--md-sys-color-error-container)',
@@ -283,7 +338,7 @@ export default function OrderAuthGate({ token, businessName, children }: OrderAu
 
             <button
               type="submit"
-              disabled={loading || dni.length < 8}
+              disabled={loading || dni.length < 8 || !inputOrderNumber.trim()}
               style={{
                 background: 'var(--md-sys-color-primary)',
                 color: 'white',
@@ -294,9 +349,9 @@ export default function OrderAuthGate({ token, businessName, children }: OrderAu
                 fontSize: '1rem',
                 textTransform: 'uppercase',
                 cursor: 'pointer',
-                opacity: loading || dni.length < 8 ? 0.5 : 1,
+                opacity: loading || dni.length < 8 || !inputOrderNumber.trim() ? 0.5 : 1,
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: dni.length >= 8 ? '0 15px 30px rgba(var(--md-sys-color-primary-rgb), 0.3)' : 'none',
+                boxShadow: dni.length >= 8 && inputOrderNumber.trim() ? '0 15px 30px rgba(var(--md-sys-color-primary-rgb), 0.3)' : 'none',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

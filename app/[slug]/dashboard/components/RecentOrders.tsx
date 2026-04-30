@@ -6,7 +6,6 @@ import {
   Calendar,
   CheckCircle,
   Clock,
-  Copy,
   CreditCard,
   ExternalLink,
   Hash,
@@ -29,7 +28,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { uploadTicketAndUpdatePayment, type UploadTicketResult } from '../actions/ticketActions';
+import { uploadTicketAndUpdatePayment, notifyDelivery, type UploadTicketResult } from '../actions/ticketActions';
 import styles from './RecentOrders.module.css';
 
 interface OrderItem {
@@ -45,6 +44,7 @@ interface OrderItem {
   status:
     | 'pending'
     | 'paid'
+    | 'validando'
     | 'not_delivered'
     | 'delivered'
     | 'completed'
@@ -68,7 +68,8 @@ interface OrderItem {
   shippingReference: string | null;
   shippingPhone: string | null;
   buyerEmail: string | null;
-  trackingToken: string | null;
+  maskedDni: string; // DNI enmascarado (****1234) para proteger al customer
+  trackingToken?: string | null; // Internal — not exposed to seller, but kept for type safety
   ticketImageUrl: string | null;
   finalizationDeadline: string | null;
   metadata: any;
@@ -90,51 +91,15 @@ const URBANO_STATUS_MAP: Record<
   { label: string; className: string; progress: number; icon: string }
 > = {
   paid: { label: 'Pagado', className: 'statusPaid', progress: 10, icon: 'payments' },
-  processing: {
-    label: 'En preparación',
-    className: 'statusProcessing',
-    progress: 20,
-    icon: 'hourglass_top',
-  },
-  analizando: {
-    label: 'Validando envío',
-    className: 'statusAnalyzing',
-    progress: 30,
-    icon: 'fact_check',
-  },
-  aceptado: { label: 'Aceptado', className: 'statusAccepted', progress: 40, icon: 'check_circle' },
-  shipped: { label: 'En camino', className: 'statusShipped', progress: 60, icon: 'local_shipping' },
-  delivered: { label: 'Entregado', className: 'statusDelivered', progress: 80, icon: 'home' },
+  validando: { label: 'VALIDANDO', className: 'statusValidando', progress: 25, icon: 'fact_check' },
+  not_delivered: { label: 'No Entregado', className: 'statusNotDelivered', progress: 30, icon: 'hourglass_top' },
+  delivered: { label: 'Entregado al Courier', className: 'statusDelivered', progress: 50, icon: 'local_shipping' },
+  en_reparto: { label: 'En Reparto', className: 'statusEnReparto', progress: 75, icon: 'local_shipping' },
   completed: { label: 'Finalizado', className: 'statusCompleted', progress: 100, icon: 'verified' },
-  finalizado: {
-    label: 'Finalizado',
-    className: 'statusCompleted',
-    progress: 100,
-    icon: 'verified',
-  },
-  pending: { label: 'Pendiente', className: 'statusPending', progress: 5, icon: 'schedule' },
-  esperando_confirmacion: {
-    label: 'Esperando confirmación',
-    className: 'statusWaiting',
-    progress: 90,
-    icon: 'hourglass_empty',
-  },
-  rechazado: {
-    label: 'Observado',
-    className: 'statusRejected',
-    progress: 0,
-    icon: 'report_problem',
-  },
-  not_delivered: { label: 'No entregado', className: 'statusFailed', progress: 0, icon: 'error' },
+  disputed: { label: 'En Disputa', className: 'statusDisputed', progress: 0, icon: 'gavel' },
   failed: { label: 'Fallido', className: 'statusFailed', progress: 0, icon: 'error' },
-  disputed: { label: 'Disputa', className: 'statusDisputed', progress: 0, icon: 'gavel' },
-  refund_requested: {
-    label: 'Reembolso solicitado',
-    className: 'statusRefunded',
-    progress: 0,
-    icon: 'receipt_long',
-  },
-  refunded: { label: 'Reembolsado', className: 'statusRefunded', progress: 0, icon: 'money_off' },
+  refund_requested: { label: 'Reembolso Solicitado', className: 'statusRefunded', progress: 0, icon: 'currency_exchange' },
+  refunded: { label: 'Reembolsado', className: 'statusRefunded', progress: 0, icon: 'currency_exchange' },
 };
 
 const PAYMENT_METHOD_MAP: Record<string, string> = {
@@ -160,6 +125,8 @@ export function RecentOrders({
   const [ticketPreview, setTicketPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<UploadTicketResult | null>(null);
+  const [isEditingTicket, setIsEditingTicket] = useState(false);
+  const [notifyingDelivery, setNotifyingDelivery] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
     open: boolean;
     action: (() => void) | null;
@@ -187,6 +154,8 @@ export function RecentOrders({
     setTicketPreview(null);
     setUploadResult(null);
     setUploading(false);
+    setIsEditingTicket(false);
+    setNotifyingDelivery(false);
     setActiveTab('detalles');
   }, [selectedOrder]);
 
@@ -237,10 +206,18 @@ export function RecentOrders({
       );
       setUploadResult(result);
       if (result.success) {
-        setTimeout(() => {
-          router.refresh();
-          setSelectedOrder(null);
-        }, 1500);
+        // Actualizar el estado local para mostrar el ticket y cambiar a "VALIDANDO"
+        setSelectedOrder({
+          ...selectedOrder,
+          ticketImageUrl: result.ticketImageUrl || '',
+          status: 'validando',
+        });
+        // Limpiar el formulario de upload
+        setTicketFile(null);
+        setTicketPreview(null);
+        setUploadResult(null);
+        // Refrescar en background para sincronizar con servidor
+        router.refresh();
       }
     } catch {
       setUploadResult({ success: false, error: 'Error inesperado al subir el ticket' });
@@ -254,6 +231,25 @@ export function RecentOrders({
     setTicketPreview(null);
     setUploadResult(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleNotifyDelivery = async () => {
+    if (!selectedOrder) return;
+    setNotifyingDelivery(true);
+    try {
+      const result = await notifyDelivery(selectedOrder.id, selectedOrder.businessId);
+      if (result.success) {
+        // Actualizar estado local
+        setSelectedOrder({ ...selectedOrder, status: 'en_reparto' });
+        router.refresh();
+      } else {
+        alert(result.error || 'Error al notificar la entrega');
+      }
+    } catch {
+      alert('Error inesperado al notificar la entrega');
+    } finally {
+      setNotifyingDelivery(false);
+    }
   };
 
   const renderDots = (segmentProgress: number) => {
@@ -452,108 +448,77 @@ export function RecentOrders({
 
   const renderTicketSection = (order: OrderItem) => {
     const hasTicket = !!order.ticketImageUrl;
-    const statusInfo = URBANO_STATUS_MAP[order.status] || { progress: 0 };
-    return (
-      <section className={styles.ticketSection}>
-        <div className={styles.ticketHeader}>
-          <h3 className={styles.sectionTitle}>
-            <Receipt size={16} /> Comprobante de Envío
-          </h3>
-          {hasTicket && (
-            <span className={`${styles.ticketStatusBadge} ${styles.statusBadgeGreen}`}>
-              <CheckCircle size={14} /> Subido
-            </span>
-          )}
-        </div>
-        {hasTicket ? (
-          <div className={styles.ticketCard}>
-            <div className={styles.ticketImageContainer}>
-              <Image
-                src={order.ticketImageUrl || ''}
-                alt="Ticket"
-                width={300}
-                height={200}
-                className={styles.ticketImage}
-              />
-              <div className={styles.ticketImageOverlay}>
-                <span>Vista previa del comprobante</span>
-              </div>
+    const isInValidando = order.status === 'validando';
+    const isDelivered = order.status === 'delivered'; // Customer confirmó ticket
+    const isEnReparto = order.status === 'en_reparto'; // Seller notificó llegada
+    const isDisputed = order.status === 'disputed'; // Ticket rechazado
+    // Solo se puede editar cuando está en validando o disputado (necesita re-subir)
+    const canEditTicket = isInValidando || isDisputed;
+    
+    // Función auxiliar para renderizar el formulario de subida
+    const renderUploadForm = (isEditing = false) => (
+      <div className={styles.ticketUploadCard}>
+        {!ticketPreview ? (
+          <>
+            <div className={styles.ticketUploadIcon}>
+              <Upload size={32} />
             </div>
-            <div className={styles.ticketInfo}>
-              <p className={styles.ticketInfoTextSuccess}>✓ Ticket subido correctamente</p>
-              {order.trackingToken && (
-                <div className={styles.trackingTokenInfo}>
-                  Token: <code>{order.trackingToken}</code>
-                </div>
-              )}
+            <p className={styles.ticketUploadTitle}>
+              {isEditing ? 'Editar comprobante de envío' : 'Subir comprobante de envío'}
+            </p>
+            <p className={styles.ticketUploadHint}>
+              {isEditing 
+                ? 'Seleccioná la nueva imagen del ticket de courier'
+                : 'Adjuntá la foto del ticket de courier para que el cliente pueda seguir su pedido'
+              }
+            </p>
+            <label className={styles.uploadLabel}>
+              <Upload size={18} /> Seleccionar Imagen
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className={styles.fileInput}
+                onChange={handleTicketFileSelect}
+              />
+            </label>
+            <p className={styles.hint}>Formatos: JPG, PNG, WebP</p>
+          </>
+        ) : (
+          <div className={styles.ticketPreview}>
+            <div className={styles.ticketImageWrapper}>
+              <Image
+                src={ticketPreview}
+                alt="Preview"
+                fill
+                className={`${styles.ticketImage} ${styles.ticketBlurred}`}
+                style={{ objectFit: 'contain' }}
+              />
+              <div className={styles.ticketOverlay}>Click para confirmar</div>
             </div>
             <div className={styles.ticketActions}>
               <button
-                className={styles.copyButton}
-                onClick={() => copyToClipboard(order.trackingToken || '', 'token')}
+                className={styles.sendButton}
+                onClick={handleUploadTicket}
+                disabled={uploading}
               >
-                <Copy size={14} />
-                {copiedField === 'token' ? 'Copiado!' : 'Copiar Token'}
+                {uploading ? <RefreshCw size={18} /> : <Send size={18} />}
+                {uploading ? 'Subiendo...' : (isEditing ? 'Actualizar Ticket' : 'Enviar Ticket')}
+              </button>
+              <button 
+                className={styles.cancelButton} 
+                onClick={() => {
+                  if (isEditing) setIsEditingTicket(false);
+                  handleCancelUpload();
+                }}
+              >
+                <X size={18} /> Cancelar
               </button>
             </div>
           </div>
-        ) : statusInfo.progress >= 20 ? (
-          <div className={styles.ticketUploadCard}>
-            {!ticketPreview ? (
-              <>
-                <div className={styles.ticketUploadIcon}>
-                  <Upload size={32} />
-                </div>
-                <p className={styles.ticketUploadTitle}>Subir comprobante de envío</p>
-                <p className={styles.ticketUploadHint}>
-                  Adjuntá la foto del ticket de courier para que el cliente pueda seguir su pedido
-                </p>
-                <label className={styles.uploadLabel}>
-                  <Upload size={18} /> Seleccionar Imagen
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className={styles.fileInput}
-                    onChange={handleTicketFileSelect}
-                  />
-                </label>
-                <p className={styles.hint}>Formatos: JPG, PNG, WebP</p>
-              </>
-            ) : uploadResult?.success ? (
-              <div className={styles.ticketPreview}>
-                <p className={styles.ticketUploaded}>
-                  <CheckCircle size={18} /> Ticket subido exitosamente
-                </p>
-                <p className={styles.ticketHint}>Redirigiendo...</p>
-              </div>
-            ) : (
-              <div className={styles.ticketPreview}>
-                <div className={styles.ticketImageWrapper}>
-                  <Image
-                    src={ticketPreview}
-                    alt="Preview"
-                    width={280}
-                    height={200}
-                    className={`${styles.ticketImage} ${styles.ticketBlurred}`}
-                  />
-                  <div className={styles.ticketOverlay}>Click para confirmar</div>
-                </div>
-                <div className={styles.ticketActions}>
-                  <button
-                    className={styles.sendButton}
-                    onClick={handleUploadTicket}
-                    disabled={uploading}
-                  >
-                    {uploading ? <RefreshCw size={18} /> : <Send size={18} />}
-                    {uploading ? 'Subiendo...' : 'Enviar Ticket'}
-                  </button>
-                  <button className={styles.cancelButton} onClick={handleCancelUpload}>
-                    <X size={18} /> Cancelar
-                  </button>
-                </div>
-              </div>
-            )}
+        )}
+        {!isEditing && (
+          <>
             <button className={styles.helpToggle} onClick={() => setHelpOpen(!helpOpen)}>
               <HelpCircle size={16} />
               {helpOpen ? 'Ocultar instrucciones' : '¿Cómo funciona?'}
@@ -589,8 +554,101 @@ export function RecentOrders({
                 </details>
               </div>
             )}
+          </>
+        )}
+      </div>
+    );
+    
+    return (
+      <section className={styles.ticketSection}>
+        <div className={styles.ticketHeader}>
+          <h3 className={styles.sectionTitle}>
+            <Receipt size={16} /> Comprobante de Envío
+          </h3>
+          {hasTicket && (
+            <span className={`${styles.ticketStatusBadge} ${
+              isDisputed ? styles.statusBadgeRed :
+              isInValidando ? styles.statusBadgeOrange : 
+              styles.statusBadgeGreen
+            }`}>
+              {isDisputed ? (
+                <><X size={14} /> Rechazado</>
+              ) : isInValidando ? (
+                <><RefreshCw size={14} /> VALIDANDO</>
+              ) : isEnReparto ? (
+                <><Truck size={14} /> En Reparto</>
+              ) : (
+                <><CheckCircle size={14} /> Confirmado</>
+              )}
+            </span>
+          )}
+        </div>
+        
+        {isEditingTicket ? (
+          // Modo edición
+          renderUploadForm(true)
+        ) : hasTicket ? (
+          // Mostrar ticket existente
+          <div className={styles.ticketCard}>
+            <div className={styles.ticketImageContainer}>
+              <Image
+                src={order.ticketImageUrl || ''}
+                alt="Ticket"
+                fill
+                className={`${styles.ticketImage} ${isInValidando ? styles.ticketBlurred : ''}`}
+                style={{ objectFit: 'contain' }}
+              />
+              <div className={styles.ticketImageOverlay}>
+                <span>
+                  {isDisputed ? 'Ticket rechazado' :
+                   isInValidando ? 'Esperando validación' :
+                   isEnReparto ? 'En reparto' :
+                   'Ticket confirmado'}
+              </span>
+              </div>
+            </div>
+            <div className={styles.ticketInfo}>
+              {isDisputed ? (
+                <p className={styles.ticketInfoTextWarning}>⚠️ El cliente rechazó este ticket. Subí uno nuevo.</p>
+              ) : isInValidando ? (
+                <p className={styles.ticketInfoTextWarning}>⏳ Esperando validación del cliente</p>
+              ) : isEnReparto ? (
+                <p className={styles.ticketInfoTextSuccess}>🚚 Pedido en reparto — el cliente confirmará recepción</p>
+              ) : isDelivered ? (
+                <p className={styles.ticketInfoTextSuccess}>✓ Ticket confirmado por el cliente</p>
+              ) : (
+                <p className={styles.ticketInfoTextSuccess}>✓ Ticket subido correctamente</p>
+              )}
+            </div>
+            <div className={styles.ticketActions}>
+              {canEditTicket && (
+                <button
+                  className={styles.editButton}
+                  onClick={() => {
+                    setIsEditingTicket(true);
+                    setTicketPreview(null);
+                    setTicketFile(null);
+                    setUploadResult(null);
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                  }}
+                >
+                  <Upload size={14} /> {isDisputed ? 'Re-subir Ticket' : 'Editar Ticket'}
+                </button>
+              )}
+              {isDelivered && (
+                <button
+                  className={styles.sendButton}
+                  onClick={handleNotifyDelivery}
+                  disabled={notifyingDelivery}
+                >
+                  {notifyingDelivery ? <RefreshCw size={18} /> : <Truck size={18} />}
+                  {notifyingDelivery ? 'Notificando...' : 'Notificar Entrega'}
+                </button>
+              )}
+            </div>
           </div>
         ) : (
+          // No puede subir todavía
           <div className={styles.ticketCard}>
             <p className={styles.ticketInfoText}>
               El ticket de envío estará disponible cuando el pedido sea despachado.
@@ -793,7 +851,7 @@ export function RecentOrders({
                   </div>
                   <div className={styles.dataItem}>
                     <IdCard size={16} />
-                    <span>DNI: {order.metadata?.buyerDni || 'No registrado'}</span>
+                    <span>DNI: {order.maskedDni || 'No registrado'}</span>
                   </div>
                   <div className={styles.dataItem}>
                     <Phone size={16} />
@@ -804,15 +862,6 @@ export function RecentOrders({
               {renderShippingPathModal(order)}
             </div>
             <div className={styles.quickActions}>
-              {order.trackingToken && (
-                <button
-                  className={`${styles.actionButton} ${styles.copyButton}`}
-                  onClick={() => copyToClipboard(order.trackingToken, 'token')}
-                >
-                  <Copy size={16} />
-                  {copiedField === 'token' ? 'Token copiado!' : 'Copiar Token'}
-                </button>
-              )}
               <button
                 className={styles.actionButton}
                 onClick={() =>
@@ -860,7 +909,9 @@ export function RecentOrders({
           </div>
         )}
         {activeTab === 'ticket' && (
-          <div className={styles.modalBodyNew}>{renderTicketSection(order)}</div>
+          <div className={styles.modalBodyNew} key={selectedOrder?.ticketImageUrl || 'no-ticket'}>
+            {renderTicketSection(selectedOrder!)}
+          </div>
         )}
         {activeTab === 'ayuda' && <div className={styles.modalBodyNew}>{renderHelpTab()}</div>}
       </>

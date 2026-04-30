@@ -1,57 +1,114 @@
-import { db } from '@/core/database/client';
-import { payments } from '@/core/database/schema';
-import { eq, and } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { db } from '@/core/database/client';
+import { businesses, businessTeamMembers, payments } from '@/core/database/schema';
+import { and, eq } from 'drizzle-orm';
+import { createClient } from '@/lib/supabase/server';
 
 /**
  * POST /api/order/lookup
- * Body: { dni: string, orderNumber: string, businessSlug: string }
- * Returns: { success: boolean, token?: string, error?: string }
+ * Busca el tracking_token usando DNI, Nro de Orden y businessSlug
+ * 🔒 SECURITY: Blocks authenticated sellers/team members from looking up
+ * orders from their own business to prevent self-confirmation attacks.
  */
 export async function POST(request: Request) {
   try {
-    const { dni, orderNumber, businessSlug } = await request.json();
+    const body = await request.json();
+    const { dni, orderNumber, businessSlug } = body;
 
+    // Validación básica
     if (!dni || !orderNumber || !businessSlug) {
       return NextResponse.json(
-        { success: false, error: 'Faltan datos: DNI, Nro de Orden y Slug del negocio.' },
+        { success: false, error: 'Faltan datos (DNI, Nro Orden o Slug)' },
         { status: 400 }
       );
     }
 
-    // Buscar el pago por DNI + Nro Orden + Slug del negocio
-    const [order] = await db
-      .select({
-        trackingToken: payments.trackingToken,
-        businessSlug: payments.business?.slug,
-      })
-      .from(payments)
-      .leftJoin(businesses, eq(payments.businessId, businesses.id))
-      .where(
-        and(
-          eq(payments.buyerDni, dni),
-          eq(payments.orderNumber, orderNumber),
-          eq(businesses.slug, businessSlug)
-        )
-      )
-      .limit(1);
+    // 🔒 SECURITY: Check if the requester is a seller/team member of this business.
+    // Sellers should NOT be able to lookup trackingTokens for their own orders.
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!order || !order.trackingToken) {
+    if (user) {
+      // Find businesses owned by this user that match the slug
+      const ownedBusiness = await db.query.businesses.findFirst({
+        where: and(
+          eq(businesses.ownerId, user.id),
+        ),
+        columns: { id: true, slug: true },
+      });
+
+      // Check if owned business matches the requested slug
+      if (ownedBusiness && ownedBusiness.slug.toLowerCase() === businessSlug.toLowerCase()) {
+        return NextResponse.json(
+          { success: false, error: 'Acceso denegado: usa el panel de vendedor para gestionar pedidos' },
+          { status: 403 }
+        );
+      }
+
+      // Also check team membership
+      if (ownedBusiness) {
+        const teamMembership = await db.query.businessTeamMembers.findFirst({
+          where: and(
+            eq(businessTeamMembers.userId, user.id),
+          ),
+          with: { business: { columns: { slug: true } } },
+        });
+
+        if (teamMembership && teamMembership.business?.slug?.toLowerCase() === businessSlug.toLowerCase()) {
+          return NextResponse.json(
+            { success: false, error: 'Acceso denegado: usa el panel de vendedor para gestionar pedidos' },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
+    // Limpiar el número de orden (por si viene con #)
+    const cleanOrderNumber = orderNumber.startsWith('#') ? orderNumber.slice(1) : orderNumber;
+
+    // Buscar el pago que coincida con DNI y Nro de Orden
+    const payment = await db.query.payments.findFirst({
+      where: and(
+        eq(payments.buyerDni, dni),
+        eq(payments.orderNumber, cleanOrderNumber),
+      ),
+      columns: {
+        trackingToken: true,
+        businessId: true,
+      },
+      with: {
+        business: {
+          columns: {
+            slug: true,
+          },
+        },
+      },
+    });
+
+    // Verificar que la orden exista Y que pertenezca al negocio correcto
+    if (!payment || !payment.trackingToken) {
       return NextResponse.json(
-        { success: false, error: 'Orden no encontrada. Verifica tus datos.' },
+        { success: false, error: 'No se encontró ningún pedido con esos datos' },
         { status: 404 }
+      );
+    }
+
+    if (payment.business?.slug !== businessSlug) {
+      return NextResponse.json(
+        { success: false, error: 'Esta orden no pertenece a este negocio' },
+        { status: 403 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      token: order.trackingToken,
+      token: payment.trackingToken,
     });
 
   } catch (error) {
-    console.error('[API /order/lookup] Error:', error);
+    console.error('[order/lookup] Error:', error);
     return NextResponse.json(
-      { success: false, error: 'Error de conexión. Intenta de nuevo.' },
+      { success: false, error: 'Error interno al buscar el pedido' },
       { status: 500 }
     );
   }

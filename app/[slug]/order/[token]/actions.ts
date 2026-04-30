@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/core/database/client';
-import { chatSessions, messages, payments } from '@/core/database/schema';
+import { chatSessions, messages, payments, businesses } from '@/core/database/schema';
 import { and, desc, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
@@ -37,14 +37,71 @@ export async function updateOrderStatus(
   }
 }
 
-export async function verifyOrderAccess(trackingToken: string, dni: string) {
+export async function verifyOrderAccess(
+  trackingToken: string,
+  dni: string,
+  orderNumber?: string,
+) {
   try {
+    const baseWhere = and(
+      eq(payments.trackingToken, trackingToken),
+      eq(payments.buyerDni, dni),
+    );
+
     const order = await db.query.payments.findFirst({
-      where: and(eq(payments.trackingToken, trackingToken), eq(payments.buyerDni, dni)),
+      where: baseWhere,
     });
+
+    // If orderNumber is provided, verify it matches too
+    if (orderNumber && order && order.orderNumber !== orderNumber) {
+      return { success: false };
+    }
+
     return { success: !!order };
   } catch (error) {
     return { success: false };
+  }
+}
+
+/**
+ * Verify order access using ONLY DNI + orderNumber (no trackingToken).
+ * Used when the tracking link has expired and user needs to recover access.
+ */
+export async function verifyOrderAccessByDniAndOrderNumber(
+  dni: string,
+  orderNumber: string,
+) {
+  try {
+    const order = await db.query.payments.findFirst({
+      where: and(
+        eq(payments.buyerDni, dni),
+        eq(payments.orderNumber, orderNumber),
+      ),
+    });
+
+    if (!order) {
+      return { success: false };
+    }
+
+    return {
+      success: true,
+      trackingToken: order.trackingToken,
+      slug: order.businessId ? await getBusinessSlug(order.businessId) : null,
+    };
+  } catch (error) {
+    return { success: false };
+  }
+}
+
+async function getBusinessSlug(businessId: string): Promise<string | null> {
+  try {
+    const biz = await db.query.businesses.findFirst({
+      where: eq(businesses.id, businessId),
+      columns: { slug: true },
+    });
+    return biz?.slug ?? null;
+  } catch {
+    return null;
   }
 }
 

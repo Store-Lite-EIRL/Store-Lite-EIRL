@@ -30,8 +30,10 @@ export const mediaTypeEnum = pgEnum('media_type', ['image', 'video']);
 export const paymentStatusEnum = pgEnum('payment_status', [
   'pending',
   'paid',
+  'validando',
   'not_delivered',
   'delivered',
+  'en_reparto',
   'completed',
   'failed',
   'disputed',
@@ -541,6 +543,7 @@ export const payments = pgTable(
       enum: [
         'pending',
         'paid',
+        'validando',
         'not_delivered',
         'delivered',
         'completed',

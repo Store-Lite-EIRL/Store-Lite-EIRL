@@ -1,6 +1,7 @@
 'use client';
 
 import { Icon } from '@/shared/components/ui';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { updateOrderStatus } from './actions';
 
@@ -11,6 +12,7 @@ interface ActionModalsProps {
 }
 
 export default function ActionModals({ paymentId, trackingToken, orderNumber }: ActionModalsProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [reportReason, setReportReason] = useState('');
 
@@ -20,6 +22,7 @@ export default function ActionModals({ paymentId, trackingToken, orderNumber }: 
       const res = await updateOrderStatus(paymentId, trackingToken, 'delivered');
       if (res.success) {
         window.location.hash = ''; // Cerrar modal
+        router.refresh(); // Refrescar datos del servidor
       } else {
         alert(res.error);
       }
@@ -42,6 +45,7 @@ export default function ActionModals({ paymentId, trackingToken, orderNumber }: 
       });
       if (res.success) {
         window.location.hash = ''; // Cerrar modal
+        router.refresh(); // Refrescar datos del servidor
       } else {
         alert(res.error);
       }

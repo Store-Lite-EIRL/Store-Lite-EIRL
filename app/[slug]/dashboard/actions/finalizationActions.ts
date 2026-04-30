@@ -206,7 +206,7 @@ export async function confirmFinalization(
       return { success: false, error: 'Pedido no encontrado o token inválido.' };
     }
 
-    if (payment.status !== 'not_delivered') {
+    if (payment.status !== 'not_delivered' && payment.status !== 'en_reparto') {
       console.error('[confirmFinalization] Invalid status:', payment.status);
       return {
         success: false,
@@ -317,7 +317,7 @@ export async function rejectFinalization(
       return { success: false, error: 'Pedido no encontrado o token inválido.' };
     }
 
-    if (payment.status !== 'not_delivered') {
+    if (payment.status !== 'not_delivered' && payment.status !== 'en_reparto') {
       console.error('[rejectFinalization] Invalid status:', payment.status);
       return {
         success: false,
