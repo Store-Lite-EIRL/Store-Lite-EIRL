@@ -1,8 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { Icon } from '@/shared/components/ui';
+import { Button } from '@/shared/components/ui/buttons/Button';
+import { Icon } from '@/shared/components/ui/data-display/Icon';
+import { TextField } from '@/shared/components/ui/inputs/TextField';
+import { Dialog } from '@/shared/components/ui/surfaces/Dialog';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 interface LookupOrderModalProps {
   open: boolean;
@@ -37,15 +40,15 @@ export function LookupOrderModal({ open, onClose, businessSlug }: LookupOrderMod
       const data = await res.json();
 
       if (data.success && data.token) {
-        // Generar token de auth (sesión de 1 hora)
+        // Guardar sesión local de 1 hora por seguridad
+        const SESSION_TTL = 1 * 60 * 60 * 1000; // 1 hora en milisegundos
         const authTokenData = {
-          token: data.token, // trackingToken para la URL
-          expiresAt: Date.now() + (1 * 60 * 60 * 1000), // 1 hora
+          token: data.token,
+          dni: dni, // Guardamos el DNI para que OrderAuthGate pueda verificar
+          expiresAt: Date.now() + SESSION_TTL,
         };
-        // Guardar en localStorage bajo la key del negocio
-        localStorage.setItem(`order_session_${businessSlug}`, JSON.stringify(authTokenData));
-        
-        // Redirigir a /order/{token}
+        localStorage.setItem(`order_session_${data.token}`, JSON.stringify(authTokenData));
+
         router.push(`/${businessSlug}/order/${data.token}`);
         onClose();
       } else {
@@ -59,79 +62,86 @@ export function LookupOrderModal({ open, onClose, businessSlug }: LookupOrderMod
   };
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${open ? '' : 'hidden'}`}>
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-[#1a1a2e] rounded-3xl border border-white/10 p-8 shadow-2xl">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/5 transition-all"
-        >
-          <Icon className="material-symbols-outlined text-slate-400">close</Icon>
-        </button>
+    <Dialog open={open} onClose={onClose} id="lookup-order-dialog">
+      {/* MD3 Dialog Headline */}
+      <div slot="headline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <Icon>search</Icon>
+        Ver mi Pedido
+      </div>
 
-        <h2 className="text-xl font-black text-white mb-2">Ver mi Pedido</h2>
-        <p className="text-sm text-slate-400 mb-6">
+      {/* MD3 Dialog Content */}
+      <div slot="content">
+        <p style={{
+          marginBottom: '1.5rem',
+          color: 'var(--md-sys-color-on-surface-variant)',
+          fontSize: '0.875rem',
+          lineHeight: '1.4'
+        }}>
           Ingresa tu DNI y número de orden para ver el estado de tu compra.
         </p>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-slate-500">
-              DNI (8 dígitos)
-            </label>
-            <input
-              type="text"
-              placeholder="12345678"
-              value={dni}
-              onChange={(e) => setDni(e.target.value.replace(/\D/g, '').substring(0, 8))}
-              maxLength={8}
-              className="w-full p-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-slate-600 focus:outline-none focus:border-[#135bec]/50 transition-all"
-              required
-            />
-          </div>
+        <form id="lookup-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <TextField
+            type="text"
+            label="DNI (8 dígitos)"
+            placeholder="12345678"
+            value={dni}
+            onChange={(e: any) => setDni(e.target.value.replace(/\D/g, '').substring(0, 8))}
+            maxLength={8}
+            required
+            supportingText="Ingresa tu DNI de 8 dígitos"
+          />
 
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-slate-500">
-              Número de Orden
-            </label>
-            <input
-              type="text"
-              placeholder="Ej: ORD-001"
-              value={orderNumber}
-              onChange={(e) => setOrderNumber(e.target.value)}
-              className="w-full p-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-slate-600 focus:outline-none focus:border-[#135bec]/50 transition-all"
-              required
-            />
-          </div>
+          <TextField
+            type="text"
+            label="Número de Orden"
+            placeholder="Ej: ORD-001"
+            value={orderNumber}
+            onChange={(e: any) => setOrderNumber(e.target.value)}
+            required
+          />
 
           {error && (
-            <div className="flex items-start gap-3 rounded-2xl bg-red-500/10 p-4 border border-red-500/20">
-              <Icon className="material-symbols-outlined text-red-500 text-sm">error</Icon>
-              <p className="text-xs text-red-400">{error}</p>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.75rem 1rem',
+              borderRadius: 'var(--md-sys-shape-corner-medium)',
+              backgroundColor: 'var(--md-sys-color-error-container)',
+              color: 'var(--md-sys-color-on-error-container)',
+              fontSize: '0.875rem'
+            }}>
+              <Icon style={{ fontSize: '1.125rem' }}>error</Icon>
+              {error}
             </div>
           )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full relative group overflow-hidden rounded-2xl disabled:opacity-70"
-          >
-            <div className="absolute inset-0 bg-[#135bec] group-hover:bg-[#1565f5] transition-colors" />
-            <div className="relative py-5 px-6 flex items-center justify-center gap-3">
-              {loading ? (
-                <span className="flex items-center gap-2 text-white font-black uppercase tracking-wide text-sm">
-                  <Icon className="material-symbols-outlined animate-spin">progress_activity</Icon>
-                  Buscando...
-                </span>
-              ) : (
-                <span className="text-white font-black uppercase tracking-wide text-sm">
-                  Ver mi Pedido
-                </span>
-              )}
-            </div>
-          </button>
         </form>
       </div>
-    </div>
+
+      {/* MD3 Dialog Actions */}
+      <div slot="actions">
+        <Button variant="text" onClick={onClose}>
+          Cancelar
+        </Button>
+        <Button
+          variant="filled"
+          onClick={() => {
+            const form = document.getElementById('lookup-form') as HTMLFormElement;
+            if (form) form.requestSubmit();
+          }}
+          disabled={loading}
+        >
+          {loading ? (
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Icon style={{ fontSize: '1.125rem', animation: 'spin 1s linear infinite' }}>progress_activity</Icon>
+              Buscando...
+            </span>
+          ) : (
+            'Ver mi Pedido'
+          )}
+        </Button>
+      </div>
+    </Dialog>
   );
 }

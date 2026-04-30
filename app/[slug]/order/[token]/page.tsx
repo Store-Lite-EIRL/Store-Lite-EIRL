@@ -559,29 +559,8 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                 </div>
               )}
 
-              {/* ACTION: Finalization Confirm */}
-              {order.status === 'esperando_confirmacion' && (
-                <div className="despacho-card" style={{ borderStyle: 'solid', borderColor: 'var(--md-sys-color-tertiary)', background: 'var(--md-sys-color-tertiary-container)', color: 'var(--md-sys-color-on-tertiary-container)' }}>
-                   <div style={{ display: 'flex', gap: '1rem', textAlign: 'left' }}>
-                     <Icon size={32}>info</Icon>
-                     <div>
-                       <h3 style={{ margin: 0, fontWeight: 950, fontSize: '1.1rem' }}>¿Ya recibiste tu producto?</h3>
-                       <p style={{ margin: '4px 0 0', fontSize: '0.9rem', opacity: 0.8 }}>Confirmá para liberar el pago al vendedor. Si tenés un problema, reportalo ahora.</p>
-                     </div>
-                   </div>
-                   <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                    <a href="#confirm-finalize" className="btn-hub btn-hub-p" style={{ flex: 1, justifyContent: 'center', background: 'var(--md-sys-color-tertiary)', color: 'white' }}>
-                      SÍ, LO RECIBÍ
-                    </a>
-                    <a href="#report-finalize" className="btn-hub btn-hub-s" style={{ flex: 1, justifyContent: 'center' }}>
-                      TENGO UN PROBLEMA
-                    </a>
-                  </div>
-                </div>
-              )}
-
               {/* Default Buttons if no specific card */}
-              {!['validando', 'disputed', 'esperando_confirmacion', 'delivered', 'completed'].includes(order.status) && currentStatus.actionLabel && (
+              {!['validando', 'disputed', 'delivered', 'completed'].includes(order.status) && currentStatus.actionLabel && (
                 <button className="btn-hub btn-hub-p pulse-active">
                   {currentStatus.actionLabel}
                   <Icon>arrow_forward</Icon>
@@ -676,7 +655,7 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
         <ConfirmationFlow
           paymentId={order.id}
           trackingToken={token}
-          businessName={order.businessName || 'Store Lite'}
+          businessName={order.business?.name || 'Store Lite'}
         />
 
         {/* MODAL: Report Problem — with spinner & success screen */}

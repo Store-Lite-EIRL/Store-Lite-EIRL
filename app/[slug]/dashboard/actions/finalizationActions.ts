@@ -218,16 +218,32 @@ export async function confirmFinalization(
 
     console.log('[confirmFinalization] Confirming finalization...');
 
-    // 2. Update payment to 'completed'
-    await db
-      .update(payments)
-      .set({
-        status: 'completed' as any,
-        finalizationConfirmedAt: now,
-        completedAt: now,
-        updatedAt: now,
-      })
-      .where(eq(payments.id, paymentId));
+    // 2. Update payment to 'completed' inside transaction with re-check (P5: race condition guard)
+    await db.transaction(async (tx) => {
+      // Re-read current status inside the transaction
+      const [currentPayment] = await tx
+        .select({ status: payments.status })
+        .from(payments)
+        .where(eq(payments.id, paymentId))
+        .limit(1);
+
+      if (
+        currentPayment?.status !== 'not_delivered' &&
+        currentPayment?.status !== 'en_reparto'
+      ) {
+        throw new Error('Estado del pedido fue modificado por otra operación.');
+      }
+
+      await tx
+        .update(payments)
+        .set({
+          status: 'completed' as any,
+          finalizationConfirmedAt: now,
+          completedAt: now,
+          updatedAt: now,
+        })
+        .where(eq(payments.id, paymentId));
+    });
 
     // 3. Notify the business (seller)
     await createBusinessNotification({
@@ -281,6 +297,13 @@ export async function confirmFinalization(
       },
     };
   } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    if (message.includes('modificado por otra operación')) {
+      return {
+        success: false,
+        error: 'El estado del pedido fue modificado. Recargá la página e intentá de nuevo.',
+      };
+    }
     console.error('[confirmFinalization] Error:', error);
     return {
       success: false,
@@ -327,15 +350,33 @@ export async function rejectFinalization(
 
     console.log('[rejectFinalization] Rejecting with reason:', reason);
 
-    // 2. Update payment to 'disputed' (complaint filed)
-    await db
-      .update(payments)
-      .set({
-        status: 'disputed' as any,
-        rejectionReason: reason,
-        updatedAt: new Date(),
-      })
-      .where(eq(payments.id, paymentId));
+    // 2. Update payment to 'disputed' inside transaction with re-check (P5: race condition guard)
+    // Also clear completedAt if it was previously set (P17)
+    const now = new Date();
+    await db.transaction(async (tx) => {
+      const [currentPayment] = await tx
+        .select({ status: payments.status })
+        .from(payments)
+        .where(eq(payments.id, paymentId))
+        .limit(1);
+
+      if (
+        currentPayment?.status !== 'not_delivered' &&
+        currentPayment?.status !== 'en_reparto'
+      ) {
+        throw new Error('Estado del pedido fue modificado por otra operación.');
+      }
+
+      await tx
+        .update(payments)
+        .set({
+          status: 'disputed' as any,
+          rejectionReason: reason,
+          completedAt: null, // P17: clear completion date on rejection
+          updatedAt: now,
+        })
+        .where(eq(payments.id, paymentId));
+    });
 
     // 3. Notify the business (seller)
     await createBusinessNotification({
@@ -390,6 +431,13 @@ export async function rejectFinalization(
       },
     };
   } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    if (message.includes('modificado por otra operación')) {
+      return {
+        success: false,
+        error: 'El estado del pedido fue modificado. Recargá la página e intentá de nuevo.',
+      };
+    }
     console.error('[rejectFinalization] Error:', error);
     return {
       success: false,

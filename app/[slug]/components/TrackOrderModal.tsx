@@ -42,6 +42,14 @@ export function TrackOrderModal({ open, onClose, businessSlug }: TrackOrderModal
         throw new Error(data.error || 'No se encontró el pedido');
       }
 
+      // Guardar sesión local de 1 hora por seguridad
+      const SESSION_TTL = 1 * 60 * 60 * 1000; // 1 hora en milisegundos
+      const authTokenData = {
+        dni: dni,
+        expiresAt: Date.now() + SESSION_TTL,
+      };
+      localStorage.setItem(`order_session_${data.token}`, JSON.stringify(authTokenData));
+
       router.push(`/${businessSlug}/order/${data.token}?dni=${dni}`);
       onClose();
     } catch (err) {

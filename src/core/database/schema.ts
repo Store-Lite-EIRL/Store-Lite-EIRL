@@ -34,6 +34,8 @@ export const paymentStatusEnum = pgEnum('payment_status', [
   'not_delivered',
   'delivered',
   'en_reparto',
+  // @deprecated — legacy status, kept for backward compatibility with existing DB records
+  'esperando_confirmacion',
   'completed',
   'failed',
   'disputed',
@@ -577,6 +579,8 @@ export const payments = pgTable(
     finalizationConfirmedAt: timestamp('finalization_confirmed_at', { withTimezone: true }),
     completedAt: timestamp('completed_at', { withTimezone: true }),
     metadata: jsonb('metadata').default({}),
+    // Optimistic locking counter — incremented on every status change
+    version: integer('version').notNull().default(0),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -587,6 +591,30 @@ export const payments = pgTable(
     statusIdx: index('idx_payments_status').on(table.status),
     culqiChargeIdIdx: index('idx_payments_culqi_charge_id').on(table.culqiChargeId),
     createdAtIdx: index('idx_payments_created_at').on(table.createdAt.desc()),
+  }),
+);
+
+// =====================================================
+// TABLE: order_events — Audit trail for payment status changes
+// =====================================================
+
+export const orderEvents = pgTable(
+  'order_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    paymentId: uuid('payment_id')
+      .notNull()
+      .references(() => payments.id, { onDelete: 'cascade' }),
+    fromStatus: text('from_status'),
+    toStatus: text('to_status').notNull(),
+    // Who triggered the change: 'customer', 'seller', 'system'
+    triggeredBy: text('triggered_by'),
+    reason: text('reason'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    paymentIdIdx: index('idx_order_events_payment_id').on(table.paymentId),
+    createdAtIdx: index('idx_order_events_created_at').on(table.createdAt.desc()),
   }),
 );
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { Icon } from '@/shared/components/ui';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { rejectFinalization } from '../../dashboard/actions/finalizationActions';
 
@@ -12,6 +13,7 @@ interface ReportFlowProps {
 type FlowState = 'idle' | 'loading' | 'success';
 
 export default function ReportFlow({ paymentId, trackingToken }: ReportFlowProps) {
+  const router = useRouter();
   const [state, setState] = useState<FlowState>('idle');
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +30,7 @@ export default function ReportFlow({ paymentId, trackingToken }: ReportFlowProps
       const result = await rejectFinalization(paymentId, trackingToken, reason.trim());
       if (result.success) {
         setState('success');
+        router.refresh();
       } else {
         setError(result.error || 'Error al enviar el reporte');
         setState('idle');
@@ -56,6 +59,27 @@ export default function ReportFlow({ paymentId, trackingToken }: ReportFlowProps
             textAlign: 'center',
           }}
         >
+          {/* Close button (X) */}
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              window.location.hash = '';
+            }}
+            style={{
+              position: 'absolute',
+              top: '2rem',
+              right: '2rem',
+              color: 'inherit',
+              opacity: 0.5,
+              transition: 'opacity 0.2s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.5')}
+          >
+            <Icon>close</Icon>
+          </a>
+
           {/* Shield icon */}
           <div
             style={{
@@ -132,11 +156,22 @@ export default function ReportFlow({ paymentId, trackingToken }: ReportFlowProps
               fontSize: '0.8rem',
               color: 'var(--md-sys-color-on-surface-variant)',
               opacity: 0.6,
+              marginBottom: '2rem',
             }}
           >
             <Icon size={16}>support_agent</Icon>
             Soporte activo 24/7
           </div>
+
+          <button
+            onClick={() => {
+              window.location.hash = '';
+            }}
+            className="btn-hub btn-hub-s"
+            style={{ width: '100%', justifyContent: 'center' }}
+          >
+            CERRAR
+          </button>
 
           <style>{`
             @keyframes celebrate-pop {

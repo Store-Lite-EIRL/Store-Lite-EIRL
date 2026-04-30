@@ -57,6 +57,27 @@ export default function ConfirmationFlow({
             textAlign: 'center',
           }}
         >
+          {/* Close button (X) */}
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              window.location.hash = '';
+            }}
+            style={{
+              position: 'absolute',
+              top: '2rem',
+              right: '2rem',
+              color: 'inherit',
+              opacity: 0.5,
+              transition: 'opacity 0.2s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.5')}
+          >
+            <Icon>close</Icon>
+          </a>
+
           {/* Celebration icon */}
           <div
             style={{
@@ -133,11 +154,22 @@ export default function ConfirmationFlow({
               fontSize: '0.8rem',
               color: 'var(--md-sys-color-on-surface-variant)',
               opacity: 0.6,
+              marginBottom: '2rem',
             }}
           >
             <Icon size={16}>verified</Icon>
             Transacción segura y completada
           </div>
+
+          <button
+            onClick={() => {
+              window.location.hash = '';
+            }}
+            className="btn-hub btn-hub-p"
+            style={{ width: '100%', justifyContent: 'center' }}
+          >
+            CERRAR
+          </button>
 
           <style>{`
             @keyframes celebrate-pop {

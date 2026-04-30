@@ -3,7 +3,54 @@
 import { db } from '@/core/database/client';
 import { chatSessions, messages, payments, businesses } from '@/core/database/schema';
 import { and, desc, eq } from 'drizzle-orm';
+import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
+
+// ─── Rate Limiting (in-memory) ───
+// 5 intentos por IP cada 15 minutos
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+
+interface RateLimitEntry {
+  count: number;
+  resetAt: number;
+}
+
+const rateLimitMap = new Map<string, RateLimitEntry>();
+
+function checkRateLimit(): { allowed: boolean; retryAfter?: number } {
+  const headersList = headers();
+  const ip =
+    headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    headersList.get('x-real-ip') ||
+    'unknown';
+
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+
+  if (!entry || now > entry.resetAt) {
+    // Primera vez o ventana expirada
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true };
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX) {
+    const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
+    return { allowed: false, retryAfter };
+  }
+
+  entry.count += 1;
+  return { allowed: true };
+}
+
+function clearRateLimit() {
+  const headersList = headers();
+  const ip =
+    headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    headersList.get('x-real-ip') ||
+    'unknown';
+  rateLimitMap.delete(ip);
+}
 
 export async function updateOrderStatus(
   paymentId: string,
@@ -43,21 +90,39 @@ export async function verifyOrderAccess(
   orderNumber?: string,
 ) {
   try {
-    const baseWhere = and(
-      eq(payments.trackingToken, trackingToken),
-      eq(payments.buyerDni, dni),
-    );
+    // Rate limiting check
+    const rateLimit = checkRateLimit();
+    if (!rateLimit.allowed) {
+      return {
+        success: false,
+        error: `Demasiados intentos. Esperá ${rateLimit.retryAfter} segundos.`,
+        rateLimited: true,
+      };
+    }
 
     const order = await db.query.payments.findFirst({
-      where: baseWhere,
+      where: and(
+        eq(payments.trackingToken, trackingToken),
+        eq(payments.buyerDni, dni),
+      ),
     });
 
-    // If orderNumber is provided, verify it matches too
-    if (orderNumber && order && order.orderNumber !== orderNumber) {
+    if (!order) {
       return { success: false };
     }
 
-    return { success: !!order };
+    // P4: Normalize orderNumber comparison (handle null/empty)
+    const providedOrderNumber = orderNumber?.trim() || null;
+    const dbOrderNumber = order.orderNumber || null;
+
+    if (providedOrderNumber !== dbOrderNumber) {
+      return { success: false };
+    }
+
+    // Success — clear rate limit counter
+    clearRateLimit();
+
+    return { success: true };
   } catch (error) {
     return { success: false };
   }

@@ -136,10 +136,11 @@ export default function BusinessPageContent({
         culqiPublicKey={culqiPublicKey}
         chatEnabled={chatEnabled}
         storefrontLayout={storefrontLayout}
-        storefrontTheme={storefrontTheme}
-        previewCardTheme={previewCardTheme}
-      />
-    </StorageProvider>
+            storefrontTheme={storefrontTheme}
+             previewCardTheme={previewCardTheme}
+             onShowLookupModal={() => setShowLookupModal(true)}
+           />
+     </StorageProvider>
   );
 }
 
@@ -157,7 +158,7 @@ function BusinessPageContentUI({
   storefrontLayout,
   storefrontTheme,
   previewCardTheme,
-}: BusinessPageContentProps) {
+}: Omit<BusinessPageContentProps, 'onShowLookupModal'>) {
   // Pagos habilitados para compra automática solo si plan+credenciales están listos.
   const paymentsEnabled = hasPaymentGateway && isPaymentConfigured;
 
@@ -348,6 +349,7 @@ function BusinessPageContentUI({
             onCreateProduct={handleCreateProduct}
             storefrontTheme={storefrontTheme}
             previewCardTheme={previewCardTheme}
+            onShowLookupModal={() => setShowLookupModal(true)}
           />
         );
       default:
@@ -470,6 +472,12 @@ function BusinessPageContentUI({
           onClose={() => setAlert((prev) => ({ ...prev, open: false }))}
         />
       )}
+
+      <LookupOrderModal
+        open={showLookupModal}
+        onClose={() => setShowLookupModal(false)}
+        businessSlug={business.slug}
+      />
     </>
   );
 }
@@ -509,6 +517,7 @@ interface StorefrontProductGridSectionProps {
   onCreateProduct: () => void;
   storefrontTheme?: StorefrontTheme;
   previewCardTheme?: StorefrontTheme;
+  onShowLookupModal: () => void;
 }
 
 function StorefrontProductGridSection({
@@ -546,6 +555,7 @@ function StorefrontProductGridSection({
   onCreateProduct,
   storefrontTheme,
   previewCardTheme,
+  onShowLookupModal,
 }: StorefrontProductGridSectionProps) {
   const isGridVisible = section.visible;
   const paymentsEnabled = hasPaymentGateway && isPaymentConfigured;
@@ -623,7 +633,7 @@ function StorefrontProductGridSection({
                 <div className={styles.ownerActionRow}>
                   <Button
                     variant="filled"
-                    onClick={() => setShowLookupModal(true)}
+                    onClick={onShowLookupModal}
                     className={styles.addProductButton}
                   >
                     <Icon slot="icon" size={21}>

@@ -146,17 +146,34 @@ export async function notifyDelivery(
       return { success: false, error: 'El ticket aún no fue validado por el cliente' };
     }
 
-    await db
-      .update(payments)
-      .set({
-        status: 'en_reparto', // Estado: Pedido llegó, customer debe confirmar recepción
-        updatedAt: new Date(),
-      })
-      .where(eq(payments.id, paymentId));
+    // P5: Transaction with re-check for race condition guard
+    await db.transaction(async (tx) => {
+      const [currentPayment] = await tx
+        .select({ status: payments.status })
+        .from(payments)
+        .where(eq(payments.id, paymentId))
+        .limit(1);
+
+      if (currentPayment?.status !== 'delivered') {
+        throw new Error('Estado del pedido fue modificado.');
+      }
+
+      await tx
+        .update(payments)
+        .set({
+          status: 'en_reparto',
+          updatedAt: new Date(),
+        })
+        .where(eq(payments.id, paymentId));
+    });
 
     console.log('[notifyDelivery] Success — delivery notified for payment:', paymentId);
     return { success: true };
   } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    if (message.includes('modificado')) {
+      return { success: false, error: 'El estado del pedido fue modificado. Recargá e intentá de nuevo.' };
+    }
     console.error('[notifyDelivery] Error:', error instanceof Error ? error.message : String(error));
     return { success: false, error: 'Error al notificar la entrega' };
   }
