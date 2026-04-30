@@ -930,13 +930,13 @@ export function RecentOrders({
             <p className={styles.confirmDesc}>Esta acción no se puede deshacer.</p>
             <div className={styles.confirmActions}>
               <button
-                className={styles.cancelButton}
+                className={styles.confirmBtnText}
                 onClick={() => setConfirmAction({ open: false, action: null })}
               >
                 Cancelar
               </button>
               <button
-                className={styles.primaryButton}
+                className={styles.confirmBtnFilled}
                 onClick={() => {
                   confirmAction.action?.();
                   setConfirmAction({ open: false, action: null });

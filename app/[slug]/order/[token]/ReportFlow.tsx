@@ -4,6 +4,7 @@ import { Icon } from '@/shared/components/ui';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { rejectFinalization } from '../../dashboard/actions/finalizationActions';
+import './FlowModals.css';
 
 interface ReportFlowProps {
   paymentId: string;
@@ -43,315 +44,111 @@ export default function ReportFlow({ paymentId, trackingToken }: ReportFlowProps
 
   if (state === 'success') {
     return (
-      <div
-        id="report-finalize"
-        className="modal-overlay"
-        style={{
-          background: 'rgba(0,0,0,0.85)',
-          backdropFilter: 'blur(20px)',
-        }}
-      >
-        <div
-          className="m-box"
-          style={{
-            maxWidth: '480px',
-            padding: '3rem',
-            textAlign: 'center',
-          }}
-        >
-          {/* Close button (X) */}
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              window.location.hash = '';
-            }}
-            style={{
-              position: 'absolute',
-              top: '2rem',
-              right: '2rem',
-              color: 'inherit',
-              opacity: 0.5,
-              transition: 'opacity 0.2s',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.5')}
-          >
+      <div id="report-finalize" className="rf-overlay rf-overlay--visible">
+        <div className="rf-dialog rf-dialog--success">
+          {/* Close button */}
+          <button className="rf-close" onClick={() => (window.location.hash = '')} aria-label="Cerrar">
             <Icon>close</Icon>
-          </a>
+          </button>
 
           {/* Shield icon */}
-          <div
-            style={{
-              width: '100px',
-              height: '100px',
-              borderRadius: '50%',
-              background:
-                'linear-gradient(135deg, var(--md-sys-color-secondary) 0%, var(--md-sys-color-primary) 100%)',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 2rem',
-              boxShadow:
-                '0 20px 60px rgba(var(--md-sys-color-secondary-rgb, 98, 0, 238), 0.3)',
-              animation: 'celebrate-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
-            }}
-          >
+          <div className="rf-icon-circle rf-icon-circle--shield">
             <Icon size={48}>shield</Icon>
           </div>
 
-          <h2
-            style={{
-              margin: '0 0 0.5rem',
-              fontSize: '1.75rem',
-              fontWeight: 950,
-              letterSpacing: '-0.03em',
-              color: 'var(--md-sys-color-on-surface)',
-            }}
-          >
-            Reporte Enviado 🛡️
-          </h2>
+          <h2 className="rf-title">Reporte Enviado</h2>
 
-          <p
-            style={{
-              fontSize: '1rem',
-              color: 'var(--md-sys-color-on-surface-variant)',
-              lineHeight: 1.6,
-              marginBottom: '2rem',
-            }}
-          >
-            Tu reporte ha sido notificado al vendedor. <b>Revisaremos tu caso</b> y te
+          <p className="rf-body">
+            Tu reporte ha sido notificado al vendedor. <strong>Revisaremos tu caso</strong> y te
             contactaremos pronto.
           </p>
 
-          <div
-            style={{
-              background: 'var(--md-sys-color-surface-container-highest)',
-              borderRadius: '24px',
-              padding: '1.5rem',
-              marginBottom: '2rem',
-            }}
-          >
-            <p
-              style={{
-                margin: 0,
-                fontSize: '0.85rem',
-                color: 'var(--md-sys-color-on-surface-variant)',
-                lineHeight: 1.6,
-              }}
-            >
-              Tu compra está protegida por <b style={{ color: 'var(--md-sys-color-primary)' }}>Store Lite</b>.
+          <div className="rf-card">
+            <p className="rf-card-text">
+              Tu compra está protegida por <strong className="rf-brand">Store Lite</strong>.
               <br />
               El pago no se liberará hasta que el problema sea resuelto.
             </p>
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              fontSize: '0.8rem',
-              color: 'var(--md-sys-color-on-surface-variant)',
-              opacity: 0.6,
-              marginBottom: '2rem',
-            }}
-          >
+          <div className="rf-badge">
             <Icon size={16}>support_agent</Icon>
             Soporte activo 24/7
           </div>
 
-          <button
-            onClick={() => {
-              window.location.hash = '';
-            }}
-            className="btn-hub btn-hub-s"
-            style={{ width: '100%', justifyContent: 'center' }}
-          >
+          <button className="rf-btn rf-btn--secondary" onClick={() => (window.location.hash = '')}>
             CERRAR
           </button>
-
-          <style>{`
-            @keyframes celebrate-pop {
-              0% { transform: scale(0) rotate(-30deg); opacity: 0; }
-              60% { transform: scale(1.2) rotate(5deg); opacity: 1; }
-              100% { transform: scale(1) rotate(0deg); opacity: 1; }
-            }
-          `}</style>
         </div>
       </div>
     );
   }
 
   return (
-    <div id="report-finalize" className="modal-overlay">
-      <div className="m-box" style={{ maxWidth: '500px', padding: '3rem' }}>
-        <a
-          href="#"
-          style={{
-            position: 'absolute',
-            top: '2rem',
-            right: '2rem',
-            color: 'inherit',
-            pointerEvents: state === 'loading' ? 'none' : undefined,
-          }}
+    <div id="report-finalize" className="rf-overlay">
+      <div className="rf-dialog">
+        {/* Close button */}
+        <button
+          className="rf-close"
+          onClick={() => (window.location.hash = '')}
+          disabled={state === 'loading'}
+          aria-label="Cerrar"
         >
           <Icon>close</Icon>
-        </a>
+        </button>
 
         {state === 'loading' ? (
-          // LOADING STATE
-          <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-            <div
-              style={{
-                width: '64px',
-                height: '64px',
-                margin: '0 auto 2rem',
-                position: 'relative',
-              }}
-            >
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  border: '4px solid var(--md-sys-color-secondary-container)',
-                  borderRadius: '50%',
-                }}
-              />
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  border: '4px solid transparent',
-                  borderTopColor: 'var(--md-sys-color-secondary)',
-                  borderRadius: '50%',
-                  animation: 'spin 0.8s linear infinite',
-                }}
-              />
+          /* ─── LOADING STATE ─── */
+          <div className="rf-loading">
+            <div className="rf-spinner">
+              <div className="rf-spinner__track" />
+              <div className="rf-spinner__fill" />
             </div>
-            <h2
-              style={{
-                margin: '0 0 0.5rem',
-                fontSize: '1.25rem',
-                fontWeight: 950,
-                color: 'var(--md-sys-color-on-surface)',
-              }}
-            >
-              Enviando reporte...
-            </h2>
-            <p
-              style={{
-                margin: 0,
-                fontSize: '0.9rem',
-                color: 'var(--md-sys-color-on-surface-variant)',
-                opacity: 0.7,
-              }}
-            >
-              Notificando al vendedor sobre tu problema
-            </p>
+            <h2 className="rf-title rf-title--small">Enviando reporte...</h2>
+            <p className="rf-subtitle">Notificando al vendedor sobre tu problema</p>
           </div>
         ) : (
-          // IDLE STATE
+          /* ─── IDLE STATE ─── */
           <>
-            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-              <div
-                style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  background: 'var(--md-sys-color-warning-container)',
-                  color: 'var(--md-sys-color-on-warning-container)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 1rem',
-                  border: '3px solid var(--md-sys-color-warning)',
-                }}
-              >
-                <Icon size={40}>report_problem</Icon>
-              </div>
-              <h2
-                style={{
-                  margin: '0',
-                  fontSize: '1.5rem',
-                  fontWeight: 950,
-                  color: 'var(--md-sys-color-on-surface)',
-                }}
-              >
-                Reportar Problema
-              </h2>
+            <div className="rf-icon-circle rf-icon-circle--warning">
+              <Icon size={40}>report_problem</Icon>
             </div>
 
-            <p
-              style={{
-                fontSize: '1rem',
-                fontWeight: 700,
-                marginBottom: '1.5rem',
-                textAlign: 'center',
-              }}
-            >
-              Describí el problema con tu pedido
-            </p>
+            <h2 className="rf-title">Reportar Problema</h2>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="Describí el problema con detalle..."
-                required
-                style={{
-                  width: '100%',
-                  minHeight: '150px',
-                  padding: '1.25rem',
-                  borderRadius: '20px',
-                  border: '1px solid var(--md-sys-color-outline-variant)',
-                  background: 'var(--md-sys-color-surface)',
-                  fontSize: '1rem',
-                  outline: 'none',
-                  resize: 'vertical',
-                  color: 'var(--md-sys-color-on-surface)',
-                }}
-              />
+            <p className="rf-question">Describí el problema con tu pedido</p>
+
+            <form onSubmit={handleSubmit} className="rf-form">
+              <div className="rf-field">
+                <label htmlFor="report-reason" className="rf-label">
+                  Motivo del reporte
+                </label>
+                <textarea
+                  id="report-reason"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="Describí el problema con detalle..."
+                  required
+                  className="rf-textarea"
+                  rows={5}
+                />
+              </div>
 
               {error && (
-                <div
-                  style={{
-                    background: 'var(--md-sys-color-error-container)',
-                    color: 'var(--md-sys-color-on-error-container)',
-                    padding: '1rem',
-                    borderRadius: '16px',
-                    fontSize: '0.85rem',
-                    fontWeight: 700,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    justifyContent: 'center',
-                  }}
-                >
+                <div className="rf-error">
                   <Icon size={18}>error</Icon>
-                  {error}
+                  <span>{error}</span>
                 </div>
               )}
 
-              <button
-                type="submit"
-                className="btn-hub btn-hub-s"
-                style={{ width: '100%', justifyContent: 'center' }}
-              >
+              <button type="submit" className="rf-btn rf-btn--secondary" disabled={!reason.trim()}>
+                <Icon size={20}>send</Icon>
                 ENVIAR REPORTE
               </button>
             </form>
           </>
         )}
       </div>
-
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }
