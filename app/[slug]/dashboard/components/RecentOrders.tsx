@@ -1,21 +1,26 @@
 'use client';
 
+import { Button } from '@/shared/components/ui/buttons/Button';
+import { IconButton } from '@/shared/components/ui/buttons/IconButton';
 import { Select, SelectOption } from '@/shared/components/ui/inputs/Select';
 import { TextField } from '@/shared/components/ui/inputs/TextField';
 import {
+  AlertTriangle,
+  ArrowLeftRight,
   Calendar,
   CheckCircle,
   Clock,
   CreditCard,
   ExternalLink,
-  Hash,
   HelpCircle,
   Home,
   IdCard,
+  Loader2,
   MapPin,
   Phone,
   Receipt,
   RefreshCw,
+  Search,
   Send,
   ShoppingBag,
   Store,
@@ -28,12 +33,22 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { uploadTicketAndUpdatePayment, notifyDelivery, type UploadTicketResult } from '../actions/ticketActions';
+import {
+  notifyDelivery,
+  uploadTicketAndUpdatePayment,
+  type UploadTicketResult,
+} from '../actions/ticketActions';
 import styles from './RecentOrders.module.css';
+
+interface ConfirmAction {
+  open: boolean;
+  action: (() => void) | null;
+}
 
 interface OrderItem {
   id: string;
   orderNumber: string | null;
+  productId: string;
   productTitle: string;
   productSlug: string;
   productImage: string | null;
@@ -68,10 +83,11 @@ interface OrderItem {
   shippingReference: string | null;
   shippingPhone: string | null;
   buyerEmail: string | null;
-  maskedDni: string; // DNI enmascarado (****1234) para proteger al customer
-  trackingToken?: string | null; // Internal — not exposed to seller, but kept for type safety
+  maskedDni: string;
+  trackingToken?: string | null;
   ticketImageUrl: string | null;
   finalizationDeadline: string | null;
+  completedAt: string | null;
   metadata: any;
   createdAt: string;
   businessId: string;
@@ -81,26 +97,164 @@ interface RecentOrdersProps {
   orders: OrderItem[];
   totalPages: number;
   currentPage: number;
-  currentLimit: number;
   currentStatus: string;
   currentSearch: string;
+  currentDate: string;
+  businessSlug: string;
 }
 
 const URBANO_STATUS_MAP: Record<
   string,
-  { label: string; className: string; progress: number; icon: string }
+  {
+    label: string;
+    className: string;
+    progress: number;
+    icon: string;
+    lucideIcon: React.ComponentType<any>;
+  }
 > = {
-  paid: { label: 'Pagado', className: 'statusPaid', progress: 10, icon: 'payments' },
-  validando: { label: 'VALIDANDO', className: 'statusValidando', progress: 25, icon: 'fact_check' },
-  not_delivered: { label: 'No Entregado', className: 'statusNotDelivered', progress: 30, icon: 'hourglass_top' },
-  delivered: { label: 'Entregado al Courier', className: 'statusDelivered', progress: 50, icon: 'local_shipping' },
-  en_reparto: { label: 'En Reparto', className: 'statusEnReparto', progress: 75, icon: 'local_shipping' },
-  completed: { label: 'Finalizado', className: 'statusCompleted', progress: 100, icon: 'verified' },
-  disputed: { label: 'En Disputa', className: 'statusDisputed', progress: 0, icon: 'gavel' },
-  failed: { label: 'Fallido', className: 'statusFailed', progress: 0, icon: 'error' },
-  refund_requested: { label: 'Reembolso Solicitado', className: 'statusRefunded', progress: 0, icon: 'currency_exchange' },
-  refunded: { label: 'Reembolsado', className: 'statusRefunded', progress: 0, icon: 'currency_exchange' },
+  pending: {
+    label: 'Pendiente',
+    className: 'statusPending',
+    progress: 5,
+    icon: 'pending',
+    lucideIcon: Clock,
+  },
+  paid: {
+    label: 'Pagado',
+    className: 'statusPaid',
+    progress: 10,
+    icon: 'payments',
+    lucideIcon: CreditCard,
+  },
+  processing: {
+    label: 'Procesando',
+    className: 'statusProcessing',
+    progress: 20,
+    icon: 'settings',
+    lucideIcon: RefreshCw,
+  },
+  analizando: {
+    label: 'Analizando',
+    className: 'statusAnalyzing',
+    progress: 15,
+    icon: 'search',
+    lucideIcon: Search,
+  },
+  validando: {
+    label: 'VALIDANDO',
+    className: 'statusVerifying',
+    progress: 25,
+    icon: 'fact_check',
+    lucideIcon: RefreshCw,
+  },
+  not_delivered: {
+    label: 'No Entregado',
+    className: 'statusFailed',
+    progress: 30,
+    icon: 'hourglass_top',
+    lucideIcon: X,
+  },
+  aceptado: {
+    label: 'Aceptado',
+    className: 'statusAccepted',
+    progress: 40,
+    icon: 'check_circle',
+    lucideIcon: CheckCircle,
+  },
+  delivered: {
+    label: 'Entregado al Courier',
+    className: 'statusDelivered',
+    progress: 50,
+    icon: 'local_shipping',
+    lucideIcon: Truck,
+  },
+  shipped: {
+    label: 'Enviado',
+    className: 'statusDelivered',
+    progress: 60,
+    icon: 'local_shipping',
+    lucideIcon: Truck,
+  },
+  en_reparto: {
+    label: 'En Reparto',
+    className: 'statusEnReparto',
+    progress: 75,
+    icon: 'local_shipping',
+    lucideIcon: Truck,
+  },
+  esperando_confirmacion: {
+    label: 'Esperando Confirmación',
+    className: 'statusWaiting',
+    progress: 80,
+    icon: 'hourglass_empty',
+    lucideIcon: Clock,
+  },
+  completed: {
+    label: 'Finalizado',
+    className: 'statusCompleted',
+    progress: 100,
+    icon: 'verified',
+    lucideIcon: CheckCircle,
+  },
+  finalizado: {
+    label: 'Finalizado',
+    className: 'statusCompleted',
+    progress: 100,
+    icon: 'verified',
+    lucideIcon: CheckCircle,
+  },
+
+  disputed: {
+    label: 'En Disputa',
+    className: 'statusRejected',
+    progress: 0,
+    icon: 'gavel',
+    lucideIcon: AlertTriangle,
+  },
+  failed: {
+    label: 'Fallido',
+    className: 'statusFailed',
+    progress: 0,
+    icon: 'error',
+    lucideIcon: X,
+  },
+  refund_requested: {
+    label: 'Reembolso Solicitado',
+    className: 'statusRejected',
+    progress: 0,
+    icon: 'currency_exchange',
+    lucideIcon: ArrowLeftRight,
+  },
+  refunded: {
+    label: 'Reembolsado',
+    className: 'statusRejected',
+    progress: 0,
+    icon: 'currency_exchange',
+    lucideIcon: ArrowLeftRight,
+  },
+  rechazado: {
+    label: 'Rechazado',
+    className: 'statusRejected',
+    progress: 0,
+    icon: 'cancel',
+    lucideIcon: X,
+  },
 };
+
+// Estados que REALMENTE existen en la Base de Datos (schema.ts)
+const DB_STATUS_FILTERS = [
+  'pending',
+  'paid',
+  'validando',
+  'not_delivered',
+  'delivered',
+  'completed',
+  'failed',
+  'disputed',
+  'refund_requested',
+  'refunded',
+];
 
 const PAYMENT_METHOD_MAP: Record<string, string> = {
   card: 'Tarjeta de Crédito/Débito',
@@ -114,9 +268,10 @@ export function RecentOrders({
   orders,
   totalPages,
   currentPage,
-  currentLimit,
   currentStatus,
   currentSearch,
+  currentDate,
+  businessSlug,
 }: RecentOrdersProps) {
   const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
   const [activeTab, setActiveTab] = useState<ModalTab>('detalles');
@@ -127,11 +282,15 @@ export function RecentOrders({
   const [uploadResult, setUploadResult] = useState<UploadTicketResult | null>(null);
   const [isEditingTicket, setIsEditingTicket] = useState(false);
   const [notifyingDelivery, setNotifyingDelivery] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<{
-    open: boolean;
-    action: (() => void) | null;
-  }>({ open: false, action: null });
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction>({ open: false, action: null });
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const [localSearch, setLocalSearch] = useState(currentSearch);
+
+  // Sync local search with URL param
+  useEffect(() => {
+    setLocalSearch(currentSearch);
+  }, [currentSearch]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -160,27 +319,44 @@ export function RecentOrders({
   }, [selectedOrder]);
 
   const updateFilters = (updates: Record<string, string | null>) => {
+    setIsFilterLoading(true);
     const params = new URLSearchParams(searchParams.toString());
     Object.entries(updates).forEach(([key, value]) => {
-      if (value === null || value === 'all' || value === '') params.delete(key);
-      else params.set(key, value);
+      if (value === null || value === 'all' || value === '') {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
     });
-    params.set('page', '1');
+    // Siempre volver a página 1 al filtrar (excepto en cambio de página)
+    if (!('page' in updates)) {
+      params.set('page', '1');
+    }
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    // Simular tiempo mínimo de carga para UX
+    setTimeout(() => {
+      setIsFilterLoading(false);
+    }, 500);
   };
 
   const handlePageChange = (newPage: number) => {
+    setIsFilterLoading(true);
     const params = new URLSearchParams(searchParams.toString());
     params.set('page', newPage.toString());
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    setTimeout(() => {
+      setIsFilterLoading(false);
+    }, 500);
   };
 
   const copyToClipboard = async (text: string, field: string) => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedField(field);
-      setTimeout(() => setCopiedField(null), 2000);
-    } catch {
+      setTimeout(() => {
+        setCopiedField(null);
+      }, 2000);
+    } catch (err) {
       // Fallback
     }
   };
@@ -190,7 +366,9 @@ export function RecentOrders({
     if (file) {
       setTicketFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => setTicketPreview(reader.result as string);
+      reader.onloadend = () => {
+        setTicketPreview(reader.result as string);
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -383,47 +561,50 @@ export function RecentOrders({
     return (
       <section className={styles.infoSection}>
         <h3 className={styles.sectionTitle}>
-          <MapPin size={16} /> Ruta de Entrega
+          <MapPin size={18} /> Ruta de Entrega
         </h3>
-        <div className={styles.shippingPath}>
-          <div className={styles.pathItem}>
+        <div className={styles.shippingPathHorizontal}>
+          {/* Inicio */}
+          <div className={styles.pathItemHorizontal}>
             <div
               className={`${styles.pathIcon} ${statusInfo.progress >= 10 ? styles.pathIconActive : ''}`}
             >
-              <Store size={18} />
+              <Store size={20} />
             </div>
-            <div className={styles.pathContent}>
-              <p className={styles.pathLabel}>Inicio</p>
+            <div className={styles.pathLabelAlwaysVisible}>Inicio</div>
+            <div className={styles.pathTooltip}>
               <p className={styles.pathValue}>Almacén Central (Lima)</p>
             </div>
           </div>
+
           {type !== 'recojo' && (
             <>
-              <div className={styles.pathConnector} />
-              <div className={styles.pathItem}>
+              <div className={styles.pathArrow}>→</div>
+              <div className={styles.pathItemHorizontal}>
                 <div
                   className={`${styles.pathIcon} ${statusInfo.progress >= 40 ? styles.pathIconActive : ''}`}
                 >
-                  <Truck size={18} />
+                  <Truck size={20} />
                 </div>
-                <div className={styles.pathContent}>
-                  <p className={styles.pathLabel}>Agencia</p>
+                <div className={styles.pathLabelAlwaysVisible}>Agencia</div>
+                <div className={styles.pathTooltip}>
                   <p className={styles.pathValue}>{order.shippingAgency || 'Distribución local'}</p>
                 </div>
               </div>
             </>
           )}
+
           {type === 'domicilio' && (
             <>
-              <div className={styles.pathConnector} />
-              <div className={styles.pathItem}>
+              <div className={styles.pathArrow}>→</div>
+              <div className={styles.pathItemHorizontal}>
                 <div
                   className={`${styles.pathIcon} ${statusInfo.progress >= 80 ? styles.pathIconActive : ''}`}
                 >
-                  <Home size={18} />
+                  <Home size={20} />
                 </div>
-                <div className={styles.pathDetails}>
-                  <p className={styles.pathLabel}>Destino</p>
+                <div className={styles.pathLabelAlwaysVisible}>Destino</div>
+                <div className={styles.pathTooltip}>
                   <p className={styles.pathValue}>
                     {order.shippingDistrict}, {order.shippingProvince}
                   </p>
@@ -449,13 +630,11 @@ export function RecentOrders({
   const renderTicketSection = (order: OrderItem) => {
     const hasTicket = !!order.ticketImageUrl;
     const isInValidando = order.status === 'validando';
-    const isDelivered = order.status === 'delivered'; // Customer confirmó ticket
-    const isEnReparto = order.status === 'en_reparto'; // Seller notificó llegada
-    const isDisputed = order.status === 'disputed'; // Ticket rechazado
-    // Solo se puede editar cuando está en validando o disputado (necesita re-subir)
+    const isDelivered = order.status === 'delivered';
+    const isEnReparto = order.status === 'en_reparto';
+    const isDisputed = order.status === 'disputed';
     const canEditTicket = isInValidando || isDisputed;
-    
-    // Función auxiliar para renderizar el formulario de subida
+
     const renderUploadForm = (isEditing = false) => (
       <div className={styles.ticketUploadCard}>
         {!ticketPreview ? (
@@ -467,10 +646,9 @@ export function RecentOrders({
               {isEditing ? 'Editar comprobante de envío' : 'Subir comprobante de envío'}
             </p>
             <p className={styles.ticketUploadHint}>
-              {isEditing 
+              {isEditing
                 ? 'Seleccioná la nueva imagen del ticket de courier'
-                : 'Adjuntá la foto del ticket de courier para que el cliente pueda seguir su pedido'
-              }
+                : 'Adjuntá la foto del ticket de courier para que el cliente pueda seguir su pedido'}
             </p>
             <label className={styles.uploadLabel}>
               <Upload size={18} /> Seleccionar Imagen
@@ -503,10 +681,10 @@ export function RecentOrders({
                 disabled={uploading}
               >
                 {uploading ? <RefreshCw size={18} /> : <Send size={18} />}
-                {uploading ? 'Subiendo...' : (isEditing ? 'Actualizar Ticket' : 'Enviar Ticket')}
+                {uploading ? 'Subiendo...' : isEditing ? 'Actualizar Ticket' : 'Enviar Ticket'}
               </button>
-              <button 
-                className={styles.cancelButton} 
+              <button
+                className={styles.cancelButton}
                 onClick={() => {
                   if (isEditing) setIsEditingTicket(false);
                   handleCancelUpload();
@@ -558,7 +736,7 @@ export function RecentOrders({
         )}
       </div>
     );
-    
+
     return (
       <section className={styles.ticketSection}>
         <div className={styles.ticketHeader}>
@@ -566,29 +744,39 @@ export function RecentOrders({
             <Receipt size={16} /> Comprobante de Envío
           </h3>
           {hasTicket && (
-            <span className={`${styles.ticketStatusBadge} ${
-              isDisputed ? styles.statusBadgeRed :
-              isInValidando ? styles.statusBadgeOrange : 
-              styles.statusBadgeGreen
-            }`}>
+            <span
+              className={`${styles.ticketStatusBadge} ${
+                isDisputed
+                  ? styles.statusBadgeRed
+                  : isInValidando
+                    ? styles.statusBadgeOrange
+                    : styles.statusBadgeGreen
+              }`}
+            >
               {isDisputed ? (
-                <><X size={14} /> Rechazado</>
+                <>
+                  <X size={14} /> Rechazado
+                </>
               ) : isInValidando ? (
-                <><RefreshCw size={14} /> VALIDANDO</>
+                <>
+                  <RefreshCw size={14} /> VALIDANDO
+                </>
               ) : isEnReparto ? (
-                <><Truck size={14} /> En Reparto</>
+                <>
+                  <Truck size={14} /> En Reparto
+                </>
               ) : (
-                <><CheckCircle size={14} /> Confirmado</>
+                <>
+                  <CheckCircle size={14} /> Confirmado
+                </>
               )}
             </span>
           )}
         </div>
-        
+
         {isEditingTicket ? (
-          // Modo edición
           renderUploadForm(true)
         ) : hasTicket ? (
-          // Mostrar ticket existente
           <div className={styles.ticketCard}>
             <div className={styles.ticketImageContainer}>
               <Image
@@ -600,20 +788,27 @@ export function RecentOrders({
               />
               <div className={styles.ticketImageOverlay}>
                 <span>
-                  {isDisputed ? 'Ticket rechazado' :
-                   isInValidando ? 'Esperando validación' :
-                   isEnReparto ? 'En reparto' :
-                   'Ticket confirmado'}
-              </span>
+                  {isDisputed
+                    ? 'Ticket rechazado'
+                    : isInValidando
+                      ? 'Esperando validación'
+                      : isEnReparto
+                        ? 'En reparto'
+                        : 'Ticket confirmado'}
+                </span>
               </div>
             </div>
             <div className={styles.ticketInfo}>
               {isDisputed ? (
-                <p className={styles.ticketInfoTextWarning}>⚠️ El cliente rechazó este ticket. Subí uno nuevo.</p>
+                <p className={styles.ticketInfoTextWarning}>
+                  ⚠️ El cliente rechazó este ticket. Subí uno nuevo.
+                </p>
               ) : isInValidando ? (
                 <p className={styles.ticketInfoTextWarning}>⏳ Esperando validación del cliente</p>
               ) : isEnReparto ? (
-                <p className={styles.ticketInfoTextSuccess}>🚚 Pedido en reparto — el cliente confirmará recepción</p>
+                <p className={styles.ticketInfoTextSuccess}>
+                  🚚 Pedido en reparto — el cliente confirmará recepción
+                </p>
               ) : isDelivered ? (
                 <p className={styles.ticketInfoTextSuccess}>✓ Ticket confirmado por el cliente</p>
               ) : (
@@ -648,7 +843,6 @@ export function RecentOrders({
             </div>
           </div>
         ) : (
-          // No puede subir todavía
           <div className={styles.ticketCard}>
             <p className={styles.ticketInfoText}>
               El ticket de envío estará disponible cuando el pedido sea despachado.
@@ -710,20 +904,30 @@ export function RecentOrders({
     return (
       <>
         <div className={styles.modalHero}>
-          <button className={styles.modalHeroClose} onClick={() => setSelectedOrder(null)}>
-            <X size={20} />
-          </button>
+          <IconButton
+            variant="filled-tonal"
+            onClick={() => setSelectedOrder(null)}
+            aria-label="Cerrar"
+            className={styles.modalHeroClose}
+          >
+            <X size={24} />
+          </IconButton>
           <div className={styles.modalHeroOrderNumber}>
-            <Hash size={24} />
-            <h2>#{order.orderNumber || order.id.slice(0, 8).toUpperCase()}</h2>
+            <div className={`${styles.statusHeroBadge} ${styles[statusInfo.className] || ''}`}>
+              {statusInfo.lucideIcon && (
+                <statusInfo.lucideIcon
+                  size={16}
+                  style={{ marginRight: '0.3rem', verticalAlign: 'middle' }}
+                />
+              )}
+              {statusInfo.label}
+            </div>
+            <h2>{order.orderNumber || order.id.slice(0, 8).toUpperCase()}</h2>
           </div>
-          <div className={styles.statusHeroBadge}>
-            {statusInfo.icon && (
-              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
-                {statusInfo.icon}
-              </span>
-            )}
-            {statusInfo.label}
+
+          <div className={styles.productNameInHeader}>
+            <ShoppingBag size={16} />
+            <span>{order.productTitle}</span>
           </div>
           <div className={styles.modalHeroMeta}>
             <Calendar size={16} />
@@ -756,35 +960,81 @@ export function RecentOrders({
         </div>
         {activeTab === 'detalles' && (
           <div className={styles.modalBodyNew}>
-            <div className={styles.modalInfoGrid}>
-              <section className={styles.infoSection}>
-                <h3 className={styles.sectionTitle}>
-                  <ShoppingBag size={16} /> Producto
-                </h3>
-                <div className={styles.productCard}>
+            {/* SECCIÓN 1: Producto y Cliente UNIDOS en un solo card */}
+            <section className={styles.infoSection}>
+              <h3 className={styles.sectionTitle}>
+                <User size={18} /> Comprador y Producto
+              </h3>
+              <div className={`${styles.unifiedCard} ${styles.unifiedContent}`}>
+                {/* Cliente arriba */}
+                <div className={styles.customerSection}>
+                  <div className={styles.customerHeader}>
+                    <div className={styles.customerAvatar}>
+                      <User size={28} />
+                    </div>
+                    <div className={styles.customerBasicInfo}>
+                      <p className={styles.customerLabel}>Comprador</p>
+                      <div className={styles.customerDataRow}>
+                        <div className={styles.dataItemInline}>
+                          <IdCard size={18} />
+                          <span>DNI: {order.maskedDni || 'No registrado'}</span>
+                        </div>
+                        <div className={styles.dataItemInline}>
+                          <Phone size={18} />
+                          <span>Tel: {order.shippingPhone || 'Sin teléfono'}</span>
+                        </div>
+                      </div>
+                      <p className={styles.customerEmail}>{order.buyerEmail || 'No registrado'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className={styles.unifiedDivider} />
+
+                {/* Producto abajo */}
+                <div className={styles.productSection}>
                   <div className={styles.productImageWrapper}>
                     {order.productImage ? (
                       <Image
                         src={order.productImage}
                         alt={order.productTitle}
-                        width={60}
-                        height={60}
+                        width={100}
+                        height={100}
                         className={styles.productImg}
                       />
                     ) : (
                       <div className={styles.productPlaceholder}>
-                        <ShoppingBag size={24} />
+                        <ShoppingBag size={36} />
                       </div>
                     )}
                   </div>
                   <div className={styles.productInfo}>
                     <Link
-                      href={`/product/${order.productSlug}`}
+                      href={`/${businessSlug}/product/${order.productId || order.productSlug}`}
                       target="_blank"
                       className={styles.productLink}
                     >
                       {order.productTitle} <ExternalLink size={14} />
                     </Link>
+                    <div className={styles.productMetaRow}>
+                      <span className={styles.productMetaItem}>
+                        <span className={styles.metaLabel}>ID:</span>{' '}
+                        {order.productId?.slice(0, 10)}...
+                      </span>
+                    </div>
+                    <div className={styles.productMetaRow}>
+                      <span className={styles.productMetaItem}>
+                        <span className={styles.metaLabel}>Cant.:</span> 1 unid.
+                      </span>
+                      <span className={styles.productMetaItem}>
+                        <span className={styles.metaLabel}>Envío:</span>{' '}
+                        {new Intl.NumberFormat('es-PE', {
+                          style: 'currency',
+                          currency: order.currency,
+                        }).format(Number(order.shippingCost))}
+                      </span>
+                    </div>
                     <p className={styles.itemPrice}>
                       {new Intl.NumberFormat('es-PE', {
                         style: 'currency',
@@ -793,88 +1043,54 @@ export function RecentOrders({
                     </p>
                   </div>
                 </div>
-              </section>
-              <section className={styles.infoSection}>
-                <h3 className={styles.sectionTitle}>
-                  <CreditCard size={16} /> Pago
-                </h3>
-                <div className={styles.paymentDetails}>
-                  <div className={styles.detailRow}>
-                    <span className={styles.detailLabel}>Método:</span>
-                    <span className={styles.capitalizeText}>
-                      {PAYMENT_METHOD_MAP[order.paymentMethod] || order.paymentMethod}
-                    </span>
-                  </div>
-                  <div className={styles.divider} />
-                  <div className={styles.detailRow}>
-                    <span className={styles.detailLabel}>Subtotal:</span>
-                    <span>
-                      {new Intl.NumberFormat('es-PE', {
-                        style: 'currency',
-                        currency: order.currency,
-                      }).format(Number(order.amount) - Number(order.shippingCost))}
-                    </span>
-                  </div>
-                  <div className={styles.detailRow}>
-                    <span className={styles.detailLabel}>Envío:</span>
-                    <span>
-                      {new Intl.NumberFormat('es-PE', {
-                        style: 'currency',
-                        currency: order.currency,
-                      }).format(Number(order.shippingCost))}
-                    </span>
-                  </div>
-                  <div className={`${styles.detailRow} ${styles.totalRow}`}>
-                    <span className={styles.detailLabel}>Total:</span>
-                    <span className={styles.totalValue}>
-                      {new Intl.NumberFormat('es-PE', {
-                        style: 'currency',
-                        currency: order.currency,
-                      }).format(Number(order.amount))}
-                    </span>
-                  </div>
+              </div>
+            </section>
+
+            {/* SECCIÓN 2: Pago - 100% width */}
+            <section className={styles.infoSection}>
+              <h3 className={styles.sectionTitle}>
+                <CreditCard size={18} /> Pago
+              </h3>
+              <div className={styles.paymentDetails}>
+                <div className={styles.detailRow}>
+                  <span className={styles.detailLabel}>Método:</span>
+                  <span className={styles.capitalizeText}>
+                    {PAYMENT_METHOD_MAP[order.paymentMethod] || order.paymentMethod}
+                  </span>
                 </div>
-              </section>
-              <section className={styles.infoSection}>
-                <h3 className={styles.sectionTitle}>
-                  <User size={16} /> Cliente
-                </h3>
-                <div className={styles.customerCard}>
-                  <div className={styles.customerHeader}>
-                    <div className={styles.customerAvatar}>
-                      <User size={24} />
-                    </div>
-                    <div className={styles.customerBasicInfo}>
-                      <p className={styles.customerLabel}>Comprador</p>
-                      <p className={styles.customerEmail}>{order.buyerEmail || 'No registrado'}</p>
-                    </div>
-                  </div>
-                  <div className={styles.dataItem}>
-                    <IdCard size={16} />
-                    <span>DNI: {order.maskedDni || 'No registrado'}</span>
-                  </div>
-                  <div className={styles.dataItem}>
-                    <Phone size={16} />
-                    <span>Tel: {order.shippingPhone || 'Sin teléfono'}</span>
-                  </div>
+                <div className={styles.divider} />
+                <div className={styles.detailRow}>
+                  <span className={styles.detailLabel}>Subtotal:</span>
+                  <span>
+                    {new Intl.NumberFormat('es-PE', {
+                      style: 'currency',
+                      currency: order.currency,
+                    }).format(Number(order.amount) - Number(order.shippingCost))}
+                  </span>
                 </div>
-              </section>
-              {renderShippingPathModal(order)}
-            </div>
-            <div className={styles.quickActions}>
-              <button
-                className={styles.actionButton}
-                onClick={() =>
-                  copyToClipboard(
-                    `${order.shippingAddress || ''}, ${order.shippingDistrict || ''}, ${order.shippingProvince || ''}`,
-                    'address',
-                  )
-                }
-              >
-                <MapPin size={16} />
-                {copiedField === 'address' ? 'Dirección copiada!' : 'Copiar Dirección'}
-              </button>
-            </div>
+                <div className={styles.detailRow}>
+                  <span className={styles.detailLabel}>Envío:</span>
+                  <span>
+                    {new Intl.NumberFormat('es-PE', {
+                      style: 'currency',
+                      currency: order.currency,
+                    }).format(Number(order.shippingCost))}
+                  </span>
+                </div>
+                <div className={`${styles.detailRow} ${styles.totalRow}`}>
+                  <span className={styles.detailLabel}>Total:</span>
+                  <span className={styles.totalValue}>
+                    {new Intl.NumberFormat('es-PE', {
+                      style: 'currency',
+                      currency: order.currency,
+                    }).format(Number(order.amount))}
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            {/* SECCIÓN 3: Ruta de Entrega - 100% width */}
+            {renderShippingPathModal(order)}
             {order.status === 'esperando_confirmacion' && order.finalizationDeadline && (
               <div className={styles.finalizationPending}>
                 <div className={styles.finalizationIcon}>
@@ -949,16 +1165,35 @@ export function RecentOrders({
         </div>
       )}
       <div className={styles.filtersHeader}>
-        <div className={styles.searchWrapper}>
-          <TextField
-            type="text"
-            label="Buscar por dirección o NRO..."
-            value={currentSearch}
-            className={styles.searchInputMD3}
-            onKeyDown={(e: any) => {
-              if (e.key === 'Enter') updateFilters({ search: e.target.value });
-            }}
-          />
+        <div className={`${styles.searchWrapper} ${styles.searchWithButton}`}>
+          <div className={styles.searchContainer}>
+            <TextField
+              type="text"
+              label="Buscar por NRO de orden..."
+              value={localSearch}
+              className={styles.searchInputMD3}
+              onChange={(e: any) => {
+                const value = e.target.value;
+                setLocalSearch(value);
+                // Si se borra el texto, limpiar el filtro inmediatamente
+                if (value === '') {
+                  updateFilters({ search: null });
+                }
+              }}
+              onKeyDown={(e: any) => {
+                if (e.key === 'Enter') updateFilters({ search: localSearch });
+              }}
+            />
+            {/* Botón condicional: solo si hay 12 o más caracteres */}
+            {localSearch.length >= 12 && (
+              <button
+                className={styles.searchButtonInside}
+                onClick={() => updateFilters({ search: localSearch })}
+              >
+                <Search size={18} />
+              </button>
+            )}
+          </div>
         </div>
         <div className={styles.filterGroup}>
           <Select
@@ -969,26 +1204,51 @@ export function RecentOrders({
             onChange={(e: any) => updateFilters({ status: e.target.value })}
           >
             <SelectOption value="all">Todos los estados</SelectOption>
-            {Object.entries(URBANO_STATUS_MAP).map(([key, info]) => (
-              <SelectOption key={key} value={key}>
-                {info.label}
-              </SelectOption>
-            ))}
+            {/* Solo mostramos los estados que están en la Base de Datos */}
+            {DB_STATUS_FILTERS.map((key) => {
+              const info = URBANO_STATUS_MAP[key];
+              if (!info) return null;
+              return (
+                <SelectOption key={key} value={key}>
+                  {info.label}
+                </SelectOption>
+              );
+            })}
           </Select>
           <Select
-            label="Límite"
+            label="Fecha"
             outlined
-            value={currentLimit.toString()}
-            className={styles.limitSelectMD3}
-            onChange={(e: any) => updateFilters({ limit: e.target.value })}
+            value={currentDate || 'all'}
+            className={styles.dateSelectMD3}
+            onChange={(e: any) => updateFilters({ date: e.target.value })}
           >
-            <SelectOption value="10">10 por página</SelectOption>
-            <SelectOption value="20">20 por página</SelectOption>
-            <SelectOption value="50">50 por página</SelectOption>
+            <SelectOption value="all">Todo</SelectOption>
+            <SelectOption value="today">Hoy</SelectOption>
+            <SelectOption value="yesterday">Ayer</SelectOption>
+            <SelectOption value="week">Esta semana</SelectOption>
           </Select>
         </div>
       </div>
-      <div className={styles.tableWrapper}>
+      <div className={styles.tableWrapper} style={{ position: 'relative' }}>
+        {isFilterLoading && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'rgba(var(--md-sys-color-surface-rgb, 255, 255, 255), 0.8)',
+              zIndex: 10,
+              borderRadius: 'inherit',
+            }}
+          >
+            <Loader2
+              size={36}
+              style={{ animation: 'spin 1s linear infinite', color: 'var(--md-sys-color-primary)' }}
+            />
+          </div>
+        )}
         <table className={styles.table}>
           <thead>
             <tr>
@@ -998,12 +1258,13 @@ export function RecentOrders({
               <th>Ruta de Envío</th>
               <th>Estado</th>
               <th>Fecha</th>
+              <th>Finalización</th>
             </tr>
           </thead>
           <tbody>
-            {orders.length === 0 ? (
+            {orders.length === 0 && !isFilterLoading ? (
               <tr>
-                <td colSpan={6} className={styles.emptyRow}>
+                <td colSpan={7} className={styles.emptyRow}>
                   No se encontraron pedidos.
                 </td>
               </tr>
@@ -1018,12 +1279,12 @@ export function RecentOrders({
                   <tr key={order.id}>
                     <td className={styles.orderNumberCell}>
                       <span className={styles.orderNumber}>
-                        #{order.orderNumber || order.id.slice(0, 8).toUpperCase()}
+                        {order.orderNumber || order.id.slice(0, 8).toUpperCase()}
                       </span>
                     </td>
                     <td className={styles.productCell}>
                       <Link
-                        href={`/product/${order.productSlug}`}
+                        href={`/${businessSlug}/product/${order.productId}`}
                         target="_blank"
                         className={styles.productTableLink}
                       >
@@ -1036,9 +1297,23 @@ export function RecentOrders({
                         currency: order.currency,
                       }).format(Number(order.amount))}
                     </td>
-                    <td className={styles.trackingCell}>{renderShippingProgress(order)}</td>
+                    <td className={styles.trackingCell}>
+                      <button
+                        className={styles.viewMoreButton}
+                        onClick={() => setSelectedOrder(order)}
+                      >
+                        <MapPin size={14} />
+                        Ver más
+                      </button>
+                    </td>
                     <td className={styles.statusCell}>
                       <span className={`${styles.statusBadge} ${styles[statusInfo.className]}`}>
+                        {statusInfo.lucideIcon && (
+                          <statusInfo.lucideIcon
+                            size={14}
+                            style={{ marginRight: '0.3rem', verticalAlign: 'middle' }}
+                          />
+                        )}
                         {statusInfo.label}
                       </span>
                     </td>
@@ -1048,6 +1323,15 @@ export function RecentOrders({
                         month: '2-digit',
                         year: '2-digit',
                       })}
+                    </td>
+                    <td className={styles.dateCell}>
+                      {order.completedAt
+                        ? new Date(order.completedAt).toLocaleDateString('es-PE', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: '2-digit',
+                          })
+                        : '-'}
                     </td>
                   </tr>
                 );
@@ -1082,9 +1366,9 @@ export function RecentOrders({
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             {renderModalContent(selectedOrder)}
             <footer className={styles.modalFooter}>
-              <button className={styles.primaryButton} onClick={() => setSelectedOrder(null)}>
+              <Button variant="filled-tonal" onClick={() => setSelectedOrder(null)}>
                 Cerrar
-              </button>
+              </Button>
             </footer>
           </div>
         </div>
