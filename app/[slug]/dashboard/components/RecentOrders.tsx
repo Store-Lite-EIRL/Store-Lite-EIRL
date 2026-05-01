@@ -12,9 +12,11 @@ import {
   Clock,
   CreditCard,
   ExternalLink,
+  FileText,
   HelpCircle,
   Home,
   IdCard,
+  Lightbulb,
   Loader2,
   MapPin,
   Phone,
@@ -635,6 +637,31 @@ export function RecentOrders({
     const isDisputed = order.status === 'disputed';
     const canEditTicket = isInValidando || isDisputed;
 
+    const renderStatusBadge = () => {
+      const statusInfo = URBANO_STATUS_MAP[order.status] || {};
+      return (
+        <span className={`${styles.statusBadge} ${styles[statusInfo.className || '']}`}>
+          {isDisputed ? (
+            <>
+              <X size={14} /> Rechazado
+            </>
+          ) : isInValidando ? (
+            <>
+              <RefreshCw size={14} /> VALIDANDO
+            </>
+          ) : isEnReparto ? (
+            <>
+              <Truck size={14} /> En Reparto
+            </>
+          ) : (
+            <>
+              <CheckCircle size={14} /> Confirmado
+            </>
+          )}
+        </span>
+      );
+    };
+
     const renderUploadForm = (isEditing = false) => (
       <div className={styles.ticketUploadCard}>
         {!ticketPreview ? (
@@ -675,23 +702,23 @@ export function RecentOrders({
               <div className={styles.ticketOverlay}>Click para confirmar</div>
             </div>
             <div className={styles.ticketActions}>
-              <button
-                className={styles.sendButton}
+              <Button
+                variant="filled"
                 onClick={handleUploadTicket}
                 disabled={uploading}
               >
                 {uploading ? <RefreshCw size={18} /> : <Send size={18} />}
                 {uploading ? 'Subiendo...' : isEditing ? 'Actualizar Ticket' : 'Enviar Ticket'}
-              </button>
-              <button
-                className={styles.cancelButton}
+              </Button>
+              <Button
+                variant="outlined"
                 onClick={() => {
                   if (isEditing) setIsEditingTicket(false);
                   handleCancelUpload();
                 }}
               >
                 <X size={18} /> Cancelar
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -741,43 +768,16 @@ export function RecentOrders({
       <section className={styles.ticketSection}>
         <div className={styles.ticketHeader}>
           <h3 className={styles.sectionTitle}>
-            <Receipt size={16} /> Comprobante de Envío
+            <FileText size={16} /> Comprobante de Envío
           </h3>
-          {hasTicket && (
-            <span
-              className={`${styles.ticketStatusBadge} ${
-                isDisputed
-                  ? styles.statusBadgeRed
-                  : isInValidando
-                    ? styles.statusBadgeOrange
-                    : styles.statusBadgeGreen
-              }`}
-            >
-              {isDisputed ? (
-                <>
-                  <X size={14} /> Rechazado
-                </>
-              ) : isInValidando ? (
-                <>
-                  <RefreshCw size={14} /> VALIDANDO
-                </>
-              ) : isEnReparto ? (
-                <>
-                  <Truck size={14} /> En Reparto
-                </>
-              ) : (
-                <>
-                  <CheckCircle size={14} /> Confirmado
-                </>
-              )}
-            </span>
-          )}
+          {hasTicket && renderStatusBadge()}
         </div>
 
         {isEditingTicket ? (
           renderUploadForm(true)
         ) : hasTicket ? (
           <div className={styles.ticketCard}>
+            {/* Imagen con Badge flotando en la esquina */}
             <div className={styles.ticketImageContainer}>
               <Image
                 src={order.ticketImageUrl || ''}
@@ -786,6 +786,8 @@ export function RecentOrders({
                 className={`${styles.ticketImage} ${isInValidando ? styles.ticketBlurred : ''}`}
                 style={{ objectFit: 'contain' }}
               />
+              {/* Badge flotando en esquina superior derecha */}
+              <div className={styles.ticketBadgeFloating}>{renderStatusBadge()}</div>
               <div className={styles.ticketImageOverlay}>
                 <span>
                   {isDisputed
@@ -798,6 +800,8 @@ export function RecentOrders({
                 </span>
               </div>
             </div>
+
+            {/* Info text */}
             <div className={styles.ticketInfo}>
               {isDisputed ? (
                 <p className={styles.ticketInfoTextWarning}>
@@ -815,10 +819,12 @@ export function RecentOrders({
                 <p className={styles.ticketInfoTextSuccess}>✓ Ticket subido correctamente</p>
               )}
             </div>
-            <div className={styles.ticketActions}>
+
+            {/* Botones MD3 centrados */}
+            <div className={styles.ticketActionsCentered}>
               {canEditTicket && (
-                <button
-                  className={styles.editButton}
+                <Button
+                  variant="outlined"
                   onClick={() => {
                     setIsEditingTicket(true);
                     setTicketPreview(null);
@@ -828,17 +834,17 @@ export function RecentOrders({
                   }}
                 >
                   <Upload size={14} /> {isDisputed ? 'Re-subir Ticket' : 'Editar Ticket'}
-                </button>
+                </Button>
               )}
               {isDelivered && (
-                <button
-                  className={styles.sendButton}
+                <Button
+                  variant="filled"
                   onClick={handleNotifyDelivery}
                   disabled={notifyingDelivery}
                 >
                   {notifyingDelivery ? <RefreshCw size={18} /> : <Truck size={18} />}
                   {notifyingDelivery ? 'Notificando...' : 'Notificar Entrega'}
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -854,42 +860,266 @@ export function RecentOrders({
   };
 
   const renderHelpTab = () => (
-    <div className={styles.tabContent}>
-      <div className={styles.helpBox}>
-        <h3 className={styles.sectionTitle}>
-          <HelpCircle size={16} /> Guía de Estados
-        </h3>
-        {Object.entries(URBANO_STATUS_MAP)
-          .slice(0, 8)
-          .map(([key, info]) => (
-            <div key={key} className={styles.helpStep}>
-              <div className={styles.helpStepNumber}>{info.progress}%</div>
-              <span>{info.label}</span>
+    <div className={styles.helpFlowContainer}>
+      {/* SECCIÓN 1: Flujo de Pedido */}
+      <div className={styles.helpSection}>
+        <div className={styles.helpSectionHeader}>
+          <div className={styles.helpSectionIcon}>
+            <ShoppingBag size={20} />
+          </div>
+          <div>
+            <h3 className={styles.helpSectionTitle}>Flujo de Pedido</h3>
+            <p className={styles.helpSectionSubtitle}>
+              Pasos que debés seguir para completar una venta
+            </p>
+          </div>
+        </div>
+        <div className={styles.helpSteps}>
+          {/* Paso 1 */}
+          <div className={styles.helpStep}>
+            <div className={`${styles.helpStepNumber} ${styles.statusPaid}`}>
+              1
             </div>
-          ))}
+            <div className={styles.helpStepContent}>
+              <h4 className={styles.helpStepTitle}>
+                <CreditCard size={14} /> Pedido Recibido (Pagado)
+              </h4>
+              <p className={styles.helpStepDescription}>
+                El cliente realizó el pago del producto + envío. Recordá que <strong>vos estableciste el precio del envío</strong>, por lo que ya está cubierto. ¡No te quejes después!
+              </p>
+              <div className={`${styles.helpStepStatus} ${styles.statusPaid}`}>
+                <CheckCircle size={12} /> Estado: PAGADO
+              </div>
+            </div>
+          </div>
+
+          {/* Paso 2 */}
+          <div className={styles.helpStep}>
+            <div className={`${styles.helpStepNumber} ${styles.statusVerifying}`}>
+              2
+            </div>
+            <div className={styles.helpStepContent}>
+              <h4 className={styles.helpStepTitle}>
+                <Truck size={14} /> Organizá el Envío
+              </h4>
+              <p className={styles.helpStepDescription}>
+                Coordiná el envío directo con la agencia o transporte. El cliente ya pagó el envío que vos configuraste, así que el costo ya está en tu cuenta.
+              </p>
+            </div>
+          </div>
+
+          {/* Paso 3 */}
+          <div className={styles.helpStep}>
+            <div className={`${styles.helpStepNumber} ${styles.statusVerifying}`}>
+              3
+            </div>
+            <div className={styles.helpStepContent}>
+              <h4 className={styles.helpStepTitle}>
+                <Receipt size={14} /> Subí el Ticket de Envío
+              </h4>
+              <p className={styles.helpStepDescription}>
+                Sacale una foto clara al comprobante/ticket del courier y subilo en la pestaña "Ticket". Una vez subido, el estado pasará a <strong>VALIDANDO</strong>.
+              </p>
+              <div className={`${styles.helpStepStatus} ${styles.statusVerifying}`}>
+                <RefreshCw size={12} /> Estado: VALIDANDO
+              </div>
+            </div>
+          </div>
+
+          {/* Paso 4 */}
+          <div className={styles.helpStep}>
+            <div className={`${styles.helpStepNumber} ${styles.statusAccepted}`}>
+              4
+            </div>
+            <div className={styles.helpStepContent}>
+              <h4 className={styles.helpStepTitle}>
+                <CheckCircle size={14} /> Validación del Cliente
+              </h4>
+              <p className={styles.helpStepDescription}>
+                El cliente revisará el ticket y aceptará la validación. Una vez que el cliente acepte, el estado pasará a <strong>ACEPTADO</strong> y el producto saldrá en camino.
+              </p>
+              <div className={`${styles.helpStepStatus} ${styles.statusAccepted}`}>
+                <CheckCircle size={12} /> Estado: ACEPTADO
+              </div>
+            </div>
+          </div>
+
+          {/* Paso 5 */}
+          <div className={styles.helpStep}>
+            <div className={`${styles.helpStepNumber} ${styles.statusEnReparto}`}>
+              5
+            </div>
+            <div className={styles.helpStepContent}>
+              <h4 className={styles.helpStepTitle}>
+                <Truck size={14} /> En Reparto / Esperando
+              </h4>
+              <p className={styles.helpStepDescription}>
+                El producto está en camino. El cliente confirmará cuando le llegue. El estado será <strong>EN REPARTO</strong> y luego <strong>ESPERANDO CONFIRMACIÓN</strong>.
+              </p>
+              <div className={`${styles.helpStepStatus} ${styles.statusEnReparto}`}>
+                <Truck size={12} /> Estado: EN REPARTO
+              </div>
+            </div>
+          </div>
+
+          {/* Paso 6 */}
+          <div className={styles.helpStep}>
+            <div className={`${styles.helpStepNumber} ${styles.helpStepNumberCompleted}`}>
+              6
+            </div>
+            <div className={styles.helpStepContent}>
+              <h4 className={styles.helpStepTitle}>
+                <CheckCircle size={14} /> Confirmación Final
+              </h4>
+              <p className={styles.helpStepDescription}>
+                El cliente confirma que recibió el producto. El pedido pasa a <strong>FINALIZADO</strong> y se completa la venta. ¡Felicidades!
+              </p>
+              <div className={`${styles.helpStepStatus} ${styles.statusCompleted}`}>
+                <CheckCircle size={12} /> Estado: FINALIZADO
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div className={styles.helpBox}>
-        <h3 className={styles.sectionTitle}>
-          <Truck size={16} /> Tipos de Envío
-        </h3>
-        <div className={styles.helpStep}>
-          <div className={styles.helpStepNumber}>A</div>
-          <span>
-            <strong>Agencia:</strong> El cliente retira en punto de recogida
-          </span>
+
+      {/* SECCIÓN 2: Tipos de Envío */}
+      <div className={styles.helpSection}>
+        <div className={styles.helpSectionHeader}>
+          <div className={styles.helpSectionIcon}>
+            <Truck size={20} />
+          </div>
+          <div>
+            <h3 className={styles.helpSectionTitle}>Tipos de Envío</h3>
+            <p className={styles.helpSectionSubtitle}>
+              Conocé las opciones de entrega disponibles
+            </p>
+          </div>
         </div>
-        <div className={styles.helpStep}>
-          <div className={styles.helpStepNumber}>D</div>
-          <span>
-            <strong>Domicilio:</strong> Entrega directa a la dirección
-          </span>
+        <div className={styles.shippingTypesGrid}>
+          <div className={styles.shippingTypeCard}>
+            <div className={styles.shippingTypeIcon}>
+              <Truck size={20} />
+            </div>
+            <h4 className={styles.shippingTypeName}>Agencia</h4>
+            <p className={styles.shippingTypeDesc}>
+              El cliente retira en un punto de recogida (Olva, Shalom, etc.)
+            </p>
+          </div>
+          <div className={styles.shippingTypeCard}>
+            <div className={styles.shippingTypeIcon}>
+              <Home size={20} />
+            </div>
+            <h4 className={styles.shippingTypeName}>Domicilio</h4>
+            <p className={styles.shippingTypeDesc}>
+              Entrega directa a la dirección del cliente
+            </p>
+          </div>
+          <div className={styles.shippingTypeCard}>
+            <div className={styles.shippingTypeIcon}>
+              <Store size={20} />
+            </div>
+            <h4 className={styles.shippingTypeName}>Recojo</h4>
+            <p className={styles.shippingTypeDesc}>
+              El cliente pasa a retirar el producto a tu local
+            </p>
+          </div>
         </div>
-        <div className={styles.helpStep}>
-          <div className={styles.helpStepNumber}>R</div>
-          <span>
-            <strong>Recojo:</strong> El cliente retira en tu local
-          </span>
+      </div>
+
+      {/* SECCIÓN 3: Consejos para el Vendedor */}
+      <div className={styles.tipsSection}>
+        <div className={styles.tipsHeader}>
+          <Lightbulb size={18} />
+          <h3 className={styles.tipsTitle}>Consejos para Vos</h3>
         </div>
+        <div className={styles.tipItem}>
+          <div className={styles.tipIcon}>💡</div>
+          <p className={styles.tipText}>
+            <strong>Sacá una foto clara del ticket:</strong> Asegurate de que se vea el número de guía y el código de barras para que el cliente pueda rastrear su pedido.
+          </p>
+        </div>
+        <div className={styles.tipItem}>
+          <div className={styles.tipIcon}>⏰</div>
+          <p className={styles.tipText}>
+            <strong>Subí el ticket rápido:</strong> Entre más rápido subas el ticket, más rápido el cliente validará y saldrá el producto. ¡La velocidad es clave!
+          </p>
+        </div>
+        <div className={styles.tipItem}>
+          <div className={styles.tipIcon}>📦</div>
+          <p className={styles.tipText}>
+            <strong>Empaquetado seguro:</strong> Asegurate de que el producto esté bien empaquetado. Vos sos responsable hasta que el cliente lo reciba.
+          </p>
+        </div>
+      </div>
+
+      {/* SECCIÓN 4: Advertencias de Negocio */}
+      <div className={styles.warningsSection}>
+        <div className={styles.warningsHeader}>
+          <div className={styles.warningsIcon}>
+            <AlertTriangle size={20} />
+          </div>
+          <div>
+            <h3 className={styles.warningsTitle}>Reglas de Negocio</h3>
+            <p className={styles.warningsSubtitle}>
+              Cumplí con los tiempos para evitar sanciones
+            </p>
+          </div>
+        </div>
+        <div className={styles.warningsList}>
+          {/* Regla 1 */}
+          <div className={styles.warningItem}>
+            <div className={styles.warningNumber}>1</div>
+            <div className={styles.warningContent}>
+              <h4 className={styles.warningTitle}>Pedidos sin terminar</h4>
+              <p className={styles.warningText}>
+                Mantener pedidos pendientes afecta directamente la reputación de tu negocio y puede disminuir tus ventas futuras. ¡Completalos a tiempo!
+              </p>
+            </div>
+          </div>
+
+          {/* Regla 2 */}
+          <div className={styles.warningItem}>
+            <div className={styles.warningNumber}>2</div>
+            <div className={styles.warningContent}>
+              <h4 className={styles.warningTitle}>Confirmación Automática (3 días)</h4>
+              <p className={styles.warningText}>
+                Si el cliente no acepta el ticket y no lo rechaza, <span className={styles.warningHighlight}>se confirmará automáticamente a los 3 días</span>. Lo mismo aplica para la finalización del envío. ¡No esperes al último momento!
+              </p>
+            </div>
+          </div>
+
+          {/* Regla 3 */}
+          <div className={styles.warningItem}>
+            <div className={styles.warningNumber}>3</div>
+            <div className={styles.warningContent}>
+              <h4 className={styles.warningTitle}>Límite de Quejas</h4>
+              <p className={styles.warningText}>
+                Si acumulás <span className={styles.warningHighlight}>3 órdenes con quejas o reportes</span>, tu cuenta sufrirá desactivación de funciones o ban temporal/permanente de tu RUC. ¡Cuidá tu historial!
+              </p>
+            </div>
+          </div>
+
+          {/* Regla 4 */}
+          <div className={styles.warningItem}>
+            <div className={styles.warningNumber}>4</div>
+            <div className={styles.warningContent}>
+              <h4 className={styles.warningTitle}>Tiempo Máximo (3 días)</h4>
+              <p className={styles.warningText}>
+                Tenés un máximo de <span className={styles.warningHighlight}>3 días para subir el ticket de envío</span> tras recibir el pedido. Si no lo hacés, se considerará reporte automático. Lo mismo aplica para la finalización del producto. ¡La puntualidad es clave!
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* NOTA IMPORTANTE */}
+      <div className={styles.noteBox}>
+        <div className={styles.noteIcon}>
+          <AlertTriangle size={18} />
+        </div>
+        <p className={styles.noteText}>
+          <strong>Recordatorio:</strong> El precio del envío lo estableciste VOS al configurar el producto. El cliente ya pagó ese monto, así que no hay excusas para no hacer el envío a tiempo. ¡El ticket se difumina hasta que el cliente confirme la validación!
+        </p>
       </div>
     </div>
   );

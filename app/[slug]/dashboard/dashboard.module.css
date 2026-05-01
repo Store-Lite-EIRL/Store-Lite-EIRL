@@ -55,3 +55,30 @@
     font-size: 1.1rem;
   }
 }
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  gap: 1rem;
+}
+
+.spinningIcon {
+  animation: spin 1s linear infinite;
+}
+
+.loadingText {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+}

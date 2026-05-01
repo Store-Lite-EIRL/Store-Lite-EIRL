@@ -28,19 +28,18 @@ import styles from './dashboard.module.css';
 interface DashboardProps {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{
-    page?: string;
-    limit?: string;
     status?: string;
     search?: string;
+    date?: string;
   }>;
 }
 
 export default async function Dashboard({ params, searchParams }: DashboardProps) {
   const { slug } = await params;
-  const { page, limit, status, search } = await searchParams;
+  const { page, status, search, date } = await searchParams;
 
   const currentPage = Math.max(1, parseInt(page || '1'));
-  const currentLimit = Math.max(1, Math.min(100, parseInt(limit || '10')));
+  const currentLimit = 10; // Fixed limit of 10 orders per page
   const offset = (currentPage - 1) * currentLimit;
 
   const lastUpdatedAt = new Date().toISOString();
@@ -80,13 +79,39 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
   // ─── Filters for Recent Orders ───
   const orderFilters = [eq(payments.businessId, business.id)];
 
+  // Filter by status
   if (status && status !== 'all') {
     orderFilters.push(eq(payments.status, status as any));
   }
 
+  // Filter by order number (search)
   if (search) {
     const searchTerm = `%${search}%`;
-    orderFilters.push(sql`${payments.shippingAddress} ILIKE ${searchTerm}`);
+    orderFilters.push(sql`${payments.orderNumber} ILIKE ${searchTerm}`);
+  }
+
+  // Filter by date
+  if (date && date !== 'all') {
+    const now = new Date();
+    let dateFilter: Date;
+    
+    switch (date) {
+      case 'today':
+        dateFilter = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        orderFilters.push(gte(payments.createdAt, dateFilter));
+        break;
+      case 'yesterday':
+        const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        orderFilters.push(gte(payments.createdAt, startOfYesterday));
+        orderFilters.push(lt(payments.createdAt, startOfToday));
+        break;
+      case 'week':
+        dateFilter = new Date(now);
+        dateFilter.setDate(dateFilter.getDate() - 7);
+        orderFilters.push(gte(payments.createdAt, dateFilter));
+        break;
+    }
   }
 
   const orderWhere = and(...orderFilters);
@@ -325,7 +350,6 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
   const recentOrdersData = recentOrdersResult[0];
   const totalOrdersCount = recentOrdersResult[1][0]?.count || 0;
   const totalPages = Math.ceil(totalOrdersCount / currentLimit);
-
   // ─── Formatting Helpers ───
   const getAmount = (res: any) => parseFloat(res[0]?.sum || '0');
   const calcChange = (current: number, previous: number) => {
@@ -395,6 +419,7 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
   const formattedOrders = recentOrdersData.map((order) => ({
     id: order.id,
     orderNumber: order.orderNumber,
+    productId: order.productId || '',
     productTitle: order.product?.title || 'Producto desconocido',
     productSlug: order.product?.slug || '',
     productImage: order.product?.media?.[0]?.mediaUrl || null,
@@ -420,6 +445,11 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
       ? order.finalizationDeadline instanceof Date
         ? order.finalizationDeadline.toISOString()
         : order.finalizationDeadline
+      : null,
+    completedAt: order.completedAt
+      ? order.completedAt instanceof Date
+        ? order.completedAt.toISOString()
+        : order.completedAt
       : null,
     // ⚠️ metadata NO incluye buyerDni — se sanitiza para seguridad
     metadata: sanitizeMetadata(order.metadata),
@@ -498,11 +528,10 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
 
       <RecentOrders
         orders={formattedOrders}
-        totalPages={totalPages}
-        currentPage={currentPage}
-        currentLimit={currentLimit}
         currentStatus={status || 'all'}
         currentSearch={search || ''}
+        currentDate={date || 'all'}
+        businessSlug={slug}
       />
 
       <PlanStatusBar
