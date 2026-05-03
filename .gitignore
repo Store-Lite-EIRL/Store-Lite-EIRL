@@ -1,15 +1,23 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# docs IA
-.agent-teams
-.ai-tools
-.engram
-.guardian
-.kilocode
-designInspo
+# docs IA & AI Tools
+.agent/
+.agent-teams/
+.ai-tools/
+.atl/
+.codex/
+.cursor/
+.engram/
+.gemini/
+.guardian/
+.kilocode/
+.opencode/
+.qoder/
+designInspo/
 
 .aider.chat.history.md
 .aider.input.history
+.aider.tags.cache.v4/
 clone.html
 
 # dependencies
@@ -56,23 +64,9 @@ next-env.d.ts
 tasks.txt
 
 
-# AI & documents
-.agent-teams
-.ai-tools
-.engram
-.guardian
-.kilocode
-designInspo
-
-.aider.chat.history.md
-.aider.input.history
-clone.html
-
 # Sentry Config File
 .env.sentry-build-plugin
 
 # IDE & MCP Meta
-.cursor/
 .mcp.json
-.vscode/mcp.json
 opencode.json

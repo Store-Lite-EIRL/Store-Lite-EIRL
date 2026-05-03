@@ -6,9 +6,9 @@ import { Icon } from '@/shared/components/ui/data-display/Icon';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import Checkout from './Checkout';
 import { useCart } from '../storage/context/CartContext';
 import { formatPrice } from '../storage/utils/currency';
+import Checkout from './Checkout';
 import styles from './ProductPreviewSheet.module.css';
 
 interface ProductPreviewSheetProps {
@@ -298,7 +298,8 @@ export default function ProductPreviewSheet({
                         style={
                           {
                             flex: 1,
-                            '--md-filled-button-container-color': 'var(--md-sys-color-surface-variant)',
+                            '--md-filled-button-container-color':
+                              'var(--md-sys-color-surface-variant)',
                             '--md-filled-button-label-text-color':
                               'var(--md-sys-color-on-surface-variant)',
                           } as React.CSSProperties
@@ -349,4 +350,3 @@ export default function ProductPreviewSheet({
     </>
   );
 }
-

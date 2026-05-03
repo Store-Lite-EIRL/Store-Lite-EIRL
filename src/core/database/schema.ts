@@ -479,6 +479,7 @@ export const chatSessions = pgTable(
     businessId: uuid('business_id')
       .notNull()
       .references(() => businesses.id, { onDelete: 'cascade' }),
+    paymentId: uuid('payment_id').references(() => payments.id, { onDelete: 'set null' }),
     guestId: text('guest_id').notNull(),
     guestName: text('guest_name').notNull(),
     guestGender: text('guest_gender').notNull(),
@@ -489,6 +490,7 @@ export const chatSessions = pgTable(
   (table) => ({
     guestIdIdx: index('idx_chat_sessions_guest_id').on(table.guestId),
     businessIdIdx: index('idx_chat_sessions_business_id').on(table.businessId),
+    paymentIdIdx: index('idx_chat_sessions_payment_id').on(table.paymentId),
   }),
 );
 
@@ -959,6 +961,10 @@ export const chatSessionsRelations = relations(chatSessions, ({ one, many }) => 
     fields: [chatSessions.businessId],
     references: [businesses.id],
   }),
+  payment: one(payments, {
+    fields: [chatSessions.paymentId],
+    references: [payments.id],
+  }),
   messages: many(messages),
 }));
 
@@ -969,7 +975,7 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   }),
 }));
 
-export const paymentsRelations = relations(payments, ({ one }) => ({
+export const paymentsRelations = relations(payments, ({ one, many }) => ({
   business: one(businesses, {
     fields: [payments.businessId],
     references: [businesses.id],
@@ -982,6 +988,7 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
     fields: [payments.sellerUserId],
     references: [profiles.id],
   }),
+  chatSessions: many(chatSessions),
 }));
 
 export const sellerPayoutAccountsRelations = relations(sellerPayoutAccounts, ({ one }) => ({

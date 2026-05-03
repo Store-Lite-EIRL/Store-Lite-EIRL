@@ -1,5 +1,6 @@
 import { db } from '@/core/database/client';
 import { businesses, businessTeamMembers, payments } from '@/core/database/schema';
+import { createClient } from '@/lib/supabase/server';
 import { Icon } from '@/shared/components/ui';
 import { and, eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
@@ -7,12 +8,12 @@ import { notFound } from 'next/navigation';
 import ActionModals from './ActionModals';
 import ConfirmationFlow from './ConfirmationFlow';
 import DownloadButton from './DownloadButton';
+import LogoutButton from './LogoutButton';
 import OrderAuthGate from './OrderAuthGate';
 import OrderChatSection from './OrderChatSection';
 import OrderGuide from './OrderGuide';
 import OrderRealtimeHandler from './OrderRealtimeHandler';
 import ReportFlow from './ReportFlow';
-import { createClient } from '@/lib/supabase/server';
 
 interface OrderTrackingPageProps {
   params: Promise<{
@@ -68,7 +69,9 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
   // 🔒 SECURITY: Block sellers and team members from accessing customer order pages.
   // Even if they somehow obtain the trackingToken, they cannot self-confirm.
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (user) {
     // Check if user is the owner
@@ -90,36 +93,64 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
 
     if ((sellerBusiness && sellerBusiness.id === order.businessId) || teamMembership) {
       return (
-        <div style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'var(--md-sys-color-surface)',
-          padding: '2rem',
-        }}>
-          <div style={{
-            maxWidth: '440px',
-            width: '100%',
-            background: 'var(--md-sys-color-error-container)',
-            borderRadius: '32px',
-            padding: '3rem 2rem',
-            textAlign: 'center',
-            border: '1px solid var(--md-sys-color-outline-variant)',
-          }}>
-            <div style={{
-              width: 64, height: 64, borderRadius: '20px',
-              background: 'var(--md-sys-color-error)',
-              color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 1.5rem', fontSize: 32,
-            }}>
+        <div
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'var(--md-sys-color-surface)',
+            padding: '2rem',
+          }}
+        >
+          <div
+            style={{
+              maxWidth: '440px',
+              width: '100%',
+              background: 'var(--md-sys-color-error-container)',
+              borderRadius: '32px',
+              padding: '3rem 2rem',
+              textAlign: 'center',
+              border: '1px solid var(--md-sys-color-outline-variant)',
+            }}
+          >
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: '20px',
+                background: 'var(--md-sys-color-error)',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1.5rem',
+                fontSize: 32,
+              }}
+            >
               🚫
             </div>
-            <h2 style={{ margin: '0 0 1rem', fontSize: '1.5rem', fontWeight: 950, color: 'var(--md-sys-color-on-error-container)' }}>
+            <h2
+              style={{
+                margin: '0 0 1rem',
+                fontSize: '1.5rem',
+                fontWeight: 950,
+                color: 'var(--md-sys-color-on-error-container)',
+              }}
+            >
               Acceso No Permitido
             </h2>
-            <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.5, color: 'var(--md-sys-color-on-error-container)', opacity: 0.8 }}>
-              Esta página es exclusiva para el <b>comprador</b>. Como vendedor, no puedes acceder al portal de seguimiento de tu propia orden.
+            <p
+              style={{
+                margin: 0,
+                fontSize: '0.95rem',
+                lineHeight: 1.5,
+                color: 'var(--md-sys-color-on-error-container)',
+                opacity: 0.8,
+              }}
+            >
+              Esta página es exclusiva para el <b>comprador</b>. Como vendedor, no puedes acceder al
+              portal de seguimiento de tu propia orden.
             </p>
           </div>
         </div>
@@ -142,7 +173,14 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
 
   const statusMap: Record<
     string,
-    { label: string; icon: string; color: string; bgColor: string; desc: string; actionLabel?: string }
+    {
+      label: string;
+      icon: string;
+      color: string;
+      bgColor: string;
+      desc: string;
+      actionLabel?: string;
+    }
   > = {
     pending: {
       label: 'Preparando Pedido',
@@ -212,7 +250,11 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
   ];
 
   return (
-    <OrderAuthGate token={token} businessName={order.business.name} orderNumber={order.orderNumber || ''}>
+    <OrderAuthGate
+      token={token}
+      businessName={order.business.name}
+      orderNumber={order.orderNumber || ''}
+    >
       <div className="order-root">
         <OrderRealtimeHandler orderId={order.id} />
         <ActionModals paymentId={order.id} trackingToken={token} orderNumber={order.orderNumber} />
@@ -365,38 +407,71 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
             <div className="biz-branding">
               <div className="biz-logo">
                 {order.business.logoUrl ? (
-                  <img src={order.business.logoUrl} alt={order.business.name} style={{ width: '100%', height: '100%', borderRadius: 'inherit', objectFit: 'cover' }} />
+                  <img
+                    src={order.business.logoUrl}
+                    alt={order.business.name}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      borderRadius: 'inherit',
+                      objectFit: 'cover',
+                    }}
+                  />
                 ) : (
                   order.business.name.charAt(0)
                 )}
               </div>
               <div className="biz-info">
                 <span className="biz-name">{order.business.name}</span>
-                <p style={{ margin: 0, fontSize: '10px', fontWeight: 900, opacity: 0.5, textTransform: 'uppercase' }}>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: '10px',
+                    fontWeight: 900,
+                    opacity: 0.5,
+                    textTransform: 'uppercase',
+                  }}
+                >
                   Orden #{order.orderNumber || order.id.slice(0, 8)}
                 </p>
               </div>
             </div>
 
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-               <div style={{ textAlign: 'right', display: 'none' }} className="desktop-only">
-                  <p style={{ margin: 0, fontSize: '10px', fontWeight: 900, opacity: 0.5 }}>TOTAL PAGADO</p>
-                  <p style={{ margin: 0, fontWeight: 950, color: 'var(--md-sys-color-primary)' }}>{order.currency} {order.amount}</p>
-               </div>
-               <a href="#details-modal" style={{ 
-                 background: 'var(--md-sys-color-surface-container-highest)', 
-                 padding: '10px', borderRadius: '14px', color: 'inherit' 
-               }}>
-                 <Icon>receipt_long</Icon>
-               </a>
+              <div style={{ textAlign: 'right', display: 'none' }} className="desktop-only">
+                <p style={{ margin: 0, fontSize: '10px', fontWeight: 900, opacity: 0.5 }}>
+                  TOTAL PAGADO
+                </p>
+                <p style={{ margin: 0, fontWeight: 950, color: 'var(--md-sys-color-primary)' }}>
+                  {order.currency} {order.amount}
+                </p>
+              </div>
+              <a
+                href="#details-modal"
+                style={{
+                  background: 'var(--md-sys-color-surface-container-highest)',
+                  padding: '10px',
+                  borderRadius: '14px',
+                  color: 'inherit',
+                }}
+              >
+                <Icon>receipt_long</Icon>
+              </a>
+              <LogoutButton token={token} businessSlug={slug} />
             </div>
           </div>
         </header>
 
         <main className="hub-container">
-          <div className="left-side" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <div
+            className="left-side"
+            style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}
+          >
             <div className="hub-card">
-              <div className="status-badge" style={{ background: currentStatus.bgColor, color: currentStatus.color }}>
+              <div
+                className="status-badge"
+                style={{ background: currentStatus.bgColor, color: currentStatus.color }}
+              >
                 <Icon size={18}>{currentStatus.icon}</Icon>
                 {currentStatus.label}
               </div>
@@ -406,7 +481,10 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
 
               <div className="pro-timeline">
                 <div className="pro-line" />
-                <div className="pro-line-fill" style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }} />
+                <div
+                  className="pro-line-fill"
+                  style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+                />
                 {steps.map((s, i) => (
                   <div key={i} className={`pro-step ${i <= currentStep ? 'active' : ''}`}>
                     <div className="pro-icon-box">
@@ -441,33 +519,94 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                     }}
                   >
                     <Icon size={18}>receipt_long</Icon>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 950,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em',
+                        color: 'var(--md-sys-color-on-surface-variant)',
+                      }}
+                    >
                       Comprobante de Transacción
                     </span>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <div>
-                      <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--md-sys-color-on-surface-variant)', opacity: 0.6 }}>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: '0.65rem',
+                          fontWeight: 900,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                          color: 'var(--md-sys-color-on-surface-variant)',
+                          opacity: 0.6,
+                        }}
+                      >
                         Fecha del Pedido
                       </p>
-                      <p style={{ margin: '4px 0 0', fontSize: '0.95rem', fontWeight: 800, color: 'var(--md-sys-color-on-surface)' }}>
+                      <p
+                        style={{
+                          margin: '4px 0 0',
+                          fontSize: '0.95rem',
+                          fontWeight: 800,
+                          color: 'var(--md-sys-color-on-surface)',
+                        }}
+                      >
                         {order.createdAt ? formatDate(order.createdAt) : '—'}
                       </p>
                     </div>
                     <div>
-                      <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--md-sys-color-on-surface-variant)', opacity: 0.6 }}>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: '0.65rem',
+                          fontWeight: 900,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                          color: 'var(--md-sys-color-on-surface-variant)',
+                          opacity: 0.6,
+                        }}
+                      >
                         Fecha de Finalización
                       </p>
-                      <p style={{ margin: '4px 0 0', fontSize: '0.95rem', fontWeight: 800, color: 'var(--md-sys-color-tertiary)' }}>
+                      <p
+                        style={{
+                          margin: '4px 0 0',
+                          fontSize: '0.95rem',
+                          fontWeight: 800,
+                          color: 'var(--md-sys-color-tertiary)',
+                        }}
+                      >
                         {order.completedAt ? formatDate(order.completedAt) : '—'}
                       </p>
                     </div>
                   </div>
 
-                  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px dashed var(--md-sys-color-outline-variant)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                    <Icon size={14} style={{ color: 'var(--md-sys-color-primary)' }}>verified</Icon>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--md-sys-color-on-surface-variant)', opacity: 0.7 }}>
+                  <div
+                    style={{
+                      marginTop: '1rem',
+                      paddingTop: '1rem',
+                      borderTop: '1px dashed var(--md-sys-color-outline-variant)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <Icon size={14} style={{ color: 'var(--md-sys-color-primary)' }}>
+                      verified
+                    </Icon>
+                    <span
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        color: 'var(--md-sys-color-on-surface-variant)',
+                        opacity: 0.7,
+                      }}
+                    >
                       N° Orden: {order.orderNumber || '—'} · Pagado: {order.currency} {order.amount}
                     </span>
                   </div>
@@ -477,13 +616,35 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
               {/* ACTION: Ticket Verification (when seller uploads, status = 'validando') */}
               {order.status === 'validando' && order.ticketImageUrl && (
                 <div className="despacho-card pulse-active">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'left' }}>
-                    <div style={{ background: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)', width: 44, height: 44, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div
+                      style={{
+                        background: 'var(--md-sys-color-primary-container)',
+                        color: 'var(--md-sys-color-on-primary-container)',
+                        width: 44,
+                        height: 44,
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
                       <Icon>description</Icon>
                     </div>
                     <div>
-                      <p style={{ margin: 0, fontWeight: 950, fontSize: '0.9rem' }}>Comprobante de Envío</p>
-                      <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.6 }}>Subido por el vendedor — revisá y confirmá</p>
+                      <p style={{ margin: 0, fontWeight: 950, fontSize: '0.9rem' }}>
+                        Comprobante de Envío
+                      </p>
+                      <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.6 }}>
+                        Subido por el vendedor — revisá y confirmá
+                      </p>
                     </div>
                   </div>
                   <a href="#ticket-view" className="ticket-preview">
@@ -491,16 +652,32 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                     <div className="ticket-overlay">
                       <div style={{ textAlign: 'center' }}>
                         <Icon size={32}>zoom_in</Icon>
-                        <p style={{ fontWeight: 900, fontSize: '0.8rem', marginTop: '4px' }}>AMPLIAR TICKET</p>
+                        <p style={{ fontWeight: 900, fontSize: '0.8rem', marginTop: '4px' }}>
+                          AMPLIAR TICKET
+                        </p>
                       </div>
                     </div>
                   </a>
                   <div style={{ display: 'flex', gap: '1rem' }}>
-                    <a href="#accept-confirm" className="btn-hub btn-hub-p" style={{ flex: 1, justifyContent: 'center' }}>
+                    <a
+                      href="#accept-confirm"
+                      className="btn-hub btn-hub-p"
+                      style={{ flex: 1, justifyContent: 'center' }}
+                    >
                       <Icon>check_circle</Icon>
                       CONFIRMAR ENVÍO
                     </a>
-                    <a href="#report-form" className="btn-hub btn-hub-s" style={{ width: '60px', padding: '0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <a
+                      href="#report-form"
+                      className="btn-hub btn-hub-s"
+                      style={{
+                        width: '60px',
+                        padding: '0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
                       <Icon>flag</Icon>
                     </a>
                   </div>
@@ -509,49 +686,101 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
 
               {/* ACTION: Disputed - Ticket was rejected, waiting for seller to re-upload */}
               {order.status === 'disputed' && (
-                <div className="despacho-card" style={{ borderStyle: 'solid', borderColor: 'var(--md-sys-color-error)', background: 'var(--md-sys-color-error-container)', color: 'var(--md-sys-color-on-error-container)' }}>
-                   <div style={{ display: 'flex', gap: '1rem', textAlign: 'left' }}>
-                     <Icon size={32}>report_problem</Icon>
-                     <div>
-                       <h3 style={{ margin: 0, fontWeight: 950, fontSize: '1.1rem' }}>Ticket Rechazado</h3>
-                       <p style={{ margin: '4px 0 0', fontSize: '0.9rem', opacity: 0.8 }}>El vendedor fue notificado y debe subir un nuevo comprobante.</p>
-                     </div>
-                   </div>
-                   {order.ticketImageUrl && (
-                     <>
-                       <a href="#ticket-view" className="ticket-preview" style={{ height: 150 }}>
-                         <img src={order.ticketImageUrl} alt="Ticket rechazado" style={{ filter: 'grayscale(1) brightness(0.7)' }} />
-                         <div className="ticket-overlay" style={{ opacity: 1 }}>
-                           <div style={{ textAlign: 'center' }}>
-                             <Icon size={24}>cancel</Icon>
-                             <p style={{ fontWeight: 900, fontSize: '0.75rem', marginTop: '4px' }}>TICKET RECHAZADO</p>
-                           </div>
-                         </div>
-                       </a>
-                       <a href="#ticket-view" style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.8, textAlign: 'center' }}>
-                         Ver ticket original
-                       </a>
-                     </>
-                   )}
+                <div
+                  className="despacho-card"
+                  style={{
+                    borderStyle: 'solid',
+                    borderColor: 'var(--md-sys-color-error)',
+                    background: 'var(--md-sys-color-error-container)',
+                    color: 'var(--md-sys-color-on-error-container)',
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: '1rem', textAlign: 'left' }}>
+                    <Icon size={32}>report_problem</Icon>
+                    <div>
+                      <h3 style={{ margin: 0, fontWeight: 950, fontSize: '1.1rem' }}>
+                        Ticket Rechazado
+                      </h3>
+                      <p style={{ margin: '4px 0 0', fontSize: '0.9rem', opacity: 0.8 }}>
+                        El vendedor fue notificado y debe subir un nuevo comprobante.
+                      </p>
+                    </div>
+                  </div>
+                  {order.ticketImageUrl && (
+                    <>
+                      <a href="#ticket-view" className="ticket-preview" style={{ height: 150 }}>
+                        <img
+                          src={order.ticketImageUrl}
+                          alt="Ticket rechazado"
+                          style={{ filter: 'grayscale(1) brightness(0.7)' }}
+                        />
+                        <div className="ticket-overlay" style={{ opacity: 1 }}>
+                          <div style={{ textAlign: 'center' }}>
+                            <Icon size={24}>cancel</Icon>
+                            <p style={{ fontWeight: 900, fontSize: '0.75rem', marginTop: '4px' }}>
+                              TICKET RECHAZADO
+                            </p>
+                          </div>
+                        </div>
+                      </a>
+                      <a
+                        href="#ticket-view"
+                        style={{
+                          fontSize: '0.85rem',
+                          fontWeight: 700,
+                          opacity: 0.8,
+                          textAlign: 'center',
+                        }}
+                      >
+                        Ver ticket original
+                      </a>
+                    </>
+                  )}
                 </div>
               )}
 
               {/* ACTION: Finalization Confirm (delivery received) */}
               {order.status === 'en_reparto' && (
-                <div className="despacho-card pulse-active" style={{ borderStyle: 'solid', borderColor: 'var(--md-sys-color-secondary)', background: 'var(--md-sys-color-secondary-container)', color: 'var(--md-sys-color-on-secondary-container)' }}>
-                   <div style={{ display: 'flex', gap: '1rem', textAlign: 'left' }}>
-                     <Icon size={32}>home</Icon>
-                     <div>
-                       <h3 style={{ margin: 0, fontWeight: 950, fontSize: '1.1rem' }}>¿Recibiste tu pedido?</h3>
-                       <p style={{ margin: '4px 0 0', fontSize: '0.9rem', opacity: 0.8 }}>Confirmá que el producto llegó en buen estado. Si hay algún problema, reportalo ahora.</p>
-                     </div>
-                   </div>
-                   <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                    <a href="#confirm-finalize" className="btn-hub btn-hub-p" style={{ flex: 1, justifyContent: 'center', background: 'var(--md-sys-color-secondary)', color: 'white' }}>
+                <div
+                  className="despacho-card pulse-active"
+                  style={{
+                    borderStyle: 'solid',
+                    borderColor: 'var(--md-sys-color-secondary)',
+                    background: 'var(--md-sys-color-secondary-container)',
+                    color: 'var(--md-sys-color-on-secondary-container)',
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: '1rem', textAlign: 'left' }}>
+                    <Icon size={32}>home</Icon>
+                    <div>
+                      <h3 style={{ margin: 0, fontWeight: 950, fontSize: '1.1rem' }}>
+                        ¿Recibiste tu pedido?
+                      </h3>
+                      <p style={{ margin: '4px 0 0', fontSize: '0.9rem', opacity: 0.8 }}>
+                        Confirmá que el producto llegó en buen estado. Si hay algún problema,
+                        reportalo ahora.
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                    <a
+                      href="#confirm-finalize"
+                      className="btn-hub btn-hub-p"
+                      style={{
+                        flex: 1,
+                        justifyContent: 'center',
+                        background: 'var(--md-sys-color-secondary)',
+                        color: 'white',
+                      }}
+                    >
                       <Icon>check_circle</Icon>
                       SÍ, LO RECIBÍ
                     </a>
-                    <a href="#report-finalize" className="btn-hub btn-hub-s" style={{ flex: 1, justifyContent: 'center' }}>
+                    <a
+                      href="#report-finalize"
+                      className="btn-hub btn-hub-s"
+                      style={{ flex: 1, justifyContent: 'center' }}
+                    >
                       <Icon>flag</Icon>
                       TENGO UN PROBLEMA
                     </a>
@@ -560,12 +789,13 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
               )}
 
               {/* Default Buttons if no specific card */}
-              {!['validando', 'disputed', 'delivered', 'completed'].includes(order.status) && currentStatus.actionLabel && (
-                <button className="btn-hub btn-hub-p pulse-active">
-                  {currentStatus.actionLabel}
-                  <Icon>arrow_forward</Icon>
-                </button>
-              )}
+              {!['validando', 'disputed', 'delivered', 'completed'].includes(order.status) &&
+                currentStatus.actionLabel && (
+                  <button className="btn-hub btn-hub-p pulse-active">
+                    {currentStatus.actionLabel}
+                    <Icon>arrow_forward</Icon>
+                  </button>
+                )}
             </div>
 
             <OrderGuide />
@@ -575,6 +805,7 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
             <OrderChatSection
               businessName={order.business.name}
               businessId={order.business.id}
+              paymentId={order.id}
               buyerEmail={order.buyerEmail}
               buyerName={null}
               buyerDni={order.buyerDni!}
@@ -586,69 +817,166 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
         {/* Reutilización de Modales con Style Clean */}
         <div id="ticket-view" className="modal-overlay">
           <div className="m-box">
-             <div style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--md-sys-color-outline-variant)' }}>
-                <span style={{ fontWeight: 950, letterSpacing: '0.1em', fontSize: '0.75rem' }}>COMPROBANTE DE ENVÍO</span>
-                <a href="#" style={{ color: 'inherit' }}><Icon>close</Icon></a>
-             </div>
-              <div style={{ padding: '1rem', background: '#000', display: 'flex', justifyContent: 'center' }}>
-                 {order.ticketImageUrl ? (
-                   <img src={order.ticketImageUrl} alt="Ticket" style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: '8px' }} />
-                 ) : (
-                   <div style={{ color: '#fff', padding: '2rem', textAlign: 'center' }}>
-                     <Icon>image_not_supported</Icon>
-                     <p>No hay comprobante disponible</p>
-                   </div>
-                 )}
-              </div>
-              <div style={{ padding: '1.5rem', textAlign: 'center' }}>
-                 {order.ticketImageUrl && (
-                   <DownloadButton imageUrl={order.ticketImageUrl} fileName={`ticket-${order.orderNumber}.jpg`} className="btn-hub btn-hub-p" />
-                 )}
-              </div>
+            <div
+              style={{
+                padding: '1.5rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderBottom: '1px solid var(--md-sys-color-outline-variant)',
+              }}
+            >
+              <span style={{ fontWeight: 950, letterSpacing: '0.1em', fontSize: '0.75rem' }}>
+                COMPROBANTE DE ENVÍO
+              </span>
+              <a href="#" style={{ color: 'inherit' }}>
+                <Icon>close</Icon>
+              </a>
+            </div>
+            <div
+              style={{
+                padding: '1rem',
+                background: '#000',
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              {order.ticketImageUrl ? (
+                <img
+                  src={order.ticketImageUrl}
+                  alt="Ticket"
+                  style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: '8px' }}
+                />
+              ) : (
+                <div style={{ color: '#fff', padding: '2rem', textAlign: 'center' }}>
+                  <Icon>image_not_supported</Icon>
+                  <p>No hay comprobante disponible</p>
+                </div>
+              )}
+            </div>
+            <div style={{ padding: '1.5rem', textAlign: 'center' }}>
+              {order.ticketImageUrl && (
+                <DownloadButton
+                  imageUrl={order.ticketImageUrl}
+                  fileName={`ticket-${order.orderNumber}.jpg`}
+                  className="btn-hub btn-hub-p"
+                />
+              )}
+            </div>
           </div>
         </div>
 
         {/* Modal Detalles Detallado */}
         <div id="details-modal" className="modal-overlay">
-           <div className="m-box" style={{ maxWidth: '500px', padding: '3rem' }}>
-              <a href="#" style={{ position: 'absolute', top: '2rem', right: '2rem', color: 'inherit' }}><Icon>close</Icon></a>
-              <h3 style={{ fontSize: '1.75rem', fontWeight: 950, marginBottom: '2rem', letterSpacing: '-0.03em' }}>Detalles de Compra</h3>
-              
-              <div style={{ display: 'grid', gap: '2rem' }}>
-                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <div style={{ width: 48, height: 48, borderRadius: '12px', background: 'var(--md-sys-color-primary-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--md-sys-color-primary)' }}>
-                       <Icon>shopping_cart</Icon>
-                    </div>
-                    <div>
-                       <p style={{ margin: 0, fontSize: '10px', fontWeight: 900, opacity: 0.5 }}>PRODUCTO</p>
-                       <p style={{ margin: 0, fontWeight: 800 }}>{order.product.title}</p>
-                       <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--md-sys-color-primary)', fontWeight: 900 }}>{order.currency} {order.amount}</p>
-                    </div>
-                 </div>
+          <div className="m-box" style={{ maxWidth: '500px', padding: '3rem' }}>
+            <a
+              href="#"
+              style={{ position: 'absolute', top: '2rem', right: '2rem', color: 'inherit' }}
+            >
+              <Icon>close</Icon>
+            </a>
+            <h3
+              style={{
+                fontSize: '1.75rem',
+                fontWeight: 950,
+                marginBottom: '2rem',
+                letterSpacing: '-0.03em',
+              }}
+            >
+              Detalles de Compra
+            </h3>
 
-                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <div style={{ width: 48, height: 48, borderRadius: '12px', background: 'var(--md-sys-color-secondary-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--md-sys-color-secondary)' }}>
-                       <Icon>location_on</Icon>
-                    </div>
-                    <div>
-                       <p style={{ margin: 0, fontSize: '10px', fontWeight: 900, opacity: 0.5 }}>DIRECCIÓN DE ENTREGA</p>
-                       <p style={{ margin: 0, fontWeight: 800 }}>{order.shippingAddress || 'Recojo en Tienda'}</p>
-                       <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.7 }}>{order.shippingDistrict ? `${order.shippingDistrict}, ${order.shippingProvince}` : ''}</p>
-                    </div>
-                 </div>
-
-                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <div style={{ width: 48, height: 48, borderRadius: '12px', background: 'var(--md-sys-color-tertiary-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--md-sys-color-tertiary)' }}>
-                       <Icon>person</Icon>
-                    </div>
-                    <div>
-                       <p style={{ margin: 0, fontSize: '10px', fontWeight: 900, opacity: 0.5 }}>COMPRADOR</p>
-                       <p style={{ margin: 0, fontWeight: 800 }}>{order.buyerEmail}</p>
-                       <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.7 }}>DNI: {order.buyerDni || 'No registrado'}</p>
-                    </div>
-                 </div>
+            <div style={{ display: 'grid', gap: '2rem' }}>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '12px',
+                    background: 'var(--md-sys-color-primary-container)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--md-sys-color-primary)',
+                  }}
+                >
+                  <Icon>shopping_cart</Icon>
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontSize: '10px', fontWeight: 900, opacity: 0.5 }}>
+                    PRODUCTO
+                  </p>
+                  <p style={{ margin: 0, fontWeight: 800 }}>{order.product.title}</p>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: '0.9rem',
+                      color: 'var(--md-sys-color-primary)',
+                      fontWeight: 900,
+                    }}
+                  >
+                    {order.currency} {order.amount}
+                  </p>
+                </div>
               </div>
-           </div>
+
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '12px',
+                    background: 'var(--md-sys-color-secondary-container)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--md-sys-color-secondary)',
+                  }}
+                >
+                  <Icon>location_on</Icon>
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontSize: '10px', fontWeight: 900, opacity: 0.5 }}>
+                    DIRECCIÓN DE ENTREGA
+                  </p>
+                  <p style={{ margin: 0, fontWeight: 800 }}>
+                    {order.shippingAddress || 'Recojo en Tienda'}
+                  </p>
+                  <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.7 }}>
+                    {order.shippingDistrict
+                      ? `${order.shippingDistrict}, ${order.shippingProvince}`
+                      : ''}
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '12px',
+                    background: 'var(--md-sys-color-tertiary-container)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--md-sys-color-tertiary)',
+                  }}
+                >
+                  <Icon>person</Icon>
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontSize: '10px', fontWeight: 900, opacity: 0.5 }}>
+                    COMPRADOR
+                  </p>
+                  <p style={{ margin: 0, fontWeight: 800 }}>{order.buyerEmail}</p>
+                  <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.7 }}>
+                    DNI: {order.buyerDni || 'No registrado'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* MODAL: Confirm Finalization - with spinner & success screen */}
@@ -660,7 +988,6 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
 
         {/* MODAL: Report Problem — with spinner & success screen */}
         <ReportFlow paymentId={order.id} trackingToken={token} />
-
       </div>
     </OrderAuthGate>
   );

@@ -1,10 +1,10 @@
 'use server';
 
 import { db } from '@/core/database/client';
-import { chatSessions, messages, payments, businesses } from '@/core/database/schema';
+import { businesses, chatSessions, messages, payments } from '@/core/database/schema';
 import { and, desc, eq } from 'drizzle-orm';
-import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
 
 // ─── Rate Limiting (in-memory) ───
 // 5 intentos por IP cada 15 minutos
@@ -84,11 +84,7 @@ export async function updateOrderStatus(
   }
 }
 
-export async function verifyOrderAccess(
-  trackingToken: string,
-  dni: string,
-  orderNumber?: string,
-) {
+export async function verifyOrderAccess(trackingToken: string, dni: string, orderNumber?: string) {
   try {
     // Rate limiting check
     const rateLimit = checkRateLimit();
@@ -101,10 +97,7 @@ export async function verifyOrderAccess(
     }
 
     const order = await db.query.payments.findFirst({
-      where: and(
-        eq(payments.trackingToken, trackingToken),
-        eq(payments.buyerDni, dni),
-      ),
+      where: and(eq(payments.trackingToken, trackingToken), eq(payments.buyerDni, dni)),
     });
 
     if (!order) {
@@ -132,16 +125,10 @@ export async function verifyOrderAccess(
  * Verify order access using ONLY DNI + orderNumber (no trackingToken).
  * Used when the tracking link has expired and user needs to recover access.
  */
-export async function verifyOrderAccessByDniAndOrderNumber(
-  dni: string,
-  orderNumber: string,
-) {
+export async function verifyOrderAccessByDniAndOrderNumber(dni: string, orderNumber: string) {
   try {
     const order = await db.query.payments.findFirst({
-      where: and(
-        eq(payments.buyerDni, dni),
-        eq(payments.orderNumber, orderNumber),
-      ),
+      where: and(eq(payments.buyerDni, dni), eq(payments.orderNumber, orderNumber)),
     });
 
     if (!order) {
@@ -171,22 +158,27 @@ async function getBusinessSlug(businessId: string): Promise<string | null> {
 }
 
 /**
- * Sincroniza la sesión de chat: busca por DNI o por ID de invitado anterior.
- * Unifica las sesiones si es necesario para que el historial sea persistente.
+ * Sincroniza la sesión de chat vinculada a un pedido específico.
+ *
+ * Lógica:
+ * 1. Busca una sesión activa vinculada al paymentId exacto.
+ * 2. Si no existe, cierra sesiones viejas del mismo buyer (para evitar chat cruzado).
+ * 3. Crea una nueva sesión vinculada al paymentId con mensaje de bienvenida.
  */
 export async function syncChatSession(params: {
   guestIdFromStorage: string | null;
   dni: string;
   businessId: string;
   buyerName: string;
+  paymentId: string;
 }) {
   try {
     const dniGuestId = `dni-${params.dni}`;
 
-    // 1. Buscamos si ya existe una sesión vinculada al DNI
-    let session = await db.query.chatSessions.findFirst({
+    // 1. Buscamos si ya existe una sesión vinculada a ESTE paymentId
+    const session = await db.query.chatSessions.findFirst({
       where: and(
-        eq(chatSessions.guestId, dniGuestId),
+        eq(chatSessions.paymentId, params.paymentId),
         eq(chatSessions.businessId, params.businessId),
         eq(chatSessions.status, 'active'),
       ),
@@ -194,36 +186,28 @@ export async function syncChatSession(params: {
     });
 
     if (session) {
-      return { success: true, sessionId: session.id, guestId: dniGuestId };
+      return { success: true, sessionId: session.id, guestId: session.guestId };
     }
 
-    // 2. Si no hay por DNI, buscamos si hay una por el ID aleatorio del storage
-    if (params.guestIdFromStorage) {
-      session = await db.query.chatSessions.findFirst({
-        where: and(
-          eq(chatSessions.guestId, params.guestIdFromStorage),
+    // 2. No hay sesión para este pedido → cerramos sesiones viejas del mismo buyer
+    // para evitar que mensajes de otra orden aparezcan aquí
+    await db
+      .update(chatSessions)
+      .set({ status: 'closed', updatedAt: new Date() })
+      .where(
+        and(
+          eq(chatSessions.guestId, dniGuestId),
           eq(chatSessions.businessId, params.businessId),
           eq(chatSessions.status, 'active'),
         ),
-        orderBy: [desc(chatSessions.createdAt)],
-      });
+      );
 
-      if (session) {
-        // Vinculamos esta sesión al DNI para siempre
-        await db
-          .update(chatSessions)
-          .set({ guestId: dniGuestId, guestName: params.buyerName })
-          .where(eq(chatSessions.id, session.id));
-
-        return { success: true, sessionId: session.id, guestId: dniGuestId };
-      }
-    }
-
-    // 3. Si nada existe, creamos una nueva sesión con el DNI
+    // 3. Creamos una nueva sesión vinculada al paymentId
     const [newSession] = await db
       .insert(chatSessions)
       .values({
         businessId: params.businessId,
+        paymentId: params.paymentId,
         guestId: dniGuestId,
         guestName: params.buyerName,
         guestGender: 'other',

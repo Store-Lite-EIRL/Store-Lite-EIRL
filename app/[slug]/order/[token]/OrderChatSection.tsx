@@ -16,6 +16,7 @@ interface Message {
 interface OrderChatSectionProps {
   businessName: string;
   businessId: string;
+  paymentId: string;
   buyerEmail: string;
   buyerName: string | null;
   buyerDni: string;
@@ -24,6 +25,7 @@ interface OrderChatSectionProps {
 export default function OrderChatSection({
   businessName,
   businessId,
+  paymentId,
   buyerEmail,
   buyerName,
   buyerDni,
@@ -51,6 +53,7 @@ export default function OrderChatSection({
           dni: buyerDni,
           businessId,
           buyerName: name,
+          paymentId,
         });
 
         if (res.success && res.sessionId) {
@@ -65,7 +68,7 @@ export default function OrderChatSection({
       }
     };
     initChat();
-  }, [businessId, buyerDni, buyerEmail, buyerName]);
+  }, [businessId, paymentId, buyerDni, buyerEmail, buyerName]);
 
   // Carga de mensajes y suscripción Realtime
   useEffect(() => {
@@ -127,13 +130,40 @@ export default function OrderChatSection({
     const text = newMessage.trim();
     if (!text || !sessionId || !guestId || isSending) return;
 
+    // Optimistic UI: agregar mensaje inmediatamente al estado local
+    const optimisticId = `temp-${Date.now()}`;
+    const now = new Date();
+    setMessages((prev) => [
+      ...prev,
+      { id: optimisticId, text, isFromStore: false, createdAt: now },
+    ]);
+
     setIsSending(true);
     setNewMessage('');
+
     try {
-      await sendMessage({ sessionId, guestId, content: text });
+      const result = await sendMessage({ sessionId, guestId, content: text });
+
+      // Si el servidor responde con éxito, reemplazamos el mensaje temporal
+      // con el real (el realtime de Supabase también lo hará, pero esto es fallback)
+      if (result.success && result.message) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === optimisticId
+              ? {
+                  ...m,
+                  id: result.message!.id,
+                  createdAt: result.message!.createdAt ? new Date(result.message!.createdAt) : now,
+                }
+              : m,
+          ),
+        );
+      }
     } catch (err) {
-      console.error('[OrderChat] Send failed:', err);
+      // Si falla, quitamos el mensaje optimista y restauramos el input
+      setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
       setNewMessage(text);
+      console.error('[OrderChat] Send failed:', err);
     } finally {
       setIsSending(false);
     }
@@ -199,10 +229,22 @@ export default function OrderChatSection({
           <Icon size={28}>support_agent</Icon>
         </div>
         <div>
-          <p style={{ margin: 0, fontWeight: 950, fontSize: '1rem', letterSpacing: '-0.02em' }}>Soporte de Tienda</p>
+          <p style={{ margin: 0, fontWeight: 950, fontSize: '1rem', letterSpacing: '-0.02em' }}>
+            Soporte de Tienda
+          </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#4CAF50' }} />
-            <span style={{ fontSize: '11px', fontWeight: 900, color: '#4CAF50', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Conectado</span>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 900,
+                color: '#4CAF50',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              Conectado
+            </span>
           </div>
         </div>
       </div>
@@ -210,7 +252,18 @@ export default function OrderChatSection({
       <div className="chat-body">
         {messages.length === 0 ? (
           <div style={{ margin: 'auto', textAlign: 'center', opacity: 0.3 }}>
-            <div style={{ background: 'var(--md-sys-color-surface-container-highest)', width: 80, height: 80, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+            <div
+              style={{
+                background: 'var(--md-sys-color-surface-container-highest)',
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1.5rem',
+              }}
+            >
               <Icon size={40}>forum</Icon>
             </div>
             <p style={{ fontSize: '0.85rem', fontWeight: 950, letterSpacing: '0.1em' }}>

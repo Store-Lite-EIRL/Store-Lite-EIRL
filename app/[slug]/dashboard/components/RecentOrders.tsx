@@ -1,5 +1,6 @@
 'use client';
 
+import { Icon } from '@/shared';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { IconButton } from '@/shared/components/ui/buttons/IconButton';
 import { Select, SelectOption } from '@/shared/components/ui/inputs/Select';
@@ -45,6 +46,8 @@ import styles from './RecentOrders.module.css';
 interface ConfirmAction {
   open: boolean;
   action: (() => void) | null;
+  title?: string;
+  description?: string;
 }
 
 interface OrderItem {
@@ -702,13 +705,11 @@ export function RecentOrders({
               <div className={styles.ticketOverlay}>Click para confirmar</div>
             </div>
             <div className={styles.ticketActions}>
-              <Button
-                variant="filled"
-                onClick={handleUploadTicket}
-                disabled={uploading}
-              >
-                {uploading ? <RefreshCw size={18} /> : <Send size={18} />}
-                {uploading ? 'Subiendo...' : isEditing ? 'Actualizar Ticket' : 'Enviar Ticket'}
+              <Button variant="filled" onClick={handleUploadTicket} disabled={uploading}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {uploading ? <RefreshCw size={18} /> : <Send size={18} />}
+                  {uploading ? 'Subiendo...' : isEditing ? 'Actualizar Ticket' : 'Enviar Ticket'}
+                </span>
               </Button>
               <Button
                 variant="outlined"
@@ -717,7 +718,9 @@ export function RecentOrders({
                   handleCancelUpload();
                 }}
               >
-                <X size={18} /> Cancelar
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <X size={18} /> Cancelar
+                </span>
               </Button>
             </div>
           </div>
@@ -839,21 +842,27 @@ export function RecentOrders({
               {isDelivered && (
                 <Button
                   variant="filled"
-                  onClick={handleNotifyDelivery}
+                  onClick={() =>
+                    setConfirmAction({
+                      open: true,
+                      action: handleNotifyDelivery,
+                      title: '¿Notificar entrega?',
+                      description:
+                        'Se enviará al cliente una notificación de que su pedido llegó. Esta acción no se puede deshacer.',
+                    })
+                  }
                   disabled={notifyingDelivery}
                 >
-                  {notifyingDelivery ? <RefreshCw size={18} /> : <Truck size={18} />}
-                  {notifyingDelivery ? 'Notificando...' : 'Notificar Entrega'}
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {notifyingDelivery ? <RefreshCw size={18} /> : <Truck size={18} />}
+                    {notifyingDelivery ? 'Notificando...' : 'Notificar Entrega'}
+                  </span>
                 </Button>
               )}
             </div>
           </div>
         ) : (
-          <div className={styles.ticketCard}>
-            <p className={styles.ticketInfoText}>
-              El ticket de envío estará disponible cuando el pedido sea despachado.
-            </p>
-          </div>
+          renderUploadForm()
         )}
       </section>
     );
@@ -877,15 +886,15 @@ export function RecentOrders({
         <div className={styles.helpSteps}>
           {/* Paso 1 */}
           <div className={styles.helpStep}>
-            <div className={`${styles.helpStepNumber} ${styles.statusPaid}`}>
-              1
-            </div>
+            <div className={`${styles.helpStepNumber} ${styles.statusPaid}`}>1</div>
             <div className={styles.helpStepContent}>
               <h4 className={styles.helpStepTitle}>
                 <CreditCard size={14} /> Pedido Recibido (Pagado)
               </h4>
               <p className={styles.helpStepDescription}>
-                El cliente realizó el pago del producto + envío. Recordá que <strong>vos estableciste el precio del envío</strong>, por lo que ya está cubierto. ¡No te quejes después!
+                El cliente realizó el pago del producto + envío. Recordá que{' '}
+                <strong>vos estableciste el precio del envío</strong>, por lo que ya está cubierto.
+                ¡No te quejes después!
               </p>
               <div className={`${styles.helpStepStatus} ${styles.statusPaid}`}>
                 <CheckCircle size={12} /> Estado: PAGADO
@@ -895,30 +904,28 @@ export function RecentOrders({
 
           {/* Paso 2 */}
           <div className={styles.helpStep}>
-            <div className={`${styles.helpStepNumber} ${styles.statusVerifying}`}>
-              2
-            </div>
+            <div className={`${styles.helpStepNumber} ${styles.statusVerifying}`}>2</div>
             <div className={styles.helpStepContent}>
               <h4 className={styles.helpStepTitle}>
                 <Truck size={14} /> Organizá el Envío
               </h4>
               <p className={styles.helpStepDescription}>
-                Coordiná el envío directo con la agencia o transporte. El cliente ya pagó el envío que vos configuraste, así que el costo ya está en tu cuenta.
+                Coordiná el envío directo con la agencia o transporte. El cliente ya pagó el envío
+                que vos configuraste, así que el costo ya está en tu cuenta.
               </p>
             </div>
           </div>
 
           {/* Paso 3 */}
           <div className={styles.helpStep}>
-            <div className={`${styles.helpStepNumber} ${styles.statusVerifying}`}>
-              3
-            </div>
+            <div className={`${styles.helpStepNumber} ${styles.statusVerifying}`}>3</div>
             <div className={styles.helpStepContent}>
               <h4 className={styles.helpStepTitle}>
                 <Receipt size={14} /> Subí el Ticket de Envío
               </h4>
               <p className={styles.helpStepDescription}>
-                Sacale una foto clara al comprobante/ticket del courier y subilo en la pestaña "Ticket". Una vez subido, el estado pasará a <strong>VALIDANDO</strong>.
+                Sacale una foto clara al comprobante/ticket del courier y subilo en la pestaña
+                Ticket. Una vez subido, el estado pasará a <strong>VALIDANDO</strong>.
               </p>
               <div className={`${styles.helpStepStatus} ${styles.statusVerifying}`}>
                 <RefreshCw size={12} /> Estado: VALIDANDO
@@ -928,15 +935,14 @@ export function RecentOrders({
 
           {/* Paso 4 */}
           <div className={styles.helpStep}>
-            <div className={`${styles.helpStepNumber} ${styles.statusAccepted}`}>
-              4
-            </div>
+            <div className={`${styles.helpStepNumber} ${styles.statusAccepted}`}>4</div>
             <div className={styles.helpStepContent}>
               <h4 className={styles.helpStepTitle}>
                 <CheckCircle size={14} /> Validación del Cliente
               </h4>
               <p className={styles.helpStepDescription}>
-                El cliente revisará el ticket y aceptará la validación. Una vez que el cliente acepte, el estado pasará a <strong>ACEPTADO</strong> y el producto saldrá en camino.
+                El cliente revisará el ticket y aceptará la validación. Una vez que el cliente
+                acepte, el estado pasará a <strong>ACEPTADO</strong> y el producto saldrá en camino.
               </p>
               <div className={`${styles.helpStepStatus} ${styles.statusAccepted}`}>
                 <CheckCircle size={12} /> Estado: ACEPTADO
@@ -946,15 +952,14 @@ export function RecentOrders({
 
           {/* Paso 5 */}
           <div className={styles.helpStep}>
-            <div className={`${styles.helpStepNumber} ${styles.statusEnReparto}`}>
-              5
-            </div>
+            <div className={`${styles.helpStepNumber} ${styles.statusEnReparto}`}>5</div>
             <div className={styles.helpStepContent}>
               <h4 className={styles.helpStepTitle}>
                 <Truck size={14} /> En Reparto / Esperando
               </h4>
               <p className={styles.helpStepDescription}>
-                El producto está en camino. El cliente confirmará cuando le llegue. El estado será <strong>EN REPARTO</strong> y luego <strong>ESPERANDO CONFIRMACIÓN</strong>.
+                El producto está en camino. El cliente confirmará cuando le llegue. El estado será{' '}
+                <strong>EN REPARTO</strong> y luego <strong>ESPERANDO CONFIRMACIÓN</strong>.
               </p>
               <div className={`${styles.helpStepStatus} ${styles.statusEnReparto}`}>
                 <Truck size={12} /> Estado: EN REPARTO
@@ -964,15 +969,14 @@ export function RecentOrders({
 
           {/* Paso 6 */}
           <div className={styles.helpStep}>
-            <div className={`${styles.helpStepNumber} ${styles.helpStepNumberCompleted}`}>
-              6
-            </div>
+            <div className={`${styles.helpStepNumber} ${styles.helpStepNumberCompleted}`}>6</div>
             <div className={styles.helpStepContent}>
               <h4 className={styles.helpStepTitle}>
                 <CheckCircle size={14} /> Confirmación Final
               </h4>
               <p className={styles.helpStepDescription}>
-                El cliente confirma que recibió el producto. El pedido pasa a <strong>FINALIZADO</strong> y se completa la venta. ¡Felicidades!
+                El cliente confirma que recibió el producto. El pedido pasa a{' '}
+                <strong>FINALIZADO</strong> y se completa la venta. ¡Felicidades!
               </p>
               <div className={`${styles.helpStepStatus} ${styles.statusCompleted}`}>
                 <CheckCircle size={12} /> Estado: FINALIZADO
@@ -990,9 +994,7 @@ export function RecentOrders({
           </div>
           <div>
             <h3 className={styles.helpSectionTitle}>Tipos de Envío</h3>
-            <p className={styles.helpSectionSubtitle}>
-              Conocé las opciones de entrega disponibles
-            </p>
+            <p className={styles.helpSectionSubtitle}>Conocé las opciones de entrega disponibles</p>
           </div>
         </div>
         <div className={styles.shippingTypesGrid}>
@@ -1010,9 +1012,7 @@ export function RecentOrders({
               <Home size={20} />
             </div>
             <h4 className={styles.shippingTypeName}>Domicilio</h4>
-            <p className={styles.shippingTypeDesc}>
-              Entrega directa a la dirección del cliente
-            </p>
+            <p className={styles.shippingTypeDesc}>Entrega directa a la dirección del cliente</p>
           </div>
           <div className={styles.shippingTypeCard}>
             <div className={styles.shippingTypeIcon}>
@@ -1035,19 +1035,22 @@ export function RecentOrders({
         <div className={styles.tipItem}>
           <div className={styles.tipIcon}>💡</div>
           <p className={styles.tipText}>
-            <strong>Sacá una foto clara del ticket:</strong> Asegurate de que se vea el número de guía y el código de barras para que el cliente pueda rastrear su pedido.
+            <strong>Sacá una foto clara del ticket:</strong> Asegurate de que se vea el número de
+            guía y el código de barras para que el cliente pueda rastrear su pedido.
           </p>
         </div>
         <div className={styles.tipItem}>
           <div className={styles.tipIcon}>⏰</div>
           <p className={styles.tipText}>
-            <strong>Subí el ticket rápido:</strong> Entre más rápido subas el ticket, más rápido el cliente validará y saldrá el producto. ¡La velocidad es clave!
+            <strong>Subí el ticket rápido:</strong> Entre más rápido subas el ticket, más rápido el
+            cliente validará y saldrá el producto. ¡La velocidad es clave!
           </p>
         </div>
         <div className={styles.tipItem}>
           <div className={styles.tipIcon}>📦</div>
           <p className={styles.tipText}>
-            <strong>Empaquetado seguro:</strong> Asegurate de que el producto esté bien empaquetado. Vos sos responsable hasta que el cliente lo reciba.
+            <strong>Empaquetado seguro:</strong> Asegurate de que el producto esté bien empaquetado.
+            Vos sos responsable hasta que el cliente lo reciba.
           </p>
         </div>
       </div>
@@ -1060,9 +1063,7 @@ export function RecentOrders({
           </div>
           <div>
             <h3 className={styles.warningsTitle}>Reglas de Negocio</h3>
-            <p className={styles.warningsSubtitle}>
-              Cumplí con los tiempos para evitar sanciones
-            </p>
+            <p className={styles.warningsSubtitle}>Cumplí con los tiempos para evitar sanciones</p>
           </div>
         </div>
         <div className={styles.warningsList}>
@@ -1072,7 +1073,8 @@ export function RecentOrders({
             <div className={styles.warningContent}>
               <h4 className={styles.warningTitle}>Pedidos sin terminar</h4>
               <p className={styles.warningText}>
-                Mantener pedidos pendientes afecta directamente la reputación de tu negocio y puede disminuir tus ventas futuras. ¡Completalos a tiempo!
+                Mantener pedidos pendientes afecta directamente la reputación de tu negocio y puede
+                disminuir tus ventas futuras. ¡Completalos a tiempo!
               </p>
             </div>
           </div>
@@ -1083,7 +1085,11 @@ export function RecentOrders({
             <div className={styles.warningContent}>
               <h4 className={styles.warningTitle}>Confirmación Automática (3 días)</h4>
               <p className={styles.warningText}>
-                Si el cliente no acepta el ticket y no lo rechaza, <span className={styles.warningHighlight}>se confirmará automáticamente a los 3 días</span>. Lo mismo aplica para la finalización del envío. ¡No esperes al último momento!
+                Si el cliente no acepta el ticket y no lo rechaza,{' '}
+                <span className={styles.warningHighlight}>
+                  se confirmará automáticamente a los 3 días
+                </span>
+                . Lo mismo aplica para la finalización del envío. ¡No esperes al último momento!
               </p>
             </div>
           </div>
@@ -1094,7 +1100,10 @@ export function RecentOrders({
             <div className={styles.warningContent}>
               <h4 className={styles.warningTitle}>Límite de Quejas</h4>
               <p className={styles.warningText}>
-                Si acumulás <span className={styles.warningHighlight}>3 órdenes con quejas o reportes</span>, tu cuenta sufrirá desactivación de funciones o ban temporal/permanente de tu RUC. ¡Cuidá tu historial!
+                Si acumulás{' '}
+                <span className={styles.warningHighlight}>3 órdenes con quejas o reportes</span>, tu
+                cuenta sufrirá desactivación de funciones o ban temporal/permanente de tu RUC.
+                ¡Cuidá tu historial!
               </p>
             </div>
           </div>
@@ -1105,7 +1114,12 @@ export function RecentOrders({
             <div className={styles.warningContent}>
               <h4 className={styles.warningTitle}>Tiempo Máximo (3 días)</h4>
               <p className={styles.warningText}>
-                Tenés un máximo de <span className={styles.warningHighlight}>3 días para subir el ticket de envío</span> tras recibir el pedido. Si no lo hacés, se considerará reporte automático. Lo mismo aplica para la finalización del producto. ¡La puntualidad es clave!
+                Tenés un máximo de{' '}
+                <span className={styles.warningHighlight}>
+                  3 días para subir el ticket de envío
+                </span>{' '}
+                tras recibir el pedido. Si no lo hacés, se considerará reporte automático. Lo mismo
+                aplica para la finalización del producto. ¡La puntualidad es clave!
               </p>
             </div>
           </div>
@@ -1118,7 +1132,9 @@ export function RecentOrders({
           <AlertTriangle size={18} />
         </div>
         <p className={styles.noteText}>
-          <strong>Recordatorio:</strong> El precio del envío lo estableciste VOS al configurar el producto. El cliente ya pagó ese monto, así que no hay excusas para no hacer el envío a tiempo. ¡El ticket se difumina hasta que el cliente confirme la validación!
+          <strong>Recordatorio:</strong> El precio del envío lo estableciste VOS al configurar el
+          producto. El cliente ya pagó ese monto, así que no hay excusas para no hacer el envío a
+          tiempo. ¡El ticket se difumina hasta que el cliente confirme la validación!
         </p>
       </div>
     </div>
@@ -1173,13 +1189,19 @@ export function RecentOrders({
             className={`${styles.tabButton} ${activeTab === 'detalles' ? styles.tabActive : ''}`}
             onClick={() => setActiveTab('detalles')}
           >
-            <Receipt size={16} /> Detalles
+            <Icon slot="icon" size={21}>
+              box_edit
+            </Icon>
+            Detalles
           </button>
           <button
             className={`${styles.tabButton} ${activeTab === 'ticket' ? styles.tabActive : ''}`}
             onClick={() => setActiveTab('ticket')}
           >
-            <Receipt size={16} /> Ticket
+            <Icon slot="icon" size={21}>
+              local_activity
+            </Icon>{' '}
+            Ticket
           </button>
           <button
             className={`${styles.tabButton} ${activeTab === 'ayuda' ? styles.tabActive : ''}`}
@@ -1369,15 +1391,31 @@ export function RecentOrders({
       {confirmAction.open && (
         <div
           className={styles.confirmOverlay}
-          onClick={() => setConfirmAction({ open: false, action: null })}
+          onClick={() =>
+            setConfirmAction({
+              open: false,
+              action: null,
+              title: undefined,
+              description: undefined,
+            })
+          }
         >
           <div className={styles.confirmContent} onClick={(e) => e.stopPropagation()}>
-            <h3 className={styles.confirmTitle}>¿Estás seguro?</h3>
-            <p className={styles.confirmDesc}>Esta acción no se puede deshacer.</p>
+            <h3 className={styles.confirmTitle}>{confirmAction.title || '¿Estás seguro?'}</h3>
+            <p className={styles.confirmDesc}>
+              {confirmAction.description || 'Esta acción no se puede deshacer.'}
+            </p>
             <div className={styles.confirmActions}>
               <button
                 className={styles.confirmBtnText}
-                onClick={() => setConfirmAction({ open: false, action: null })}
+                onClick={() =>
+                  setConfirmAction({
+                    open: false,
+                    action: null,
+                    title: undefined,
+                    description: undefined,
+                  })
+                }
               >
                 Cancelar
               </button>
@@ -1385,7 +1423,12 @@ export function RecentOrders({
                 className={styles.confirmBtnFilled}
                 onClick={() => {
                   confirmAction.action?.();
-                  setConfirmAction({ open: false, action: null });
+                  setConfirmAction({
+                    open: false,
+                    action: null,
+                    title: undefined,
+                    description: undefined,
+                  });
                 }}
               >
                 Confirmar
