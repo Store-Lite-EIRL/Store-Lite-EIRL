@@ -169,6 +169,9 @@ export default function Checkout({
     department: '',
     province: '',
     district: '',
+    agency: '', // Inicializar para evitar uncontrolled -> controlled
+    address: '', // Inicializar para evitar uncontrolled -> controlled
+    reference: '', // Inicializar para evitar uncontrolled -> controlled
     phone: '',
     dni: '',
     cost: 10.0, // Costo base para domicilio
@@ -746,7 +749,7 @@ export default function Checkout({
     : { title: 'Abriendo pasarela de pagos', subtitle: 'Serás redirigido a Culqi de forma segura' };
 
   return createPortal(
-    <div className={styles.checkoutOverlay} onClick={onCancel}>
+    <div className={styles.checkoutOverlay}>
       {/* Loading Overlay cuando se procesa el pago o se abre Culqi */}
       {isLoading && (
         <div
