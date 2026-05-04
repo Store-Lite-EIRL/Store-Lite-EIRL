@@ -1,3 +1,5 @@
+'use server';
+
 import { db } from '@/core/database/client';
 import { businesses, chatSessions, messages, payments } from '@/core/database/schema';
 import { and, desc, eq } from 'drizzle-orm';
@@ -85,7 +87,7 @@ export async function updateOrderStatus(
 export async function verifyOrderAccess(trackingToken: string, dni: string, orderNumber?: string) {
   try {
     // Rate limiting check
-    const rateLimit = checkRateLimit();
+    const rateLimit = await checkRateLimit();
     if (!rateLimit.allowed) {
       return {
         success: false,
@@ -111,7 +113,7 @@ export async function verifyOrderAccess(trackingToken: string, dni: string, orde
     }
 
     // Success — clear rate limit counter
-    clearRateLimit();
+    await clearRateLimit();
 
     return { success: true };
   } catch (error) {

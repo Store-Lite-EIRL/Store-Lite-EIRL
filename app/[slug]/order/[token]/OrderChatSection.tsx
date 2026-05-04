@@ -20,6 +20,7 @@ interface OrderChatSectionProps {
   buyerEmail: string;
   buyerName: string | null;
   buyerDni: string;
+  trackingToken: string;
 }
 
 export default function OrderChatSection({
@@ -29,6 +30,7 @@ export default function OrderChatSection({
   buyerEmail,
   buyerName,
   buyerDni,
+  trackingToken,
 }: OrderChatSectionProps) {
   const supabase = useMemo(() => createClient(), []);
   const [sessionId, setSessionId] = useState<string | null>(null);

@@ -162,7 +162,7 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
     if (order.status === 'pending') return 0;
     if (order.status === 'validando') return 1;
     if (order.status === 'delivered') return 2;
-    if (order.status === 'en_reparto') return 3; // Pedido llegó, customer debe confirmar recepción
+    if ((order.status as string) === 'en_reparto') return 3; // Pedido llegó, customer debe confirmar recepción
     if (order.status === 'disputed') return order.ticketImageUrl ? 1 : 0;
     if (order.status === 'completed') return 4;
     if (order.status === 'not_delivered') return order.ticketImageUrl ? 1 : 0;
@@ -740,7 +740,7 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
               )}
 
               {/* ACTION: Finalization Confirm (delivery received) */}
-              {order.status === 'en_reparto' && (
+              {(order.status as string) === 'en_reparto' && (
                 <div
                   className="despacho-card pulse-active"
                   style={{
