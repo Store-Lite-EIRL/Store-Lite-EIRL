@@ -16,7 +16,7 @@ interface RateLimitEntry {
 
 const rateLimitMap = new Map<string, RateLimitEntry>();
 
-function checkRateLimit(): { allowed: boolean; retryAfter?: number } {
+async function checkRateLimit(): Promise<{ allowed: boolean; retryAfter?: number }> {
   const headersList = await headers();
   const ip =
     headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ||
@@ -41,7 +41,7 @@ function checkRateLimit(): { allowed: boolean; retryAfter?: number } {
   return { allowed: true };
 }
 
-function clearRateLimit() {
+async function clearRateLimit() {
   const headersList = await headers();
   const ip =
     headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ||
