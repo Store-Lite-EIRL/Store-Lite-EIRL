@@ -206,7 +206,10 @@ export async function confirmFinalization(
       return { success: false, error: 'Pedido no encontrado o token inválido.' };
     }
 
-    if (payment.status !== 'not_delivered' && payment.status !== 'en_reparto') {
+    if (
+      (payment.status as string) !== 'not_delivered' &&
+      (payment.status as string) !== 'en_reparto'
+    ) {
       console.error('[confirmFinalization] Invalid status:', payment.status);
       return {
         success: false,
@@ -229,7 +232,7 @@ export async function confirmFinalization(
 
       if (
         currentPayment?.status !== 'not_delivered' &&
-        currentPayment?.status !== 'en_reparto'
+        (currentPayment?.status as string) !== 'en_reparto'
       ) {
         throw new Error('Estado del pedido fue modificado por otra operación.');
       }
@@ -340,7 +343,7 @@ export async function rejectFinalization(
       return { success: false, error: 'Pedido no encontrado o token inválido.' };
     }
 
-    if (payment.status !== 'not_delivered' && payment.status !== 'en_reparto') {
+    if (payment.status !== 'not_delivered' && (payment.status as string) !== 'en_reparto') {
       console.error('[rejectFinalization] Invalid status:', payment.status);
       return {
         success: false,
@@ -362,7 +365,7 @@ export async function rejectFinalization(
 
       if (
         currentPayment?.status !== 'not_delivered' &&
-        currentPayment?.status !== 'en_reparto'
+        (currentPayment?.status as string) !== 'en_reparto'
       ) {
         throw new Error('Estado del pedido fue modificado por otra operación.');
       }

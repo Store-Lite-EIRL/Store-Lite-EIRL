@@ -136,11 +136,11 @@ export default function BusinessPageContent({
         culqiPublicKey={culqiPublicKey}
         chatEnabled={chatEnabled}
         storefrontLayout={storefrontLayout}
-            storefrontTheme={storefrontTheme}
-             previewCardTheme={previewCardTheme}
-             onShowLookupModal={() => setShowLookupModal(true)}
-           />
-     </StorageProvider>
+        storefrontTheme={storefrontTheme}
+        previewCardTheme={previewCardTheme}
+        // onShowLookupModal removed: prop not defined in interface
+      />
+    </StorageProvider>
   );
 }
 
@@ -359,44 +359,44 @@ function BusinessPageContentUI({
 
   const themeStyles = storefrontTheme
     ? ((): CSSProperties & Record<string, string> => {
-      const ff =
-        storefrontTheme.fontFamily === 'roboto'
-          ? 'var(--font-storefront-roboto), var(--mio-theme-text-font-family), sans-serif'
-          : storefrontTheme.fontFamily === 'poppins'
-            ? 'var(--font-storefront-poppins), var(--mio-theme-text-font-family), sans-serif'
-            : 'var(--font-storefront-inter), var(--mio-theme-text-font-family), sans-serif';
-      const isDark = storefrontTheme.surfaceMode === 'dark';
-      return {
-        '--storefront-font-family': ff,
-        '--md-sys-color-primary': storefrontTheme.palette.primary,
-        '--md-sys-color-on-primary': getReadableTextColor(storefrontTheme.palette.primary),
-        '--md-sys-color-primary-container': storefrontTheme.palette.primary,
-        '--md-sys-color-on-primary-container': getReadableTextColor(
-          storefrontTheme.palette.primary,
-        ),
-        '--md-sys-color-secondary': storefrontTheme.palette.secondary,
-        '--md-sys-color-on-secondary': getReadableTextColor(storefrontTheme.palette.secondary),
-        '--md-sys-color-secondary-container': storefrontTheme.palette.secondary,
-        '--md-sys-color-on-secondary-container': getReadableTextColor(
-          storefrontTheme.palette.secondary,
-        ),
-        '--md-sys-color-tertiary': storefrontTheme.palette.accent,
-        '--md-sys-color-on-tertiary': getReadableTextColor(storefrontTheme.palette.accent),
-        '--md-sys-color-tertiary-container': storefrontTheme.palette.accent,
-        '--md-sys-color-on-tertiary-container': getReadableTextColor(
-          storefrontTheme.palette.accent,
-        ),
-        '--md-sys-color-surface': isDark ? '#0f1117' : '#ffffff',
-        '--md-sys-color-on-surface': isDark ? '#f3f4f6' : '#111827',
-        '--md-sys-color-surface-variant': isDark ? '#161b24' : '#f5f7fb',
-        '--md-sys-color-on-surface-variant': isDark ? '#cbd5e1' : '#4b5563',
-        '--md-sys-color-surface-container-low': isDark ? '#181d29' : '#f8fafc',
-        '--md-sys-color-surface-container': isDark ? '#1d2432' : '#f1f5f9',
-        '--md-sys-color-surface-container-high': isDark ? '#242d3d' : '#e9eef6',
-        '--md-sys-color-surface-container-highest': isDark ? '#2d3748' : '#dfe6f1',
-        '--md-sys-color-outline-variant': isDark ? '#475569' : '#cbd5e1',
-      };
-    })()
+        const ff =
+          storefrontTheme.fontFamily === 'roboto'
+            ? 'var(--font-storefront-roboto), var(--mio-theme-text-font-family), sans-serif'
+            : storefrontTheme.fontFamily === 'poppins'
+              ? 'var(--font-storefront-poppins), var(--mio-theme-text-font-family), sans-serif'
+              : 'var(--font-storefront-inter), var(--mio-theme-text-font-family), sans-serif';
+        const isDark = storefrontTheme.surfaceMode === 'dark';
+        return {
+          '--storefront-font-family': ff,
+          '--md-sys-color-primary': storefrontTheme.palette.primary,
+          '--md-sys-color-on-primary': getReadableTextColor(storefrontTheme.palette.primary),
+          '--md-sys-color-primary-container': storefrontTheme.palette.primary,
+          '--md-sys-color-on-primary-container': getReadableTextColor(
+            storefrontTheme.palette.primary,
+          ),
+          '--md-sys-color-secondary': storefrontTheme.palette.secondary,
+          '--md-sys-color-on-secondary': getReadableTextColor(storefrontTheme.palette.secondary),
+          '--md-sys-color-secondary-container': storefrontTheme.palette.secondary,
+          '--md-sys-color-on-secondary-container': getReadableTextColor(
+            storefrontTheme.palette.secondary,
+          ),
+          '--md-sys-color-tertiary': storefrontTheme.palette.accent,
+          '--md-sys-color-on-tertiary': getReadableTextColor(storefrontTheme.palette.accent),
+          '--md-sys-color-tertiary-container': storefrontTheme.palette.accent,
+          '--md-sys-color-on-tertiary-container': getReadableTextColor(
+            storefrontTheme.palette.accent,
+          ),
+          '--md-sys-color-surface': isDark ? '#0f1117' : '#ffffff',
+          '--md-sys-color-on-surface': isDark ? '#f3f4f6' : '#111827',
+          '--md-sys-color-surface-variant': isDark ? '#161b24' : '#f5f7fb',
+          '--md-sys-color-on-surface-variant': isDark ? '#cbd5e1' : '#4b5563',
+          '--md-sys-color-surface-container-low': isDark ? '#181d29' : '#f8fafc',
+          '--md-sys-color-surface-container': isDark ? '#1d2432' : '#f1f5f9',
+          '--md-sys-color-surface-container-high': isDark ? '#242d3d' : '#e9eef6',
+          '--md-sys-color-surface-container-highest': isDark ? '#2d3748' : '#dfe6f1',
+          '--md-sys-color-outline-variant': isDark ? '#475569' : '#cbd5e1',
+        };
+      })()
     : undefined;
 
   return (
@@ -404,22 +404,23 @@ function BusinessPageContentUI({
       <div className={`page-container ${styles.storefrontThemeRoot}`} style={themeStyles}>
         {storefrontLayout.sections.map(renderStorefrontSection)}
       </div>
-<ProductPreviewSheet
-  slug={business.slug}
-  product={previewProduct}
-  openSignal={previewSignal}
-  isOwner={isStaff}
-  hasPaymentGateway={hasPaymentGateway}
-  culqiPublicKey={culqiPublicKey}
-  businessId={business.id}
-  businessName={business.name}
-  businessAddress={business.address ?? undefined}
-  businessCity={business.city ?? undefined}
-  businessLogoUrl={business.logoUrl ?? undefined}
-  onEdit={handleEditFromPreview}
-  onDelete={handleDeleteFromPreview}
-  initialImageIndex={previewImageIndex}
-/>      {!isStaff && (
+      <ProductPreviewSheet
+        slug={business.slug}
+        product={previewProduct}
+        openSignal={previewSignal}
+        isOwner={isStaff}
+        hasPaymentGateway={hasPaymentGateway}
+        culqiPublicKey={culqiPublicKey}
+        businessId={business.id}
+        businessName={business.name}
+        businessAddress={business.address ?? undefined}
+        businessCity={business.city ?? undefined}
+        businessLogoUrl={business.logoUrl ?? undefined}
+        onEdit={handleEditFromPreview}
+        onDelete={handleDeleteFromPreview}
+        initialImageIndex={previewImageIndex}
+      />{' '}
+      {!isStaff && (
         <>
           <FloatingCartButton />
           <CartDrawer
@@ -472,7 +473,6 @@ function BusinessPageContentUI({
           onClose={() => setAlert((prev) => ({ ...prev, open: false }))}
         />
       )}
-
       <LookupOrderModal
         open={showLookupModal}
         onClose={() => setShowLookupModal(false)}

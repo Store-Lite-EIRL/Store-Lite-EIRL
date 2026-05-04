@@ -1,5 +1,3 @@
-'use server';
-
 import { db } from '@/core/database/client';
 import { businesses, chatSessions, messages, payments } from '@/core/database/schema';
 import { and, desc, eq } from 'drizzle-orm';
@@ -19,7 +17,7 @@ interface RateLimitEntry {
 const rateLimitMap = new Map<string, RateLimitEntry>();
 
 function checkRateLimit(): { allowed: boolean; retryAfter?: number } {
-  const headersList = headers();
+  const headersList = await headers();
   const ip =
     headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ||
     headersList.get('x-real-ip') ||
@@ -44,7 +42,7 @@ function checkRateLimit(): { allowed: boolean; retryAfter?: number } {
 }
 
 function clearRateLimit() {
-  const headersList = headers();
+  const headersList = await headers();
   const ip =
     headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ||
     headersList.get('x-real-ip') ||

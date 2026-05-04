@@ -36,7 +36,7 @@ interface DashboardProps {
 
 export default async function Dashboard({ params, searchParams }: DashboardProps) {
   const { slug } = await params;
-  const { page, status, search, date } = await searchParams;
+  const { page, status, search, date } = await (searchParams as any);
 
   const currentPage = Math.max(1, parseInt(page || '1'));
   const currentLimit = 10; // Fixed limit of 10 orders per page
@@ -94,18 +94,19 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
   if (date && date !== 'all') {
     const now = new Date();
     let dateFilter: Date;
-    
+
     switch (date) {
       case 'today':
         dateFilter = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         orderFilters.push(gte(payments.createdAt, dateFilter));
         break;
-      case 'yesterday':
+      case 'yesterday': {
         const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         orderFilters.push(gte(payments.createdAt, startOfYesterday));
         orderFilters.push(lt(payments.createdAt, startOfToday));
         break;
+      }
       case 'week':
         dateFilter = new Date(now);
         dateFilter.setDate(dateFilter.getDate() - 7);
@@ -528,6 +529,8 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
 
       <RecentOrders
         orders={formattedOrders}
+        currentPage={currentPage}
+        totalPages={1}
         currentStatus={status || 'all'}
         currentSearch={search || ''}
         currentDate={date || 'all'}

@@ -24,10 +24,16 @@ export default function OrderGuide() {
       icon: 'workspace_premium',
       content: (
         <div>
-          <p style={{ margin: '0 0 1rem 0' }}>Si el producto llega dañado o no coincide con lo comprado:</p>
+          <p style={{ margin: '0 0 1rem 0' }}>
+            Si el producto llega dañado o no coincide con lo comprado:
+          </p>
           <ul style={{ paddingLeft: '1.25rem', margin: 0, listStyle: 'disc' }}>
-            <li><b>No confirmés la entrega</b> en esta página.</li>
-            <li>Usá el botón <b>"Reportar Problema"</b> inmediatamente.</li>
+            <li>
+              <b>No confirmés la entrega</b> en esta página.
+            </li>
+            <li>
+              Usá el botón <b>&#39;Reportar Problema&#39;</b> inmediatamente.
+            </li>
             <li>Chateá con el vendedor usando el panel lateral para resolverlo rápido.</li>
           </ul>
         </div>
@@ -63,8 +69,16 @@ export default function OrderGuide() {
         }}
       />
 
-      <div style={{ padding: '1rem 2rem', borderBottom: '1px solid var(--md-sys-color-outline-variant)', marginBottom: '0.5rem' }}>
-        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 950, letterSpacing: '-0.02em' }}>Guía de Seguridad</h3>
+      <div
+        style={{
+          padding: '1rem 2rem',
+          borderBottom: '1px solid var(--md-sys-color-outline-variant)',
+          marginBottom: '0.5rem',
+        }}
+      >
+        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 950, letterSpacing: '-0.02em' }}>
+          Guía de Seguridad
+        </h3>
       </div>
 
       {sections.map((s, i) => (
@@ -80,7 +94,7 @@ export default function OrderGuide() {
               style={{
                 transition: 'transform 0.3s',
                 transform: openIndex === i ? 'rotate(180deg)' : 'none',
-                opacity: 0.5
+                opacity: 0.5,
               }}
             >
               expand_more

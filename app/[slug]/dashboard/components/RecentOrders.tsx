@@ -423,7 +423,7 @@ export function RecentOrders({
       const result = await notifyDelivery(selectedOrder.id, selectedOrder.businessId);
       if (result.success) {
         // Actualizar estado local
-        setSelectedOrder({ ...selectedOrder, status: 'en_reparto' });
+        setSelectedOrder({ ...selectedOrder, status: 'en_reparto' as any });
         router.refresh();
       } else {
         alert(result.error || 'Error al notificar la entrega');
@@ -636,7 +636,7 @@ export function RecentOrders({
     const hasTicket = !!order.ticketImageUrl;
     const isInValidando = order.status === 'validando';
     const isDelivered = order.status === 'delivered';
-    const isEnReparto = order.status === 'en_reparto';
+    const isEnReparto = (order.status as any) === 'en_reparto';
     const isDisputed = order.status === 'disputed';
     const canEditTicket = isInValidando || isDisputed;
 
@@ -1639,7 +1639,7 @@ export function RecentOrders({
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             {renderModalContent(selectedOrder)}
             <footer className={styles.modalFooter}>
-              <Button variant="filled-tonal" onClick={() => setSelectedOrder(null)}>
+              <Button variant="filled" onClick={() => setSelectedOrder(null)}>
                 Cerrar
               </Button>
             </footer>

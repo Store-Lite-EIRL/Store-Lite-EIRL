@@ -37,9 +37,9 @@ export async function uploadTicketAndUpdatePayment(
   try {
     // 1. Obtener el trackingToken y validar que el pago pertenezca al negocio
     const [existingPayment] = await db
-      .select({ 
+      .select({
         trackingToken: payments.trackingToken,
-        businessId: payments.businessId 
+        businessId: payments.businessId,
       })
       .from(payments)
       .where(eq(payments.id, paymentId))
@@ -51,7 +51,12 @@ export async function uploadTicketAndUpdatePayment(
     }
 
     if (existingPayment.businessId !== businessId) {
-      console.error('[uploadTicket] Permission denied — expected:', businessId, 'got:', existingPayment.businessId);
+      console.error(
+        '[uploadTicket] Permission denied — expected:',
+        businessId,
+        'got:',
+        existingPayment.businessId,
+      );
       return { success: false, error: 'No tienes permisos para este pedido' };
     }
 
@@ -161,7 +166,7 @@ export async function notifyDelivery(
       await tx
         .update(payments)
         .set({
-          status: 'en_reparto',
+          status: 'en_reparto' as any,
           updatedAt: new Date(),
         })
         .where(eq(payments.id, paymentId));
@@ -172,9 +177,15 @@ export async function notifyDelivery(
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
     if (message.includes('modificado')) {
-      return { success: false, error: 'El estado del pedido fue modificado. Recargá e intentá de nuevo.' };
+      return {
+        success: false,
+        error: 'El estado del pedido fue modificado. Recargá e intentá de nuevo.',
+      };
     }
-    console.error('[notifyDelivery] Error:', error instanceof Error ? error.message : String(error));
+    console.error(
+      '[notifyDelivery] Error:',
+      error instanceof Error ? error.message : String(error),
+    );
     return { success: false, error: 'Error al notificar la entrega' };
   }
 }
