@@ -21,25 +21,28 @@ export default function CreatedPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasBusinesses, setHasBusinesses] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRucVerified, setIsRucVerified] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [formData, setFormData] = useState<BusinessData>({
     personType: 'natural',
     country: 'Perú',
     countryPrefix: '+51',
-    taxId: '10456789231',
-    commercialName: 'EA Tech Solutions',
+    taxId: '',
+    commercialName: '',
     logo: null,
-    sector: 'Servicios',
-    description:
-      'Empresa dedicada al desarrollo de aplicaciones web modernas, mantenimiento de APIs y servicios de infraestructura en la nube utilizando TypeScript y prácticas DevOps.',
-    address: 'Av. Javier Prado Este 1234, Oficina 502',
-    city: 'Lima',
+    sector: '',
+    description: '',
+    address: '', // Keep for backward compatibility
+    departamento: '',
+    provincia: '',
+    distrito: '',
+    city: '',
     phone: '',
-    email: 'contacto@eatech.pe',
-    legalRepName: 'Ernesto Alonso García',
-    legalRepRole: 'Gerente General',
+    email: '',
+    legalRepName: '',
+    legalRepRole: '',
     legalRepPhone: '',
-    legalRepEmail: 'gerente@eatech.pe',
+    legalRepEmail: '',
   });
   const [storefrontTheme, setStorefrontTheme] = useState<StorefrontTheme>(
     createDefaultStorefrontTheme(),
@@ -67,8 +70,8 @@ export default function CreatedPage() {
           setHasBusinesses(true);
         }
       })
-      .catch((err) => {
-        console.error('Error checking businesses:', err);
+      .catch((_err) => {
+        // Error checking businesses - handled silently in production
       })
       .finally(() => {
         setIsLoading(false);
@@ -87,6 +90,11 @@ export default function CreatedPage() {
         }
       }
 
+      // Reset RUC verification if taxId changes
+      if (field === 'taxId') {
+        setIsRucVerified(false);
+      }
+
       return newData;
     });
 
@@ -97,6 +105,10 @@ export default function CreatedPage() {
         return Object.fromEntries(newEntries) as FormErrors;
       });
     }
+  };
+
+  const handleRucVerificationChange = (isVerified: boolean) => {
+    setIsRucVerified(isVerified);
   };
 
   const handleFileChange = (file: File | null) => {
@@ -180,12 +192,16 @@ export default function CreatedPage() {
         }
         break;
       case 2:
-        if (!formData.city) {
-          newErrors.city = 'La ciudad es obligatoria.';
+        if (!formData.departamento) {
+          newErrors.departamento = 'El DEPARTAMENTO es obligatorio.';
           isValid = false;
         }
-        if (!formData.address) {
-          newErrors.address = 'La dirección es obligatoria.';
+        if (!formData.provincia) {
+          newErrors.provincia = 'La PROVINCIA es obligatoria.';
+          isValid = false;
+        }
+        if (!formData.distrito) {
+          newErrors.distrito = 'El DISTRITO es obligatorio.';
           isValid = false;
         }
         if (!formData.email || !formData.email.includes('@')) {
@@ -260,8 +276,7 @@ export default function CreatedPage() {
           try {
             const optimizedLogo = await optimizeImage(formData.logo);
             formDataToSubmit.append('logo', optimizedLogo);
-          } catch (error) {
-            console.error('Error optimizing logo:', error);
+          } catch (_error) {
             // Fallback to original logo if optimization fails
             formDataToSubmit.append('logo', formData.logo);
           }
@@ -280,8 +295,7 @@ export default function CreatedPage() {
           // Use window.location for hard redirect to the list business page
           window.location.href = '/list-business';
         }
-      } catch (error) {
-        console.error('Error submitting form:', error);
+      } catch (_error) {
         setAlert({
           open: true,
           message: 'Ocurrió un error inesperado al crear la empresa.',
@@ -373,6 +387,8 @@ export default function CreatedPage() {
                 onFileChange={handleFileChange}
                 errors={errors}
                 isSubmitting={isSubmitting}
+                isRucVerified={isRucVerified}
+                onRucVerificationChange={handleRucVerificationChange}
               />
             </div>
 
@@ -399,6 +415,7 @@ export default function CreatedPage() {
                 onChange={handleChange}
                 errors={errors}
                 isSubmitting={isSubmitting}
+                isRucVerified={isRucVerified} // ← FIX: Pass isRucVerified prop
               />
             </div>
 
@@ -413,6 +430,7 @@ export default function CreatedPage() {
                 onChange={handleChange}
                 errors={errors}
                 isSubmitting={isSubmitting}
+                isRucVerified={isRucVerified} // ← FIX: Pass isRucVerified prop
               />
             </div>
           </div>
