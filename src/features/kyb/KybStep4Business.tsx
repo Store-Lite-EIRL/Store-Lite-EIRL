@@ -7,7 +7,7 @@
 'use client';
 
 import { createVerifiedBusinessAction } from './kybActions';
-import type { WizardData } from './kybWizard';
+import type { WizardData } from './KybWizard';
 
 export function KybStep4Business({
   onSubmit,

@@ -430,7 +430,7 @@ export default function CreatedPage() {
                 onChange={handleChange}
                 errors={errors}
                 isSubmitting={isSubmitting}
-                isRucVerified={isRucVerified} // ← FIX: Pass isRucVerified prop
+                isRucVerified={isRucVerified}
               />
             </div>
           </div>

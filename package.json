@@ -44,6 +44,7 @@
     "react-barcode": "^1.6.1",
     "react-dom": "19.2.3",
     "recharts": "^3.8.0",
+    "twilio": "^6.0.1",
     "xlsx": "^0.18.5",
     "zod": "^4.3.6"
   },

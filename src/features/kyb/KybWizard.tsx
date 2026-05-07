@@ -8,7 +8,6 @@
 'use client';
 
 import { useState } from 'react';
-import { verifyIdentityAction } from './kybActions';
 // WizardData is defined below in this file
 import { KybStep1Identity } from './KybStep1Identity';
 import { KybStep2Representative } from './KybStep2Representative';
@@ -39,35 +38,27 @@ export interface WizardData {
 
 export function KYBWizard() {
   const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading] = useState(false);
+  const [error] = useState<string | null>(null);
   const [data, setData] = useState<WizardData>({});
 
   const nextStep = () => setStep((s) => Math.min(s + 1, 4));
   const prevStep = () => setStep((s) => Math.max(s - 1, 1));
 
-  const handleStep1 = async (formData: FormData) => {
-    setLoading(true);
-    setError(null);
-    const res = await verifyIdentityAction(formData);
-    setLoading(false);
-    if (res.error) {
-      setError(res.error);
-      return;
-    }
-    // Save data from API
-    setData((prev) => ({ ...prev, ...res.data }));
+  const handleStep1 = async (stepData: any) => {
+    // We receive the data returned by the server action
+    setData((prev) => ({ ...prev, ...stepData }));
     nextStep();
   };
 
   // Placeholder handlers for other steps
-  const handleStep2 = async (formData: FormData) => {
+  const handleStep2 = async (_formData: FormData) => {
     nextStep();
   };
-  const handleStep3 = async (formData: FormData) => {
+  const handleStep3 = async (_formData: FormData) => {
     nextStep();
   };
-  const handleStep4 = async (formData: FormData) => {
+  const handleStep4 = async (_formData: FormData) => {
     /* Final submit handled inside component */
   };
 

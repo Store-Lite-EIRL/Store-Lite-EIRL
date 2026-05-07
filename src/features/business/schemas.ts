@@ -9,9 +9,11 @@ export const createBusinessSchema = z.object({
     .string()
     .min(3, 'El nombre comercial debe tener al menos 3 caracteres')
     .max(100, 'El nombre comercial es demasiado largo'),
-  personType: z.enum(['natural', 'juridica'], {
-    error: 'Tipo de persona no válido',
-  }),
+  personType: z
+    .enum(['natural', 'juridica'], {
+      error: 'Tipo de persona no válido',
+    })
+    .optional(), // ← BACKEND AUTO-DETECTS if not provided
   taxId: z
     .string()
     .min(11, 'El RUC/NIT debe tener al menos 11 caracteres')

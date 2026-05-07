@@ -12,11 +12,11 @@ const dniRegex = /^\d{8}$/;
 const phoneRegex = /^9\d{8}$/; // Peru mobile format
 
 // =====================================================
-// Step 1: RUC/DNI Validation
+// Step1: RUC/DNI Validation
 // =====================================================
 
 export const VerifyIdentitySchema = z.object({
-  personType: z.enum(['natural', 'juridica']),
+  personType: z.enum(['natural', 'juridica']).optional(), // ← BACKEND AUTO-DETECTS if not provided
   // If natural, validate DNI (8 digits). If juridica, validate RUC (11 digits)
   documentNumber: z.string().refine(
     (val) => {

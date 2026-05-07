@@ -98,7 +98,7 @@ export async function createBusinessAction(formData: FormData) {
 
   const {
     commercialName,
-    personType,
+    personType: rawPersonType,
     country,
     taxId,
     sector,
@@ -113,6 +113,18 @@ export async function createBusinessAction(formData: FormData) {
     legalRepEmail,
     storefrontTheme: rawStorefrontTheme,
   } = validationResult.data;
+
+  // AUTO-DETECT personType if not provided (from RUC prefix)
+  let personType = rawPersonType;
+  if (!personType && taxId && taxId.length === 11) {
+    // Detect from RUC prefix: "20" = juridica, else = natural
+    personType = taxId.startsWith('20') ? 'juridica' : 'natural';
+    console.log('[createBusinessAction] Auto-detected personType:', personType);
+  }
+
+  if (!personType) {
+    return { error: 'No se pudo determinar el tipo de persona. Verifique el RUC/DNI.' };
+  }
 
   const logoFile = formData.get('logo') as File | null;
 

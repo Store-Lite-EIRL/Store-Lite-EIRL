@@ -1,4 +1,4 @@
-import { Button, Icon } from '@/shared/components/ui';
+﻿import { Button, Icon } from '@/shared/components/ui';
 import type { BusinessData, FormErrors } from '../types';
 import { Step1General, Step2Economic, Step3Contact, Step4Legal } from './BusinessFormSteps';
 
@@ -13,6 +13,9 @@ interface BusinessFormProps {
   onFileChange?: (file: File | null) => void;
   errors: FormErrors;
   isSubmitting?: boolean;
+  // NEW: Props for RUC verification state
+  isRucVerified?: boolean;
+  onRucVerificationChange?: (verified: boolean) => void;
 }
 
 export function BusinessForm({
@@ -26,6 +29,8 @@ export function BusinessForm({
   onFileChange,
   errors,
   isSubmitting,
+  isRucVerified,
+  onRucVerificationChange,
 }: BusinessFormProps) {
   let buttonText = 'Siguiente';
   if (isSubmitting) {
@@ -54,6 +59,8 @@ export function BusinessForm({
             onChange={onChange}
             onFileChange={onFileChange}
             errors={errors}
+            isRucVerified={isRucVerified} // â† PASS THIS
+            onVerificationChange={onRucVerificationChange} // â† PASS THIS
           />
         )}
 
@@ -62,10 +69,22 @@ export function BusinessForm({
         )}
 
         {stepNumber === 3 && (
-          <Step3Contact formData={formData} onChange={onChange} errors={errors} />
+          <Step3Contact
+            formData={formData}
+            onChange={onChange}
+            errors={errors}
+            isRucVerified={isRucVerified} // â† PASS THIS
+          />
         )}
 
-        {stepNumber === 4 && <Step4Legal formData={formData} onChange={onChange} errors={errors} />}
+        {stepNumber === 4 && (
+          <Step4Legal
+            formData={formData}
+            onChange={onChange}
+            errors={errors}
+            isRucVerified={isRucVerified} // â† PASS THIS
+          />
+        )}
 
         <div className={`flex-row ${onBack ? 'flex-justify-between' : 'flex-justify-end'} mt-2xl`}>
           {onBack && (
@@ -74,7 +93,7 @@ export function BusinessForm({
               style={{ borderRadius: '100px', marginRight: 20 }}
               onClick={onBack}
             >
-              Atrás
+              AtrÃ¡s
             </Button>
           )}
 

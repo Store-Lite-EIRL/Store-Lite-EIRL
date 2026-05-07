@@ -6,7 +6,7 @@
 
 'use client';
 
-import type { WizardData } from './kybWizard';
+import type { WizardData } from './KybWizard';
 
 export function KybStep2Representative({
   onSubmit,

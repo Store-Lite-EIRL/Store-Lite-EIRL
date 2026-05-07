@@ -7,6 +7,10 @@ export const env = {
   // Factiliza API Configuration (Server-side only)
   factilizaToken: process.env.FACTILIZA_TOKEN!,
   factilizaWspInstance: process.env.FACTILIZA_WSP_INSTANCE!,
+  // Twilio WhatsApp OTP Configuration (Server-side only)
+  twilioAccountSid: process.env.TWILIO_ACCOUNT_SID!,
+  twilioAuthToken: process.env.TWILIO_AUTH_TOKEN!,
+  twilioWhatsAppNumber: process.env.TWILIO_WHATSAPP_NUMBER!,
 } as const;
 
 // Optional: Add validation here to throw early if vars are missing

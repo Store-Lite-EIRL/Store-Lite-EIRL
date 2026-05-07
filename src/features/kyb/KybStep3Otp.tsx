@@ -8,7 +8,7 @@
 
 import { useState } from 'react';
 import { requestOtpAction, verifyOtpAction } from './kybActions';
-import type { WizardData } from './kybWizard';
+import type { WizardData } from './KybWizard';
 
 export function KybStep3Otp({
   onSubmit,
