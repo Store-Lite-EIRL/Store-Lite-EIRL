@@ -7,7 +7,10 @@ export interface BusinessData {
   logo: File | null;
   sector: string;
   description: string;
-  address: string;
+  address: string; // Keep for backward compatibility
+  departamento: string; // Department (from SUNAT)
+  provincia: string; // Province (from SUNAT)
+  distrito: string; // District (from SUNAT)
   city: string;
   phone: string;
   email: string;

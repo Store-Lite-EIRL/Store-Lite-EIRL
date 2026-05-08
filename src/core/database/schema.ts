@@ -165,6 +165,13 @@ export const businesses = pgTable(
     seoTitle: text('seo_title'),
     seoDescription: text('seo_description'),
     seoKeywords: text('seo_keywords').array(),
+    // KYB Verification Fields
+    verificationStatus: text('verification_status', {
+      enum: ['unverified', 'pending', 'verified', 'rejected'],
+    })
+      .notNull()
+      .default('unverified'),
+    verificationData: jsonb('verification_data').default({}),
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -1050,6 +1057,30 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
 }));
 
 // =====================================================
+// VERIFICATION OTP TABLE (Twilio WhatsApp OTP)
+// =====================================================
+// NOTA: code_hash almacena HMAC-SHA256 del código OTP
+// NUNCA se almacena el código en texto plano.
+// =====================================================
+
+export const verificationOtps = pgTable(
+  'verification_otps',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    identifier: text('identifier').notNull(), // phone number or email
+    codeHash: text('code_hash').notNull(), // HMAC-SHA256 del OTP (nunca texto plano)
+    type: text('type', { enum: ['phone', 'email'] }).notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    verified: boolean('verified').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    identifierIdx: index('verification_otps_identifier_idx').on(table.identifier),
+    expiresAtIdx: index('verification_otps_expires_at_idx').on(table.expiresAt),
+  }),
+);
+
+// =====================================================
 // TYPE EXPORTS
 // =====================================================
 
@@ -1120,3 +1151,7 @@ export type NewNotification = typeof notifications.$inferInsert;
 export function formatTicketNumber(series: string, correlative: number): string {
   return `${series}-${String(correlative).padStart(8, '0')}`;
 }
+
+// Verification OTP types
+export type VerificationOtp = typeof verificationOtps.$inferSelect;
+export type NewVerificationOtp = typeof verificationOtps.$inferInsert;

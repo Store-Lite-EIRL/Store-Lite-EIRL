@@ -19,6 +19,8 @@ designInspo/
 .aider.input.history
 .aider.tags.cache.v4/
 clone.html
+checkout_diff.txt
+*.backup
 
 # dependencies
 /node_modules
