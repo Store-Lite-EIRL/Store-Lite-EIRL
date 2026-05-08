@@ -55,6 +55,9 @@ export type VerifyRepresentativeInput = z.infer<typeof VerifyRepresentativeSchem
 export const RequestOtpSchema = z.object({
   identifier: z.string().regex(phoneRegex, 'Must be a valid Peruvian phone number (9XXXXXXXXX)'),
   type: z.enum(['phone', 'email']).default('phone'),
+  // Country prefix for Twilio formatting (e.g. "+51" for Peru)
+  // Only used server-side for Twilio — the DB stores the raw identifier
+  countryPrefix: z.string().default('+51'),
 });
 
 export type RequestOtpInput = z.infer<typeof RequestOtpSchema>;

@@ -22,6 +22,9 @@ export default function CreatedPage() {
   const [hasBusinesses, setHasBusinesses] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRucVerified, setIsRucVerified] = useState(false);
+  // Almacena el número de teléfono que fue verificado con OTP.
+  // Derivated state: cualquier campo con formData.phone === verifiedPhone muestra "✓ Verificado"
+  const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [formData, setFormData] = useState<BusinessData>({
     personType: 'natural',
@@ -109,6 +112,10 @@ export default function CreatedPage() {
 
   const handleRucVerificationChange = (isVerified: boolean) => {
     setIsRucVerified(isVerified);
+  };
+
+  const handlePhoneVerificationChange = (phone: string | null) => {
+    setVerifiedPhone(phone);
   };
 
   const handleFileChange = (file: File | null) => {
@@ -214,6 +221,9 @@ export default function CreatedPage() {
         } else if (!phoneRegex.test(formData.phone)) {
           newErrors.phone = 'Formato de teléfono inválido (9-15 dígitos).';
           isValid = false;
+        } else if (formData.phone !== verifiedPhone) {
+          newErrors.phone = 'Debe verificar el celular con código OTP.';
+          isValid = false;
         }
         break;
       case 3:
@@ -225,15 +235,18 @@ export default function CreatedPage() {
           newErrors.legalRepRole = 'El cargo del representante es obligatorio.';
           isValid = false;
         }
-        if (!formData.legalRepPhone) {
-          newErrors.legalRepPhone = 'El celular del representante es obligatorio.';
+        if (!formData.phone) {
+          newErrors.phone = 'El celular de contacto es obligatorio.';
           isValid = false;
-        } else if (!phoneRegex.test(formData.legalRepPhone)) {
-          newErrors.legalRepPhone = 'Formato de celular inválido.';
+        } else if (!phoneRegex.test(formData.phone)) {
+          newErrors.phone = 'Formato de celular inválido.';
+          isValid = false;
+        } else if (formData.phone !== verifiedPhone) {
+          newErrors.phone = 'Debe verificar el celular con código OTP.';
           isValid = false;
         }
-        if (!formData.legalRepEmail || !formData.legalRepEmail.includes('@')) {
-          newErrors.legalRepEmail = 'Email del representante inválido.';
+        if (!formData.email || !formData.email.includes('@')) {
+          newErrors.email = 'Email de contacto inválido.';
           isValid = false;
         }
         break;
@@ -269,6 +282,21 @@ export default function CreatedPage() {
             formDataToSubmit.append(key, value.toString());
           }
         });
+
+        // Auto-set legalRep fields from business contact info
+        // (micro-negocio: el representante usa el mismo contacto)
+        if (
+          !formDataToSubmit.get('legalRepPhone') ||
+          formDataToSubmit.get('legalRepPhone') === ''
+        ) {
+          formDataToSubmit.set('legalRepPhone', formData.phone);
+        }
+        if (
+          !formDataToSubmit.get('legalRepEmail') ||
+          formDataToSubmit.get('legalRepEmail') === ''
+        ) {
+          formDataToSubmit.set('legalRepEmail', formData.email);
+        }
         formDataToSubmit.append('storefrontTheme', JSON.stringify(storefrontTheme));
 
         // Handle the logo file specially with optimization
@@ -358,10 +386,11 @@ export default function CreatedPage() {
         </Button>
       )}
 
-      {/* Left Column: Form */}
+      {/* Left Column: Form (60%) */}
       <div
-        className="flex-1 flex-column flex-justify-center page-container"
+        className="flex-column flex-justify-center page-container"
         style={{
+          flex: '3 1 0%',
           backgroundColor: 'var(--md-sys-color-surface)',
           overflow: 'hidden',
           padding: '40px',
@@ -370,7 +399,7 @@ export default function CreatedPage() {
         <div
           className="slide-container"
           style={{
-            maxWidth: '480px',
+            maxWidth: '600px',
             margin: '0 auto',
             width: '100%',
           }}
@@ -415,7 +444,9 @@ export default function CreatedPage() {
                 onChange={handleChange}
                 errors={errors}
                 isSubmitting={isSubmitting}
-                isRucVerified={isRucVerified} // ← FIX: Pass isRucVerified prop
+                isRucVerified={isRucVerified}
+                verifiedPhone={verifiedPhone}
+                onPhoneVerificationChange={handlePhoneVerificationChange}
               />
             </div>
 
@@ -431,20 +462,22 @@ export default function CreatedPage() {
                 errors={errors}
                 isSubmitting={isSubmitting}
                 isRucVerified={isRucVerified}
+                verifiedPhone={verifiedPhone}
+                onPhoneVerificationChange={handlePhoneVerificationChange}
               />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Right Column: Dynamic Preview */}
+      {/* Right Column: Dynamic Preview (40%) */}
       <div
         className="flex-justify-center flex-align-center show-tablet-desktop"
         style={{
           backgroundColor: 'var(--md-sys-color-surface-variant)',
           height: '100vh',
           overflow: 'visible',
-          flex: 1,
+          flex: '2 1 0%',
           justifyContent: 'center',
           alignItems: 'center',
           padding: '40px',

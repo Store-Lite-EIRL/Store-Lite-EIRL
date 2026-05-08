@@ -1,5 +1,6 @@
 ﻿'use server';
 
+import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { verificationOtps } from '@/core/database/schema';
 import {
@@ -10,7 +11,82 @@ import {
 } from '@/features/kyb/kybSchemas';
 import { generateOTP, getRucInfo, getRucRepresentatives } from '@/lib/factiliza/client';
 import { sendOtpWhatsApp } from '@/lib/twilio/client';
-import { and, eq, gt } from 'drizzle-orm';
+import { and, eq, gt, lte, sql } from 'drizzle-orm';
+import crypto from 'node:crypto';
+
+// =====================================================
+// HELPERS
+// =====================================================
+
+/**
+ * Hashea un código OTP usando HMAC-SHA256.
+ * NUNCA se almacena el código en texto plano en la DB.
+ * Si alguien obtiene la DB, no puede reversar los OTPs
+ * porque no tiene la clave HMAC secreta.
+ */
+function hashOtpCode(code: string): string {
+  return crypto.createHmac('sha256', env.otpHashSecret).update(code).digest('hex');
+}
+
+/**
+ * Limpia OTPs expirados de la DB.
+ * Se llama antes de insertar un nuevo OTP para mantener
+ * la tabla limpia sin necesidad de un cron job.
+ */
+async function cleanExpiredOtps(): Promise<void> {
+  const result = await db
+    .delete(verificationOtps)
+    .where(lte(verificationOtps.expiresAt, new Date()))
+    .returning({ id: verificationOtps.id });
+
+  if (result.length > 0) {
+    console.log(`[KYB] Cleaned up ${result.length} expired OTPs`);
+  }
+}
+
+/**
+ * Rate limiting: máx 3 solicitudes OTP por identifier cada 5 minutos.
+ * Esto evita que quemen saldo de Twilio spammeando números.
+ */
+async function checkOtpRateLimit(
+  identifier: string,
+): Promise<{ allowed: boolean; retryAfterSeconds?: number }> {
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
+  const recentCount = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(verificationOtps)
+    .where(
+      and(
+        eq(verificationOtps.identifier, identifier),
+        gt(verificationOtps.createdAt, fiveMinutesAgo),
+      ),
+    )
+    .then((rows) => Number(rows[0]?.count ?? 0));
+
+  if (recentCount >= 3) {
+    // Find when the oldest of the 3 OTPs was created to suggest retry time
+    const oldest = await db
+      .select({ createdAt: verificationOtps.createdAt })
+      .from(verificationOtps)
+      .where(
+        and(
+          eq(verificationOtps.identifier, identifier),
+          gt(verificationOtps.createdAt, fiveMinutesAgo),
+        ),
+      )
+      .orderBy(verificationOtps.createdAt)
+      .limit(1);
+
+    const retryAfter = oldest[0]?.createdAt
+      ? Math.ceil((fiveMinutesAgo.getTime() - oldest[0].createdAt.getTime() + 5 * 60 * 1000) / 1000)
+      : 300;
+
+    return { allowed: false, retryAfterSeconds: Math.max(retryAfter, 60) };
+  }
+
+  return { allowed: true };
+}
 
 export async function verifyIdentityAction(formData: FormData) {
   try {
@@ -119,40 +195,68 @@ export async function verifyIdentityAction(formData: FormData) {
 
 /**
  * Request OTP via WhatsApp
- * Generates a 6-digit code, saves to DB, and sends via Factiliza WhatsApp API
+ * Generates a 6-digit code, hashes it, saves hash to DB, and sends via Twilio WhatsApp
+ * Includes: rate limiting (max 3/5min), cleanup of expired OTPs, OTP hashing
  */
 export async function requestOtpAction(formData: FormData) {
   try {
     const rawData = Object.fromEntries(formData.entries());
     const parsed = RequestOtpSchema.parse(rawData);
-    const { identifier, type } = parsed;
+    const { identifier, type, countryPrefix } = parsed;
 
     console.log(`[KYB] Requesting OTP for ${identifier} via ${type}`);
 
-    // Generate 6-digit OTP
+    // ── Rate limiting ──────────────────────────────────────────────
+    const rateCheck = await checkOtpRateLimit(identifier);
+    if (!rateCheck.allowed) {
+      console.warn(`[KYB] Rate limit hit for ${identifier}`);
+      return {
+        error: `Demasiadas solicitudes. Intenta de nuevo en ${rateCheck.retryAfterSeconds} segundos.`,
+      };
+    }
+
+    // ── Anti-fraude: número ya registrado? ─────────────────────────
+    // Si el teléfono ya tiene un OTP con verified=true, está asociado
+    // a otro negocio. Bloqueamos para evitar re-uso del mismo número.
+    const existingVerified = await db
+      .select({ id: verificationOtps.id })
+      .from(verificationOtps)
+      .where(and(eq(verificationOtps.identifier, identifier), eq(verificationOtps.verified, true)))
+      .limit(1);
+
+    if (existingVerified.length > 0) {
+      console.log(`[KYB] Phone ${identifier} already registered, rejecting`);
+      return {
+        error: 'Este número ya está registrado en el sistema. Use un número diferente.',
+      };
+    }
+
+    // ── Cleanup de OTPs expirados ─────────────────────────────────
+    await cleanExpiredOtps();
+
+    // ── Generar y hashear OTP ─────────────────────────────────────
     const code = generateOTP();
+    const codeHash = hashOtpCode(code);
 
     // Calculate expiration (5 minutes from now)
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 5);
 
-    // Save OTP to database
+    // Save OTP hash to database (NUNCA el código en texto plano)
     await db.insert(verificationOtps).values({
       identifier,
-      code,
+      codeHash,
       type,
       expiresAt,
     });
 
-    console.log(`[KYB] OTP saved to DB for ${identifier}, expires at ${expiresAt}`);
+    console.log(`[KYB] OTP hash saved to DB for ${identifier}, expires at ${expiresAt}`);
 
-    // Send via WhatsApp using Twilio (Official Meta Cloud API)
+    // ── Enviar OTP via Twilio WhatsApp ─────────────────────────────
     if (type === 'phone') {
-      // Format phone: ensure it has '+' prefix for international format
-      let phone = identifier.trim();
-      if (!phone.startsWith('+')) {
-        phone = `+${phone}`;
-      }
+      // Format phone: combine country prefix + local number for international format
+      const localNumber = identifier.trim();
+      const phone = `${countryPrefix}${localNumber}`;
 
       console.log(`[KYB] Sending OTP via Twilio WhatsApp to ${phone}`);
 
@@ -186,7 +290,8 @@ export async function requestOtpAction(formData: FormData) {
 
 /**
  * Verify OTP code
- * Checks if the code matches and hasn't expired
+ * Checks if the code hash matches and hasn't expired
+ * El código ingresado se hashea y se compara contra el hash almacenado
  */
 export async function verifyOtpAction(formData: FormData) {
   try {
@@ -196,14 +301,17 @@ export async function verifyOtpAction(formData: FormData) {
 
     console.log(`[KYB] Verifying OTP for ${identifier}`);
 
-    // Find valid OTP in database
+    // Hashear el código ingresado para comparar contra el hash en DB
+    const codeHash = hashOtpCode(code);
+
+    // Find valid OTP in database by hash
     const otpRecord = await db
       .select()
       .from(verificationOtps)
       .where(
         and(
           eq(verificationOtps.identifier, identifier),
-          eq(verificationOtps.code, code),
+          eq(verificationOtps.codeHash, codeHash),
           eq(verificationOtps.verified, false),
           gt(verificationOtps.expiresAt, new Date()), // Not expired
         ),

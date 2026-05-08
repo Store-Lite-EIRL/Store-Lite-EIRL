@@ -47,12 +47,6 @@ export interface FactilizaDniInfo {
   nombreCompleto: string;
 }
 
-export interface FactilizaOtpResponse {
-  success: boolean;
-  message: string;
-  messageId?: string;
-}
-
 // Cache structure
 export interface CacheEntry {
   data: any;

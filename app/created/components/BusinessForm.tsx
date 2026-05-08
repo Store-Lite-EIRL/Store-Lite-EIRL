@@ -16,6 +16,9 @@ interface BusinessFormProps {
   // NEW: Props for RUC verification state
   isRucVerified?: boolean;
   onRucVerificationChange?: (verified: boolean) => void;
+  // Props for phone verification state (stores the verified phone number)
+  verifiedPhone?: string | null;
+  onPhoneVerificationChange?: (phone: string | null) => void;
 }
 
 export function BusinessForm({
@@ -31,6 +34,8 @@ export function BusinessForm({
   isSubmitting,
   isRucVerified,
   onRucVerificationChange,
+  verifiedPhone,
+  onPhoneVerificationChange,
 }: BusinessFormProps) {
   let buttonText = 'Siguiente';
   if (isSubmitting) {
@@ -73,7 +78,9 @@ export function BusinessForm({
             formData={formData}
             onChange={onChange}
             errors={errors}
-            isRucVerified={isRucVerified} // â† PASS THIS
+            isRucVerified={isRucVerified}
+            verifiedPhone={verifiedPhone}
+            onPhoneVerificationChange={onPhoneVerificationChange}
           />
         )}
 
@@ -82,7 +89,9 @@ export function BusinessForm({
             formData={formData}
             onChange={onChange}
             errors={errors}
-            isRucVerified={isRucVerified} // â† PASS THIS
+            isRucVerified={isRucVerified}
+            verifiedPhone={verifiedPhone}
+            onPhoneVerificationChange={onPhoneVerificationChange}
           />
         )}
 
@@ -93,7 +102,7 @@ export function BusinessForm({
               style={{ borderRadius: '100px', marginRight: 20 }}
               onClick={onBack}
             >
-              AtrÃ¡s
+              Atras
             </Button>
           )}
 

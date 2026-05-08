@@ -1057,7 +1057,10 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
 }));
 
 // =====================================================
-// VERIFICATION OTP TABLE (KYB Factiliza)
+// VERIFICATION OTP TABLE (Twilio WhatsApp OTP)
+// =====================================================
+// NOTA: code_hash almacena HMAC-SHA256 del código OTP
+// NUNCA se almacena el código en texto plano.
 // =====================================================
 
 export const verificationOtps = pgTable(
@@ -1065,7 +1068,7 @@ export const verificationOtps = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     identifier: text('identifier').notNull(), // phone number or email
-    code: text('code').notNull(),
+    codeHash: text('code_hash').notNull(), // HMAC-SHA256 del OTP (nunca texto plano)
     type: text('type', { enum: ['phone', 'email'] }).notNull(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     verified: boolean('verified').notNull().default(false),

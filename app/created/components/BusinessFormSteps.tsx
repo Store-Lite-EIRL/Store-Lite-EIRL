@@ -2,8 +2,9 @@
 
 import { Button, Icon, IconButton, Select, SelectOption, TextField } from '@/shared/components/ui';
 import { getMaterialSelectValue, type MaterialSelectEvent } from '@/shared/utils';
-import { verifyIdentityAction } from '@app/actions/kyb';
+import { requestOtpAction, verifyIdentityAction, verifyOtpAction } from '@app/actions/kyb';
 import { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { BUSINESS_SECTORS, CARGO_OPTIONS } from '../constants';
 import type { BusinessData, FormErrors } from '../types';
 
@@ -43,7 +44,9 @@ interface StepProps {
   onChange: (field: keyof BusinessData, value: string) => void;
   errors: FormErrors;
   onVerificationChange?: (isVerified: boolean) => void;
-  isRucVerified?: boolean; // â† Para hacer campos read-only despuÃ©s de verificar
+  isRucVerified?: boolean; // ← Para hacer campos read-only después de verificar
+  verifiedPhone?: string | null; // Número de teléfono verificado (null si ninguno)
+  onPhoneVerificationChange?: (phone: string | null) => void;
 }
 
 const getFieldValue = (event: React.FormEvent<HTMLElement>) =>
@@ -144,7 +147,7 @@ export const Step1General = ({
         // For PN: Suggest the name from SUNAT, but let user type DNI manually
         setDniData({
           dni: '', // â† USER MUST TYPE THEIR 8-DIGIT DNI (not the 11-digit RUC!)
-          fullName: verificationData?.legalRepName || '', // â† Use legalRepName from server response
+          fullName: '', // â† USER MUST TYPE THEIR NAME to confirm identity
         });
 
         // âœ… PN: Mark as verified
@@ -178,21 +181,15 @@ export const Step1General = ({
             isRucVerified && verificationResult?.personType
               ? verificationResult.personType === 'natural'
                 ? 'Persona Natural (con Negocio)'
-                : 'Persona JurÃ­dica'
-              : 'Se detectarÃ¡ al verificar RUC'
+                : 'Persona Jurídica'
+              : 'Se detectará al verificar RUC'
           }
           disabled={true} // â† SOLO LECTURA (auto-detectado)
         />
 
-        <Select
-          label="PaÃ­s"
-          outlined
-          style={{ flex: 1 }}
-          value="PerÃº" // â† SIEMPRE PerÃº (SASS solo funciona en PerÃº por ahora)
-          disabled={true} // â† BLOQUEADO permanentemente
-        >
-          <SelectOption value="PerÃº" selected={true}>
-            PerÃº
+        <Select label="Paí­s" outlined style={{ flex: 1 }} value="Perú" disabled={true}>
+          <SelectOption value="Perú" selected={true}>
+            Perú
           </SelectOption>
         </Select>
       </div>
@@ -214,9 +211,7 @@ export const Step1General = ({
           }}
           error={!!errors.taxId}
           errorText={errors.taxId}
-          supportingText={
-            isRucVerified ? 'âœ“ Verificado con Factiliza' : 'Ingrese 11 dÃ­gitos (RUC)'
-          }
+          supportingText={isRucVerified ? 'Verificado con Factiliza' : 'Ingrese 11 dígitos (RUC)'}
         />
         <Button
           variant={isRucVerified ? 'tonal' : 'filled'}
@@ -233,7 +228,7 @@ export const Step1General = ({
           onClick={handleVerifyRuc}
           disabled={isVerifying || !formData.taxId || formData.taxId.length !== 11 || isRucVerified}
         >
-          {isVerifying ? '...' : isRucVerified ? 'âœ“' : 'Verificar'}
+          {isVerifying ? '...' : isRucVerified ? '✓' : 'Verificar'}
         </Button>
       </div>
 
@@ -321,7 +316,7 @@ export const Step1General = ({
                     setPjRepData((prev) => ({ ...prev, dni: value }));
                   }}
                   placeholder="12345678 (DNI) o 123456789 (CE)"
-                  supportingText="Ingrese DNI (8 dÃ­gitos) o CE (9 dÃ­gitos)"
+                  supportingText="Ingrese DNI (8 dígitos) o CE (9 dígitos)"
                 />
                 <TextField
                   label="Apellidos y Nombres del Representante (como aparece en DNI)"
@@ -441,7 +436,7 @@ export const Step1General = ({
 
       {/* Row 3: Commercial Name */}
       <TextField
-        label={formData.personType === 'natural' ? 'Nombre Comercial (opcional)' : 'RazÃ³n Social'}
+        label={formData.personType === 'natural' ? 'Nombre Comercial (opcional)' : 'Razón Social'}
         placeholder={formData.personType === 'natural' ? 'Mi Negocio' : formData.commercialName}
         variant="outlined"
         style={{ width: '100%' }}
@@ -549,7 +544,7 @@ export const Step2Economic = ({ formData, onChange, errors, isRucVerified }: Ste
     </Select>
 
     <TextField
-      label="DescripciÃ³n de la Empresa"
+      label="Descripción de la Empresa"
       placeholder="Describe brevemente lo que hace tu empresa..."
       variant="outlined"
       type="textarea"
@@ -567,208 +562,758 @@ export const Step2Economic = ({ formData, onChange, errors, isRucVerified }: Ste
   </>
 );
 
-export const Step3Contact = ({ formData, onChange, errors, isRucVerified }: StepProps) => (
-  <>
-    {/* ALL location fields are ALWAYS READ-ONLY - data comes from SUNAT */}
-    <div className="flex-responsive-row gap-md">
-      <TextField
-        label="DEPARTAMENTO"
-        placeholder="Lima"
-        variant="outlined"
-        style={{ flex: 1 }}
-        value={formData.departamento}
-        disabled={true} // â† ALWAYS READ-ONLY (data comes from SUNAT in Phase 1)
-        onInput={(e: React.FormEvent<HTMLElement>) => {
-          onChange('departamento', getFieldValue(e));
-        }}
-        error={!!errors.departamento}
-        errorText={errors.departamento}
-        supportingText="Verificado por SUNAT (no editable)"
-      >
-        <Icon slot="trailing-icon">map</Icon>
-      </TextField>
+const OTP_LENGTH = 6;
+const EMPTY_OTP_DIGITS = Array(OTP_LENGTH).fill('') as string[];
 
-      <TextField
-        label="PROVINCIA"
-        placeholder="Lima"
-        variant="outlined"
-        style={{ flex: 1 }}
-        value={formData.provincia}
-        disabled={true} // â† ALWAYS READ-ONLY (data comes from SUNAT in Phase 1)
-        onInput={(e: React.FormEvent<HTMLElement>) => {
-          onChange('provincia', getFieldValue(e));
-        }}
-        error={!!errors.provincia}
-        errorText={errors.provincia}
-        supportingText="Verificado por SUNAT (no editable)"
-      />
-    </div>
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
 
-    <div className="flex-responsive-row gap-md" style={{ marginTop: '16px' }}>
-      <TextField
-        label="DISTRITO"
-        placeholder="Miraflores"
-        variant="outlined"
-        style={{ flex: 1 }}
-        value={formData.distrito}
-        disabled={true} // â† ALWAYS READ-ONLY (data comes from SUNAT in Phase 1)
-        onInput={(e: React.FormEvent<HTMLElement>) => {
-          onChange('distrito', getFieldValue(e));
-        }}
-        error={!!errors.distrito}
-        errorText={errors.distrito}
-        supportingText="Verificado por SUNAT (no editable)"
-      >
-        <Icon slot="trailing-icon">location_on</Icon>
-      </TextField>
+interface PhoneOtpVerificationOptions {
+  formData: BusinessData;
+  onChange: (field: keyof BusinessData, value: string) => void;
+  verifiedPhone?: string | null;
+  onPhoneVerificationChange?: (phone: string | null) => void;
+}
 
-      <TextField
-        label="Ciudad (Opcional)"
-        placeholder="Lima"
-        variant="outlined"
-        style={{ flex: 1 }}
-        value={formData.city}
-        // â† Ciudad is OPTIONAL and editable (user can type their city even after RUC verification)
-        onInput={(e: React.FormEvent<HTMLElement>) => {
-          onChange('city', getFieldValue(e));
-        }}
-        error={!!errors.city}
-        errorText={errors.city}
-      />
-    </div>
+function usePhoneOtpVerification({
+  formData,
+  onChange,
+  verifiedPhone,
+  onPhoneVerificationChange,
+}: PhoneOtpVerificationOptions) {
+  const isVerified = verifiedPhone !== null && formData.phone === verifiedPhone;
+  const [isOtpSending, setIsOtpSending] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpDigits, setOtpDigits] = useState<string[]>(EMPTY_OTP_DIGITS);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [isOtpVerifying, setIsOtpVerifying] = useState(false);
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-    <div className="flex-responsive-row gap-md" style={{ marginTop: '16px' }}>
-      <TextField
-        label="TelÃ©fono"
-        placeholder="999 999 999"
-        variant="outlined"
-        style={{ flex: 1 }}
-        value={formData.phone}
-        prefixText={formData.countryPrefix}
-        onInput={(e: React.FormEvent<HTMLElement>) => {
-          onChange('phone', getFieldValue(e));
-        }}
-        error={!!errors.phone}
-        errorText={errors.phone}
-      >
-        <Icon slot="trailing-icon">phone</Icon>
-      </TextField>
+  const handlePhoneChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 9);
+    onChange('phone', digits);
+    if (otpError) setOtpError(null);
+  };
 
-      <TextField
-        label="Email"
-        placeholder="contacto@empresa.com"
-        variant="outlined"
-        style={{ flex: 1 }}
-        value={formData.email}
-        type="email"
-        onInput={(e: React.FormEvent<HTMLElement>) => {
-          onChange('email', getFieldValue(e));
-        }}
-        error={!!errors.email}
-        errorText={errors.email}
-      >
-        <Icon slot="trailing-icon">mail</Icon>
-      </TextField>
-    </div>
-  </>
-);
+  const handleRequestOtp = async () => {
+    const phone = formData.phone.trim();
+    if (phone.length !== 9) return;
 
-export const Step4Legal = ({ formData, onChange, errors, isRucVerified }: StepProps) => (
-  <>
-    {/* Nombre del Representante: ALWAYS READ-ONLY (comes from SUNAT in Phase 1) */}
-    <TextField
-      label={
-        formData.personType === 'natural' ? 'Nombre Completo' : 'Nombre del Representante Legal'
+    setIsOtpSending(true);
+    setOtpError(null);
+
+    try {
+      const formDataObj = new FormData();
+      formDataObj.append('identifier', phone);
+      formDataObj.append('type', 'phone');
+      formDataObj.append('countryPrefix', formData.countryPrefix || '+51');
+
+      const result = await requestOtpAction(formDataObj);
+
+      if (result.error) {
+        setOtpError(result.error);
+        return;
       }
-      variant="outlined"
-      style={{ width: '100%' }}
-      value={formData.legalRepName}
-      disabled={true} // â† ALWAYS READ-ONLY (data comes from SUNAT in Phase 1)
-      onInput={(e: React.FormEvent<HTMLElement>) => {
-        onChange('legalRepName', getFieldValue(e));
-      }}
-      error={!!errors.legalRepName}
-      errorText={errors.legalRepName}
-      supportingText="Verificado por SUNAT (no editable)"
-    />
 
-    <div className="flex-column gap-sm">
-      <Select
-        label="Cargo"
-        outlined
-        style={{ width: '100%' }}
-        value={CARGO_OPTIONS.includes(formData.legalRepRole) ? formData.legalRepRole : 'Otro'}
-        onChange={(e: MaterialSelectEvent) => {
-          const value = getMaterialSelectValue(e);
-          if (value !== 'Otro') {
-            onChange('legalRepRole', value);
-          }
-        }}
-      >
-        {CARGO_OPTIONS.map((o) => (
-          <SelectOption
-            key={o}
-            value={o}
-            selected={
-              formData.legalRepRole === o ||
-              (o === 'Otro' && !CARGO_OPTIONS.includes(formData.legalRepRole))
+      setOtpDigits([...EMPTY_OTP_DIGITS]);
+      setOtpError(null);
+      setShowOtpModal(true);
+      setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
+    } catch (error: unknown) {
+      setOtpError(getErrorMessage(error, 'Error al enviar código'));
+    } finally {
+      setIsOtpSending(false);
+    }
+  };
+
+  const handleOtpInput = (index: number, value: string) => {
+    if (value && !/^\d$/.test(value)) return;
+
+    const newDigits = [...otpDigits];
+    newDigits[index] = value;
+    setOtpDigits(newDigits);
+    setOtpError(null);
+
+    if (value && index < OTP_LENGTH - 1) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+    const pastedData = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, OTP_LENGTH);
+    if (pastedData.length === 0) return;
+
+    event.preventDefault();
+
+    const newDigits = pastedData.split('').concat(EMPTY_OTP_DIGITS).slice(0, OTP_LENGTH);
+    setOtpDigits(newDigits);
+
+    const nextEmpty = newDigits.findIndex((digit) => digit === '');
+    const focusIndex = nextEmpty === -1 ? OTP_LENGTH - 1 : nextEmpty;
+    otpInputRefs.current[focusIndex]?.focus();
+  };
+
+  const handleOtpKeyDown = (index: number, event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Backspace' && !otpDigits[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const closeOtpModal = () => {
+    setShowOtpModal(false);
+    setOtpError(null);
+  };
+
+  const handleVerifyOtp = async () => {
+    const code = otpDigits.join('');
+    if (code.length !== OTP_LENGTH) return;
+
+    setIsOtpVerifying(true);
+    setOtpError(null);
+
+    try {
+      const formDataObj = new FormData();
+      formDataObj.append('identifier', formData.phone.trim());
+      formDataObj.append('code', code);
+
+      const result = await verifyOtpAction(formDataObj);
+
+      if (result.error) {
+        setOtpError(result.error);
+        return;
+      }
+
+      setShowOtpModal(false);
+      setOtpError(null);
+      onPhoneVerificationChange?.(formData.phone);
+    } catch (error: unknown) {
+      setOtpError(getErrorMessage(error, 'Error al verificar código'));
+    } finally {
+      setIsOtpVerifying(false);
+    }
+  };
+
+  const resendOtp = () => {
+    setOtpDigits([...EMPTY_OTP_DIGITS]);
+    setOtpError(null);
+    void handleRequestOtp();
+  };
+
+  return {
+    closeOtpModal,
+    handleOtpInput,
+    handleOtpKeyDown,
+    handleOtpPaste,
+    handlePhoneChange,
+    handleRequestOtp,
+    handleVerifyOtp,
+    isOtpSending,
+    isOtpVerifying,
+    isVerified,
+    otpDigits,
+    otpError,
+    otpInputRefs,
+    resendOtp,
+    showOtpModal,
+  };
+}
+
+export const Step3Contact = ({
+  formData,
+  onChange,
+  errors,
+  isRucVerified,
+  verifiedPhone,
+  onPhoneVerificationChange,
+}: StepProps) => {
+  const otp = usePhoneOtpVerification({
+    formData,
+    onChange,
+    verifiedPhone,
+    onPhoneVerificationChange,
+  });
+
+  return (
+    <>
+      {/* ALL location fields are ALWAYS READ-ONLY - data comes from SUNAT */}
+      <div className="flex-responsive-row gap-md">
+        <TextField
+          label="DEPARTAMENTO"
+          placeholder="Lima"
+          variant="outlined"
+          style={{ flex: 1 }}
+          value={formData.departamento}
+          disabled={true}
+          onInput={(e: React.FormEvent<HTMLElement>) => {
+            onChange('departamento', getFieldValue(e));
+          }}
+          error={!!errors.departamento}
+          errorText={errors.departamento}
+          supportingText="Verificado por SUNAT (no editable)"
+        >
+          <Icon slot="trailing-icon">map</Icon>
+        </TextField>
+
+        <TextField
+          label="PROVINCIA"
+          placeholder="Lima"
+          variant="outlined"
+          style={{ flex: 1 }}
+          value={formData.provincia}
+          disabled={true}
+          onInput={(e: React.FormEvent<HTMLElement>) => {
+            onChange('provincia', getFieldValue(e));
+          }}
+          error={!!errors.provincia}
+          errorText={errors.provincia}
+          supportingText="Verificado por SUNAT (no editable)"
+        />
+      </div>
+
+      <div className="flex-responsive-row gap-md" style={{ marginTop: '16px' }}>
+        <TextField
+          label="DISTRITO"
+          placeholder="Miraflores"
+          variant="outlined"
+          style={{ flex: 1 }}
+          value={formData.distrito}
+          disabled={true}
+          onInput={(e: React.FormEvent<HTMLElement>) => {
+            onChange('distrito', getFieldValue(e));
+          }}
+          error={!!errors.distrito}
+          errorText={errors.distrito}
+          supportingText="Verificado por SUNAT (no editable)"
+        >
+          <Icon slot="trailing-icon">location_on</Icon>
+        </TextField>
+
+        <TextField
+          label="Ciudad (Opcional)"
+          placeholder="Lima"
+          variant="outlined"
+          style={{ flex: 1 }}
+          value={formData.city}
+          onInput={(e: React.FormEvent<HTMLElement>) => {
+            onChange('city', getFieldValue(e));
+          }}
+          error={!!errors.city}
+          errorText={errors.city}
+        />
+      </div>
+
+      <div className="flex-responsive-row gap-md" style={{ marginTop: '16px' }}>
+        {/* Phone field with inline Verify button */}
+        <div style={{ position: 'relative', flex: 1 }}>
+          <TextField
+            label="Teléfono"
+            placeholder="999 999 999"
+            variant="outlined"
+            style={{ width: '100%' }}
+            value={formData.phone}
+            prefixText={formData.countryPrefix}
+            disabled={otp.isVerified}
+            maxLength={9}
+            onInput={(e: React.FormEvent<HTMLElement>) => {
+              otp.handlePhoneChange(getFieldValue(e));
+            }}
+            error={!!errors.phone || !!otp.otpError}
+            errorText={errors.phone || otp.otpError || ''}
+            supportingText={
+              otp.isVerified
+                ? '✓ Verificado con WhatsApp'
+                : otp.otpError
+                  ? otp.otpError
+                  : 'Ingrese 9 dígitos'
             }
           >
-            {o}
-          </SelectOption>
-        ))}
-      </Select>
+            {otp.isVerified ? (
+              <Icon slot="trailing-icon">verified</Icon>
+            ) : (
+              <Icon slot="trailing-icon">phone</Icon>
+            )}
+          </TextField>
 
-      {(!CARGO_OPTIONS.includes(formData.legalRepRole) || formData.legalRepRole === 'Otro') && (
+          {/* Verify button — shows when 9 digits entered and not yet verified */}
+          {formData.phone.length === 9 && !otp.isVerified && (
+            <Button
+              variant="filled"
+              style={{
+                position: 'absolute',
+                right: '8px',
+                top: '8px',
+                transform: 'translateY(0)',
+                borderRadius: '100px',
+                padding: '8px 16px',
+                minWidth: '100px',
+                height: '36px',
+              }}
+              onClick={otp.handleRequestOtp}
+              disabled={otp.isOtpSending}
+            >
+              {otp.isOtpSending ? '...' : 'Verificar'}
+            </Button>
+          )}
+        </div>
+
         <TextField
-          label="Especifique Cargo"
-          placeholder="Ej. Apoderado, Socio"
+          label="Email"
+          placeholder="contacto@empresa.com"
           variant="outlined"
-          style={{ width: '100%' }}
-          value={formData.legalRepRole === 'Otro' ? '' : formData.legalRepRole}
+          style={{ flex: 1 }}
+          value={formData.email}
+          type="email"
           onInput={(e: React.FormEvent<HTMLElement>) => {
-            onChange('legalRepRole', getFieldValue(e));
+            onChange('email', getFieldValue(e));
           }}
-          error={!!errors.legalRepRole}
-          errorText={errors.legalRepRole}
-        />
-      )}
-    </div>
+          error={!!errors.email}
+          errorText={errors.email}
+        >
+          <Icon slot="trailing-icon">mail</Icon>
+        </TextField>
+      </div>
 
-    <div className="flex-responsive-row gap-md">
-      <TextField
-        label="Celular de contacto"
-        placeholder="999 999 999"
-        variant="outlined"
-        style={{ flex: 1 }}
-        value={formData.phone} // â† Use phone from Phase 3 (user input)
-        prefixText={formData.countryPrefix}
-        // â† REMOVED disabled: user wants this editable
-        onInput={(e: React.FormEvent<HTMLElement>) => {
-          onChange('phone', getFieldValue(e)); // â† Update phone in formData
-        }}
-        error={!!errors.phone}
-        errorText={errors.phone}
-      >
-        <Icon slot="trailing-icon">smartphone</Icon>
-      </TextField>
+      {/* ── OTP Verification Modal ──────────────────────────────── */}
+      {otp.showOtpModal &&
+        createPortal(
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.32)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                backgroundColor: 'var(--md-sys-color-surface)',
+                padding: '24px',
+                borderRadius: '16px',
+                width: '90%',
+                maxWidth: '400px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+                textAlign: 'center',
+              }}
+            >
+              <h2 style={{ margin: 0, fontSize: '1.25rem' }}>Verificar Teléfono</h2>
+              <p
+                style={{
+                  color: 'var(--md-sys-color-on-surface-variant)',
+                  fontSize: '0.875rem',
+                  margin: 0,
+                }}
+              >
+                Ingresa el código de 6 dígitos que enviamos a tu WhatsApp
+                <br />
+                <strong>
+                  {formData.countryPrefix} {formData.phone}
+                </strong>
+              </p>
 
+              {/* 6-digit OTP inputs */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '8px',
+                  justifyContent: 'center',
+                  margin: '16px 0',
+                }}
+              >
+                {otp.otpDigits.map((digit, i) => (
+                  <input
+                    key={i}
+                    ref={(el) => {
+                      otp.otpInputRefs.current[i] = el;
+                    }}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => otp.handleOtpInput(i, e.target.value)}
+                    onKeyDown={(e) => otp.handleOtpKeyDown(i, e)}
+                    onPaste={i === 0 ? otp.handleOtpPaste : undefined}
+                    autoComplete="one-time-code"
+                    style={{
+                      width: '48px',
+                      height: '56px',
+                      textAlign: 'center',
+                      fontSize: '1.5rem',
+                      fontWeight: 500,
+                      border: `2px solid ${
+                        otp.otpError ? 'var(--md-sys-color-error)' : 'var(--md-sys-color-outline)'
+                      }`,
+                      borderRadius: '12px',
+                      outline: 'none',
+                      backgroundColor: 'var(--md-sys-color-surface-container-high)',
+                      color: 'var(--md-sys-color-on-surface)',
+                      caretColor: 'var(--md-sys-color-primary)',
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = 'var(--md-sys-color-primary)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = otp.otpError
+                        ? 'var(--md-sys-color-error)'
+                        : 'var(--md-sys-color-outline)';
+                    }}
+                  />
+                ))}
+              </div>
+
+              {/* Error display */}
+              {otp.otpError && (
+                <div
+                  style={{
+                    color: 'var(--md-sys-color-error)',
+                    fontSize: '0.875rem',
+                    padding: '8px 12px',
+                    backgroundColor: 'var(--md-sys-color-error-container)',
+                    borderRadius: '8px',
+                  }}
+                >
+                  {otp.otpError}
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginTop: '8px',
+                }}
+              >
+                <Button
+                  variant="text"
+                  onClick={() => {
+                    otp.closeOtpModal();
+                  }}
+                >
+                  Cancelar
+                </Button>
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button variant="text" onClick={otp.handleRequestOtp} disabled={otp.isOtpSending}>
+                    Reenviar código
+                  </Button>
+
+                  <Button
+                    variant="filled"
+                    onClick={otp.handleVerifyOtp}
+                    disabled={otp.otpDigits.join('').length !== 6 || otp.isOtpVerifying}
+                  >
+                    {otp.isOtpVerifying ? 'Validando...' : 'Validar'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
+  );
+};
+
+export const Step4Legal = ({
+  formData,
+  onChange,
+  errors,
+  isRucVerified,
+  verifiedPhone,
+  onPhoneVerificationChange,
+}: StepProps) => {
+  const otp = usePhoneOtpVerification({
+    formData,
+    onChange,
+    verifiedPhone,
+    onPhoneVerificationChange,
+  });
+
+  return (
+    <>
+      {/* Nombre del Representante: ALWAYS READ-ONLY (comes from SUNAT in Phase 1) */}
       <TextField
-        label="Email de contacto"
-        placeholder="gerente@empresa.com"
+        label={
+          formData.personType === 'natural' ? 'Nombre Completo' : 'Nombre del Representante Legal'
+        }
         variant="outlined"
-        style={{ flex: 1 }}
-        value={formData.email} // â† Use email from Phase 3 (user input)
-        type="email"
-        // â† REMOVED disabled: user wants this editable
+        style={{ width: '100%' }}
+        value={formData.legalRepName}
+        disabled={true}
         onInput={(e: React.FormEvent<HTMLElement>) => {
-          onChange('email', getFieldValue(e)); // â† Update email in formData
+          onChange('legalRepName', getFieldValue(e));
         }}
-        error={!!errors.email}
-        errorText={errors.email}
-      >
-        <Icon slot="trailing-icon">alternate_email</Icon>
-      </TextField>
-    </div>
-  </>
-);
+        error={!!errors.legalRepName}
+        errorText={errors.legalRepName}
+        supportingText="Verificado por SUNAT (no editable)"
+      />
+
+      <div className="flex-column gap-sm">
+        <Select
+          label="Cargo"
+          outlined
+          style={{ width: '100%' }}
+          value={CARGO_OPTIONS.includes(formData.legalRepRole) ? formData.legalRepRole : 'Otro'}
+          onChange={(e: MaterialSelectEvent) => {
+            const value = getMaterialSelectValue(e);
+            if (value !== 'Otro') {
+              onChange('legalRepRole', value);
+            }
+          }}
+        >
+          {CARGO_OPTIONS.map((o) => (
+            <SelectOption
+              key={o}
+              value={o}
+              selected={
+                formData.legalRepRole === o ||
+                (o === 'Otro' && !CARGO_OPTIONS.includes(formData.legalRepRole))
+              }
+            >
+              {o}
+            </SelectOption>
+          ))}
+        </Select>
+
+        {(!CARGO_OPTIONS.includes(formData.legalRepRole) || formData.legalRepRole === 'Otro') && (
+          <TextField
+            label="Especifique Cargo"
+            placeholder="Ej. Apoderado, Socio"
+            variant="outlined"
+            style={{ width: '100%' }}
+            value={formData.legalRepRole === 'Otro' ? '' : formData.legalRepRole}
+            onInput={(e: React.FormEvent<HTMLElement>) => {
+              onChange('legalRepRole', getFieldValue(e));
+            }}
+            error={!!errors.legalRepRole}
+            errorText={errors.legalRepRole}
+          />
+        )}
+      </div>
+
+      <div className="flex-responsive-row gap-md">
+        <div style={{ position: 'relative', flex: 1 }}>
+          <TextField
+            label="Celular de contacto"
+            placeholder="999 999 999"
+            variant="outlined"
+            style={{ width: '100%' }}
+            value={formData.phone}
+            prefixText={formData.countryPrefix}
+            disabled={false} // Siempre editable — si cambia el nro, se pide re-verificar
+            maxLength={9}
+            onInput={(e: React.FormEvent<HTMLElement>) => {
+              otp.handlePhoneChange(getFieldValue(e));
+            }}
+            error={!!errors.phone || !!otp.otpError}
+            errorText={errors.phone || otp.otpError || ''}
+            supportingText={
+              otp.isVerified
+                ? '✓ Verificado con WhatsApp'
+                : otp.otpError
+                  ? otp.otpError
+                  : formData.phone.length === 9
+                    ? 'Presione Verificar para validar'
+                    : 'Ingrese 9 dígitos'
+            }
+          >
+            {otp.isVerified ? (
+              <Icon slot="trailing-icon">verified</Icon>
+            ) : (
+              <Icon slot="trailing-icon">smartphone</Icon>
+            )}
+          </TextField>
+
+          {/* Verify button — shows when 9 digits entered and not yet verified */}
+          {formData.phone.length === 9 && !otp.isVerified && (
+            <Button
+              variant="filled"
+              style={{
+                position: 'absolute',
+                right: '8px',
+                top: '8px',
+                transform: 'translateY(0)',
+                borderRadius: '100px',
+                padding: '8px 16px',
+                minWidth: '100px',
+                height: '36px',
+              }}
+              onClick={otp.handleRequestOtp}
+              disabled={otp.isOtpSending}
+            >
+              {otp.isOtpSending ? '...' : 'Verificar'}
+            </Button>
+          )}
+        </div>
+
+        <TextField
+          label="Email de contacto"
+          placeholder="gerente@empresa.com"
+          variant="outlined"
+          style={{ flex: 1 }}
+          value={formData.email}
+          type="email"
+          onInput={(e: React.FormEvent<HTMLElement>) => {
+            onChange('email', getFieldValue(e));
+          }}
+          error={!!errors.email}
+          errorText={errors.email}
+        >
+          <Icon slot="trailing-icon">alternate_email</Icon>
+        </TextField>
+      </div>
+
+      {/* ── OTP Verification Modal ──────────────────────────────── */}
+      {otp.showOtpModal &&
+        createPortal(
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+              backgroundColor: 'rgba(0,0,0,0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+            }}
+            onClick={otp.closeOtpModal}
+          >
+            <div
+              style={{
+                backgroundColor: 'var(--md-sys-color-surface)',
+                borderRadius: '16px',
+                padding: '32px',
+                maxWidth: '400px',
+                width: '90%',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600, marginBottom: '8px' }}>
+                Verificar teléfono
+              </h2>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: '0.875rem',
+                  color: 'var(--md-sys-color-on-surface-variant)',
+                  marginBottom: '24px',
+                }}
+              >
+                Ingresa el código de 6 dígitos enviado a{' '}
+                <strong>
+                  {formData.countryPrefix} {formData.phone}
+                </strong>
+              </p>
+
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '8px',
+                  justifyContent: 'center',
+                  marginBottom: '24px',
+                }}
+              >
+                {otp.otpDigits.map((digit, index) => (
+                  <input
+                    key={index}
+                    ref={(el) => {
+                      otp.otpInputRefs.current[index] = el;
+                    }}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => otp.handleOtpInput(index, e.target.value)}
+                    onPaste={index === 0 ? otp.handleOtpPaste : undefined}
+                    onKeyDown={(e) => otp.handleOtpKeyDown(index, e)}
+                    style={{
+                      width: '48px',
+                      height: '56px',
+                      textAlign: 'center',
+                      fontSize: '1.5rem',
+                      fontWeight: 600,
+                      border: `2px solid ${otp.otpDigits[index] ? 'var(--md-sys-color-primary)' : otp.otpError ? 'var(--md-sys-color-error)' : 'var(--md-sys-color-outline)'}`,
+                      borderRadius: '12px',
+                      outline: 'none',
+                      backgroundColor: 'var(--md-sys-color-surface-container-highest)',
+                      color: 'var(--md-sys-color-on-surface)',
+                      caretColor: 'transparent',
+                    }}
+                  />
+                ))}
+              </div>
+
+              {otp.otpError && (
+                <p
+                  style={{
+                    color: 'var(--md-sys-color-error)',
+                    fontSize: '0.875rem',
+                    textAlign: 'center',
+                    margin: '0 0 16px 0',
+                  }}
+                >
+                  {otp.otpError}
+                </p>
+              )}
+
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '12px',
+                  justifyContent: 'center',
+                }}
+              >
+                <Button
+                  variant="text"
+                  style={{ borderRadius: '100px' }}
+                  onClick={() => {
+                    otp.closeOtpModal();
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="outlined"
+                  style={{ borderRadius: '100px' }}
+                  onClick={() => {
+                    otp.resendOtp();
+                  }}
+                  disabled={otp.isOtpSending}
+                >
+                  Reenviar código
+                </Button>
+                <Button
+                  variant="filled"
+                  style={{ borderRadius: '100px', padding: '0 24px' }}
+                  onClick={otp.handleVerifyOtp}
+                  disabled={otp.otpDigits.join('').length !== 6 || otp.isOtpVerifying}
+                >
+                  {otp.isOtpVerifying ? 'Validando...' : 'Validar'}
+                </Button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
+  );
+};

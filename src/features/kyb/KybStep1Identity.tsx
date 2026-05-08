@@ -24,8 +24,6 @@ export function KybStep1Identity({
   );
   const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
     // Debug: Log what's actually being submitted from the client
-    console.log('[Client] Submitting FormData:', Object.fromEntries(formData.entries()));
-
     const res = await verifyIdentityAction(formData);
     if (!res.error && res.data) {
       onSubmit(res.data); // Pass the response data to wizard
@@ -35,7 +33,7 @@ export function KybStep1Identity({
 
   return (
     <form action={formAction} className="space-y-4">
-      <md-headline-small>VerificaciÃ³n de Identidad</md-headline-small>
+      <md-headline-small>Verificación de Identidad</md-headline-small>
       <p className="text-on-surface-variant">
         Paso 1 de 4. Selecciona el tipo de persona y valida el documento.
       </p>
@@ -62,15 +60,15 @@ export function KybStep1Identity({
             onChange={() => setPersonType('juridica')}
             required
           />
-          <span className="ml-2">Persona JurÃ­dica (RUC)</span>
+          <span className="ml-2">Persona Jurídica (RUC)</span>
         </label>
       </div>
 
       {/* Document Number Input */}
       <md-outlined-text-field
         name="documentNumber"
-        label="NÃºmero de Documento"
-        placeholder="Ingrese DNI (8 dÃ­gitos) o RUC (11 dÃ­gitos)"
+        label="Número de Documento"
+        placeholder="Ingrese DNI (8 dígitos) o RUC (11 dígitos)"
         required
         className="w-full"
       />
@@ -82,9 +80,9 @@ export function KybStep1Identity({
       {state?.success && state.data && (
         <div className="bg-secondary-container p-4 rounded-lg">
           <p className="font-bold">Datos Verificados:</p>
-          <p>RazÃ³n Social: {state.data.razonSocial || state.data.legalRepName}</p>
+          <p>Razón Social: {state.data.razonSocial || state.data.legalRepName}</p>
           <p>Estado: ACTIVO / HABIDO</p>
-          <p>DirecciÃ³n: {state.data.address}</p>
+          <p>Dirección: {state.data.address}</p>
         </div>
       )}
 
