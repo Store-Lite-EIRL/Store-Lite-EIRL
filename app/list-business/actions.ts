@@ -2,12 +2,82 @@
 
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
-import { businesses, productMedia, products } from '@/core/database/schema';
+import { businesses, productCategories, productMedia, products } from '@/core/database/schema';
 import type { CookieOptions } from '@supabase/ssr';
 import { createServerClient } from '@supabase/ssr';
-import { eq, inArray } from 'drizzle-orm';
+import { asc, count, desc, eq, inArray } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
+
+export async function getProductStats(businessId: string) {
+  const [productCount] = await db
+    .select({ count: count() })
+    .from(products)
+    .where(eq(products.businessId, businessId));
+
+  const [categoryCount] = await db
+    .select({ count: count() })
+    .from(productCategories)
+    .where(eq(productCategories.businessId, businessId));
+
+  const lastProduct = await db.query.products.findFirst({
+    where: eq(products.businessId, businessId),
+    orderBy: [desc(products.createdAt)],
+    columns: {
+      title: true,
+      createdAt: true,
+      price: true,
+    },
+  });
+
+  return {
+    productCount: productCount?.count ?? 0,
+    categoryCount: categoryCount?.count ?? 0,
+    lastProduct: lastProduct
+      ? {
+          title: lastProduct.title,
+          createdAt: lastProduct.createdAt.toISOString(),
+          price: lastProduct.price,
+        }
+      : null,
+  };
+}
+
+export async function getProductsForExport(businessId: string) {
+  const rows = await db.query.products.findMany({
+    where: eq(products.businessId, businessId),
+    columns: { title: true, stock: true },
+    with: {
+      category: {
+        columns: { name: true },
+      },
+    },
+    orderBy: [asc(products.title)],
+  });
+
+  // Compute count per category in a single pass
+  const categoryCounts = new Map<string, number>();
+  for (const row of rows) {
+    const catName = row.category?.name ?? 'Sin categoría';
+    categoryCounts.set(catName, (categoryCounts.get(catName) ?? 0) + 1);
+  }
+
+  const productsData = rows.map((row) => {
+    const catName = row.category?.name ?? 'Sin categoría';
+    return {
+      title: row.title,
+      category: catName,
+      stock: row.stock,
+      categoryCount: categoryCounts.get(catName) ?? 0,
+    };
+  });
+
+  const categorySummary = [...categoryCounts.entries()]
+    .map(([name, count]) => ({ name, productCount: count }))
+    .sort((a, b) => b.productCount - a.productCount);
+
+  return { products: productsData, categorySummary };
+}
 
 export async function deleteBusinessAction(businessId: string) {
   const cookieStore = await cookies();

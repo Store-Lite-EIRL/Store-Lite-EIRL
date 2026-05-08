@@ -94,19 +94,15 @@
 .mainContent {
   flex: 1;
   background-color: var(--md-sys-color-surface);
-  padding: 48px 48px;
+  padding: 48px 48px 0;
   position: relative;
   overflow-y: auto;
-}
-
-.contentContainer {
-  max-width: 600px;
 }
 
 .closeButtonContainer {
   position: fixed;
   top: 40px;
-  right: 40px;
+  right: 22px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -349,7 +345,11 @@
   }
 
   .mainContent {
-    padding: 2rem 1.5rem;
+    padding: 2rem 1.5rem 0;
+  }
+
+  .stickyFooter {
+    padding: 12px 0;
   }
 
   .closeButtonContainer {
@@ -503,14 +503,28 @@
   gap: 32px;
 }
 
+/* Wrapper para que el stickyFooter pueda ocupar todo el ancho del mainContent */
+.tabContentWrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.contentContainer {
+  flex: 1;
+  max-width: 600px;
+}
+
 .stickyFooter {
   margin-top: 30px;
+  padding: 12px 0;
   position: sticky;
   bottom: 0;
   background: var(--md-sys-color-surface);
-  padding: 10px 0;
   border-top: 1px solid var(--md-sys-color-outline-variant);
   z-index: 10;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .subSectionTitle {
@@ -518,6 +532,16 @@
   font-weight: 700;
   color: var(--md-sys-color-on-surface);
   margin: 16px 0 8px;
+}
+
+/* Read-only / disabled fields — look like display data, not broken inputs */
+.disabledField {
+  --md-outlined-text-field-outline-color: var(--md-sys-color-outline-variant);
+  --md-outlined-text-field-hover-outline-color: var(--md-sys-color-outline-variant);
+  --md-outlined-text-field-focus-outline-color: var(--md-sys-color-outline-variant);
+  --md-outlined-text-field-input-text-color: var(--md-sys-color-on-surface);
+  opacity: 0.85;
+  cursor: default;
 }
 
 .formGrid {

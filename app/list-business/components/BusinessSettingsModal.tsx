@@ -100,7 +100,7 @@ export default function BusinessSettingsModal({
           />
         );
       case 'productos':
-        return <ProductosTab />;
+        return <ProductosTab businessId={business.id} />;
       case 'resultados':
         return <ResultadosTab />;
       case 'equipo':
@@ -109,7 +109,7 @@ export default function BusinessSettingsModal({
         return <TemasTab />;
       case 'peligro':
         return (
-          <div className={styles.contentContainer}>
+          <div className={styles.contentContainer} style={{ paddingBottom: '48px' }}>
             <h2 className={styles.sectionTitle} style={{ color: 'var(--md-sys-color-error)' }}>
               Zona de Peligro
             </h2>
