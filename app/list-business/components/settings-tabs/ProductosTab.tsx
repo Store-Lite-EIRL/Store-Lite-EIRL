@@ -26,10 +26,15 @@ export const ProductosTab: React.FC<ProductosTabProps> = ({ businessId }) => {
   const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
-    getProductStats(businessId).then((data) => {
-      setStats(data);
-      setLoading(false);
-    });
+    getProductStats(businessId)
+      .then((data) => {
+        setStats(data);
+        setLoading(false);
+        return null;
+      })
+      .catch(() => {
+        setLoading(false);
+      });
   }, [businessId]);
 
   const handleDownload = useCallback(async () => {

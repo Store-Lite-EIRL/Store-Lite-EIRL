@@ -102,7 +102,7 @@ export default function BusinessSettingsModal({
       case 'productos':
         return <ProductosTab businessId={business.id} />;
       case 'resultados':
-        return <ResultadosTab />;
+        return <ResultadosTab business={business} />;
       case 'equipo':
         return <EquipoTab businessName={business.name} />;
       case 'temas':
