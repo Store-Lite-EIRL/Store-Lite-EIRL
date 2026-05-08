@@ -2,10 +2,16 @@
 
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
-import { businesses, productCategories, productMedia, products } from '@/core/database/schema';
+import {
+  businesses,
+  payments,
+  productCategories,
+  productMedia,
+  products,
+} from '@/core/database/schema';
 import type { CookieOptions } from '@supabase/ssr';
 import { createServerClient } from '@supabase/ssr';
-import { asc, count, desc, eq, inArray } from 'drizzle-orm';
+import { and, asc, avg, count, desc, eq, inArray, sum } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 
@@ -38,6 +44,49 @@ export async function getProductStats(businessId: string) {
           title: lastProduct.title,
           createdAt: lastProduct.createdAt.toISOString(),
           price: lastProduct.price,
+        }
+      : null,
+  };
+}
+
+export async function getBusinessResults(businessId: string) {
+  const paidStatuses = ['paid', 'completed', 'delivered'] as const;
+
+  const [totals] = await db
+    .select({
+      totalSales: sum(payments.amount).mapWith(Number),
+      orderCount: count(),
+      avgTicket: avg(payments.amount).mapWith(Number),
+    })
+    .from(payments)
+    .where(and(eq(payments.businessId, businessId), inArray(payments.status, paidStatuses)));
+
+  const lastOrder = await db.query.payments.findFirst({
+    where: and(eq(payments.businessId, businessId), inArray(payments.status, paidStatuses)),
+    orderBy: [desc(payments.createdAt)],
+    columns: {
+      amount: true,
+      createdAt: true,
+      orderNumber: true,
+    },
+  });
+
+  const pendingCount = await db
+    .select({ count: count() })
+    .from(payments)
+    .where(and(eq(payments.businessId, businessId), eq(payments.status, 'pending')))
+    .then((r) => r[0]?.count ?? 0);
+
+  return {
+    totalSales: totals?.totalSales ?? 0,
+    orderCount: totals?.orderCount ?? 0,
+    avgTicket: totals?.avgTicket ?? 0,
+    pendingOrders: pendingCount,
+    lastOrder: lastOrder
+      ? {
+          amount: lastOrder.amount,
+          createdAt: lastOrder.createdAt.toISOString(),
+          orderNumber: lastOrder.orderNumber,
         }
       : null,
   };

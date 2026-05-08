@@ -3,16 +3,23 @@
 import type { Business } from '@/core/database/schema';
 import { Icon } from '@/shared/components/ui/data-display';
 import React, { useEffect, useState } from 'react';
-import { getProductStats } from '../../actions';
+import { getBusinessResults } from '../../actions';
 import styles from '../BusinessSettingsModal.module.css';
 
 interface ResultadosTabProps {
   business: Business;
 }
 
-interface Stats {
-  productCount: number;
-  categoryCount: number;
+interface BusinessResults {
+  totalSales: number;
+  orderCount: number;
+  avgTicket: number;
+  pendingOrders: number;
+  lastOrder: {
+    amount: string;
+    createdAt: string;
+    orderNumber: string | null;
+  } | null;
 }
 
 const VERIFICATION_LABELS: Record<string, { label: string; color: string }> = {
@@ -22,36 +29,53 @@ const VERIFICATION_LABELS: Record<string, { label: string; color: string }> = {
   rejected: { label: 'Rechazado', color: 'var(--md-sys-color-error)' },
 };
 
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('es-PE', {
+    style: 'currency',
+    currency: 'PEN',
+    minimumFractionDigits: 2,
+  }).format(amount);
+}
+
 function formatDate(date: Date | string | null): string {
   if (!date) return '—';
   return new Date(date).toLocaleDateString('es-PE', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
   });
 }
 
+function daysSince(date: Date | string | null): number {
+  if (!date) return 0;
+  const now = new Date();
+  const then = new Date(date);
+  return Math.floor((now.getTime() - then.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 export const ResultadosTab: React.FC<ResultadosTabProps> = ({ business }) => {
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [results, setResults] = useState<BusinessResults | null>(null);
 
   useEffect(() => {
-    getProductStats(business.id)
+    getBusinessResults(business.id)
       .then((data) => {
-        setStats({
-          productCount: data.productCount,
-          categoryCount: data.categoryCount,
-        });
+        setResults(data);
         return null;
       })
       .catch(() => {
-        setStats({ productCount: 0, categoryCount: 0 });
+        setResults({
+          totalSales: 0,
+          orderCount: 0,
+          avgTicket: 0,
+          pendingOrders: 0,
+          lastOrder: null,
+        });
       });
   }, [business.id]);
 
   const verification =
     VERIFICATION_LABELS[business.verificationStatus] ?? VERIFICATION_LABELS.unverified;
+  const daysActive = daysSince(business.createdAt);
 
   return (
     <div className={styles.contentContainer}>
@@ -61,17 +85,36 @@ export const ResultadosTab: React.FC<ResultadosTabProps> = ({ business }) => {
       {/* ── Metrics Grid ── */}
       <div className={styles.metricsGrid}>
         <div className={styles.metricCard}>
-          <div className={styles.metricLabel}>Productos registrados</div>
-          <div className={styles.metricValue}>{stats?.productCount ?? '—'}</div>
+          <div className={styles.metricLabel}>Ventas Totales</div>
+          <div className={styles.metricValue}>
+            {results ? formatCurrency(results.totalSales) : '—'}
+          </div>
         </div>
 
         <div className={styles.metricCard}>
-          <div className={styles.metricLabel}>Categorías</div>
-          <div className={styles.metricValue}>{stats?.categoryCount ?? '—'}</div>
+          <div className={styles.metricLabel}>Órdenes</div>
+          <div className={styles.metricValue}>{results?.orderCount ?? '—'}</div>
         </div>
 
         <div className={styles.metricCard}>
-          <div className={styles.metricLabel}>Estado de verificación</div>
+          <div className={styles.metricLabel}>Ticket Promedio</div>
+          <div className={styles.metricValue}>
+            {results ? formatCurrency(results.avgTicket) : '—'}
+          </div>
+        </div>
+
+        <div className={styles.metricCard}>
+          <div className={styles.metricLabel}>Órdenes Pendientes</div>
+          <div className={styles.metricValue}>{results?.pendingOrders ?? '—'}</div>
+        </div>
+
+        <div className={styles.metricCard}>
+          <div className={styles.metricLabel}>Días Activo</div>
+          <div className={styles.metricValue}>{daysActive > 0 ? `${daysActive} días` : 'Hoy'}</div>
+        </div>
+
+        <div className={styles.metricCard}>
+          <div className={styles.metricLabel}>Verificación</div>
           <div className={styles.metricValue}>
             <span
               style={{
@@ -84,20 +127,6 @@ export const ResultadosTab: React.FC<ResultadosTabProps> = ({ business }) => {
             </span>
           </div>
         </div>
-
-        <div className={styles.metricCard}>
-          <div className={styles.metricLabel}>Negocio creado</div>
-          <div className={styles.metricValue} style={{ fontSize: '1rem', lineHeight: 1.3 }}>
-            {formatDate(business.createdAt)}
-          </div>
-        </div>
-
-        <div className={styles.metricCard}>
-          <div className={styles.metricLabel}>Última actualización</div>
-          <div className={styles.metricValue} style={{ fontSize: '1rem', lineHeight: 1.3 }}>
-            {formatDate(business.updatedAt)}
-          </div>
-        </div>
       </div>
 
       {/* ── Business Info Card ── */}
@@ -105,8 +134,8 @@ export const ResultadosTab: React.FC<ResultadosTabProps> = ({ business }) => {
         <div className={styles.actionsCardInfo}>
           <div className={styles.actionsCardTitle}>{business.name}</div>
           <div className={styles.actionsCardDesc}>
-            {business.storeType ? `${business.storeType} · ` : ''}
-            {business.city ?? business.country ?? 'Sin ubicación'}
+            Creado el {formatDate(business.createdAt)}
+            {business.storeType ? ` · ${business.storeType}` : ''}
           </div>
         </div>
         <Icon size={24}>store</Icon>
