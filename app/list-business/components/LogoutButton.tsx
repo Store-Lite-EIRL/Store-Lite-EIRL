@@ -33,10 +33,9 @@ export default function LogoutButton() {
         suppressHydrationWarning
         disabled={isLoggingOut}
         title="Cerrar sesión"
+        class={styles.logoutButton}
       >
-        <Icon size={28} style={{ color: 'white' }}>
-          power_settings_new
-        </Icon>
+        <Icon size={28}>power_settings_new</Icon>
       </md-icon-button>
 
       {isLoggingOut && (

@@ -67,11 +67,21 @@
     var(--md-sys-color-secondary-container) 100%
   );
   position: relative;
+  /* overflow NO está hidden — el tooltip de límite necesita verse fuera */
+}
+
+/* Contenedor interno para el shimmer con overflow aislado */
+.heroShimmer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
   overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Shimmer sweep */
-.hero::after {
+.heroShimmer::after {
   content: '';
   position: absolute;
   top: -50%;
@@ -85,7 +95,6 @@
     transparent 60%
   );
   animation: shimmer 5s ease-in-out infinite;
-  pointer-events: none;
 }
 
 @keyframes shimmer {
@@ -408,6 +417,7 @@
   width: 52px;
   padding: 0;
   display: flex;
+  padding-top: 4px;
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -570,6 +580,19 @@
   font-size: 0.9rem;
   color: var(--md-sys-color-on-surface-variant);
   margin: 0;
+}
+
+.logoutButton {
+  --md-icon-button-icon-color: var(--md-sys-color-on-primary-container);
+  --md-icon-button-hover-state-layer-color: var(--md-sys-color-on-primary-container);
+  --md-icon-button-hover-state-layer-opacity: 0.12;
+  --md-icon-button-pressed-state-layer-color: var(--md-sys-color-on-primary-container);
+  --md-icon-button-pressed-state-layer-opacity: 0.18;
+  transition: transform 0.2s ease;
+}
+
+.logoutButton:hover {
+  transform: scale(1.08);
 }
 
 .pricingLink {
