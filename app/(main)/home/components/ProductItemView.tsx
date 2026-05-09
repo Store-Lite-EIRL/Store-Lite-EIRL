@@ -2,15 +2,15 @@
 
 import { AlertSnackbar, Icon } from '@/shared/components/ui';
 import { Button, IconButton } from '@/shared/components/ui/buttons';
+import Checkout from '@app/[slug]/components/Checkout';
+import { DeleteProductDialog } from '@app/[slug]/storage/components/DeleteProductDialog';
+import { CreateProductSheet } from '@app/[slug]/storage/components/createProduct/CreateProductSheet';
+import type { Product } from '@app/[slug]/storage/data';
+import { formatPrice } from '@app/[slug]/storage/utils/currency';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import React, { useState } from 'react';
-import Checkout from '../../../[slug]/components/Checkout';
-import { DeleteProductDialog } from '../../../[slug]/storage/components/DeleteProductDialog';
-import { CreateProductSheet } from '../../../[slug]/storage/components/createProduct/CreateProductSheet';
-import type { Product } from '../../../[slug]/storage/data';
-import { formatPrice } from '../../../[slug]/storage/utils/currency';
 import styles from './ProductItem.module.css';
 
 export interface ProductViewData {
@@ -417,8 +417,12 @@ export function ProductItemView({
         </div>
 
         <div className={styles.stockInfo}>
-          <div className={`${styles.stockDot} ${product.stock === 0 ? styles.unavailable : styles.available}`} />
-          <span className={product.stock === 0 ? styles.unavailable : styles.available}>{product.stock === 0 ? 'AGOTADO' : product.isAvailable ? 'En Stock' : 'Agotado'}</span>
+          <div
+            className={`${styles.stockDot} ${product.stock === 0 ? styles.unavailable : styles.available}`}
+          />
+          <span className={product.stock === 0 ? styles.unavailable : styles.available}>
+            {product.stock === 0 ? 'AGOTADO' : product.isAvailable ? 'En Stock' : 'Agotado'}
+          </span>
         </div>
 
         {product.shippingInfo && (
@@ -442,9 +446,7 @@ export function ProductItemView({
                 {discount && <span className={styles.discountBadge}>-{discount}%</span>}
               </div>
             )}
-            <span className={styles.currentPrice}>
-              {formatPrice(price, currencySymbol)}
-            </span>
+            <span className={styles.currentPrice}>{formatPrice(price, currencySymbol)}</span>
           </div>
         </div>
 

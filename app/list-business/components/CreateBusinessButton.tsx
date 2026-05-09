@@ -36,19 +36,32 @@ export default function CreateBusinessButton({ hasReachedLimit }: CreateBusiness
         suppressHydrationWarning
         id="limit-button"
       >
-        <Icon slot="icon" size={21}>help_outline</Icon>
+        <Icon slot="icon" size={21}>
+          help_outline
+        </Icon>
         Crear nueva empresa
       </md-filled-button>
 
       <md-menu
         anchor="limit-button"
         open={open}
-        anchor-corner="bottom-start"
-        style={{ '--md-menu-container-color': 'var(--md-sys-color-surface-container)' }}
+        anchor-corner="bottom-end"
+        menu-corner="start"
+        style={{
+          '--md-menu-container-color': 'var(--md-sys-color-surface-container)',
+          zIndex: 100,
+        }}
         suppressHydrationWarning
       >
-        <div style={{ padding: '12px 16px', maxWidth: '240px' }}>
-          <p style={{ margin: 0, fontSize: '14px', color: 'var(--md-sys-color-on-surface)' }}>
+        <div style={{ padding: '14px 18px', maxWidth: '260px' }}>
+          <p
+            style={{
+              margin: 0,
+              fontSize: '14px',
+              lineHeight: '1.5',
+              color: 'var(--md-sys-color-on-surface)',
+            }}
+          >
             <strong>Límite alcanzado</strong>
             <br />
             Has alcanzado el máximo de 3 empresas permitidas en el plan gratuito. Actualiza a{' '}

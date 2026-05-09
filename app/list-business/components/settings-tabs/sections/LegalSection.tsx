@@ -29,9 +29,8 @@ export const LegalSection: React.FC<LegalSectionProps> = ({
           <md-outlined-text-field
             suppressHydrationWarning
             value={taxId}
-            onInput={(e: React.FormEvent<HTMLInputElement>) =>
-              handleChange('taxId', (e.target as HTMLInputElement).value)
-            }
+            disabled
+            className={styles.disabledField}
             placeholder="10456789012"
           />
         </div>
@@ -39,10 +38,9 @@ export const LegalSection: React.FC<LegalSectionProps> = ({
           <label className={styles.label}>Tipo de persona</label>
           <md-outlined-text-field
             suppressHydrationWarning
-            value={personType}
-            onInput={(e: React.FormEvent<HTMLInputElement>) =>
-              handleChange('personType', (e.target as HTMLInputElement).value)
-            }
+            value={personType.toUpperCase()}
+            disabled
+            className={styles.disabledField}
             placeholder="Natural o Jurídica"
           />
         </div>
@@ -55,9 +53,8 @@ export const LegalSection: React.FC<LegalSectionProps> = ({
           <md-outlined-text-field
             suppressHydrationWarning
             value={legalRepName}
-            onInput={(e: React.FormEvent<HTMLInputElement>) =>
-              handleChange('legalRepName', (e.target as HTMLInputElement).value)
-            }
+            disabled
+            className={styles.disabledField}
             placeholder="Nombre del representante"
           />
         </div>
@@ -80,9 +77,8 @@ export const LegalSection: React.FC<LegalSectionProps> = ({
           <md-outlined-text-field
             suppressHydrationWarning
             value={legalRepPhone}
-            onInput={(e: React.FormEvent<HTMLInputElement>) =>
-              handleChange('legalRepPhone', (e.target as HTMLInputElement).value)
-            }
+            disabled
+            className={styles.disabledField}
             placeholder="+51..."
           />
         </div>
@@ -92,9 +88,8 @@ export const LegalSection: React.FC<LegalSectionProps> = ({
             suppressHydrationWarning
             type="email"
             value={legalRepEmail}
-            onInput={(e: React.FormEvent<HTMLInputElement>) =>
-              handleChange('legalRepEmail', (e.target as HTMLInputElement).value)
-            }
+            disabled
+            className={styles.disabledField}
             placeholder="rep@negocio.com"
           />
         </div>

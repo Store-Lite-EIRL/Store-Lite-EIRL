@@ -11,18 +11,7 @@ export const SOUTH_AMERICAN_COUNTRIES = [
   { name: 'Venezuela', prefix: '+58' },
 ];
 
-export const BUSINESS_SECTORS = [
-  'Servicios',
-  'Comercio',
-  'Tecnología',
-  'Alimentos y Bebidas',
-  'Construcción',
-  'Manufactura',
-  'Educación',
-  'Salud',
-  'Turismo',
-  'Otro',
-];
+export { BUSINESS_SECTORS } from '@/shared/constants/business';
 
 export const CARGO_OPTIONS = [
   'Gerente General',

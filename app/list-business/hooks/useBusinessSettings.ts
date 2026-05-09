@@ -31,7 +31,7 @@ export function useBusinessSettings(business: Business | null, open: boolean) {
     business?.id,
     business?.slug,
     business?.logoUrl || null,
-    setAlert
+    setAlert,
   );
 
   // Sync state when business prop changes
@@ -68,6 +68,7 @@ export function useBusinessSettings(business: Business | null, open: boolean) {
     isSaving,
     hasChanges,
     alert,
+    setAlert,
     handleSave: onSave,
     handleLogoUpload,
     closeAlert,

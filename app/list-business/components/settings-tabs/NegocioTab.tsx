@@ -49,48 +49,50 @@ export const NegocioTab: React.FC<NegocioTabProps> = ({
   };
 
   return (
-    <div className={styles.contentContainer} style={{ paddingBottom: '40px' }}>
-      <h2 className={styles.sectionTitle}>Vista general del negocio</h2>
-      <p className={styles.formHint}>Información básica y legal de tu establecimiento.</p>
+    <div className={styles.tabContentWrapper}>
+      <div className={styles.contentContainer}>
+        <h2 className={styles.sectionTitle}>Vista general del negocio</h2>
+        <p className={styles.formHint}>Información básica y legal de tu establecimiento.</p>
 
-      <div className={styles.formWrapper}>
-        <IdentitySection
-          name={formData.name}
-          description={formData.description}
-          storeType={formData.storeType}
-          logoPreview={logoPreview}
-          isUpdatingLogo={isUpdatingLogo}
-          handleChange={handleSectionChange}
-          handleFileClick={() => fileInputRef.current?.click()}
-        />
+        <div className={styles.formWrapper}>
+          <IdentitySection
+            name={formData.name}
+            description={formData.description}
+            storeType={formData.storeType}
+            logoPreview={logoPreview}
+            isUpdatingLogo={isUpdatingLogo}
+            handleChange={handleSectionChange}
+            handleFileClick={() => fileInputRef.current?.click()}
+          />
 
-        <ContactSection
-          whatsappNumber={formData.whatsappNumber}
-          email={formData.email}
-          address={formData.address}
-          city={formData.city}
-          country={formData.country}
-          handleChange={handleSectionChange}
-        />
+          <ContactSection
+            whatsappNumber={formData.whatsappNumber}
+            email={formData.email}
+            address={formData.address}
+            city={formData.city}
+            country={formData.country}
+            handleChange={handleSectionChange}
+          />
 
-        <LegalSection
-          taxId={formData.taxId}
-          personType={formData.personType}
-          legalRepName={formData.legalRepName}
-          legalRepRole={formData.legalRepRole}
-          legalRepPhone={formData.legalRepPhone}
-          legalRepEmail={formData.legalRepEmail}
-          handleChange={handleSectionChange}
-        />
+          <LegalSection
+            taxId={formData.taxId}
+            personType={formData.personType}
+            legalRepName={formData.legalRepName}
+            legalRepRole={formData.legalRepRole}
+            legalRepPhone={formData.legalRepPhone}
+            legalRepEmail={formData.legalRepEmail}
+            handleChange={handleSectionChange}
+          />
 
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          accept="image/*"
-          style={{ display: 'none' }}
-          aria-label="Subir logo del negocio"
-        />
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept="image/*"
+            style={{ display: 'none' }}
+            aria-label="Subir logo del negocio"
+          />
+        </div>
       </div>
 
       <div className={styles.stickyFooter}>

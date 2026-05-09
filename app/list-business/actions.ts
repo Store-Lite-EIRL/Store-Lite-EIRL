@@ -2,12 +2,158 @@
 
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
-import { businesses, productMedia, products } from '@/core/database/schema';
+import {
+  businessTeamMembers,
+  businesses,
+  payments,
+  productCategories,
+  productMedia,
+  products,
+} from '@/core/database/schema';
 import type { CookieOptions } from '@supabase/ssr';
 import { createServerClient } from '@supabase/ssr';
-import { eq, inArray } from 'drizzle-orm';
+import { and, asc, avg, count, desc, eq, inArray, sum } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
+
+export async function getProductStats(businessId: string) {
+  const [productCount] = await db
+    .select({ count: count() })
+    .from(products)
+    .where(eq(products.businessId, businessId));
+
+  const [categoryCount] = await db
+    .select({ count: count() })
+    .from(productCategories)
+    .where(eq(productCategories.businessId, businessId));
+
+  const lastProduct = await db.query.products.findFirst({
+    where: eq(products.businessId, businessId),
+    orderBy: [desc(products.createdAt)],
+    columns: {
+      title: true,
+      createdAt: true,
+      price: true,
+    },
+  });
+
+  return {
+    productCount: productCount?.count ?? 0,
+    categoryCount: categoryCount?.count ?? 0,
+    lastProduct: lastProduct
+      ? {
+          title: lastProduct.title,
+          createdAt: lastProduct.createdAt.toISOString(),
+          price: lastProduct.price,
+        }
+      : null,
+  };
+}
+
+export async function getBusinessResults(businessId: string) {
+  const paidStatuses = ['paid', 'completed', 'delivered'] as const;
+
+  const [totals] = await db
+    .select({
+      totalSales: sum(payments.amount).mapWith(Number),
+      orderCount: count(),
+      avgTicket: avg(payments.amount).mapWith(Number),
+    })
+    .from(payments)
+    .where(and(eq(payments.businessId, businessId), inArray(payments.status, paidStatuses)));
+
+  const lastOrder = await db.query.payments.findFirst({
+    where: and(eq(payments.businessId, businessId), inArray(payments.status, paidStatuses)),
+    orderBy: [desc(payments.createdAt)],
+    columns: {
+      amount: true,
+      createdAt: true,
+      orderNumber: true,
+    },
+  });
+
+  const pendingCount = await db
+    .select({ count: count() })
+    .from(payments)
+    .where(and(eq(payments.businessId, businessId), eq(payments.status, 'pending')))
+    .then((r) => r[0]?.count ?? 0);
+
+  return {
+    totalSales: totals?.totalSales ?? 0,
+    orderCount: totals?.orderCount ?? 0,
+    avgTicket: totals?.avgTicket ?? 0,
+    pendingOrders: pendingCount,
+    lastOrder: lastOrder
+      ? {
+          amount: lastOrder.amount,
+          createdAt: lastOrder.createdAt.toISOString(),
+          orderNumber: lastOrder.orderNumber,
+        }
+      : null,
+  };
+}
+
+export async function getBusinessTeam(businessId: string) {
+  const members = await db.query.businessTeamMembers.findMany({
+    where: eq(businessTeamMembers.businessId, businessId),
+    with: {
+      user: {
+        columns: {
+          fullName: true,
+          email: true,
+          avatarUrl: true,
+        },
+      },
+    },
+    orderBy: [asc(businessTeamMembers.joinedAt)],
+  });
+
+  return members.map((member) => ({
+    id: member.id,
+    userId: member.userId,
+    role: member.role,
+    joinedAt: member.joinedAt.toISOString(),
+    fullName: member.user.fullName,
+    email: member.user.email,
+    avatarUrl: member.user.avatarUrl,
+  }));
+}
+
+export async function getProductsForExport(businessId: string) {
+  const rows = await db.query.products.findMany({
+    where: eq(products.businessId, businessId),
+    columns: { title: true, stock: true },
+    with: {
+      category: {
+        columns: { name: true },
+      },
+    },
+    orderBy: [asc(products.title)],
+  });
+
+  // Compute count per category in a single pass
+  const categoryCounts = new Map<string, number>();
+  for (const row of rows) {
+    const catName = row.category?.name ?? 'Sin categoría';
+    categoryCounts.set(catName, (categoryCounts.get(catName) ?? 0) + 1);
+  }
+
+  const productsData = rows.map((row) => {
+    const catName = row.category?.name ?? 'Sin categoría';
+    return {
+      title: row.title,
+      category: catName,
+      stock: row.stock,
+      categoryCount: categoryCounts.get(catName) ?? 0,
+    };
+  });
+
+  const categorySummary = [...categoryCounts.entries()]
+    .map(([name, count]) => ({ name, productCount: count }))
+    .sort((a, b) => b.productCount - a.productCount);
+
+  return { products: productsData, categorySummary };
+}
 
 export async function deleteBusinessAction(businessId: string) {
   const cookieStore = await cookies();
@@ -45,8 +191,21 @@ export async function deleteBusinessAction(businessId: string) {
     throw new Error('Empresa no encontrada o no tienes permisos para eliminarla');
   }
 
+  // 3. Check for pending payments — can't delete with unresolved orders
+  const [pendingPayments] = await db
+    .select({ count: count() })
+    .from(payments)
+    .where(and(eq(payments.businessId, businessId), eq(payments.status, 'pending')));
+
+  if (pendingPayments && pendingPayments.count > 0) {
+    return {
+      success: false,
+      error: `No se puede eliminar la empresa porque tiene ${pendingPayments.count} ${pendingPayments.count === 1 ? 'orden pendiente' : 'órdenes pendientes'}. Finaliza todas las órdenes antes de eliminar.`,
+    };
+  }
+
   try {
-    // 3. Collect image paths to delete from storage
+    // 5. Collect image paths to delete from storage
     // We need to find all products of this business first
     const businessProducts = await db.query.products.findMany({
       where: eq(products.businessId, businessId),
@@ -84,7 +243,7 @@ export async function deleteBusinessAction(businessId: string) {
       }
     }
 
-    // 4. Delete business (cascades in DB)
+    // 6. Delete business (cascades in DB)
     await db.delete(businesses).where(eq(businesses.id, businessId));
 
     // 5. Revalidate

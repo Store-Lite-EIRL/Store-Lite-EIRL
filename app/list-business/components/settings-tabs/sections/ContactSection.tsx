@@ -27,9 +27,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           <md-outlined-text-field
             suppressHydrationWarning
             value={whatsappNumber}
-            onInput={(e: React.FormEvent<HTMLInputElement>) =>
-              handleChange('whatsappNumber', (e.target as HTMLInputElement).value)
-            }
+            disabled
+            className={styles.disabledField}
             placeholder="+51 987 654 321"
           />
         </div>
@@ -39,9 +38,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
             suppressHydrationWarning
             type="email"
             value={email}
-            onInput={(e: React.FormEvent<HTMLInputElement>) =>
-              handleChange('email', (e.target as HTMLInputElement).value)
-            }
+            disabled
+            className={styles.disabledField}
             placeholder="contacto@negocio.com"
           />
         </div>
@@ -52,9 +50,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
         <md-outlined-text-field
           suppressHydrationWarning
           value={address}
-          onInput={(e: React.FormEvent<HTMLInputElement>) =>
-            handleChange('address', (e.target as HTMLInputElement).value)
-          }
+          disabled
+          className={styles.disabledField}
           placeholder="Av. Principal 123, Urb. Los Olivos"
         />
       </div>
@@ -76,9 +73,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           <md-outlined-text-field
             suppressHydrationWarning
             value={country}
-            onInput={(e: React.FormEvent<HTMLInputElement>) =>
-              handleChange('country', (e.target as HTMLInputElement).value)
-            }
+            disabled
+            className={styles.disabledField}
             placeholder="Perú"
           />
         </div>
