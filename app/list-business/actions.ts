@@ -191,8 +191,21 @@ export async function deleteBusinessAction(businessId: string) {
     throw new Error('Empresa no encontrada o no tienes permisos para eliminarla');
   }
 
+  // 3. Check for pending payments — can't delete with unresolved orders
+  const [pendingPayments] = await db
+    .select({ count: count() })
+    .from(payments)
+    .where(and(eq(payments.businessId, businessId), eq(payments.status, 'pending')));
+
+  if (pendingPayments && pendingPayments.count > 0) {
+    return {
+      success: false,
+      error: `No se puede eliminar la empresa porque tiene ${pendingPayments.count} ${pendingPayments.count === 1 ? 'orden pendiente' : 'órdenes pendientes'}. Finaliza todas las órdenes antes de eliminar.`,
+    };
+  }
+
   try {
-    // 3. Collect image paths to delete from storage
+    // 5. Collect image paths to delete from storage
     // We need to find all products of this business first
     const businessProducts = await db.query.products.findMany({
       where: eq(products.businessId, businessId),
@@ -230,7 +243,7 @@ export async function deleteBusinessAction(businessId: string) {
       }
     }
 
-    // 4. Delete business (cascades in DB)
+    // 6. Delete business (cascades in DB)
     await db.delete(businesses).where(eq(businesses.id, businessId));
 
     // 5. Revalidate
