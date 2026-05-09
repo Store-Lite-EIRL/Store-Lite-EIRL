@@ -2,18 +2,18 @@
 'use client';
 
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
-import { useParams, useRouter } from 'next/navigation';
-import { useContext, useState } from 'react';
-import { CartContext } from '../../../[slug]/storage/context/CartContext';
-import { StorageContext } from '../../../[slug]/storage/context/StorageContext';
-import type { Product } from '../../../[slug]/storage/data';
+import { CartContext } from 'app/[slug]/storage/context/CartContext';
+import { StorageContext } from 'app/[slug]/storage/context/StorageContext';
+import type { Product } from 'app/[slug]/storage/data';
 import {
   toggleLikeProductIsolated,
   toggleProductStatus,
   updateProductIsolated,
-} from '../../../[slug]/storage/isolatedUpdateAction';
-import { uploadProductImage } from '../../../[slug]/storage/services/storageService';
-import { parsePriceValue } from '../../../[slug]/storage/utils/currency';
+} from 'app/[slug]/storage/isolatedUpdateAction';
+import { uploadProductImage } from 'app/[slug]/storage/services/storageService';
+import { parsePriceValue } from 'app/[slug]/storage/utils/currency';
+import { useParams, useRouter } from 'next/navigation';
+import { useContext, useState } from 'react';
 
 type AlertColor = 'success' | 'error';
 type MediaItem = { type: 'url'; url: string } | { type: 'file'; file: File; preview: string };
