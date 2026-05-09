@@ -37,15 +37,6 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-function formatDate(date: Date | string | null): string {
-  if (!date) return '—';
-  return new Date(date).toLocaleDateString('es-PE', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-}
-
 function daysSince(date: Date | string | null): number {
   if (!date) return 0;
   const now = new Date();
@@ -128,19 +119,6 @@ export const ResultadosTab: React.FC<ResultadosTabProps> = ({ business }) => {
           </div>
         </div>
       </div>
-
-      {/* ── Business Info Card ── */}
-      <div className={styles.actionsCard}>
-        <div className={styles.actionsCardInfo}>
-          <div className={styles.actionsCardTitle}>{business.name}</div>
-          <div className={styles.actionsCardDesc}>
-            Creado el {formatDate(business.createdAt)}
-            {business.storeType ? ` · ${business.storeType}` : ''}
-          </div>
-        </div>
-        <Icon size={24}>store</Icon>
-      </div>
-
       {/* ── Chart placeholder (future) ── */}
       <div className={styles.chartPlaceholder}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>

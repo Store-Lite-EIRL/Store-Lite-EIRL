@@ -104,7 +104,7 @@ export default function BusinessSettingsModal({
       case 'resultados':
         return <ResultadosTab business={business} />;
       case 'equipo':
-        return <EquipoTab businessName={business.name} />;
+        return <EquipoTab businessId={business.id} />;
       case 'temas':
         return <TemasTab />;
       case 'peligro':

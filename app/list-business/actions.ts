@@ -3,6 +3,7 @@
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import {
+  businessTeamMembers,
   businesses,
   payments,
   productCategories,
@@ -90,6 +91,32 @@ export async function getBusinessResults(businessId: string) {
         }
       : null,
   };
+}
+
+export async function getBusinessTeam(businessId: string) {
+  const members = await db.query.businessTeamMembers.findMany({
+    where: eq(businessTeamMembers.businessId, businessId),
+    with: {
+      user: {
+        columns: {
+          fullName: true,
+          email: true,
+          avatarUrl: true,
+        },
+      },
+    },
+    orderBy: [asc(businessTeamMembers.joinedAt)],
+  });
+
+  return members.map((member) => ({
+    id: member.id,
+    userId: member.userId,
+    role: member.role,
+    joinedAt: member.joinedAt.toISOString(),
+    fullName: member.user.fullName,
+    email: member.user.email,
+    avatarUrl: member.user.avatarUrl,
+  }));
 }
 
 export async function getProductsForExport(businessId: string) {
