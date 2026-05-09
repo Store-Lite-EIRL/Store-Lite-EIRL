@@ -4,8 +4,8 @@ import type { Business } from '@/core/database/schema';
 import { useState } from 'react';
 import style from '../ListBusiness.module.css';
 import BusinessCard from './BusinessCard';
-import DeleteBusinessDialog from './DeleteBusinessDialog';
 import BusinessSettingsModal from './BusinessSettingsModal';
+import DeleteBusinessDialog from './DeleteBusinessDialog';
 
 interface BusinessGridProps {
   businesses: (Business & { isTeam?: boolean; planType?: string | null })[];
@@ -16,7 +16,9 @@ export default function BusinessGrid({ businesses }: BusinessGridProps) {
     null,
   );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedEditBusiness, setSelectedEditBusiness] = useState<Business | null>(null);
+  const [selectedEditBusiness, setSelectedEditBusiness] = useState<
+    (Business & { planType?: string | null }) | null
+  >(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const handleDeleteClick = (biz: Business) => {
@@ -33,7 +35,7 @@ export default function BusinessGrid({ businesses }: BusinessGridProps) {
     // Server action already revalidates the path
   };
 
-  const handleEditClick = (biz: Business) => {
+  const handleEditClick = (biz: Business & { planType?: string | null }) => {
     setSelectedEditBusiness(biz);
     setIsSettingsOpen(true);
   };
@@ -66,6 +68,7 @@ export default function BusinessGrid({ businesses }: BusinessGridProps) {
 
       <BusinessSettingsModal
         business={selectedEditBusiness}
+        planType={selectedEditBusiness?.planType ?? null}
         open={isSettingsOpen}
         onClose={handleCloseSettings}
       />

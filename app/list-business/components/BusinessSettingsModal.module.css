@@ -550,6 +550,28 @@
   gap: 16px;
 }
 
+/* Locked tab — premium only */
+.tabButtonLocked {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: auto; /* needed so hover effects don't override */
+}
+.tabButtonLocked:hover {
+  background-color: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Upgrade prompt in locked tab content */
+.upgradePrompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 32px;
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
 @media (max-width: 600px) {
   .formGrid {
     grid-template-columns: 1fr;
