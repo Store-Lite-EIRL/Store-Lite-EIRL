@@ -4,6 +4,7 @@ import type { Business } from '@/core/database/schema';
 import { Icon } from '@/shared/components/ui/data-display';
 import { AlertSnackbar } from '@/shared/components/ui/feedback';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { deleteBusinessAction } from '../actions';
 import { useBusinessSettings } from '../hooks/useBusinessSettings';
 import styles from './BusinessSettingsModal.module.css';
 import { EquipoTab } from './settings-tabs/EquipoTab';
@@ -36,6 +37,7 @@ export default function BusinessSettingsModal({
     isSaving,
     hasChanges,
     alert,
+    setAlert,
     handleSave,
     handleLogoUpload,
     closeAlert,
@@ -75,13 +77,48 @@ export default function BusinessSettingsModal({
     };
   }, [open]);
 
-  if (!business || !open) return null;
-
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     handleLogoUpload(file);
   };
+
+  const handleDelete = useCallback(async () => {
+    if (!business) return;
+
+    const confirmed = window.confirm(
+      `¿Estás seguro de eliminar "${business.name}"?\n\nEsta acción es irreversible. Se borrarán todos los datos, productos y pedidos asociados.`,
+    );
+    if (!confirmed) return;
+
+    setAlert({ open: false, description: '', color: 'primary' });
+
+    try {
+      const result = await deleteBusinessAction(business.id);
+      if (result.success) {
+        setAlert({
+          open: true,
+          description: `"${business.name}" ha sido eliminado definitivamente.`,
+          color: 'success',
+        });
+        // Close modal after a brief delay so the user sees the success
+        setTimeout(() => {
+          closeAlert();
+          onClose();
+        }, 1500);
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      setAlert({
+        open: true,
+        description: error instanceof Error ? error.message : 'Error al eliminar el negocio.',
+        color: 'error',
+      });
+    }
+  }, [business, setAlert, closeAlert, onClose]);
+
+  if (!business || !open) return null;
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -124,6 +161,7 @@ export default function BusinessSettingsModal({
               <md-filled-button
                 suppressHydrationWarning
                 style={{ '--md-filled-button-container-color': 'var(--md-sys-color-error)' }}
+                onClick={handleDelete}
               >
                 Eliminar definitivamente
               </md-filled-button>
