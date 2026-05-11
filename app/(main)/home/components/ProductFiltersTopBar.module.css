@@ -21,6 +21,11 @@
   min-width: 0;
 }
 
+/* Makes PriceRangeFilter stretch to fill its group */
+.priceRangeFullWidth {
+  width: 100%;
+}
+
 /* ── Desktop: spread filter groups across full width ── */
 @media (min-width: 769px) {
   .topBar {
@@ -33,6 +38,12 @@
 
   .divider {
     display: none;
+  }
+
+  /* Dropdowns group (Filtrar por + Cat + Brand) grows to fill space */
+  .topBar > .filterGroup:nth-of-type(2) {
+    flex: 1;
+    min-width: 0;
   }
 }
 

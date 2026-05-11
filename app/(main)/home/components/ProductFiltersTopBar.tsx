@@ -59,6 +59,7 @@ export default function ProductFiltersTopBar({
           currentMin={currentMinPrice}
           currentMax={currentMaxPrice}
           onChange={onPriceRangeChange}
+          className={styles.priceRangeFullWidth}
         />
       </div>
 
