@@ -24,7 +24,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0.9) 100%);
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 30%,
+    rgba(0, 0, 0, 0.4) 60%,
+    rgba(0, 0, 0, 0.9) 100%
+  );
   pointer-events: none;
   z-index: 1;
 }
@@ -106,7 +111,6 @@
   }
 
   .title {
-    font-size: clamp(1.75rem, 8vw, 2.5rem);
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
   }
 }
@@ -142,10 +146,10 @@
 }
 
 .title {
-  font-size: 2.75rem; /* Slightly larger */
-  font-weight: 800; /* Extra bold */
+  font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+  font-weight: 800;
   margin: 0;
-  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8); /* Stronger shadow */
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
 }
 
 /* Hide any description or avatar if they still exist in some ghost way */
