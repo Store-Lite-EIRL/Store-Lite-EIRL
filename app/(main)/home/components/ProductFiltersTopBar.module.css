@@ -21,9 +21,9 @@
   min-width: 0;
 }
 
-/* Makes PriceRangeFilter stretch to fill its group */
+/* Makes PriceRangeFilter grow to fill its group in row flex context */
 .priceRangeFullWidth {
-  width: 100%;
+  flex: 1;
 }
 
 /* ── Desktop: spread filter groups across full width ── */
@@ -40,9 +40,9 @@
     display: none;
   }
 
-  /* Dropdowns group (Filtrar por + Cat + Brand) grows to fill space */
-  .topBar > .filterGroup:nth-of-type(2) {
-    flex: 1;
+  /* Both filter groups grow to share available space, but don't shrink below content */
+  .filterGroup {
+    flex: 1 0 auto;
     min-width: 0;
   }
 }
