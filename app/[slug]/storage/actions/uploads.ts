@@ -2,12 +2,10 @@
 
 import { env } from '@/config/env';
 import { createClient } from '@supabase/supabase-js';
+import { validateProductImageFile } from '../utils/productImageValidation';
 import { requireOwnedBusinessById, requireOwnedBusinessBySlug } from './authz';
 
 const BUCKET_NAME = 'products';
-const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
-const ALLOWED_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const ALLOWED_IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp']);
 
 function createAdminClient() {
   return createClient(env.supabaseUrl, env.supabaseServiceRoleKey, {
@@ -17,23 +15,6 @@ function createAdminClient() {
       detectSessionInUrl: false,
     },
   });
-}
-
-function validateImageFile(file: File) {
-  if (file.size === 0) {
-    return 'Archivo no valido o vacio';
-  }
-
-  if (file.size > MAX_IMAGE_SIZE_BYTES) {
-    return 'La imagen excede el tamano maximo permitido (5MB)';
-  }
-
-  const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
-  if (!ALLOWED_IMAGE_MIME_TYPES.has(file.type) || !ALLOWED_IMAGE_EXTENSIONS.has(extension)) {
-    return 'Formato de imagen no permitido. Usa JPG, PNG o WEBP.';
-  }
-
-  return null;
 }
 
 export async function uploadProductImageAction(
@@ -50,7 +31,7 @@ export async function uploadProductImageAction(
     return { publicUrl: null, error: 'Business ID es requerido' };
   }
 
-  const fileValidationError = validateImageFile(file);
+  const fileValidationError = validateProductImageFile(file);
   if (fileValidationError) {
     return { publicUrl: null, error: fileValidationError };
   }
@@ -63,11 +44,13 @@ export async function uploadProductImageAction(
 
   try {
     const adminClient = createAdminClient();
-    const { error: uploadError } = await adminClient.storage.from(BUCKET_NAME).upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: false,
-      contentType: file.type,
-    });
+    const { error: uploadError } = await adminClient.storage
+      .from(BUCKET_NAME)
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type,
+      });
 
     if (uploadError) {
       return { publicUrl: null, error: `Error al subir imagen: ${uploadError.message}` };
@@ -142,7 +125,7 @@ export async function uploadCategoryImageAction(
     return { publicUrl: null, error: 'Business slug es requerido' };
   }
 
-  const fileValidationError = validateImageFile(file);
+  const fileValidationError = validateProductImageFile(file);
   if (fileValidationError) {
     return { publicUrl: null, error: fileValidationError };
   }
@@ -154,11 +137,13 @@ export async function uploadCategoryImageAction(
 
   try {
     const adminClient = createAdminClient();
-    const { error: uploadError } = await adminClient.storage.from(BUCKET_NAME).upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: false,
-      contentType: file.type,
-    });
+    const { error: uploadError } = await adminClient.storage
+      .from(BUCKET_NAME)
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type,
+      });
 
     if (uploadError) {
       return { publicUrl: null, error: `Error al subir imagen: ${uploadError.message}` };

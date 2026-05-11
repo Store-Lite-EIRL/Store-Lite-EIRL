@@ -7,9 +7,8 @@ import type {
   StorefrontSection,
   StorefrontTheme,
 } from '@/core/storefront';
-import { createDefaultStorefrontTheme, getReadableTextColor } from '@/core/storefront';
+import { getReadableTextColor } from '@/core/storefront';
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
-import { BusinessPreviewCard } from '@/shared/components/business/BusinessPreviewCard';
 import { AlertSnackbar } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
@@ -24,6 +23,7 @@ import Pagination from '../(main)/home/Pagination';
 import ProductFiltersTopBar from '../(main)/home/components/ProductFiltersTopBar';
 import type { BrandFilterOption } from '../(main)/home/hooks/useProductFilters';
 import { useProductFilters } from '../(main)/home/hooks/useProductFilters';
+import AboutSection from './AboutSection';
 import styles from './BusinessPageContent.module.css';
 import { BasicContactDialog } from './components/BasicContactDialog';
 import { CartDrawer } from './components/CartDrawer';
@@ -703,62 +703,11 @@ function StorefrontProductGridSection({
       )}
 
       {activeTab === 'about' && (
-        <div
-          className={filterStyles.aboutContent}
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            gap: '2.5rem',
-            justifyContent: 'center',
-            alignItems: 'flex-start',
-            paddingTop: '2rem',
-            maxWidth: '1200px',
-            margin: '0 auto',
-          }}
-        >
-          <div className={filterStyles.infoCard} style={{ flex: '1 1 500px', margin: 0 }}>
-            <h2 className={filterStyles.infoTitle}>Sobre nosotros</h2>
-            <p className={filterStyles.description}>
-              {business.description || 'No hay descripción disponible.'}
-            </p>
-
-            <div className={filterStyles.detailsGrid}>
-              {business.address && (
-                <div className={filterStyles.detailItem}>
-                  <strong>Dirección:</strong>
-                  <span>{business.address}</span>
-                </div>
-              )}
-              {business.whatsappNumber && (
-                <div className={filterStyles.detailItem}>
-                  <strong>WhatsApp:</strong>
-                  <span>{business.whatsappNumber}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div style={{ flex: '0 1 440px' }}>
-            <BusinessPreviewCard
-              commercialName={business.name}
-              sector={business.storeType || ''}
-              country={business.country || ''}
-              city={business.city || ''}
-              address={business.address || ''}
-              email={business.email || ''}
-              description={business.description || ''}
-              taxId={business.taxId || ''}
-              legalRepName={business.legalRepName || ''}
-              legalRepRole={business.legalRepRole || ''}
-              logoPreview={business.logoUrl}
-              storefrontTheme={
-                previewCardTheme || storefrontTheme || createDefaultStorefrontTheme()
-              }
-              showDownloadButton={false}
-            />
-          </div>
-        </div>
+        <AboutSection
+          business={business}
+          previewCardTheme={previewCardTheme}
+          storefrontTheme={storefrontTheme}
+        />
       )}
     </>
   );

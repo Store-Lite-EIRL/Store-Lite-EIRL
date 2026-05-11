@@ -2,6 +2,10 @@
 
 import { Icon } from '@/shared/components/ui/data-display/Icon';
 import React from 'react';
+import {
+  PRODUCT_IMAGE_ACCEPT,
+  PRODUCT_IMAGE_FORMATS_LABEL,
+} from '../../utils/productImageValidation';
 import { MAX_IMAGES } from './types';
 
 interface ImageUploadSectionProps {
@@ -56,13 +60,15 @@ export const ImageUploadSection = ({
       )}
     </div>
 
-    <p className="image-hint">PNG, JPG o WEBP · Máx. 5MB · Hasta {MAX_IMAGES} imágenes</p>
+    <p className="image-hint">
+      {PRODUCT_IMAGE_FORMATS_LABEL} · Máx. 5MB · Hasta {MAX_IMAGES} imágenes
+    </p>
     {error && <p className="field-error">{error}</p>}
 
     <input
       ref={fileInputRef}
       type="file"
-      accept="image/*"
+      accept={PRODUCT_IMAGE_ACCEPT}
       multiple
       className="hidden-file-input"
       aria-label="Subir imágenes del producto"

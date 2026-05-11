@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MAX_IMAGES } from '../components/createProduct/types';
 import type { SaveProductMediaItem } from '../types';
+import { validateProductImageFile } from '../utils/productImageValidation';
 
 export type MediaItem = SaveProductMediaItem;
 
@@ -18,12 +19,9 @@ export const useProductFormMedia = () => {
     let imageError: string | undefined;
 
     toProcess.forEach((file) => {
-      if (!file.type.startsWith('image/')) {
-        imageError = 'Solo se permiten imágenes';
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        imageError = 'Cada imagen debe pesar menos de 5MB';
+      const validationError = validateProductImageFile(file);
+      if (validationError) {
+        imageError = validationError;
         return;
       }
 
@@ -36,6 +34,7 @@ export const useProductFormMedia = () => {
     });
 
     setMediaError(imageError);
+    e.target.value = '';
   };
 
   const handleRemoveImage = (index: number) => {

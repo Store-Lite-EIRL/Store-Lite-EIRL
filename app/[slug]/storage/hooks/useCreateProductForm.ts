@@ -60,6 +60,7 @@ export const useCreateProductForm = ({
     useProductFormMedia();
   const { errors, setErrors, validate, clearError } = useProductFormValidation();
   const [isSaving, setIsSaving] = useState(false);
+  const [fileAlert, setFileAlert] = useState<string | null>(null);
   const lastSyncedProductIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -90,7 +91,13 @@ export const useCreateProductForm = ({
   }, [initialProduct, setMedia]);
 
   useEffect(() => {
-    if (mediaError) setErrors((prev) => ({ ...prev, images: mediaError }));
+    if (!mediaError) {
+      setErrors((prev) => (prev.images ? { ...prev, images: undefined } : prev));
+      return;
+    }
+
+    setErrors((prev) => ({ ...prev, images: mediaError }));
+    setFileAlert(mediaError);
   }, [mediaError, setErrors]);
 
   const handleSave = async () => {
@@ -148,6 +155,8 @@ export const useCreateProductForm = ({
     form,
     errors,
     images: media.map((m) => (m.type === 'url' ? m.url : m.preview)),
+    fileAlert,
+    clearFileAlert: () => setFileAlert(null),
     isSaving,
     fileInputRef,
     setField: <K extends keyof FormState>(k: K, v: FormState[K]) => {
