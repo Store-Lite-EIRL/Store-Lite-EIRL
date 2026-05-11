@@ -2,6 +2,7 @@
   font-family: var(--storefront-font-family);
   color: var(--md-sys-color-on-surface);
   --mio-theme-text-font-family: var(--storefront-font-family);
+  padding-inline: 0 !important;
 }
 
 .ownerActionRow {

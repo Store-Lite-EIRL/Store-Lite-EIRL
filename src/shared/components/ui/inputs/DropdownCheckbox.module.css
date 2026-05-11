@@ -86,3 +86,8 @@
   color: var(--md-sys-color-on-surface, #1d1b20);
   user-select: none;
 }
+
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}

@@ -16,6 +16,8 @@ interface DropdownCheckboxProps {
   selectedIds: string[];
   onChange: (id: string, checked: boolean) => void;
   className?: string;
+  disabled?: boolean;
+  emptyLabel?: string;
 }
 
 export const DropdownCheckbox = ({
@@ -24,6 +26,8 @@ export const DropdownCheckbox = ({
   selectedIds,
   onChange,
   className = '',
+  disabled = false,
+  emptyLabel = 'No hay opciones',
 }: DropdownCheckboxProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -39,11 +43,23 @@ export const DropdownCheckbox = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleToggle = () => setIsOpen((prev) => !prev);
+  const handleToggle = () => {
+    if (disabled) return;
+    setIsOpen((prev) => !prev);
+  };
 
   return (
-    <div className={`${styles.container} ${className}`} ref={dropdownRef}>
-      <button type="button" className={styles.button} onClick={handleToggle}>
+    <div
+      className={`${styles.container} ${disabled ? styles.disabled : ''} ${className}`}
+      ref={dropdownRef}
+    >
+      <button
+        type="button"
+        className={styles.button}
+        onClick={handleToggle}
+        disabled={disabled}
+        aria-disabled={disabled}
+      >
         <span>{label}</span>
         {selectedIds.length > 0 && <span className={styles.badge}>{selectedIds.length}</span>}
         <Icon>{isOpen ? 'expand_less' : 'expand_more'}</Icon>
@@ -53,7 +69,7 @@ export const DropdownCheckbox = ({
         <div className={styles.dropdown}>
           {options.length === 0 ? (
             <div className={styles.option}>
-              <span className={styles.optionLabel}>No hay opciones</span>
+              <span className={styles.optionLabel}>{emptyLabel}</span>
             </div>
           ) : (
             options.map((option) => (

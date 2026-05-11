@@ -1,12 +1,12 @@
 'use client';
 
 import type { ProductCategory } from '@/core/database/schema';
-import type { BrandFilterOption } from '../hooks/useProductFilters';
 import { IconButton } from '@/shared/components/ui/buttons/IconButton';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
 import { DropdownCheckbox } from '@/shared/components/ui/inputs/DropdownCheckbox';
 import { Switch } from '@/shared/components/ui/inputs/Switch';
 import { getMaterialSwitchSelected } from '@/shared/utils';
+import type { BrandFilterOption } from '../hooks/useProductFilters';
 import { PriceRangeFilter } from './PriceRangeFilter';
 import styles from './ProductFiltersTopBar.module.css';
 
@@ -66,23 +66,23 @@ export default function ProductFiltersTopBar({
 
       <div className={styles.filterGroup}>
         <span className={styles.filterLabel}>Filtrar por:</span>
-        {categories.length > 0 && (
-          <DropdownCheckbox
-            label="Categorías"
-            options={categoryOptions}
-            selectedIds={selectedCategories}
-            onChange={onCategoryChange}
-          />
-        )}
+        <DropdownCheckbox
+          label="Categorías"
+          options={categoryOptions}
+          selectedIds={selectedCategories}
+          onChange={onCategoryChange}
+          disabled={categories.length === 0}
+          emptyLabel="No hay categorías"
+        />
 
-        {brandOptions.length > 0 && (
-          <DropdownCheckbox
-            label="Marcas"
-            options={brandOptions}
-            selectedIds={selectedBrands}
-            onChange={onBrandChange}
-          />
-        )}
+        <DropdownCheckbox
+          label="Marcas"
+          options={brandOptions}
+          selectedIds={selectedBrands}
+          onChange={onBrandChange}
+          disabled={brandOptions.length === 0}
+          emptyLabel="No hay marcas"
+        />
       </div>
 
       <div className={styles.divider} />
