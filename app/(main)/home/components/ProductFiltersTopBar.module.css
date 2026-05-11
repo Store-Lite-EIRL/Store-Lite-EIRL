@@ -11,6 +11,29 @@
   border-width: 2px;
   border-color: var(--md-sys-color-outline-variant, #ffffff);
   margin-bottom: 24px;
+  width: 100%;
+}
+
+/* Wrapper for each dropdown inside the "Filtrar por:" group — stretches to fill space */
+.filterItem {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ── Desktop: spread filter groups across full width ── */
+@media (min-width: 769px) {
+  .topBar {
+    justify-content: space-between;
+  }
+
+  .filterItem {
+    flex: 1;
+  }
+
+  .divider {
+    display: none;
+  }
 }
 
 .filterGroup {

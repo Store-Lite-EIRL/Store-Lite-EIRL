@@ -66,23 +66,27 @@ export default function ProductFiltersTopBar({
 
       <div className={styles.filterGroup}>
         <span className={styles.filterLabel}>Filtrar por:</span>
-        <DropdownCheckbox
-          label="Categorías"
-          options={categoryOptions}
-          selectedIds={selectedCategories}
-          onChange={onCategoryChange}
-          disabled={categories.length === 0}
-          emptyLabel="No hay categorías"
-        />
+        <div className={styles.filterItem}>
+          <DropdownCheckbox
+            label="Categorías"
+            options={categoryOptions}
+            selectedIds={selectedCategories}
+            onChange={onCategoryChange}
+            disabled={categories.length === 0}
+            emptyLabel="No hay categorías"
+          />
+        </div>
 
-        <DropdownCheckbox
-          label="Marcas"
-          options={brandOptions}
-          selectedIds={selectedBrands}
-          onChange={onBrandChange}
-          disabled={brandOptions.length === 0}
-          emptyLabel="No hay marcas"
-        />
+        <div className={styles.filterItem}>
+          <DropdownCheckbox
+            label="Marcas"
+            options={brandOptions}
+            selectedIds={selectedBrands}
+            onChange={onBrandChange}
+            disabled={brandOptions.length === 0}
+            emptyLabel="No hay marcas"
+          />
+        </div>
       </div>
 
       <div className={styles.divider} />
