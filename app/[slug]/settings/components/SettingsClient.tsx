@@ -72,6 +72,9 @@ export interface SettingsBusiness {
   coverImageUrl: string | null;
   logoUrl: string | null;
   address: string | null;
+  departamento: string | null;
+  provincia: string | null;
+  distrito: string | null;
   storeType: string | null;
   description: string | null;
   whatsappNumber: string | null;
@@ -495,6 +498,19 @@ function BusinessSection({
           >
             <Icon slot="start" size={20}>
               location_on
+            </Icon>
+          </ListItem>
+          <Divider />
+          <ListItem
+            headline="Ubicación"
+            supportingText={
+              [business.departamento, business.provincia, business.distrito]
+                .filter(Boolean)
+                .join(', ') || 'Sin configurar'
+            }
+          >
+            <Icon slot="start" size={20}>
+              map
             </Icon>
           </ListItem>
           <Divider />
@@ -1067,6 +1083,27 @@ function ContactSection({
           <ListItem headline="Dirección" supportingText={business.address ?? 'Sin configurar'}>
             <Icon slot="start" size={20}>
               location_on
+            </Icon>
+          </ListItem>
+          <Divider />
+          <ListItem
+            headline="Departamento"
+            supportingText={business.departamento ?? 'Sin configurar'}
+          >
+            <Icon slot="start" size={20}>
+              map
+            </Icon>
+          </ListItem>
+          <Divider />
+          <ListItem headline="Provincia" supportingText={business.provincia ?? 'Sin configurar'}>
+            <Icon slot="start" size={20}>
+              map
+            </Icon>
+          </ListItem>
+          <Divider />
+          <ListItem headline="Distrito" supportingText={business.distrito ?? 'Sin configurar'}>
+            <Icon slot="start" size={20}>
+              map
             </Icon>
           </ListItem>
           <Divider />

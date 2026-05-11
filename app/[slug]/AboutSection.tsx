@@ -6,6 +6,7 @@ import { createDefaultStorefrontTheme } from '@/core/storefront';
 import { BusinessPreviewCard } from '@/shared/components/business/BusinessPreviewCard';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
 import styles from './AboutSection.module.css';
+import { LocationMap } from './components/LocationMap';
 
 interface AboutSectionProps {
   business: Business;
@@ -248,6 +249,14 @@ export default function AboutSection({
             logoPreview={business.logoUrl}
             storefrontTheme={previewCardTheme || storefrontTheme || createDefaultStorefrontTheme()}
             showDownloadButton={false}
+          />
+
+          <LocationMap
+            departamento={business.departamento}
+            provincia={business.provincia}
+            distrito={business.distrito}
+            city={business.city}
+            address={business.address}
           />
         </div>
       </div>
