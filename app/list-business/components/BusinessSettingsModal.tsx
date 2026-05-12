@@ -6,6 +6,7 @@ import { AlertSnackbar } from '@/shared/components/ui/feedback';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useBusinessSettings } from '../hooks/useBusinessSettings';
 import styles from './BusinessSettingsModal.module.css';
+import DeleteBusinessDialog from './DeleteBusinessDialog';
 import { EquipoTab } from './settings-tabs/EquipoTab';
 import { NegocioTab } from './settings-tabs/NegocioTab';
 import { ProductosTab } from './settings-tabs/ProductosTab';
@@ -14,19 +15,34 @@ import { TemasTab } from './settings-tabs/TemasTab';
 
 interface BusinessSettingsModalProps {
   business: Business | null;
+  planType?: string | null;
   open: boolean;
   onClose: () => void;
 }
 
 type TabType = 'negocio' | 'productos' | 'resultados' | 'equipo' | 'temas' | 'peligro';
 
+const PREMIUM_PLANS = ['business_pro', 'enterprise_ai'];
+const PREMIUM_TABS: TabType[] = ['resultados', 'equipo'];
+
 export default function BusinessSettingsModal({
   business,
+  planType,
   open,
   onClose,
 }: BusinessSettingsModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('negocio');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const hasPremium = planType ? PREMIUM_PLANS.includes(planType) : false;
+
+  const isTabLocked = (tab: TabType): boolean => !hasPremium && PREMIUM_TABS.includes(tab);
+
+  const handleTabClick = (tab: TabType) => {
+    if (isTabLocked(tab)) return;
+    setActiveTab(tab);
+  };
 
   const {
     formData,
@@ -75,15 +91,41 @@ export default function BusinessSettingsModal({
     };
   }, [open]);
 
-  if (!business || !open) return null;
-
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     handleLogoUpload(file);
   };
 
+  const handleDeleteClick = () => setDeleteDialogOpen(true);
+  const handleDeleteDialogClose = () => setDeleteDialogOpen(false);
+  const handleDeleteSuccess = () => {
+    setDeleteDialogOpen(false);
+    onClose();
+  };
+
+  if (!business || !open) return null;
+
   const renderTabContent = () => {
+    // Show upgrade prompt for locked tabs
+    if (isTabLocked(activeTab)) {
+      return (
+        <div className={styles.contentContainer}>
+          <div className={styles.upgradePrompt}>
+            <Icon size={48}>lock</Icon>
+            <h2 className={styles.sectionTitle} style={{ marginTop: '16px' }}>
+              Contenido exclusivo
+            </h2>
+            <p className={styles.formHint} style={{ textAlign: 'center', maxWidth: '400px' }}>
+              Esta sección está disponible solo en los planes <strong>Business Pro</strong> y{' '}
+              <strong>Enterprise AI</strong>. Actualiza tu plan para acceder a métricas avanzadas y
+              gestión de equipo.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     switch (activeTab) {
       case 'negocio':
         return (
@@ -100,16 +142,16 @@ export default function BusinessSettingsModal({
           />
         );
       case 'productos':
-        return <ProductosTab />;
+        return <ProductosTab businessId={business.id} />;
       case 'resultados':
-        return <ResultadosTab />;
+        return <ResultadosTab business={business} />;
       case 'equipo':
-        return <EquipoTab businessName={business.name} />;
+        return <EquipoTab businessId={business.id} />;
       case 'temas':
         return <TemasTab />;
       case 'peligro':
         return (
-          <div className={styles.contentContainer}>
+          <div className={styles.contentContainer} style={{ paddingBottom: '48px' }}>
             <h2 className={styles.sectionTitle} style={{ color: 'var(--md-sys-color-error)' }}>
               Zona de Peligro
             </h2>
@@ -124,6 +166,7 @@ export default function BusinessSettingsModal({
               <md-filled-button
                 suppressHydrationWarning
                 style={{ '--md-filled-button-container-color': 'var(--md-sys-color-error)' }}
+                onClick={handleDeleteClick}
               >
                 Eliminar definitivamente
               </md-filled-button>
@@ -159,19 +202,21 @@ export default function BusinessSettingsModal({
             </button>
 
             <button
-              className={`${styles.tabButton} ${activeTab === 'resultados' ? styles.tabButtonActive : ''}`}
-              onClick={() => setActiveTab('resultados')}
+              className={`${styles.tabButton} ${activeTab === 'resultados' ? styles.tabButtonActive : ''} ${isTabLocked('resultados') ? styles.tabButtonLocked : ''}`}
+              onClick={() => handleTabClick('resultados')}
             >
-              <Icon size={20}>analytics</Icon>
+              <Icon size={20}>{isTabLocked('resultados') ? 'lock' : 'analytics'}</Icon>
               Resultados
+              {isTabLocked('resultados') && <Icon size={14}>lock</Icon>}
             </button>
 
             <button
-              className={`${styles.tabButton} ${activeTab === 'equipo' ? styles.tabButtonActive : ''}`}
-              onClick={() => setActiveTab('equipo')}
+              className={`${styles.tabButton} ${activeTab === 'equipo' ? styles.tabButtonActive : ''} ${isTabLocked('equipo') ? styles.tabButtonLocked : ''}`}
+              onClick={() => handleTabClick('equipo')}
             >
-              <Icon size={20}>groups</Icon>
+              <Icon size={20}>{isTabLocked('equipo') ? 'lock' : 'groups'}</Icon>
               Equipo
+              {isTabLocked('equipo') && <Icon size={14}>lock</Icon>}
             </button>
 
             <button
@@ -216,6 +261,13 @@ export default function BusinessSettingsModal({
         description={alert.description}
         color={alert.color}
         onClose={closeAlert}
+      />
+
+      <DeleteBusinessDialog
+        business={business ? { id: business.id, name: business.name } : null}
+        open={deleteDialogOpen}
+        onClose={handleDeleteDialogClose}
+        onSuccess={handleDeleteSuccess}
       />
     </div>
   );

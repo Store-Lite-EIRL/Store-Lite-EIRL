@@ -1,6 +1,7 @@
 'use client';
 
-import { useTheme } from '@/shared/context/ThemeContext';
+import { useTheme, type ColorScheme } from '@/shared/context/ThemeContext';
+import type { MaterialSelectEvent } from '@/shared/utils';
 import { Icon } from './data-display';
 import { Select, SelectOption, Switch } from './inputs';
 
@@ -33,10 +34,6 @@ export function ThemeSettings() {
           style={{
             display: 'flex',
             flexDirection: 'column',
-            background: 'var(--md-sys-color-surface-container-low)',
-            borderRadius: '16px',
-            border: '1px solid var(--md-sys-color-outline-variant)',
-            overflow: 'hidden',
           }}
         >
           {/* Opción Auto */}
@@ -45,8 +42,7 @@ export function ThemeSettings() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '16px 20px',
-              borderBottom: '1px solid var(--md-sys-color-outline-variant)',
+              padding: '8px 0',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -110,7 +106,7 @@ export function ThemeSettings() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '16px 20px',
+              padding: '8px 0',
               opacity: theme === 'system' ? 0.6 : 1,
               pointerEvents: theme === 'system' ? 'none' : 'auto',
               transition: 'opacity 0.2s ease',
@@ -183,13 +179,10 @@ export function ThemeSettings() {
         </h3>
         <div
           style={{
-            padding: '16px 20px 24px',
-            background: 'var(--md-sys-color-surface-container-low)',
-            borderRadius: '16px',
-            border: '1px solid var(--md-sys-color-outline-variant)',
+            padding: '8px 0',
             display: 'flex',
             flexDirection: 'column',
-            gap: '20px',
+            gap: '16px',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -232,10 +225,8 @@ export function ThemeSettings() {
           </div>
           <Select
             value={colorScheme}
-            onChange={(
-              e: Event & { target?: { value?: string }; currentTarget?: { value?: string } },
-            ) => {
-              const value = (e.target as any)?.value || (e.currentTarget as any)?.value;
+            onChange={(e: MaterialSelectEvent) => {
+              const value = (e.target.value ?? e.detail?.value ?? '') as ColorScheme;
               if (value) setColorScheme(value);
             }}
           >

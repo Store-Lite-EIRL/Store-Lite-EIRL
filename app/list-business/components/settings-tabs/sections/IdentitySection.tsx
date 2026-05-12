@@ -1,4 +1,7 @@
 import { Icon } from '@/shared/components/ui/data-display';
+import { Select, SelectOption } from '@/shared/components/ui/inputs';
+import { BUSINESS_SECTORS } from '@/shared/constants/business';
+import { getMaterialSelectValue, type MaterialSelectEvent } from '@/shared/utils/materialEvents';
 import Image from 'next/image';
 import React from 'react';
 import styles from '../../BusinessSettingsModal.module.css';
@@ -80,14 +83,20 @@ export const IdentitySection: React.FC<IdentitySectionProps> = ({
 
         <div className={styles.formField}>
           <label className={styles.label}>Tipo de establecimiento</label>
-          <md-outlined-text-field
-            suppressHydrationWarning
+          <Select
+            label="Selecciona un sector"
+            outlined
             value={storeType}
-            onInput={(e: React.FormEvent<HTMLInputElement>) =>
-              handleChange('storeType', (e.target as HTMLInputElement).value)
-            }
-            placeholder="Ej. Restaurante, Farmacia..."
-          />
+            onChange={(e: MaterialSelectEvent) => {
+              handleChange('storeType', getMaterialSelectValue(e));
+            }}
+          >
+            {BUSINESS_SECTORS.map((sector) => (
+              <SelectOption key={sector} value={sector} selected={storeType === sector}>
+                {sector}
+              </SelectOption>
+            ))}
+          </Select>
         </div>
       </div>
 

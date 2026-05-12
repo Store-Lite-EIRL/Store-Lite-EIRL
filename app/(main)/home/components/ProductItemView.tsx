@@ -3,15 +3,15 @@
 import { AlertSnackbar, Icon } from '@/shared/components/ui';
 import { Button, IconButton } from '@/shared/components/ui/buttons';
 import { getBusinessPath } from '@/shared/utils/url';
+import Checkout from '@app/[slug]/components/Checkout';
+import { DeleteProductDialog } from '@app/[slug]/storage/components/DeleteProductDialog';
+import { CreateProductSheet } from '@app/[slug]/storage/components/createProduct/CreateProductSheet';
+import type { Product } from '@app/[slug]/storage/data';
+import { formatPrice } from '@app/[slug]/storage/utils/currency';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import React, { useState } from 'react';
-import Checkout from '../../../[slug]/components/Checkout';
-import { DeleteProductDialog } from '../../../[slug]/storage/components/DeleteProductDialog';
-import { CreateProductSheet } from '../../../[slug]/storage/components/createProduct/CreateProductSheet';
-import type { Product } from '../../../[slug]/storage/data';
-import { formatPrice } from '../../../[slug]/storage/utils/currency';
 import styles from './ProductItem.module.css';
 
 export interface ProductViewData {

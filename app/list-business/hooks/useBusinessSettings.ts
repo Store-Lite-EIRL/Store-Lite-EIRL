@@ -68,6 +68,7 @@ export function useBusinessSettings(business: Business | null, open: boolean) {
     isSaving,
     hasChanges,
     alert,
+    setAlert,
     handleSave: onSave,
     handleLogoUpload,
     closeAlert,

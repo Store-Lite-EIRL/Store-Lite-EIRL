@@ -118,6 +118,9 @@ export default async function ListBusinessPage() {
 
         {/* ── Hero / Header ── */}
         <div className={style.hero}>
+          {/* Shimmer aislado con overflow hidden */}
+          <div className={style.heroShimmer} />
+
           {/* Left: user info */}
           <div className={style.heroLeft}>
             <div className={style.userAvatar}>{avatarInitial}</div>
