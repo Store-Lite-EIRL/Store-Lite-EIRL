@@ -1,8 +1,8 @@
 import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
+import { getMemberPermissions } from '@/lib/permissions/checkPermission';
 import { createClient } from '@/lib/supabase/server';
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
-import { getMemberPermissions } from '@/lib/permissions/checkPermission';
 import { ChatClient } from './components/ChatClient';
 
 interface Props {

@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import { Icon } from '@/shared/components/ui/data-display';
+import React from 'react';
 import styles from '../BusinessSettingsModal.module.css';
 
 interface EquipoTabProps {

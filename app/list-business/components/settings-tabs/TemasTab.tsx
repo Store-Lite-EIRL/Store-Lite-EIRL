@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import { ThemeSettings } from '@/shared/components/ui/ThemeSettings';
+import React from 'react';
 import styles from '../BusinessSettingsModal.module.css';
 
 export const TemasTab: React.FC = () => {

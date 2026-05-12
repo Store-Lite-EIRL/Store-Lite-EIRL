@@ -1,15 +1,14 @@
 'use client';
 
 import { CulqiCheckout } from '@/features/billing/components/CulqiCheckout';
+import { PlanTicketTemplate } from '@/features/billing/components/PlanTicketTemplate';
+import { usePurchasePlan } from '@/features/billing/hooks/usePurchasePlan';
 import { Dialog, Select } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { Icon } from '@/shared/components/ui/data-display';
 import { loadCulqiScript } from '@app/[slug]/payment/services/culqiService';
 import confetti from 'canvas-confetti';
 import React from 'react';
-import { usePurchasePlan } from '@/features/billing/hooks/usePurchasePlan';
-import { PlanTicketTemplate } from '@/features/billing/components/PlanTicketTemplate';
-
 
 export interface PricingFeature {
   text: string;
@@ -50,7 +49,7 @@ export function PricingCard({
   const [step, setStep] = React.useState<'select' | 'billing' | 'payment' | 'success'>('select');
   const [selectedBusiness, setSelectedBusiness] = React.useState('');
   const [orderDetails, setOrderDetails] = React.useState({ id: '', date: '', time: '' });
-  
+
   // Datos SUNAT
   const [buyerEmail, setBuyerEmail] = React.useState('');
   const [buyerFullName, setBuyerFullName] = React.useState('');
@@ -59,14 +58,22 @@ export function PricingCard({
   const [buyerAddress, setBuyerAddress] = React.useState('');
 
   const culqiTriggerRef = React.useRef<HTMLDivElement>(null);
-  const { purchase, loading: isProcessing, error, result, capturingData, ticketRef, reset } = usePurchasePlan();
+  const {
+    purchase,
+    loading: isProcessing,
+    error,
+    result,
+    capturingData,
+    ticketRef,
+    reset,
+  } = usePurchasePlan();
 
   const cardClassName = `pricing-card ${isHighlighted ? 'pricing-card--highlighted' : ''}`;
 
   // Sincronizar datos del negocio seleccionado automáticamente
   React.useEffect(() => {
     if (selectedBusiness) {
-      const biz = businesses.find(b => b.id === selectedBusiness);
+      const biz = businesses.find((b) => b.id === selectedBusiness);
       if (biz) {
         setBuyerEmail(biz.email || '');
         setBuyerFullName(biz.name || '');
@@ -82,7 +89,7 @@ export function PricingCard({
     setStep('select');
 
     // Pre-cargar Culqi asíncronamente mientras el usuario selecciona negocio
-    loadCulqiScript().catch(e => console.error("Error cargando culqi:", e));
+    loadCulqiScript().catch((e) => console.error('Error cargando culqi:', e));
     if (preselectedBusinessId) {
       setSelectedBusiness(preselectedBusinessId);
     } else if (businesses.length === 1) {
@@ -104,14 +111,14 @@ export function PricingCard({
     setIsPaymentDialogOpen(false);
   };
 
-
   const selectedBusinessData = businesses.find((b) => b.id === selectedBusiness);
   const selectedBusinessName = selectedBusinessData?.name;
-  const hasActivePlan = selectedBusinessData?.planType && selectedBusinessData.planType !== 'basico';
+  const hasActivePlan =
+    selectedBusinessData?.planType && selectedBusinessData.planType !== 'basico';
 
   const handleCulqiToken = async (token: string) => {
     console.log('✅ Token recibido en PricingCard:', token);
-    
+
     let planEnum: 'basico' | 'emprendedor' | 'business_pro' | 'enterprise_ai' = 'basico';
     if (title.toLowerCase().includes('emprendedor')) planEnum = 'emprendedor';
     if (title.toLowerCase().includes('business pro')) planEnum = 'business_pro';
@@ -129,7 +136,7 @@ export function PricingCard({
       buyerFullName,
       buyerDocumentType,
       buyerDocumentNumber,
-      buyerAddress
+      buyerAddress,
     });
 
     if (res) {
@@ -152,7 +159,9 @@ export function PricingCard({
     <>
       <div className={cardClassName}>
         {badgeText && (
-          <div className={`pricing-card-badge ${badgeType === 'secondary' ? 'pricing-card-badge--secondary' : ''}`}>
+          <div
+            className={`pricing-card-badge ${badgeType === 'secondary' ? 'pricing-card-badge--secondary' : ''}`}
+          >
             {badgeText}
           </div>
         )}
@@ -203,7 +212,10 @@ export function PricingCard({
         <div slot="content">
           <div className="pricing-payment-dialog" style={{ padding: '10px 0' }}>
             {step === 'select' && (
-              <div className="pricing-business-select-step" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div
+                className="pricing-business-select-step"
+                style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+              >
                 <p>¿A qué negocio deseas aplicarle este plan?</p>
                 {businesses.length > 0 ? (
                   <Select
@@ -214,7 +226,9 @@ export function PricingCard({
                       { value: '', label: 'Selecciona una opcion...' },
                       ...businesses.map((biz) => {
                         const hasPlan = biz.planType && biz.planType !== 'basico';
-                        const planText = hasPlan ? ` (Plan Actual: ${planLabels[biz.planType as string] || biz.planType})` : '';
+                        const planText = hasPlan
+                          ? ` (Plan Actual: ${planLabels[biz.planType as string] || biz.planType})`
+                          : '';
                         return {
                           value: biz.id,
                           label: `${biz.name}${planText}`,
@@ -224,75 +238,187 @@ export function PricingCard({
                     style={{ width: '100%' }}
                   />
                 ) : (
-                  <div style={{ padding: '16px', background: 'var(--md-sys-color-surface-variant)', borderRadius: '8px' }}>
+                  <div
+                    style={{
+                      padding: '16px',
+                      background: 'var(--md-sys-color-surface-variant)',
+                      borderRadius: '8px',
+                    }}
+                  >
                     <p style={{ margin: 0, color: 'var(--md-sys-color-on-surface-variant)' }}>
                       No tienes negocios registrados aún.
                     </p>
                   </div>
                 )}
                 {hasActivePlan && (
-                  <div style={{ padding: '12px', background: 'var(--md-sys-color-error-container)', color: 'var(--md-sys-color-on-error-container)', borderRadius: '8px', fontSize: '0.875rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <div
+                    style={{
+                      padding: '12px',
+                      background: 'var(--md-sys-color-error-container)',
+                      color: 'var(--md-sys-color-on-error-container)',
+                      borderRadius: '8px',
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        marginBottom: '4px',
+                      }}
+                    >
                       <Icon size={16}>warning</Icon>
                       <strong>Atención</strong>
                     </div>
-                    Este negocio ya cuenta con un plan de pago. Si cambias de plan, el nuevo reemplazará al actual inmediatamente. No se emitirán reembolsos ni se acumulará el tiempo restante.
+                    Este negocio ya cuenta con un plan de pago. Si cambias de plan, el nuevo
+                    reemplazará al actual inmediatamente. No se emitirán reembolsos ni se acumulará
+                    el tiempo restante.
                   </div>
                 )}
               </div>
             )}
 
             {step === 'billing' && (
-              <div className="pricing-billing-step" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--md-sys-color-primary)' }}>
-                   <Icon size={24}>verified</Icon>
-                   <p style={{ margin: 0, fontWeight: '700', fontSize: '1.1rem' }}>Verifica tus datos de facturación</p>
+              <div
+                className="pricing-billing-step"
+                style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    color: 'var(--md-sys-color-primary)',
+                  }}
+                >
+                  <Icon size={24}>verified</Icon>
+                  <p style={{ margin: 0, fontWeight: '700', fontSize: '1.1rem' }}>
+                    Verifica tus datos de facturación
+                  </p>
                 </div>
-                
-                <p style={{ margin: '0', fontSize: '0.9rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
+
+                <p
+                  style={{
+                    margin: '0',
+                    fontSize: '0.9rem',
+                    color: 'var(--md-sys-color-on-surface-variant)',
+                  }}
+                >
                   Usaremos la información de tu negocio para generar el comprobante SUNAT:
                 </p>
 
-                <div style={{ 
-                  padding: '1.25rem', 
-                  background: 'var(--md-sys-color-surface-container-low)', 
-                  borderRadius: '16px',
-                  border: '1px solid var(--md-sys-color-outline-variant)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '1rem'
-                }}>
+                <div
+                  style={{
+                    padding: '1.25rem',
+                    background: 'var(--md-sys-color-surface-container-low)',
+                    borderRadius: '16px',
+                    border: '1px solid var(--md-sys-color-outline-variant)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem',
+                  }}
+                >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--md-sys-color-primary)', textTransform: 'uppercase' }}>Razon Social / Nombre</span>
-                    <span style={{ fontSize: '1rem', fontWeight: '500' }}>{buyerFullName || 'No especificado'}</span>
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: '700',
+                        color: 'var(--md-sys-color-primary)',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      Razon Social / Nombre
+                    </span>
+                    <span style={{ fontSize: '1rem', fontWeight: '500' }}>
+                      {buyerFullName || 'No especificado'}
+                    </span>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--md-sys-color-primary)', textTransform: 'uppercase' }}>{buyerDocumentType}</span>
-                      <span style={{ fontSize: '1rem', fontWeight: '500' }}>{buyerDocumentNumber || 'No especificado'}</span>
+                      <span
+                        style={{
+                          fontSize: '0.75rem',
+                          fontWeight: '700',
+                          color: 'var(--md-sys-color-primary)',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        {buyerDocumentType}
+                      </span>
+                      <span style={{ fontSize: '1rem', fontWeight: '500' }}>
+                        {buyerDocumentNumber || 'No especificado'}
+                      </span>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--md-sys-color-primary)', textTransform: 'uppercase' }}>Correo</span>
-                      <span style={{ fontSize: '1rem', fontWeight: '500', wordBreak: 'break-all' }}>{buyerEmail || 'No especificado'}</span>
+                      <span
+                        style={{
+                          fontSize: '0.75rem',
+                          fontWeight: '700',
+                          color: 'var(--md-sys-color-primary)',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        Correo
+                      </span>
+                      <span style={{ fontSize: '1rem', fontWeight: '500', wordBreak: 'break-all' }}>
+                        {buyerEmail || 'No especificado'}
+                      </span>
                     </div>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--md-sys-color-primary)', textTransform: 'uppercase' }}>Dirección Fiscal</span>
-                    <span style={{ fontSize: '1rem', fontWeight: '500' }}>{buyerAddress || 'No especificada'}</span>
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: '700',
+                        color: 'var(--md-sys-color-primary)',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      Dirección Fiscal
+                    </span>
+                    <span style={{ fontSize: '1rem', fontWeight: '500' }}>
+                      {buyerAddress || 'No especificada'}
+                    </span>
                   </div>
                 </div>
 
                 {!buyerDocumentNumber || !buyerAddress ? (
-                  <div style={{ padding: '12px', background: 'var(--md-sys-color-warning-container)', color: 'var(--md-sys-color-on-warning-container)', borderRadius: '12px', fontSize: '0.85rem', display: 'flex', gap: '10px' }}>
+                  <div
+                    style={{
+                      padding: '12px',
+                      background: 'var(--md-sys-color-warning-container)',
+                      color: 'var(--md-sys-color-on-warning-container)',
+                      borderRadius: '12px',
+                      fontSize: '0.85rem',
+                      display: 'flex',
+                      gap: '10px',
+                    }}
+                  >
                     <Icon size={20}>info</Icon>
-                    <span>Faltan datos en tu negocio. Te recomendamos completarlos en la configuración del negocio para una facturación correcta.</span>
+                    <span>
+                      Faltan datos en tu negocio. Te recomendamos completarlos en la configuración
+                      del negocio para una facturación correcta.
+                    </span>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--md-sys-color-on-surface-variant)', fontSize: '0.85rem', padding: '0 4px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      color: 'var(--md-sys-color-on-surface-variant)',
+                      fontSize: '0.85rem',
+                      padding: '0 4px',
+                    }}
+                  >
                     <Icon size={16}>info</Icon>
-                    <span>Si necesitas cambiar estos datos, puedes hacerlo desde la configuración de tu negocio.</span>
+                    <span>
+                      Si necesitas cambiar estos datos, puedes hacerlo desde la configuración de tu
+                      negocio.
+                    </span>
                   </div>
                 )}
               </div>
@@ -300,50 +426,175 @@ export function PricingCard({
 
             {step === 'payment' && (
               <>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '1rem' }}>
-                  <div style={{ padding: '1rem', background: 'var(--md-sys-color-surface-container-high)', borderRadius: '12px', border: '1px solid var(--md-sys-color-outline-variant)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '0.875rem', color: 'var(--md-sys-color-on-surface-variant)' }}>ID de Orden:</span>
-                      <span style={{ fontSize: '0.875rem', fontFamily: 'monospace' }}>{orderDetails.id}</span>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1.5rem',
+                    marginBottom: '1rem',
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: '1rem',
+                      background: 'var(--md-sys-color-surface-container-high)',
+                      borderRadius: '12px',
+                      border: '1px solid var(--md-sys-color-outline-variant)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '0.875rem',
+                          color: 'var(--md-sys-color-on-surface-variant)',
+                        }}
+                      >
+                        ID de Orden:
+                      </span>
+                      <span style={{ fontSize: '0.875rem', fontFamily: 'monospace' }}>
+                        {orderDetails.id}
+                      </span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '0.875rem', color: 'var(--md-sys-color-on-surface-variant)' }}>Fecha y Hora:</span>
-                      <span style={{ fontSize: '0.875rem' }}>{orderDetails.date} {orderDetails.time}</span>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '0.875rem',
+                          color: 'var(--md-sys-color-on-surface-variant)',
+                        }}
+                      >
+                        Fecha y Hora:
+                      </span>
+                      <span style={{ fontSize: '0.875rem' }}>
+                        {orderDetails.date} {orderDetails.time}
+                      </span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px dashed var(--md-sys-color-outline-variant)' }}>
-                      <span style={{ fontSize: '0.875rem', color: 'var(--md-sys-color-on-surface-variant)' }}>Negocio:</span>
-                      <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>{selectedBusinessName}</span>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        marginBottom: '12px',
+                        paddingBottom: '12px',
+                        borderBottom: '1px dashed var(--md-sys-color-outline-variant)',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '0.875rem',
+                          color: 'var(--md-sys-color-on-surface-variant)',
+                        }}
+                      >
+                        Negocio:
+                      </span>
+                      <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>
+                        {selectedBusinessName}
+                      </span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontWeight: '500', color: 'var(--md-sys-color-on-surface)' }}>Total a Pagar ({period})</span>
-                      <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--md-sys-color-primary)' }}>S/ {price}</span>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <span style={{ fontWeight: '500', color: 'var(--md-sys-color-on-surface)' }}>
+                        Total a Pagar ({period})
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '1.25rem',
+                          fontWeight: 'bold',
+                          color: 'var(--md-sys-color-primary)',
+                        }}
+                      >
+                        S/ {price}
+                      </span>
                     </div>
                   </div>
 
-                  <div style={{
-                    padding: '2rem',
-                    background: 'var(--md-sys-color-surface-container)',
-                    borderRadius: '12px',
-                    textAlign: 'center',
-                    border: '1px dashed var(--md-sys-color-outline-variant)',
-                  }}>
+                  <div
+                    style={{
+                      padding: '2rem',
+                      background: 'var(--md-sys-color-surface-container)',
+                      borderRadius: '12px',
+                      textAlign: 'center',
+                      border: '1px dashed var(--md-sys-color-outline-variant)',
+                    }}
+                  >
                     {isProcessing ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                         <Icon size={48} style={{ color: 'var(--md-sys-color-primary)', animation: 'spin 2s linear infinite' }}>sync</Icon>
-                        <p style={{ margin: 0, fontWeight: '500' }}>Procesando tu pago en el servidor...</p>
-                        <p style={{ fontSize: '0.875rem', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '0.5rem' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '1rem',
+                        }}
+                      >
+                        <Icon
+                          size={48}
+                          style={{
+                            color: 'var(--md-sys-color-primary)',
+                            animation: 'spin 2s linear infinite',
+                          }}
+                        >
+                          sync
+                        </Icon>
+                        <p style={{ margin: 0, fontWeight: '500' }}>
+                          Procesando tu pago en el servidor...
+                        </p>
+                        <p
+                          style={{
+                            fontSize: '0.875rem',
+                            color: 'var(--md-sys-color-on-surface-variant)',
+                            marginTop: '0.5rem',
+                          }}
+                        >
                           Generando boleta y activando tu suscripción. No cierres esta ventana.
                         </p>
                       </div>
                     ) : (
                       <>
-                        <Icon size={48} style={{ color: 'var(--md-sys-color-primary)', marginBottom: '1rem' }}>payments</Icon>
-                        <p style={{ margin: 0, fontWeight: '500' }}>Usaremos Culqi para procesar tu pago de forma segura.</p>
-                        <p style={{ fontSize: '0.875rem', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '0.5rem' }}>
-                          Tus datos están protegidos y cifrados. Al pagar se agregará el 18% de IGV al total.
+                        <Icon
+                          size={48}
+                          style={{ color: 'var(--md-sys-color-primary)', marginBottom: '1rem' }}
+                        >
+                          payments
+                        </Icon>
+                        <p style={{ margin: 0, fontWeight: '500' }}>
+                          Usaremos Culqi para procesar tu pago de forma segura.
+                        </p>
+                        <p
+                          style={{
+                            fontSize: '0.875rem',
+                            color: 'var(--md-sys-color-on-surface-variant)',
+                            marginTop: '0.5rem',
+                          }}
+                        >
+                          Tus datos están protegidos y cifrados. Al pagar se agregará el 18% de IGV
+                          al total.
                         </p>
                         {error && (
-                          <div style={{ marginTop: '1rem', padding: '0.5rem', background: 'var(--md-sys-color-error-container)', color: 'var(--md-sys-color-error)', borderRadius: '8px', fontSize: '0.875rem' }}>
+                          <div
+                            style={{
+                              marginTop: '1rem',
+                              padding: '0.5rem',
+                              background: 'var(--md-sys-color-error-container)',
+                              color: 'var(--md-sys-color-error)',
+                              borderRadius: '8px',
+                              fontSize: '0.875rem',
+                            }}
+                          >
                             {error}
                           </div>
                         )}
@@ -355,62 +606,145 @@ export function PricingCard({
             )}
 
             {step === 'success' && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '1rem', padding: '0.5rem 0' }}>
-                <div style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '24px',
-                  background: 'var(--md-sys-color-primary-container)',
-                  color: 'var(--md-sys-color-on-primary-container)',
+              <div
+                style={{
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '0.25rem',
-                }}>
+                  textAlign: 'center',
+                  gap: '1rem',
+                  padding: '0.5rem 0',
+                }}
+              >
+                <div
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '24px',
+                    background: 'var(--md-sys-color-primary-container)',
+                    color: 'var(--md-sys-color-on-primary-container)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '0.25rem',
+                  }}
+                >
                   <Icon size={24}>check_circle</Icon>
                 </div>
                 <div>
-                  <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--md-sys-color-on-surface)' }}>¡Pago Exitoso!</h3>
-                  <p style={{ margin: 0, color: 'var(--md-sys-color-on-surface-variant)', fontSize: '0.875rem' }}>
-                    Tu plan <strong>{title}</strong> ya ha sido activado para <strong>{selectedBusinessName}</strong>.
+                  <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--md-sys-color-on-surface)' }}>
+                    ¡Pago Exitoso!
+                  </h3>
+                  <p
+                    style={{
+                      margin: 0,
+                      color: 'var(--md-sys-color-on-surface-variant)',
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    Tu plan <strong>{title}</strong> ya ha sido activado para{' '}
+                    <strong>{selectedBusinessName}</strong>.
                   </p>
                 </div>
-                <div style={{
-                  width: '100%',
-                  padding: '1.25rem',
-                  background: 'var(--md-sys-color-surface-container)',
-                  borderRadius: '16px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.5rem',
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}>
-                  <div style={{ position: 'absolute', top: '-10px', left: '-10px', width: '20px', height: '20px', borderRadius: '10px', background: 'var(--md-sys-color-surface)' }} />
-                  <div style={{ position: 'absolute', top: '-10px', right: '-10px', width: '20px', height: '20px', borderRadius: '10px', background: 'var(--md-sys-color-surface)' }} />
+                <div
+                  style={{
+                    width: '100%',
+                    padding: '1.25rem',
+                    background: 'var(--md-sys-color-surface-container)',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem',
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '-10px',
+                      left: '-10px',
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '10px',
+                      background: 'var(--md-sys-color-surface)',
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '-10px',
+                      right: '-10px',
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '10px',
+                      background: 'var(--md-sys-color-surface)',
+                    }}
+                  />
 
-                  <div style={{ fontSize: '0.75rem', letterSpacing: '0.05em', color: 'var(--md-sys-color-on-surface-variant)', textTransform: 'uppercase' }}>
+                  <div
+                    style={{
+                      fontSize: '0.75rem',
+                      letterSpacing: '0.05em',
+                      color: 'var(--md-sys-color-on-surface-variant)',
+                      textTransform: 'uppercase',
+                    }}
+                  >
                     Recibo de pago
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '0.875rem',
+                    }}
+                  >
                     <span style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Plan:</span>
                     <span style={{ fontWeight: '500' }}>{title}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '0.875rem',
+                    }}
+                  >
                     <span style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Pagado:</span>
-                    <span style={{ fontWeight: '500' }}>S/ {price} ({period})</span>
+                    <span style={{ fontWeight: '500' }}>
+                      S/ {price} ({period})
+                    </span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-                    <span style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Referencia:</span>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    <span style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
+                      Referencia:
+                    </span>
                     <span style={{ fontFamily: 'monospace' }}>{orderDetails.id}</span>
                   </div>
-                  <div style={{ height: '1px', background: 'var(--md-sys-color-outline-variant)', margin: '0.5rem 0' }} />
-                  <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                  <div
+                    style={{
+                      height: '1px',
+                      background: 'var(--md-sys-color-outline-variant)',
+                      margin: '0.5rem 0',
+                    }}
+                  />
+                  <div
+                    style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)' }}
+                  >
                     El comprobante ({result?.ticketNumber}) fue enviado a tu correo.
                   </div>
                   {result?.ticketUrl && (
                     <div style={{ marginTop: '1rem' }}>
-                      <Button variant="outlined" onClick={() => window.open(result.ticketUrl, '_blank')} style={{ width: '100%' }}>
+                      <Button
+                        variant="outlined"
+                        onClick={() => window.open(result.ticketUrl, '_blank')}
+                        style={{ width: '100%' }}
+                      >
                         Ver Boleta
                       </Button>
                     </div>
@@ -447,12 +781,12 @@ export function PricingCard({
               <Button variant="text" onClick={() => setStep('select')}>
                 Atrás
               </Button>
-              <Button 
-                  variant="filled" 
-                  onClick={() => setStep('payment')}
-                  disabled={!buyerEmail || !buyerFullName || !buyerDocumentNumber || !buyerAddress}
+              <Button
+                variant="filled"
+                onClick={() => setStep('payment')}
+                disabled={!buyerEmail || !buyerFullName || !buyerDocumentNumber || !buyerAddress}
               >
-                  Confirmar y Continuar
+                Confirmar y Continuar
               </Button>
             </>
           )}
@@ -463,9 +797,9 @@ export function PricingCard({
                 Atrás
               </Button>
               <div style={{ flex: 1 }}>
-                <Button 
-                  variant="filled" 
-                  style={{ width: '100%' }} 
+                <Button
+                  variant="filled"
+                  style={{ width: '100%' }}
                   disabled={isProcessing}
                   onClick={() => {
                     setIsPaymentDialogOpen(false);
@@ -509,7 +843,7 @@ export function PricingCard({
         <div ref={ticketRef}>
           {(result || capturingData) && (
             <PlanTicketTemplate
-              issuerRuc="10741399852" 
+              issuerRuc="10741399852"
               issuerName="STORE LITE E.I.R.L"
               issuerAddress="JR. LAS FLORES 123"
               issuerDistrict="SAN ISIDRO"
@@ -524,10 +858,14 @@ export function PricingCard({
               planType={title}
               period={period === 'mes' ? 'monthly' : 'annual'}
               planStartDate={new Date()}
-              planEndDate={new Date(result?.planActivatedUntil || capturingData?.planActivatedUntil || new Date())}
+              planEndDate={
+                new Date(
+                  result?.planActivatedUntil || capturingData?.planActivatedUntil || new Date(),
+                )
+              }
               amountSubtotal={Number(price)}
               amountIgv={Number(price) * 0.18}
-              amountTotal={result?.amountTotal || (Number(price) * 1.18)}
+              amountTotal={result?.amountTotal || Number(price) * 1.18}
               paymentMethod="Online (Culqi)"
             />
           )}

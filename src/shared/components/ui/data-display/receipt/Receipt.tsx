@@ -186,7 +186,9 @@ export function Receipt({
           </div>
           <div className={styles.infoBlock}>
             <span className={styles.infoLabel}>Fecha</span>
-            <span className={styles.infoValue}>{formatDate(date)} {formatTime(date)}</span>
+            <span className={styles.infoValue}>
+              {formatDate(date)} {formatTime(date)}
+            </span>
           </div>
         </div>
       </div>
@@ -247,7 +249,15 @@ export function Receipt({
 
       {/* Notes if any */}
       {notes && (
-        <div className={styles.notes} style={{ padding: '0 24px 16px', fontSize: '11px', color: 'var(--on-surface-variant)', fontStyle: 'italic' }}>
+        <div
+          className={styles.notes}
+          style={{
+            padding: '0 24px 16px',
+            fontSize: '11px',
+            color: 'var(--on-surface-variant)',
+            fontStyle: 'italic',
+          }}
+        >
           {notes}
         </div>
       )}
@@ -256,7 +266,15 @@ export function Receipt({
       <div className={styles.footer}>
         <div className={styles.footerText}>¡Gracias por tu preferencia!</div>
         <div className={styles.footerSubtext}>Documento de control interno</div>
-        <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+        <div
+          style={{
+            marginTop: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
           <Barcode
             value={orderNum}
             width={1.2}
@@ -265,17 +283,19 @@ export function Receipt({
             background="transparent"
             displayValue={false}
           />
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            opacity: 0.2,
-            color: '#000',
-            fontSize: '9px',
-            fontWeight: '800',
-            letterSpacing: '0.1em'
-          }}>
-            <StoreLogo size={21} variant='white' />
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              opacity: 0.2,
+              color: '#000',
+              fontSize: '9px',
+              fontWeight: '800',
+              letterSpacing: '0.1em',
+            }}
+          >
+            <StoreLogo size={21} variant="white" />
           </div>
         </div>
       </div>

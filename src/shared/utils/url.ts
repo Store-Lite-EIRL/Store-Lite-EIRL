@@ -77,8 +77,16 @@ function isSubdomainModeForSlug(slug: string): boolean {
     return hostSlug === slug;
   }
 
-  // Server-side: confiar en la feature flag
-  return env.featureSubdomainRewrite;
+  // Server-side: NO asumir subdominio solo por feature flag.
+  //
+  // El bug:
+  //   /list-business -> redirect(getBusinessPath(selectedSlug))
+  // con FEATURE_SUBDOMAIN_REWRITE=true devolvía "" en server,
+  // generando redirects vacíos y loops/loading en localhost:3000.
+  //
+  // La feature flag indica que existe soporte de subdominio, no que todos
+  // los redirects server-side deban ser relativos al host tenant.
+  return false;
 }
 
 /**

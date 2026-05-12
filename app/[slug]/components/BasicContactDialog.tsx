@@ -32,7 +32,7 @@ export function BasicContactDialog({ business, onClose, isOpen }: BasicContactDi
     let message = `Hola ${business.name}, me gustaría obtener más información sobre sus productos.`;
 
     if (cartItems.length > 0) {
-      const itemsList = cartItems.map(item => `- ${item.name} x${item.quantity}`).join('\n');
+      const itemsList = cartItems.map((item) => `- ${item.name} x${item.quantity}`).join('\n');
       message = `Hola ${business.name}, me gustaría realizar el siguiente pedido:\n\n${itemsList}\n\nTotal: S/ ${totalPrice.toLocaleString()}`;
     }
 
@@ -91,7 +91,9 @@ export function BasicContactDialog({ business, onClose, isOpen }: BasicContactDi
               <div className={styles.summaryList}>
                 {cartItems.map((item, idx) => (
                   <div key={idx} className={styles.summaryItem}>
-                    <span>{item.name} x{item.quantity}</span>
+                    <span>
+                      {item.name} x{item.quantity}
+                    </span>
                     <span>S/ {(Number(item.price) * item.quantity).toLocaleString()}</span>
                   </div>
                 ))}
@@ -105,27 +107,22 @@ export function BasicContactDialog({ business, onClose, isOpen }: BasicContactDi
         </div>
 
         <footer className={styles.footer}>
-          <Button
-            variant="filled"
-            onClick={handleWhatsApp}
-            className={styles.whatsappBtn}
-          >
-            <Icon size={20} style={{ paddingTop: 4, paddingRight: 25 }}>chat</Icon>
+          <Button variant="filled" onClick={handleWhatsApp} className={styles.whatsappBtn}>
+            <Icon size={20} style={{ paddingTop: 4, paddingRight: 25 }}>
+              chat
+            </Icon>
             Contactar por WhatsApp
           </Button>
 
-          <Button
-            variant="tonal"
-            onClick={() => window.print()}
-            className={styles.printBtn}
-
-          >
-            <Icon size={21} style={{ paddingTop: 4, paddingRight: 25 }}>download</Icon>
+          <Button variant="tonal" onClick={() => window.print()} className={styles.printBtn}>
+            <Icon size={21} style={{ paddingTop: 4, paddingRight: 25 }}>
+              download
+            </Icon>
             Descargar Resumen (PDF)
           </Button>
         </footer>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

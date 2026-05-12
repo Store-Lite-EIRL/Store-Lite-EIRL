@@ -133,29 +133,37 @@ export default function OrderAuthGate({
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: 'var(--md-sys-color-surface)',
-          gap: '2rem'
+          gap: '2rem',
         }}
       >
-        <div style={{
-          width: '40px',
-          height: '40px',
-          border: '3px solid var(--md-sys-color-primary-container)',
-          borderTopColor: 'var(--md-sys-color-primary)',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite'
-        }} />
-        <p style={{ 
-          fontSize: '0.75rem',
-          fontWeight: 900, 
-          letterSpacing: '0.2em',
-          color: 'var(--md-sys-color-on-surface)',
-          opacity: 0.6 
-        }}>
+        <div
+          style={{
+            width: '40px',
+            height: '40px',
+            border: '3px solid var(--md-sys-color-primary-container)',
+            borderTopColor: 'var(--md-sys-color-primary)',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+          }}
+        />
+        <p
+          style={{
+            fontSize: '0.75rem',
+            fontWeight: 900,
+            letterSpacing: '0.2em',
+            color: 'var(--md-sys-color-on-surface)',
+            opacity: 0.6,
+          }}
+        >
           ESTABLECIENDO CONEXIÓN SEGURA
         </p>
-        <style dangerouslySetInnerHTML={{ __html: `
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
           @keyframes spin { to { transform: rotate(360deg); } }
-        `}} />
+        `,
+          }}
+        />
       </div>
     );
   }
@@ -172,9 +180,10 @@ export default function OrderAuthGate({
           alignItems: 'center',
           justifyContent: 'center',
           padding: '1.5rem',
-          backgroundImage: 'radial-gradient(circle at 50% 50%, var(--md-sys-color-primary-container) 0%, transparent 70%)',
+          backgroundImage:
+            'radial-gradient(circle at 50% 50%, var(--md-sys-color-primary-container) 0%, transparent 70%)',
           backgroundSize: '100% 100%',
-          opacity: 0.98
+          opacity: 0.98,
         }}
       >
         <div
@@ -194,7 +203,8 @@ export default function OrderAuthGate({
             style={{
               width: 96,
               height: 96,
-              background: 'linear-gradient(135deg, var(--md-sys-color-primary) 0%, var(--md-sys-color-tertiary) 100%)',
+              background:
+                'linear-gradient(135deg, var(--md-sys-color-primary) 0%, var(--md-sys-color-tertiary) 100%)',
               color: 'white',
               borderRadius: '32px',
               display: 'flex',
@@ -202,12 +212,12 @@ export default function OrderAuthGate({
               justifyContent: 'center',
               margin: '0 auto 2.5rem',
               boxShadow: '0 20px 40px rgba(var(--md-sys-color-primary-rgb), 0.3)',
-              transform: 'rotate(-5deg)'
+              transform: 'rotate(-5deg)',
             }}
           >
             <Icon size={48}>verified_user</Icon>
           </div>
-          
+
           <h2
             style={{
               fontSize: '2rem',
@@ -215,20 +225,23 @@ export default function OrderAuthGate({
               marginBottom: '1rem',
               letterSpacing: '-0.04em',
               lineHeight: 1.1,
-              color: 'var(--md-sys-color-on-surface)'
+              color: 'var(--md-sys-color-on-surface)',
             }}
           >
             Verificá tu Identidad
           </h2>
-          
-          <p style={{ 
-            fontSize: '1rem', 
-            opacity: 0.7, 
-            marginBottom: '3rem',
-            lineHeight: 1.5,
-            padding: '0 1rem'
-          }}>
-            Para ver los detalles de tu compra en <b>{businessName}</b>, ingresá el DNI del comprador y el <b>N° de orden</b>.
+
+          <p
+            style={{
+              fontSize: '1rem',
+              opacity: 0.7,
+              marginBottom: '3rem',
+              lineHeight: 1.5,
+              padding: '0 1rem',
+            }}
+          >
+            Para ver los detalles de tu compra en <b>{businessName}</b>, ingresá el DNI del
+            comprador y el <b>N° de orden</b>.
           </p>
 
           <form
@@ -246,7 +259,7 @@ export default function OrderAuthGate({
                   color: 'var(--md-sys-color-primary)',
                   display: 'block',
                   marginBottom: '8px',
-                  letterSpacing: '0.05em'
+                  letterSpacing: '0.05em',
                 }}
               >
                 Documento de Identidad (DNI)
@@ -270,10 +283,10 @@ export default function OrderAuthGate({
                   outline: 'none',
                   transition: 'all 0.3s ease',
                   textAlign: 'center',
-                  letterSpacing: '0.2em'
+                  letterSpacing: '0.2em',
                 }}
-                onFocus={(e) => e.target.style.borderColor = 'var(--md-sys-color-primary)'}
-                onBlur={(e) => e.target.style.borderColor = 'var(--md-sys-color-outline-variant)'}
+                onFocus={(e) => (e.target.style.borderColor = 'var(--md-sys-color-primary)')}
+                onBlur={(e) => (e.target.style.borderColor = 'var(--md-sys-color-outline-variant)')}
               />
             </div>
 
@@ -288,7 +301,7 @@ export default function OrderAuthGate({
                   color: 'var(--md-sys-color-tertiary)',
                   display: 'block',
                   marginBottom: '8px',
-                  letterSpacing: '0.05em'
+                  letterSpacing: '0.05em',
                 }}
               >
                 N° de Orden
@@ -311,26 +324,28 @@ export default function OrderAuthGate({
                   outline: 'none',
                   transition: 'all 0.3s ease',
                   textAlign: 'center',
-                  letterSpacing: '0.1em'
+                  letterSpacing: '0.1em',
                 }}
-                onFocus={(e) => e.target.style.borderColor = 'var(--md-sys-color-tertiary)'}
-                onBlur={(e) => e.target.style.borderColor = 'var(--md-sys-color-outline-variant)'}
+                onFocus={(e) => (e.target.style.borderColor = 'var(--md-sys-color-tertiary)')}
+                onBlur={(e) => (e.target.style.borderColor = 'var(--md-sys-color-outline-variant)')}
               />
             </div>
 
             {error && (
-              <div style={{
-                background: 'var(--md-sys-color-error-container)',
-                color: 'var(--md-sys-color-on-error-container)',
-                padding: '1rem',
-                borderRadius: '16px',
-                fontSize: '0.85rem',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                justifyContent: 'center'
-              }}>
+              <div
+                style={{
+                  background: 'var(--md-sys-color-error-container)',
+                  color: 'var(--md-sys-color-on-error-container)',
+                  padding: '1rem',
+                  borderRadius: '16px',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  justifyContent: 'center',
+                }}
+              >
                 <Icon size={18}>error</Icon>
                 {error}
               </div>
@@ -351,11 +366,14 @@ export default function OrderAuthGate({
                 cursor: 'pointer',
                 opacity: loading || dni.length < 8 || !inputOrderNumber.trim() ? 0.5 : 1,
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: dni.length >= 8 && inputOrderNumber.trim() ? '0 15px 30px rgba(var(--md-sys-color-primary-rgb), 0.3)' : 'none',
+                boxShadow:
+                  dni.length >= 8 && inputOrderNumber.trim()
+                    ? '0 15px 30px rgba(var(--md-sys-color-primary-rgb), 0.3)'
+                    : 'none',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '12px'
+                gap: '12px',
               }}
             >
               {loading ? (
@@ -370,7 +388,9 @@ export default function OrderAuthGate({
           </form>
 
           <p style={{ marginTop: '2.5rem', fontSize: '0.75rem', opacity: 0.5, fontWeight: 700 }}>
-            <Icon size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }}>lock</Icon>
+            <Icon size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }}>
+              lock
+            </Icon>
             Conexión cifrada de punto a punto
           </p>
         </div>

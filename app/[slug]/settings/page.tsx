@@ -2,7 +2,6 @@ import { env } from '@/config/env';
 import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { businessSettings } from '@/core/database/schema';
-import { eq } from 'drizzle-orm';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import {
   getStorefrontLayoutFromPreferences,
@@ -11,6 +10,7 @@ import {
 } from '@/core/storefront';
 import { getMemberPermissions } from '@/lib/permissions/checkPermission';
 import { createServerClient } from '@supabase/ssr';
+import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';

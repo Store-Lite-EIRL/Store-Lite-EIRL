@@ -8,7 +8,7 @@ export function useLogoManager(
   businessId: string | undefined,
   businessSlug: string | undefined,
   initialLogo: string | null,
-  setAlert: (a: AlertState) => void
+  setAlert: (a: AlertState) => void,
 ) {
   const [logoPreview, setLogoPreview] = useState<string | null>(initialLogo);
   const [isUpdatingLogo, setIsUpdatingLogo] = useState(false);

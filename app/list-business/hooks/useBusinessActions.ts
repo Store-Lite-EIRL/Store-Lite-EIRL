@@ -20,7 +20,7 @@ export function useBusinessActions(isSaving: boolean, setIsSaving: (s: boolean) 
     businessId: string,
     businessSlug: string,
     formData: Record<string, string>,
-    hasChanges: boolean
+    hasChanges: boolean,
   ) => {
     if (!hasChanges || isSaving) return;
 

@@ -1,8 +1,8 @@
 'use client';
 
+import { StoreLogo } from '@/shared/components/ui/data-display/StoreLogo';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { StoreLogo } from '@/shared/components/ui/data-display/StoreLogo';
 
 const navItems = [
   { id: 'inicio', label: 'Inicio' },

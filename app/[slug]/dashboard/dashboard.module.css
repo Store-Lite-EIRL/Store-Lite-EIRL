@@ -25,7 +25,7 @@
 }
 
 .sectionTitle::after {
-  content: "";
+  content: '';
   position: absolute;
   bottom: -0.65rem;
   left: 0;
@@ -50,7 +50,7 @@
   .dashboardRoot {
     gap: 1.5rem;
   }
-  
+
   .sectionTitle {
     font-size: 1.1rem;
   }

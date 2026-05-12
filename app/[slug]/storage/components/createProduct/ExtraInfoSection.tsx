@@ -101,7 +101,9 @@ export const ExtraInfoSection = ({
         {seoEnabled && (
           <>
             <Divider style={{ margin: '16px 0' }} />
-            <p className="form-section-title" style={{ fontSize: '0.9rem', opacity: 0.8 }}>SEO del Producto</p>
+            <p className="form-section-title" style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+              SEO del Producto
+            </p>
             <div>
               <TextField
                 label="Título SEO"

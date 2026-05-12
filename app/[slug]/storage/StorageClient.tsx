@@ -200,11 +200,7 @@ export function StorageClient({
 
   return (
     <div className="storage-container">
-      <StorageProvider
-        businessSlug={businessSlug}
-        isOwner={isOwner}
-        permissions={permissions}
-      >
+      <StorageProvider businessSlug={businessSlug} isOwner={isOwner} permissions={permissions}>
         <StorageContent />
       </StorageProvider>
     </div>

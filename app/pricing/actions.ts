@@ -63,7 +63,10 @@ export async function upgradeBusinessPlan(businessId: string, planType: string) 
       .update(businessSubscriptions)
       .set({ planStatus: 'inactive', planUpdatedAt: new Date() })
       .where(
-        and(eq(businessSubscriptions.businessId, businessId), eq(businessSubscriptions.planStatus, 'active')),
+        and(
+          eq(businessSubscriptions.businessId, businessId),
+          eq(businessSubscriptions.planStatus, 'active'),
+        ),
       );
 
     await db.insert(businessSubscriptions).values({

@@ -47,7 +47,11 @@ export default function ReportFlow({ paymentId, trackingToken }: ReportFlowProps
       <div id="report-finalize" className="rf-overlay rf-overlay--visible">
         <div className="rf-dialog rf-dialog--success">
           {/* Close button */}
-          <button className="rf-close" onClick={() => (window.location.hash = '')} aria-label="Cerrar">
+          <button
+            className="rf-close"
+            onClick={() => (window.location.hash = '')}
+            aria-label="Cerrar"
+          >
             <Icon>close</Icon>
           </button>
 

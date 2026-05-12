@@ -24,6 +24,7 @@
 **Descripción**: Cobrar 10% de cada venta de los negocios automáticamente.
 
 **Cómo funciona**:
+
 ```
 Cliente paga S/100 → Culqi split:
   - 10% (S/10) → Store Lite
@@ -32,6 +33,7 @@ Cliente paga S/100 → Culqi split:
 ```
 
 **Requisitos técnicos**:
+
 ```json
 {
   "source_id": "tkn_...",
@@ -42,12 +44,14 @@ Cliente paga S/100 → Culqi split:
 }
 ```
 
-**Estado legal actual**: 
+**Estado legal actual**:
+
 - ❌ No disponible para Persona Natural
 - ✅ Requiere empresa constituida (SAC, SRL, etc.)
 - ⏳ Requiere activación de perfil Marketplace en Culqi
 
 **Pendiente**:
+
 - [ ] Contactar a Culqi para activar perfil Marketplace
 - [ ] Cuando sea empresa constituida
 - [ ] Implementar código (preparado en docs/CULQI_MARKETPLACE_WORKFLOW.md)
@@ -59,12 +63,14 @@ Cliente paga S/100 → Culqi split:
 **Descripción**: Notificaciones automáticas cuando el plan está por vencer.
 
 **Funcionalidades**:
+
 - [ ] Banner de "Plan por vencer" 7 días antes
 - [ ] Email de recordatorio
 - [ ] Proceso de renovación sin fricción
 - [ ] Grace period antes de desactivar funcionalidades
 
-**Tecnología**: 
+**Tecnología**:
+
 - Cron job o Edge Function que verifique fechas diarias
 - Email via Supabase o servicio externo
 
@@ -75,6 +81,7 @@ Cliente paga S/100 → Culqi split:
 **Descripción**: Manejo elegante cuando el pago falla o el usuario no renueva.
 
 **Flujo**:
+
 1. Pago falla → Notificación + retry automático
 2. Vence → Período de gracia (3 días)
 3. Suspensión → Solo lectura (no ventas)
@@ -87,15 +94,18 @@ Cliente paga S/100 → Culqi split:
 **Descripción**: Emitir comprobantes oficiales (facturas/boletas) validados por SUNAT.
 
 **Por qué es importante**:
+
 - SUNAT exige que todas las ventas tengan comprobantes electrónicos
 - Los clientes (especialmente empresas) exigen factura oficial para deducir IGV
 
 **Cómo funciona**:
+
 ```
 Generar JSON → Firmar con certificado → Enviar a OSE/SUNAT → CDR (validados)
 ```
 
 **Requisitos**:
+
 - OSE (Operador de Servicios Electrónicos) como APISUNAT
 - Certificado digital de empresa
 - Cuenta en portal de SUNAT
@@ -108,10 +118,12 @@ Generar JSON → Firmar con certificado → Enviar a OSE/SUNAT → CDR (validado
 | Integración directa | Bajo pero complejo | Difícil |
 
 **Estado actual**:
+
 - ⏳ No es necesario ahora - tickets actuales son internos
 - ✅ Para cuando un negocio lo solicite específicamente
 
 **Pendiente**:
+
 - [ ] Solo implementar cuando un cliente lo demande
 - [ ] Investigar costos de OSE cuando sea necesario
 
@@ -119,12 +131,12 @@ Generar JSON → Firmar con certificado → Enviar a OSE/SUNAT → CDR (validado
 
 ## Decisiones Tomadas
 
-| Tema | Decisión | Fecha |
-|------|----------|-------|
-| Suscripciones con Culqi | ❌ No necesario - manejar desde BD | Abr 2026 |
-| Split Payments | ⏳ Postergado para cuando sea empresa | Abr 2026 |
-| Facturación SUNAT | ⏳ Solo cuando un cliente lo demande | Abr 2026 |
-| Modelo de ingresos inicial | Solo planes de suscripción | Abr 2026 |
+| Tema                       | Decisión                              | Fecha    |
+| -------------------------- | ------------------------------------- | -------- |
+| Suscripciones con Culqi    | ❌ No necesario - manejar desde BD    | Abr 2026 |
+| Split Payments             | ⏳ Postergado para cuando sea empresa | Abr 2026 |
+| Facturación SUNAT          | ⏳ Solo cuando un cliente lo demande  | Abr 2026 |
+| Modelo de ingresos inicial | Solo planes de suscripción            | Abr 2026 |
 
 ---
 
@@ -137,4 +149,4 @@ Generar JSON → Firmar con certificado → Enviar a OSE/SUNAT → CDR (validado
 
 ---
 
-*Documento vivo - Actualizar cuando haya cambios en el roadmap*
+_Documento vivo - Actualizar cuando haya cambios en el roadmap_

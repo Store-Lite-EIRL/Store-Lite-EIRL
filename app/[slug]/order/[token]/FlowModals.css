@@ -27,8 +27,12 @@
 }
 
 @keyframes cf-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* ─── Dialog (shared base) ─── */
@@ -47,8 +51,14 @@
 }
 
 @keyframes cf-slide-up {
-  from { opacity: 0; transform: translateY(16px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* ─── Close button ─── */
@@ -67,7 +77,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .cf-close:hover,
@@ -102,23 +114,39 @@
 }
 
 .cf-icon-circle--success {
-  background: linear-gradient(135deg, var(--md-sys-color-tertiary, #6750a4) 0%, var(--md-sys-color-primary, #6750a4) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--md-sys-color-tertiary, #6750a4) 0%,
+    var(--md-sys-color-primary, #6750a4) 100%
+  );
   color: white;
   box-shadow: 0 12px 32px rgba(103, 80, 164, 0.3);
   animation: cf-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 .rf-icon-circle--shield {
-  background: linear-gradient(135deg, var(--md-sys-color-secondary, #6750a4) 0%, var(--md-sys-color-primary, #6750a4) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--md-sys-color-secondary, #6750a4) 0%,
+    var(--md-sys-color-primary, #6750a4) 100%
+  );
   color: white;
   box-shadow: 0 12px 32px rgba(103, 80, 164, 0.25);
   animation: cf-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 @keyframes cf-pop {
-  0% { transform: scale(0) rotate(-15deg); opacity: 0; }
-  70% { transform: scale(1.1) rotate(3deg); }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  0% {
+    transform: scale(0) rotate(-15deg);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.1) rotate(3deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
 }
 
 /* ─── Typography (shared) ─── */
@@ -304,7 +332,9 @@
 }
 
 @keyframes cf-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ─── Form (ReportFlow) ─── */
@@ -341,7 +371,9 @@
   outline: none;
   resize: vertical;
   font-family: inherit;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .rf-textarea:focus {
@@ -391,8 +423,14 @@
 }
 
 @keyframes cf-snackbar-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(16px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 .cf-snackbar-close {

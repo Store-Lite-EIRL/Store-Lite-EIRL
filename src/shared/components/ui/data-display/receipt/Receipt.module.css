@@ -2,10 +2,10 @@
 .receipt {
   --glass-bg: rgba(255, 255, 255, 0.95);
   --glass-border: rgba(255, 255, 255, 0.4);
-  --accent: var(--md-sys-color-primary, #6750A4);
-  --on-surface: var(--md-sys-color-on-surface, #1C1B1F);
-  --on-surface-variant: var(--md-sys-color-on-surface-variant, #49454F);
-  --outline-variant: var(--md-sys-color-outline-variant, #CAC4D0);
+  --accent: var(--md-sys-color-primary, #6750a4);
+  --on-surface: var(--md-sys-color-on-surface, #1c1b1f);
+  --on-surface-variant: var(--md-sys-color-on-surface-variant, #49454f);
+  --outline-variant: var(--md-sys-color-outline-variant, #cac4d0);
 
   background: var(--glass-bg);
   backdrop-filter: blur(12px);
@@ -18,7 +18,7 @@
   color: var(--on-surface);
   position: relative;
   overflow: hidden;
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.08),
     inset 0 0 0 1px var(--glass-border);
   border: 1px solid var(--outline-variant);
@@ -38,8 +38,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #E8F5E9;
-  color: #2E7D32;
+  background: #e8f5e9;
+  color: #2e7d32;
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 11px;
@@ -105,7 +105,8 @@
   white-space: pre-wrap;
 }
 
-.ruc, .address {
+.ruc,
+.address {
   font-size: 11px;
   color: var(--on-surface-variant);
   margin: 0;
@@ -271,7 +272,7 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto 12px;
-  color: #0061A4;
+  color: #0061a4;
 }
 
 /* Shipping Address Section */
@@ -287,7 +288,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #0061A4;
+  color: #0061a4;
   margin-bottom: 8px;
 }
 

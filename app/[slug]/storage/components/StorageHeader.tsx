@@ -3,13 +3,13 @@ import { CircularProgress } from '@/shared/components/ui/feedback/Progress';
 import { Dialog } from '@/shared/components/ui/surfaces/Dialog';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { usePermissions } from '../../context/PermissionsContext';
 import { importProductsBatch } from '../actions';
+import { useStorage } from '../context/StorageContext';
 import type { Product } from '../data';
 import { ImportPreviewDialog } from './ImportPreviewDialog';
 import { ImportSourceModal } from './ImportSourceModal';
-import { useStorage } from '../context/StorageContext';
 import { StatsHeader } from './StatsHeader';
-import { usePermissions } from '../../context/PermissionsContext';
 
 interface StorageHeaderProps {
   productsCount: number;
@@ -95,7 +95,7 @@ export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: Stor
         <div className="product-count-wrapper">
           <p className="product-count">({productsCount} productos)</p>
           {entitlements && entitlements.maxProducts !== Infinity && (
-            <div 
+            <div
               className={`limit-badge ${productsCount >= entitlements.maxProducts ? 'limit-reached' : ''}`}
             >
               Límite: {entitlements.maxProducts}
@@ -118,17 +118,21 @@ export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: Stor
           <Icon>notifications</Icon>
           <Badge count="3" />
         </IconButton>
-        
+
         {(isOwner || can('products.edit')) && (
           <Button variant="outlined" onClick={handleImportClick} className="btn-import">
-            <Icon slot="icon" size={23}>download</Icon>
+            <Icon slot="icon" size={23}>
+              download
+            </Icon>
             <span>Importar</span>
           </Button>
         )}
 
         {(isOwner || can('products.create')) && (
           <Button variant="filled" onClick={onAddProduct} className="btn-add-product">
-            <Icon slot="icon" size={23}>add</Icon>
+            <Icon slot="icon" size={23}>
+              add
+            </Icon>
             <span>Añadir Producto</span>
           </Button>
         )}

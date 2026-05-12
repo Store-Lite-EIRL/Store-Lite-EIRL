@@ -1,5 +1,4 @@
 // ReceiptItem - Componente para mostrar un solo item en el ticket
-import React from 'react';
 
 export interface ReceiptItemProps {
   label: string;
@@ -19,7 +18,7 @@ export function createReceiptItem(
     isBold?: boolean;
     isTotal?: boolean;
     icon?: string;
-  }
+  },
 ): ReceiptItemProps {
   return {
     label,

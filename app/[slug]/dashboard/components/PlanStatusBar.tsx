@@ -23,7 +23,8 @@ export function PlanStatusBar({
   const maxCategories = entitlements.maxCategories;
 
   const productUsage = maxProducts > 0 ? Math.min((currentProducts / maxProducts) * 100, 100) : 0;
-  const categoryUsage = maxCategories > 0 ? Math.min((currentCategories / maxCategories) * 100, 100) : 0;
+  const categoryUsage =
+    maxCategories > 0 ? Math.min((currentCategories / maxCategories) * 100, 100) : 0;
 
   const showUpgrade = entitlements.plan !== 'enterprise_ai';
 

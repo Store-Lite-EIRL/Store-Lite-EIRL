@@ -38,7 +38,9 @@ export function usePurchasePlan() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<PurchasePlanResult | null>(null);
 
-  const [capturingData, setCapturingData] = useState<PurchasePlanResult & { buyerData: PurchasePlanData } | null>(null);
+  const [capturingData, setCapturingData] = useState<
+    (PurchasePlanResult & { buyerData: PurchasePlanData }) | null
+  >(null);
 
   /**
    * Ref al nodo DOM del PlanTicketTemplate para capturar con html-to-image.
@@ -62,7 +64,8 @@ export function usePurchasePlan() {
         const purchaseJson = await purchaseResponse.json();
 
         if (!purchaseResponse.ok || !purchaseJson.success) {
-          const errorMsg = purchaseJson.details || purchaseJson.error || 'Error al procesar el pago';
+          const errorMsg =
+            purchaseJson.details || purchaseJson.error || 'Error al procesar el pago';
           setError(errorMsg);
           return null;
         }

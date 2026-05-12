@@ -6,8 +6,8 @@
 
 'use client';
 
-import type { Permission, Role } from '@/lib/permissions/definitions';
 import type { MemberPermissions } from '@/lib/permissions/checkPermission';
+import type { Permission, Role } from '@/lib/permissions/definitions';
 import { useCallback, useEffect, useState } from 'react';
 
 interface UsePermissionsReturn {

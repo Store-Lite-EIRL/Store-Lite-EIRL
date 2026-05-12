@@ -77,9 +77,10 @@ export function StatCards({
   return (
     <section className={styles.grid} aria-label="Resumen del negocio">
       {cards.map((card) => {
-        const progress = card.max !== undefined && card.max !== null 
-          ? Math.min((card.value / card.max) * 100, 100) 
-          : null;
+        const progress =
+          card.max !== undefined && card.max !== null
+            ? Math.min((card.value / card.max) * 100, 100)
+            : null;
         const isNearLimit = progress !== null && progress >= 80;
 
         return (
@@ -87,11 +88,11 @@ export function StatCards({
             <div className={styles.topRow}>
               <div className={styles.cardInfo}>
                 <span className={styles.cardLabel}>{card.label}</span>
-                <span className={styles.cardValue}>
-                  {card.value.toLocaleString('es-PE')}
-                </span>
+                <span className={styles.cardValue}>{card.value.toLocaleString('es-PE')}</span>
                 {card.max !== undefined && card.max !== null && (
-                  <span className={`${styles.cardLimit} ${isNearLimit ? styles.cardLimitWarn : ''}`}>
+                  <span
+                    className={`${styles.cardLimit} ${isNearLimit ? styles.cardLimitWarn : ''}`}
+                  >
                     de {card.max.toLocaleString('es-PE')} disponibles
                   </span>
                 )}

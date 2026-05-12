@@ -1,11 +1,11 @@
 'use client';
 
+import type { BusinessEntitlements } from '@/core/entitlements/plans';
 import { createContext, useContext, type ReactNode } from 'react';
+import { usePermissions } from '../../context/PermissionsContext';
 import type { Product } from '../data';
 import { useStorageProducts, type SortConfig } from '../hooks/useStorageProducts';
 import type { SaveProductMediaItem, SaveProductPayload } from '../types';
-import type { BusinessEntitlements } from '@/core/entitlements/plans';
-import { usePermissions } from '../../context/PermissionsContext';
 
 interface StorageContextType {
   products: Product[];

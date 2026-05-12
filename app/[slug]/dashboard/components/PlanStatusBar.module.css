@@ -65,7 +65,8 @@
   flex-wrap: wrap;
 }
 
-.planDates, .timeInfo {
+.planDates,
+.timeInfo {
   display: flex;
   gap: 1.5rem;
 }
@@ -120,7 +121,7 @@
     align-items: stretch;
     gap: 1.5rem;
   }
-  
+
   .usageInfo {
     gap: 1rem;
     flex-direction: column;
@@ -132,7 +133,8 @@
     gap: 0.75rem;
   }
 
-  .planDates, .timeInfo {
+  .planDates,
+  .timeInfo {
     flex-direction: column;
     gap: 0.35rem;
   }

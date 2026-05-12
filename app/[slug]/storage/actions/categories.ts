@@ -6,8 +6,8 @@ import { getUniqueCategorySlug } from '@/shared/utils/categorySlug';
 import { eq, sql } from 'drizzle-orm';
 
 import { getBusinessEntitlements } from '@/core/entitlements';
-import { revalidatePath } from 'next/cache';
 import { logError } from '@/lib/errorHandling';
+import { revalidatePath } from 'next/cache';
 import { requireAccess } from './authz';
 
 export async function getProductCategories(slug: string) {

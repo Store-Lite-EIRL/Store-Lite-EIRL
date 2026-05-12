@@ -45,7 +45,11 @@ export default function ConfirmationFlow({
       <div id="confirm-finalize" className="cf-overlay cf-overlay--visible">
         <div className="cf-dialog cf-dialog--success">
           {/* Close button */}
-          <button className="cf-close" onClick={() => (window.location.hash = '')} aria-label="Cerrar">
+          <button
+            className="cf-close"
+            onClick={() => (window.location.hash = '')}
+            aria-label="Cerrar"
+          >
             <Icon>close</Icon>
           </button>
 
@@ -74,10 +78,7 @@ export default function ConfirmationFlow({
             Transacción segura y completada
           </div>
 
-          <button
-            className="cf-btn cf-btn--primary"
-            onClick={() => (window.location.hash = '')}
-          >
+          <button className="cf-btn cf-btn--primary" onClick={() => (window.location.hash = '')}>
             CERRAR
           </button>
         </div>

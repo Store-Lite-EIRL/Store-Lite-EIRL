@@ -1,3 +1,5 @@
+import type { BusinessEntitlements } from '@/core/entitlements/plans';
+import { isBusinessError } from '@/lib/errorHandling';
 import { useEffect, useMemo, useState } from 'react';
 import {
   createProduct,
@@ -12,8 +14,6 @@ import type { Product } from '../data';
 import { deleteProductImage, uploadProductImage } from '../services/storageService';
 import type { SaveProductMediaItem, SaveProductPayload } from '../types';
 import { parsePriceValue } from '../utils/currency';
-import { isBusinessError } from '@/lib/errorHandling';
-import type { BusinessEntitlements } from '@/core/entitlements/plans';
 
 export type SortDirection = 'asc' | 'desc';
 export interface SortConfig {
@@ -104,7 +104,12 @@ export const useStorageProducts = ({
           const [productsRes, categoriesRes] = await Promise.all([
             needsProducts
               ? getProductsByBusinessSlug(businessSlug)
-              : Promise.resolve({ products: currentProducts, businessId, entitlements, error: null }),
+              : Promise.resolve({
+                  products: currentProducts,
+                  businessId,
+                  entitlements,
+                  error: null,
+                }),
             needsCategories
               ? getProductCategories(businessSlug)
               : Promise.resolve({ categories: categories, entitlements, error: null }),
@@ -141,7 +146,10 @@ export const useStorageProducts = ({
 
     if (businessSlug) {
       // Si tenemos initialBusinessId, guardarlo en el caché si no está
-      if (initialBusinessId && (!globalStorageCache[businessSlug] || !globalStorageCache[businessSlug].businessId)) {
+      if (
+        initialBusinessId &&
+        (!globalStorageCache[businessSlug] || !globalStorageCache[businessSlug].businessId)
+      ) {
         if (!globalStorageCache[businessSlug]) {
           globalStorageCache[businessSlug] = {
             products: initialProducts,
@@ -175,7 +183,7 @@ export const useStorageProducts = ({
   const deleteProduct = async (id: string): Promise<{ success: boolean; error?: string }> => {
     // 1. Guardar estado previo
     // 1. Find the product to delete before optimistic update
-    const productToDelete = currentProducts.find(p => p.id === id);
+    const productToDelete = currentProducts.find((p) => p.id === id);
 
     // 2. Guardar estado previo
     const previousProducts = [...currentProducts];
@@ -207,12 +215,15 @@ export const useStorageProducts = ({
 
       // 5. Storage Cleanup: Delete images if the product was successfully deleted from DB
       if (productToDelete) {
-        const imagesToDelete = productToDelete.images || (productToDelete.image ? [productToDelete.image] : []);
+        const imagesToDelete =
+          productToDelete.images || (productToDelete.image ? [productToDelete.image] : []);
         if (imagesToDelete.length > 0) {
-          console.warn(`[useStorageProducts] Eliminando ${imagesToDelete.length} imágenes del producto eliminado...`);
-          // We don't await this to avoid blocking the main save flow, 
+          console.warn(
+            `[useStorageProducts] Eliminando ${imagesToDelete.length} imágenes del producto eliminado...`,
+          );
+          // We don't await this to avoid blocking the main save flow,
           // but we execute it in background.
-          imagesToDelete.forEach(url => deleteProductImage(url).catch(console.error));
+          imagesToDelete.forEach((url) => deleteProductImage(url).catch(console.error));
         }
       }
       return { success: true };
@@ -268,8 +279,10 @@ export const useStorageProducts = ({
     try {
       // 1. Process Images in parallel
       const effectiveBusinessId = initialBusinessId || businessId;
-      console.warn(`[useStorageProducts] Procesando ${media.length} imágenes para businessId: ${effectiveBusinessId}...`);
-      
+      console.warn(
+        `[useStorageProducts] Procesando ${media.length} imágenes para businessId: ${effectiveBusinessId}...`,
+      );
+
       const uploadPromises = media.map(async (item, index) => {
         if (item.type === 'url') {
           return item.url;
@@ -287,14 +300,17 @@ export const useStorageProducts = ({
 
       // 2. Logic for cleanup (delete images that are no longer used)
       if (isEdit && initialProduct) {
-        const oldImages = initialProduct.images || (initialProduct.image ? [initialProduct.image] : []);
-        const imagesToDelete = oldImages.filter(url => !finalImageUrls.includes(url));
-        
+        const oldImages =
+          initialProduct.images || (initialProduct.image ? [initialProduct.image] : []);
+        const imagesToDelete = oldImages.filter((url) => !finalImageUrls.includes(url));
+
         if (imagesToDelete.length > 0) {
-          console.warn(`[useStorageProducts] Eliminando ${imagesToDelete.length} imágenes obsoletas...`);
-          // We don't await this to avoid blocking the main save flow, 
+          console.warn(
+            `[useStorageProducts] Eliminando ${imagesToDelete.length} imágenes obsoletas...`,
+          );
+          // We don't await this to avoid blocking the main save flow,
           // but we execute it in background.
-          imagesToDelete.forEach(url => deleteProductImage(url).catch(console.error));
+          imagesToDelete.forEach((url) => deleteProductImage(url).catch(console.error));
         }
       }
 
@@ -507,6 +523,6 @@ export const useStorageProducts = ({
           globalStorageCache[businessSlug].categories = updatedCategories;
         }
       }
-    }
+    },
   };
 };

@@ -3,8 +3,8 @@
 import { Icon } from '@/shared/components/ui/data-display/Icon';
 import { Select } from '@/shared/components/ui/inputs/Select';
 import { getMaterialSelectValue, type MaterialSelectEvent } from '@/shared/utils';
-import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
+import { useState } from 'react';
 import { AddCategoryModal } from '../../../../(main)/home/components/AddCategoryModal';
 import { createCategory } from '../../actions/categories';
 import { useStorage } from '../../context/StorageContext';
@@ -25,7 +25,6 @@ export const CategorySection = ({
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const params = useParams();
   const businessSlug = params.slug as string;
-
 
   const handleSaveNewCategory = async (newName: string, imageFile: File | null) => {
     try {

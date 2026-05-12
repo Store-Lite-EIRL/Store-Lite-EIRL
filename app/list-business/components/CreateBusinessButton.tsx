@@ -36,7 +36,9 @@ export default function CreateBusinessButton({ hasReachedLimit }: CreateBusiness
         suppressHydrationWarning
         id="limit-button"
       >
-        <Icon slot="icon" size={21}>help_outline</Icon>
+        <Icon slot="icon" size={21}>
+          help_outline
+        </Icon>
         Crear nueva empresa
       </md-filled-button>
 

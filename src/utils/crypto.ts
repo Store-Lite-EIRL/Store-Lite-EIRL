@@ -10,8 +10,8 @@ const IV_LENGTH = 16;
 const AUTH_TAG_LENGTH = 16;
 
 // In production, ENCRYPTION_KEY must be a 32-byte string in .env
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY 
-  ? scryptSync(process.env.ENCRYPTION_KEY, 'salt', 32) 
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY
+  ? scryptSync(process.env.ENCRYPTION_KEY, 'salt', 32)
   : Buffer.alloc(32, 0); // Fallback only for dev, SHOULD BE SET IN .ENV
 
 /**
@@ -24,12 +24,12 @@ export function encrypt(text: string): string {
 
   const iv = randomBytes(IV_LENGTH);
   const cipher = createCipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
-  
+
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
-  
+
   const authTag = cipher.getAuthTag().toString('hex');
-  
+
   // Format: iv:encrypted:authTag
   return `${iv.toString('hex')}:${encrypted}:${authTag}`;
 }
@@ -40,7 +40,7 @@ export function encrypt(text: string): string {
 export function decrypt(cipherText: string): string {
   try {
     const [ivHex, encrypted, authTagHex] = cipherText.split(':');
-    
+
     if (!ivHex || !encrypted || !authTagHex) {
       // If it doesn't match the format, it might be an old plain-text key
       // Return as is for backward compatibility during transition, but log it
@@ -51,12 +51,12 @@ export function decrypt(cipherText: string): string {
     const iv = Buffer.from(ivHex, 'hex');
     const authTag = Buffer.from(authTagHex, 'hex');
     const decipher = createDecipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
-    
+
     decipher.setAuthTag(authTag);
-    
+
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
-    
+
     return decrypted;
   } catch (error) {
     console.error('Decryption failed:', error);

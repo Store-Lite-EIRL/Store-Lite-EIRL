@@ -1,2 +1,2 @@
-export * from './plans';
 export * from './getBusinessEntitlements';
+export * from './plans';

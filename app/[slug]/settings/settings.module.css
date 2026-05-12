@@ -132,7 +132,9 @@
   border-radius: 16px;
   overflow: hidden;
   padding: 0;
-  transition: opacity 0.3s ease, filter 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    filter 0.3s ease;
 }
 
 .disabledCard {

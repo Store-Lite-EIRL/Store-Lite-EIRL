@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     if (!month || !year) {
       return NextResponse.json(
         { error: 'Faltan parámetros de mes (1-12) y año (YYYY)' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -29,18 +29,29 @@ export async function GET(request: Request) {
     const records = await db.query.planPayments.findMany({
       where: and(
         gte(planPayments.ticketIssuedAt, startOfMonth),
-        lte(planPayments.ticketIssuedAt, endOfMonth)
+        lte(planPayments.ticketIssuedAt, endOfMonth),
       ),
       orderBy: (params, { asc }) => [asc(params.ticketCorrelative)],
       with: {
         business: {
-          with: { owner: true }
-        }
-      }
+          with: { owner: true },
+        },
+      },
     });
 
     const csvRows = [
-      ['Fecha', 'Serie-Correlativo', 'Tipo Doc', 'Nro Doc', 'Cliente', 'Subtotal', 'IGV', 'Total', 'Moneda', 'Estado']
+      [
+        'Fecha',
+        'Serie-Correlativo',
+        'Tipo Doc',
+        'Nro Doc',
+        'Cliente',
+        'Subtotal',
+        'IGV',
+        'Total',
+        'Moneda',
+        'Estado',
+      ],
     ];
 
     for (const record of records) {

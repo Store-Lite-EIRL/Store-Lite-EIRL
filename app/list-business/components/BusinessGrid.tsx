@@ -4,8 +4,8 @@ import type { Business } from '@/core/database/schema';
 import { useState } from 'react';
 import style from '../ListBusiness.module.css';
 import BusinessCard from './BusinessCard';
-import DeleteBusinessDialog from './DeleteBusinessDialog';
 import BusinessSettingsModal from './BusinessSettingsModal';
+import DeleteBusinessDialog from './DeleteBusinessDialog';
 
 interface BusinessGridProps {
   businesses: (Business & { isTeam?: boolean; planType?: string | null })[];

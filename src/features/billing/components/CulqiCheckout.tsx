@@ -78,7 +78,7 @@ export function CulqiCheckout({
       if (window.Culqi.token) {
         const token = window.Culqi.token.id;
         console.log('✅ Token de Culqi recibido exitosamente:', token, 'para el plan:', planId);
-        if (window.Culqi) window.Culqi.close(); 
+        if (window.Culqi) window.Culqi.close();
         onTokenSuccess(token);
       } else if (window.Culqi.error) {
         console.error('❌ Error desde Culqi:', window.Culqi.error);
@@ -87,7 +87,7 @@ export function CulqiCheckout({
 
     return () => {
       // Limpieza preventiva (aunque el window.culqi podría quedarse)
-      window.culqi = () => { };
+      window.culqi = () => {};
     };
   }, [onTokenSuccess, planId]);
 
@@ -127,9 +127,9 @@ export function CulqiCheckout({
         display: 'inline-block',
         width: '100%',
         opacity: disabled ? 0.5 : 1,
-        transition: 'opacity 0.2s ease-in-out'
+        transition: 'opacity 0.2s ease-in-out',
       }}
-      title={!isCulqiReady ? "Cargando pasarela de pagos segura..." : ""}
+      title={!isCulqiReady ? 'Cargando pasarela de pagos segura...' : ''}
     >
       {children}
     </div>
