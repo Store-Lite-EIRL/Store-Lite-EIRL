@@ -3,6 +3,10 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   // ... (previous config)
+  // Exponer explícitamente vars al build para que el Edge Runtime las tenga disponibles
+  env: {
+    FEATURE_SUBDOMAIN_REWRITE: process.env.FEATURE_SUBDOMAIN_REWRITE,
+  },
   poweredByHeader: false,
   compress: true,
   async headers() {

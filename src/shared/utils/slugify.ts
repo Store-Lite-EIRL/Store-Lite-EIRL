@@ -6,7 +6,7 @@ export function slugify(text: string): string {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '') // Remove accents
-    .replace(/[^\w-]/g, '-') // Simplified alphanumeric replacement (ReDoS safe)
+    .replace(/[^a-z0-9-]/g, '-') // DNS-safe: solo minúsculas, números y guiones
     .replace(/-+/g, '-') // Collapse multiple hyphens
     .replace(/^-+/g, '') // Remove leading hyphens
     .replace(/-+$/g, ''); // Remove trailing hyphens

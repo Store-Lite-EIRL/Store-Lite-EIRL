@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertSnackbar, Icon, IconButton } from '@/shared/components/ui';
+import { getBusinessPath } from '@/shared/utils/url';
 import ProductPreviewSheet from '@app/[slug]/components/ProductPreviewSheet';
 import { useParams, useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
@@ -61,13 +62,14 @@ export const ProductTable = ({
 
   const handleGoToProduct = () => {
     closeMenu();
-    if (menuProduct) router.push(`/${businessSlug}/product/${menuProduct.id}`);
+    if (menuProduct) router.push(getBusinessPath(businessSlug, `/product/${menuProduct.id}`));
   };
 
   const handleShareProduct = () => {
     closeMenu();
     if (menuProduct) {
-      const url = `${window.location.origin}/${businessSlug}/product/${menuProduct.id}`;
+      const businessPath = getBusinessPath(businessSlug, `/product/${menuProduct.id}`);
+      const url = window.location.origin + businessPath;
       navigator.clipboard.writeText(url).then(() => setCopiedAlert(true));
     }
   };

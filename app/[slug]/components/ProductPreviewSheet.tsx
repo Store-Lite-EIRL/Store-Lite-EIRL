@@ -3,6 +3,7 @@
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
 import { Button, Sheet } from '@/shared/components/ui';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
+import { getBusinessPath } from '@/shared/utils/url';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -190,7 +191,10 @@ export default function ProductPreviewSheet({
                   : product.description || 'Sin descripción disponible.'}
               </p>
               {product.description && product.description.length > 120 && (
-                <Link href={`/${slug}/product/${product.id}`} className={styles.inlineLink}>
+                <Link
+                  href={getBusinessPath(slug, `/product/${product.id}`)}
+                  className={styles.inlineLink}
+                >
                   Ver detalle completo
                 </Link>
               )}
@@ -334,7 +338,10 @@ export default function ProductPreviewSheet({
                         Agotado
                       </Button>
                     )}
-                    <Link href={`/${slug}/product/${product.id}`} className={styles.fullLink}>
+                    <Link
+                      href={getBusinessPath(slug, `/product/${product.id}`)}
+                      className={styles.fullLink}
+                    >
                       {paymentsEnabled ? 'Ver más' : 'Ver más'}
                     </Link>
                   </div>

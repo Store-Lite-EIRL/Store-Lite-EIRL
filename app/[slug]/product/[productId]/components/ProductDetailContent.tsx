@@ -13,6 +13,7 @@ import { and, eq, inArray, ne, notInArray, or } from 'drizzle-orm';
 import { cookies, headers } from 'next/headers';
 
 import { Icon } from '@/shared/components/ui/data-display/Icon';
+import { getBusinessPath } from '@/shared/utils/url';
 import { notFound } from 'next/navigation';
 import {
   formatPrice,
@@ -292,7 +293,7 @@ export default async function ProductDetailContent({
       {!isModal && (
         <div className={styles.backButtonWrapper}>
           <BackButton
-            href={isOwner ? `/${slug}/storage` : `/${slug}`}
+            href={isOwner ? getBusinessPath(slug, '/storage') : getBusinessPath(slug)}
             style={{ width: '56px', height: '56px' }}
           />
         </div>

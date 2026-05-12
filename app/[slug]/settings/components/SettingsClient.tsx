@@ -35,6 +35,7 @@ import {
 } from '@/shared/components/ui';
 import { Dialog } from '@/shared/components/ui/surfaces/Dialog';
 import { ThemeSettings } from '@/shared/components/ui/ThemeSettings';
+import { getBusinessPath } from '@/shared/utils/url';
 import { useParams, useRouter } from 'next/navigation';
 import React, {
   useCallback,
@@ -293,7 +294,7 @@ function BusinessSection({
         setSlugError(res.error || 'Error al actualizar el slug');
       } else {
         setIsEditingSlug(false);
-        router.push(`/${res.newSlug}/settings`);
+        router.push(getBusinessPath(res.newSlug!, '/settings'));
       }
     });
   };
@@ -417,7 +418,7 @@ function BusinessSection({
         <div className={styles.slugEditContent}>
           {!isEditingSlug ? (
             <div className={styles.slugDisplayContainer}>
-              <CopyableValue value={`https://store.lite.com/${business.slug}`} />
+              <CopyableValue value={`${window.location.origin}/${business.slug}`} />
             </div>
           ) : (
             <div className={styles.slugEditor}>

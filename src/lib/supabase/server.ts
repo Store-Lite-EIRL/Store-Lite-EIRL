@@ -5,6 +5,7 @@
 // Usage: Import from '@/lib/supabase/server'
 // =====================================================
 
+import { env } from '@/config/env';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
@@ -24,6 +25,9 @@ export async function createClient() {
     );
   }
 
+  // Phase 4: En modo subdominio, las cookies necesitan Domain compartido
+  const sharedDomain = env.featureSubdomainRewrite ? env.sharedCookieDomain : null;
+
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
@@ -32,7 +36,13 @@ export async function createClient() {
       setAll(cookiesToSet) {
         try {
           for (const { name, value, options } of cookiesToSet) {
-            cookieStore.set(name, value, options);
+            const mergedOptions = { ...options };
+
+            if (sharedDomain) {
+              mergedOptions.domain = sharedDomain;
+            }
+
+            cookieStore.set(name, value, mergedOptions);
           }
         } catch {
           // The `setAll` method was called from a Server Component.

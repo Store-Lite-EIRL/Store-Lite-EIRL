@@ -1,6 +1,7 @@
 'use client';
 
 import { Icon } from '@/shared/components/ui/data-display/Icon';
+import { getBusinessPath } from '@/shared/utils/url';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback } from 'react';
@@ -83,7 +84,7 @@ function RelatedProductCard({ product, slug }: { product: RelatedProductItem; sl
 
   const originalPrice = product.secondPrice ? formatPrice(Number(product.price), currency) : null;
 
-  const productLink = `/${slug}/product/${product.id}`;
+  const productLink = getBusinessPath(slug, `/product/${product.id}`);
 
   return (
     <Link href={productLink} className={styles.card}>

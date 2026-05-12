@@ -2,6 +2,7 @@ import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { products as productsTable } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
+import { getCanonicalBusinessUrl } from '@/shared/utils/url';
 import { and, eq, or } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
@@ -49,13 +50,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     product.description?.slice(0, 160) ||
     `Compra ${product.title} en ${business.name}`;
 
+  const productSlug = product.slug || product.id;
+  const canonicalUrl = getCanonicalBusinessUrl(business.slug, `/product/${productSlug}`);
+
   return {
     title,
     description,
     keywords: product.tags?.join(', '),
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title,
       description,
+      url: canonicalUrl,
       images: product.media?.[0]?.mediaUrl ? [{ url: product.media[0].mediaUrl }] : [],
       type: 'website',
     },

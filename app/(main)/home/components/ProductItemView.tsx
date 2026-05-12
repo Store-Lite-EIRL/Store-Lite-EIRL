@@ -2,6 +2,7 @@
 
 import { AlertSnackbar, Icon } from '@/shared/components/ui';
 import { Button, IconButton } from '@/shared/components/ui/buttons';
+import { getBusinessPath } from '@/shared/utils/url';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -129,8 +130,9 @@ export function ProductItemView({
   const isImageSwitching = lastLoadedIndex !== currentImgIndex && allImages.length > 1;
   const params = useParams();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
-  const slugPart = slug ? `/${slug}` : '';
-  const productUrl = `${slugPart}/product/${product.id}`;
+  const productUrl = slug
+    ? getBusinessPath(slug, `/product/${product.id}`)
+    : `/product/${product.id}`;
   const shouldUsePreview = Boolean(onOpenPreview);
 
   const productFeatures = product.tags || [];

@@ -4,6 +4,14 @@ export const env = {
   // Only available server-side — never expose to the client
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
   nextPublicAppUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  // Feature flags
+  // Habilita el rewrite de subdominios en proxy.ts (Fase 2 de la migración a subdominios)
+  featureSubdomainRewrite: process.env.FEATURE_SUBDOMAIN_REWRITE === 'true',
+  // Dominio compartido para cookies cross-subdominio (Fase 4).
+  //   Producción: `.store-lite.com`
+  //   Desarrollo: `.localhost`
+  //   null/empty → cookies host-only (comportamiento default, no cross-subdominio)
+  sharedCookieDomain: process.env.SHARED_COOKIE_DOMAIN || null,
   // Factiliza API Configuration (Server-side only)
   factilizaToken: process.env.FACTILIZA_TOKEN!,
   factilizaWspInstance: process.env.FACTILIZA_WSP_INSTANCE!,
@@ -21,11 +29,6 @@ export const env = {
 // Optional: Add validation here to throw early if vars are missing
 if (!env.supabaseUrl || !env.supabaseAnonKey) {
   console.warn('Supabase environment variables are missing. Some features may not work.');
-}
-
-// Factiliza validation
-if (!env.factilizaToken || !env.factilizaWspInstance) {
-  console.warn('Factiliza environment variables are missing. KYB verification will not work.');
 }
 
 // Twilio validation

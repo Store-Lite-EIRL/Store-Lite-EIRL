@@ -5,6 +5,7 @@ import { CircularProgress } from '@/shared/components/ui/feedback/Progress';
 import { SwitchBusinessModal } from '@/shared/components/ui/feedback/SwitchBusinessModal';
 import { clearBusinessSessionData, useBusinessSession } from '@/shared/hooks/useBusinessSession';
 import { getSectorIcon } from '@/shared/utils/business';
+import { getBusinessPath } from '@/shared/utils/url';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -64,7 +65,7 @@ export default function BusinessCard({ biz, onDelete, onEdit, index = 0 }: Busin
     setIsSelecting(true);
     document.cookie = `selected_business_slug=${encodeURIComponent(biz.slug)}; path=/; max-age=${7 * 24 * 60 * 60}; samesite=lax`;
     localStorage.setItem('selectedBusinessSlug', biz.slug);
-    router.push(`/${biz.slug}`);
+    router.push(getBusinessPath(biz.slug));
   };
 
   const handleConfirmSwitch = () => {
@@ -78,7 +79,7 @@ export default function BusinessCard({ biz, onDelete, onEdit, index = 0 }: Busin
     cancelSwitch();
     // Redirect to current business if exists
     if (currentSession) {
-      router.push(`/${currentSession.slug}`);
+      router.push(getBusinessPath(currentSession.slug));
     }
   };
 

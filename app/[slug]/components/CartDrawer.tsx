@@ -2,6 +2,7 @@
 
 import { Icon } from '@/shared/components/ui';
 import { IconButton } from '@/shared/components/ui/buttons';
+import { getBusinessPath } from '@/shared/utils/url';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -140,7 +141,7 @@ export function CartDrawer({
                       className={`${styles.item} ${isBlocked ? styles.itemBlocked : ''}`}
                     >
                       <Link
-                        href={`/${slug}/product/${item.id}`}
+                        href={getBusinessPath(slug, `/product/${item.id}`)}
                         className={`${styles.itemImage} ${isBlocked ? styles.imgBlocked : ''}`}
                         onClick={() => setIsCartOpen(false)}
                       >
@@ -161,7 +162,7 @@ export function CartDrawer({
 
                       <div className={styles.itemInfo}>
                         <Link
-                          href={`/${slug}/product/${item.id}`}
+                          href={getBusinessPath(slug, `/product/${item.id}`)}
                           className={`${styles.itemName} ${isBlocked ? styles.nameBlocked : ''}`}
                           onClick={() => setIsCartOpen(false)}
                         >

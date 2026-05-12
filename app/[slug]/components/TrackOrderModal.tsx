@@ -1,6 +1,7 @@
 'use client';
 
 import { Button, Dialog, Icon, TextField } from '@/shared/components/ui';
+import { getBusinessPath } from '@/shared/utils/url';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
@@ -50,7 +51,8 @@ export function TrackOrderModal({ open, onClose, businessSlug }: TrackOrderModal
       };
       localStorage.setItem(`order_session_${data.token}`, JSON.stringify(authTokenData));
 
-      router.push(`/${businessSlug}/order/${data.token}?dni=${dni}`);
+      const orderPath = getBusinessPath(businessSlug, `/order/${data.token}`);
+      router.push(`${orderPath}?dni=${dni}`);
       onClose();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error desconocido';

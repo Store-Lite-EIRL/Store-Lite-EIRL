@@ -4,6 +4,7 @@ import { Button } from '@/shared/components/ui/buttons/Button';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
 import { TextField } from '@/shared/components/ui/inputs/TextField';
 import { Dialog } from '@/shared/components/ui/surfaces/Dialog';
+import { getBusinessPath } from '@/shared/utils/url';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -49,7 +50,7 @@ export function LookupOrderModal({ open, onClose, businessSlug }: LookupOrderMod
         };
         localStorage.setItem(`order_session_${data.token}`, JSON.stringify(authTokenData));
 
-        router.push(`/${businessSlug}/order/${data.token}`);
+        router.push(getBusinessPath(businessSlug, `/order/${data.token}`));
         onClose();
       } else {
         setError(data.error || 'Orden no encontrada. Verifica tus datos.');
@@ -71,16 +72,22 @@ export function LookupOrderModal({ open, onClose, businessSlug }: LookupOrderMod
 
       {/* MD3 Dialog Content */}
       <div slot="content">
-        <p style={{
-          marginBottom: '1.5rem',
-          color: 'var(--md-sys-color-on-surface-variant)',
-          fontSize: '0.875rem',
-          lineHeight: '1.4'
-        }}>
+        <p
+          style={{
+            marginBottom: '1.5rem',
+            color: 'var(--md-sys-color-on-surface-variant)',
+            fontSize: '0.875rem',
+            lineHeight: '1.4',
+          }}
+        >
           Ingresa tu DNI y número de orden para ver el estado de tu compra.
         </p>
 
-        <form id="lookup-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <form
+          id="lookup-form"
+          onSubmit={handleSubmit}
+          style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
+        >
           <TextField
             type="text"
             label="DNI (8 dígitos)"
@@ -102,16 +109,18 @@ export function LookupOrderModal({ open, onClose, businessSlug }: LookupOrderMod
           />
 
           {error && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1rem',
-              borderRadius: 'var(--md-sys-shape-corner-medium)',
-              backgroundColor: 'var(--md-sys-color-error-container)',
-              color: 'var(--md-sys-color-on-error-container)',
-              fontSize: '0.875rem'
-            }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1rem',
+                borderRadius: 'var(--md-sys-shape-corner-medium)',
+                backgroundColor: 'var(--md-sys-color-error-container)',
+                color: 'var(--md-sys-color-on-error-container)',
+                fontSize: '0.875rem',
+              }}
+            >
               <Icon style={{ fontSize: '1.125rem' }}>error</Icon>
               {error}
             </div>
@@ -134,7 +143,9 @@ export function LookupOrderModal({ open, onClose, businessSlug }: LookupOrderMod
         >
           {loading ? (
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Icon style={{ fontSize: '1.125rem', animation: 'spin 1s linear infinite' }}>progress_activity</Icon>
+              <Icon style={{ fontSize: '1.125rem', animation: 'spin 1s linear infinite' }}>
+                progress_activity
+              </Icon>
               Buscando...
             </span>
           ) : (

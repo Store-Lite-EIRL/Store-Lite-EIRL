@@ -1,3 +1,4 @@
+import { getBusinessPath } from '@/shared/utils/url';
 import Link from 'next/link';
 import styles from './ProductsOverview.module.css';
 
@@ -34,7 +35,7 @@ export function ProductsOverview({ products, slug }: ProductsOverviewProps) {
         <div className={styles.empty}>
           <span className={styles.emptyIcon}>📦</span>
           <p className={styles.emptyText}>Aún no tenés productos cargados.</p>
-          <Link href={`/${slug}/storage`} className={styles.emptyLink}>
+          <Link href={getBusinessPath(slug, '/storage')} className={styles.emptyLink}>
             Agregar primer producto →
           </Link>
         </div>
@@ -46,7 +47,7 @@ export function ProductsOverview({ products, slug }: ProductsOverviewProps) {
     <article className={styles.card}>
       <div className={styles.cardHeader}>
         <h2 className={styles.cardTitle}>Últimos productos</h2>
-        <Link href={`/${slug}/storage`} className={styles.viewAll}>
+        <Link href={getBusinessPath(slug, '/storage')} className={styles.viewAll}>
           Ver todos
         </Link>
       </div>
@@ -74,24 +75,30 @@ export function ProductsOverview({ products, slug }: ProductsOverviewProps) {
                   <span className={styles.itemPrice}>{formattedPrice}</span>
                   <div className={styles.itemBadges}>
                     {statusInfo.label && (
-                      <span className={`${styles.badge} ${styles[statusInfo.className as keyof typeof styles]}`}>
+                      <span
+                        className={`${styles.badge} ${styles[statusInfo.className as keyof typeof styles]}`}
+                      >
                         {statusInfo.label}
                       </span>
                     )}
-{product.stock === 0 ? (
-                       <span className={`${styles.badge} ${styles.badgeOutOfStock} text-red-500`}>AGOTADO</span>
-                     ) : !product.isAvailable ? (
-                       <span className={`${styles.badge} ${styles.badgeOutOfStock}`}>Sin stock</span>
-                     ) : (
-                       <span className={`${styles.badge} ${styles.badgeAvailable}`}>Disponible</span>
-                     )}
+                    {product.stock === 0 ? (
+                      <span className={`${styles.badge} ${styles.badgeOutOfStock} text-red-500`}>
+                        AGOTADO
+                      </span>
+                    ) : !product.isAvailable ? (
+                      <span className={`${styles.badge} ${styles.badgeOutOfStock}`}>Sin stock</span>
+                    ) : (
+                      <span className={`${styles.badge} ${styles.badgeAvailable}`}>Disponible</span>
+                    )}
                   </div>
                 </div>
               </div>
 
               {product.likes > 0 && (
                 <div className={styles.likes}>
-                  <span role="img" aria-label="likes">❤️</span>
+                  <span role="img" aria-label="likes">
+                    ❤️
+                  </span>
                   <span>{product.likes}</span>
                 </div>
               )}
