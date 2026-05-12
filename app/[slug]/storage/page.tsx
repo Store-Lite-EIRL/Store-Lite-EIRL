@@ -1,10 +1,10 @@
-import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
-import type { Metadata } from 'next';
-import { notFound, redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
 import { env } from '@/config/env';
+import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
 import { getMemberPermissions } from '@/lib/permissions/checkPermission';
+import { createServerClient } from '@supabase/ssr';
+import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
+import { notFound, redirect } from 'next/navigation';
 import { StorageClient } from './StorageClient';
 
 interface StoragePageProps {
@@ -46,12 +46,18 @@ export default async function StoragePage({ params }: StoragePageProps) {
     },
   });
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return notFound();
 
   const { isOwner, permissions } = await getMemberPermissions(business.id, user.id);
 
-  if (!isOwner && !permissions.includes('products.view') && !permissions.includes('categories.view')) {
+  if (
+    !isOwner &&
+    !permissions.includes('products.view') &&
+    !permissions.includes('categories.view')
+  ) {
     return notFound();
   }
 

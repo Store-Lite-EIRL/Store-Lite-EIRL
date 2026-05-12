@@ -22,6 +22,6 @@ export function PricingBackButton() {
     //   </Icon>
     //   Volver
     // </Button>
-    <BackButton href="/list-business" style={{ position: 'absolute', top: 50, }} />
+    <BackButton href="/list-business" style={{ position: 'absolute', top: 50 }} />
   );
 }

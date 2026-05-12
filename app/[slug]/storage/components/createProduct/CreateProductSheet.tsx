@@ -2,14 +2,15 @@
 
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
+import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useStorage } from '../../context/StorageContext';
 import type { Product } from '../../data';
 import { useCreateProductForm } from '../../hooks/useCreateProductForm';
 import '../../styles/create-product-sheet.css';
 import type { SaveProductMediaItem, SaveProductPayload } from '../../types';
-import { useStorage } from '../../context/StorageContext';
 import { BasicInfoSection } from './BasicInfoSection';
 import { CategorySection } from './CategorySection';
 import { ExtraInfoSection } from './ExtraInfoSection';
@@ -53,6 +54,8 @@ export const CreateProductSheet = ({
     form,
     errors,
     images,
+    fileAlert,
+    clearFileAlert,
     fileInputRef,
     setField,
     clearError,
@@ -120,7 +123,7 @@ export const CreateProductSheet = ({
         {/* Form Sections */}
         <div className="create-sheet-content">
           {entitlements && !isEditMode && totalProducts >= entitlements.maxProducts && (
-            <div 
+            <div
               style={{
                 margin: '0 24px 16px',
                 padding: '12px 16px',
@@ -131,13 +134,13 @@ export const CreateProductSheet = ({
                 alignItems: 'center',
                 gap: '12px',
                 fontSize: '14px',
-                border: '1px solid var(--md-sys-color-error)'
+                border: '1px solid var(--md-sys-color-error)',
               }}
             >
               <Icon size={20}>warning</Icon>
               <span>
-                Has alcanzado el límite de <strong>{entitlements.maxProducts} productos</strong> de tu plan. 
-                Sube de nivel para agregar más.
+                Has alcanzado el límite de <strong>{entitlements.maxProducts} productos</strong> de
+                tu plan. Sube de nivel para agregar más.
               </span>
             </div>
           )}
@@ -207,10 +210,15 @@ export const CreateProductSheet = ({
           <Button variant="outlined" onClick={handleClose} disabled={isSaving}>
             Cancelar
           </Button>
-          <Button 
-            variant="filled" 
-            onClick={handleSave} 
-            disabled={isSaving || (!isEditMode && entitlements !== null && totalProducts >= (entitlements?.maxProducts ?? Infinity))}
+          <Button
+            variant="filled"
+            onClick={handleSave}
+            disabled={
+              isSaving ||
+              (!isEditMode &&
+                entitlements !== null &&
+                totalProducts >= (entitlements?.maxProducts ?? Infinity))
+            }
           >
             <Icon slot="icon" size={21} className={isSaving ? 'spinner-mini' : ''}>
               {saveIcon}
@@ -219,6 +227,14 @@ export const CreateProductSheet = ({
           </Button>
         </div>
       </aside>
+
+      <AlertSnackbar
+        open={Boolean(fileAlert)}
+        description={fileAlert ?? ''}
+        color="error"
+        icon="error"
+        onClose={clearFileAlert}
+      />
     </>
   );
 

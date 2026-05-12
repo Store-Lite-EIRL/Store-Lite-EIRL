@@ -3,6 +3,7 @@
 import Navbar from '@/shared/components/navigation/Navbar';
 import { CircularProgress } from '@/shared/components/ui/feedback/Progress';
 import { useBusinessSession } from '@/shared/hooks/useBusinessSession';
+import { getBusinessPath } from '@/shared/utils/url';
 import '@/styles/components/layout.css';
 import '@/styles/components/navbar.css';
 import { useParams, usePathname, useRouter } from 'next/navigation';
@@ -65,7 +66,7 @@ export default function AppLayout({
       pathname === '/list-business' || pathname === '/created' || pathname.startsWith('/auth');
 
     if (pathname === '/list-business' && activeSessionSlug) {
-      router.push(`/${activeSessionSlug}`);
+      router.push(getBusinessPath(activeSessionSlug));
       return;
     }
 

@@ -5,6 +5,7 @@ import { Button } from '@/shared/components/ui/buttons/Button';
 import { IconButton } from '@/shared/components/ui/buttons/IconButton';
 import { Select, SelectOption } from '@/shared/components/ui/inputs/Select';
 import { TextField } from '@/shared/components/ui/inputs/TextField';
+import { getBusinessPath } from '@/shared/utils/url';
 import {
   AlertTriangle,
   ArrowLeftRight,
@@ -1263,7 +1264,10 @@ export function RecentOrders({
                   </div>
                   <div className={styles.productInfo}>
                     <Link
-                      href={`/${businessSlug}/product/${order.productId || order.productSlug}`}
+                      href={getBusinessPath(
+                        businessSlug,
+                        `/product/${order.productId || order.productSlug}`,
+                      )}
                       target="_blank"
                       className={styles.productLink}
                     >
@@ -1557,7 +1561,7 @@ export function RecentOrders({
                     </td>
                     <td className={styles.productCell}>
                       <Link
-                        href={`/${businessSlug}/product/${order.productId}`}
+                        href={getBusinessPath(businessSlug, `/product/${order.productId}`)}
                         target="_blank"
                         className={styles.productTableLink}
                       >

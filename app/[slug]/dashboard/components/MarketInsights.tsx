@@ -35,10 +35,7 @@ export function MarketInsights({ topProducts, topCategories, bestDays }: MarketI
                 <span className={styles.count}>{p.count} vtas</span>
               </div>
               <div className={styles.progressBar}>
-                <div 
-                  className={styles.progressFill} 
-                  style={{ width: `${p.progress}%` }} 
-                />
+                <div className={styles.progressFill} style={{ width: `${p.progress}%` }} />
               </div>
             </li>
           ))}
@@ -59,9 +56,12 @@ export function MarketInsights({ topProducts, topCategories, bestDays }: MarketI
                 <span className={styles.count}>{c.count} vtas</span>
               </div>
               <div className={styles.progressBar}>
-                <div 
-                  className={styles.progressFill} 
-                  style={{ width: `${c.progress}%`, backgroundColor: 'var(--md-sys-color-secondary)' }} 
+                <div
+                  className={styles.progressFill}
+                  style={{
+                    width: `${c.progress}%`,
+                    backgroundColor: 'var(--md-sys-color-secondary)',
+                  }}
                 />
               </div>
             </li>
@@ -79,10 +79,7 @@ export function MarketInsights({ topProducts, topCategories, bestDays }: MarketI
           {bestDays.map((d) => (
             <div key={d.day} className={styles.trendItem}>
               <div className={styles.barStack}>
-                <div 
-                  className={styles.barFill} 
-                  style={{ height: `${d.intensity}%` }} 
-                />
+                <div className={styles.barFill} style={{ height: `${d.intensity}%` }} />
               </div>
               <span className={styles.dayLabel}>{d.day}</span>
             </div>

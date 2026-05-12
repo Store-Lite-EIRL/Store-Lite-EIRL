@@ -6,6 +6,7 @@ import { db } from '@/core/database/client';
 import { businesses, profiles } from '@/core/database/schema';
 import { createBusinessSchema } from '@/features/business/schemas';
 import { generateBusinessSlug } from '@/shared/utils/slugify';
+import { getBusinessPath } from '@/shared/utils/url';
 import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
@@ -127,5 +128,5 @@ export async function createBusiness(prevState: ActionState, formData: FormData)
   }
 
   // 5. Redirect outside try/catch because NEXT_REDIRECT throws an error
-  redirect(`/${finalSlug}`);
+  redirect(getBusinessPath(finalSlug));
 }

@@ -35,6 +35,7 @@ import {
 } from '@/shared/components/ui';
 import { Dialog } from '@/shared/components/ui/surfaces/Dialog';
 import { ThemeSettings } from '@/shared/components/ui/ThemeSettings';
+import { getBusinessPath } from '@/shared/utils/url';
 import { useParams, useRouter } from 'next/navigation';
 import React, {
   useCallback,
@@ -72,6 +73,9 @@ export interface SettingsBusiness {
   coverImageUrl: string | null;
   logoUrl: string | null;
   address: string | null;
+  departamento: string | null;
+  provincia: string | null;
+  distrito: string | null;
   storeType: string | null;
   description: string | null;
   whatsappNumber: string | null;
@@ -290,7 +294,7 @@ function BusinessSection({
         setSlugError(res.error || 'Error al actualizar el slug');
       } else {
         setIsEditingSlug(false);
-        router.push(`/${res.newSlug}/settings`);
+        router.push(getBusinessPath(res.newSlug!, '/settings'));
       }
     });
   };
@@ -414,7 +418,7 @@ function BusinessSection({
         <div className={styles.slugEditContent}>
           {!isEditingSlug ? (
             <div className={styles.slugDisplayContainer}>
-              <CopyableValue value={`https://store.lite.com/${business.slug}`} />
+              <CopyableValue value={`${window.location.origin}/${business.slug}`} />
             </div>
           ) : (
             <div className={styles.slugEditor}>
@@ -495,6 +499,19 @@ function BusinessSection({
           >
             <Icon slot="start" size={20}>
               location_on
+            </Icon>
+          </ListItem>
+          <Divider />
+          <ListItem
+            headline="Ubicación"
+            supportingText={
+              [business.departamento, business.provincia, business.distrito]
+                .filter(Boolean)
+                .join(', ') || 'Sin configurar'
+            }
+          >
+            <Icon slot="start" size={20}>
+              map
             </Icon>
           </ListItem>
           <Divider />
@@ -1067,6 +1084,27 @@ function ContactSection({
           <ListItem headline="Dirección" supportingText={business.address ?? 'Sin configurar'}>
             <Icon slot="start" size={20}>
               location_on
+            </Icon>
+          </ListItem>
+          <Divider />
+          <ListItem
+            headline="Departamento"
+            supportingText={business.departamento ?? 'Sin configurar'}
+          >
+            <Icon slot="start" size={20}>
+              map
+            </Icon>
+          </ListItem>
+          <Divider />
+          <ListItem headline="Provincia" supportingText={business.provincia ?? 'Sin configurar'}>
+            <Icon slot="start" size={20}>
+              map
+            </Icon>
+          </ListItem>
+          <Divider />
+          <ListItem headline="Distrito" supportingText={business.distrito ?? 'Sin configurar'}>
+            <Icon slot="start" size={20}>
+              map
             </Icon>
           </ListItem>
           <Divider />

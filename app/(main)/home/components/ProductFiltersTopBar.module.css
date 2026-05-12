@@ -11,19 +11,51 @@
   border-width: 2px;
   border-color: var(--md-sys-color-outline-variant, #ffffff);
   margin-bottom: 24px;
+  width: 100%;
+}
+
+/* Wrapper for each dropdown inside the "Filtrar por:" group — stretches to fill space */
+.filterItem {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Makes PriceRangeFilter grow to fill its group in row flex context */
+.priceRangeFullWidth {
+  flex: 1;
+}
+
+/* ── Desktop: spread filter groups across full width ── */
+@media (min-width: 769px) {
+  .topBar {
+    justify-content: space-between;
+  }
+
+  .filterItem {
+    flex: 1;
+  }
+
+  .divider {
+    display: none;
+  }
+
+  /* Both filter groups grow to share available space, but don't shrink below content */
+  .filterGroup {
+    flex: 1 0 auto;
+    min-width: 0;
+  }
+
+  .dropdownSection {
+    flex: 1 0 auto;
+    min-width: 0;
+  }
 }
 
 .filterGroup {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.filterLabel {
-  font-family: inherit;
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
 .divider {
@@ -44,6 +76,30 @@
   font-size: 1rem;
   color: var(--md-sys-color-on-surface, #1d1b20);
   cursor: pointer;
+}
+
+/* ── Dropdowns section: label as title above both dropdowns ── */
+.dropdownSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filterLabel {
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dropdownsRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .select {
@@ -133,18 +189,6 @@
   border: 1px solid var(--md-sys-color-error);
   border-radius: 50%;
   padding: 5px;
-}
-
-@media (max-width: 480px) {
-  .topBar {
-    padding: 12px;
-    gap: 12px;
-    border-radius: 16px;
-  }
-
-  .filterLabel {
-    font-size: 0.875rem;
-  }
 }
 
 @media (max-width: 380px) {

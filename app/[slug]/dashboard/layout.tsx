@@ -2,6 +2,7 @@ import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { checkPermission } from '@/lib/permissions';
 import { createClient } from '@/lib/supabase/server';
+import { getBusinessPath } from '@/shared/utils/url';
 import { notFound, redirect } from 'next/navigation';
 import { RealtimeToast } from './components/RealtimeToast';
 
@@ -27,7 +28,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
   const entitlements = await getBusinessEntitlements(business.id);
 
   if (entitlements.plan === 'basico') {
-    redirect(`/${resolvedBusiness.canonicalSlug}`);
+    redirect(getBusinessPath(resolvedBusiness.canonicalSlug));
   }
 
   const supabase = await createClient();
@@ -37,7 +38,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
 
   const isAllowed = await checkPermission(business.id, user?.id, 'dashboard.view');
   if (!isAllowed) {
-    redirect(`/${resolvedBusiness.canonicalSlug}`);
+    redirect(getBusinessPath(resolvedBusiness.canonicalSlug));
   }
 
   return (

@@ -7,10 +7,12 @@ Este documento describe la arquitectura financiera y legal para el cobro de comi
 ## 1. Modelo de Negocio: Marketplace / Agregador
 
 A diferencia de un modelo SaaS simple donde el negocio usa su propia llave, en el modelo **Marketplace**:
+
 1. **Store Lite (SaaS)** es el "Comercio Principal" (Padre).
 2. **Cada Negocio (Tienda)** es un "Comercio Secundario" (Hijo).
 
 ### Ventajas:
+
 - **Automatización**: El cobro del 10% de comisión es instantáneo y automático.
 - **Seguridad**: El SaaS no tiene que "pedirle" la comisión al negocio; Culqi la separa en el origen.
 - **Legalidad**: Cada parte declara solo lo que le corresponde ante la SUNAT.
@@ -35,11 +37,13 @@ Cuando un cliente final compra un producto en una tienda de Store Lite:
 Para cumplir con la ley peruana, la facturación se divide así:
 
 ### A. El Negocio -> Al Cliente Final
+
 - **Monto**: S/ 100.00 (Total de la venta).
 - **Documento**: Boleta o Factura electrónica.
 - **Responsabilidad**: El negocio declara el IGV (18%) de la venta total.
 
 ### B. Store Lite (SaaS) -> Al Negocio
+
 - **Monto**: S/ 10.00 (Tu comisión del 10%).
 - **Documento**: Factura por "Servicio de Intermediación Digital / Uso de Plataforma".
 - **Responsabilidad**: Vos declarás el IGV de esos S/ 10.00. Para el negocio, esta factura es un **gasto deducible**.
@@ -49,10 +53,12 @@ Para cumplir con la ley peruana, la facturación se divide así:
 ## 4. Implementación Técnica (API)
 
 ### Requisitos:
+
 1. **Cuenta Marketplace en Culqi**: Debes solicitar la activación del perfil "Marketplace" o "Agregador" al equipo comercial de Culqi.
 2. **Merchant ID**: Cada negocio debe proveer su "ID de Comercio" (pueden crearse vía API o manualmente en el panel de Culqi).
 
 ### Estructura del Cargo (`/charges`):
+
 ```json
 {
   "amount": 10000,
@@ -80,4 +86,5 @@ Para cumplir con la ley peruana, la facturación se divide así:
   - Agregar: `commission_percentage` (Default: 10).
 
 ---
-*Nota: Este modelo protege el flujo de caja del SaaS y garantiza el cobro de comisiones sin fricción con el usuario final.*
+
+_Nota: Este modelo protege el flujo de caja del SaaS y garantiza el cobro de comisiones sin fricción con el usuario final._

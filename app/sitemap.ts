@@ -2,6 +2,7 @@ import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businesses } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
+import { getCanonicalBusinessUrl } from '@/shared/utils/url';
 import { eq } from 'drizzle-orm';
 import type { MetadataRoute } from 'next';
 
@@ -32,7 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const businessUrls: MetadataRoute.Sitemap = Array.from(seoEnabledBusinesses.values()).map(
     (b) => ({
-      url: `${baseUrl}/${b.slug}`,
+      url: getCanonicalBusinessUrl(b.slug),
       lastModified: b.updatedAt,
       changeFrequency: 'weekly',
       priority: 0.8,
@@ -67,7 +68,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   const productUrls: MetadataRoute.Sitemap = allProducts.map((p) => ({
-    url: `${baseUrl}/${p.business.slug}/product/${p.slug || p.id}`,
+    url: getCanonicalBusinessUrl(p.business.slug, `/product/${p.slug || p.id}`),
     lastModified: p.updatedAt,
     changeFrequency: 'daily',
     priority: 0.9,

@@ -5,8 +5,13 @@ import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { businessSettings, productCategories } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
-import { getStorefrontLayoutFromPreferences, getStorefrontThemeFromPreferences, hasCustomStorefrontTheme } from '@/core/storefront';
+import {
+  getStorefrontLayoutFromPreferences,
+  getStorefrontThemeFromPreferences,
+  hasCustomStorefrontTheme,
+} from '@/core/storefront';
 import { getMemberPermissions } from '@/lib/permissions';
+import { getCanonicalBusinessUrl } from '@/shared/utils/url';
 import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
@@ -45,10 +50,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     business.description ||
     `Bienvenido a ${business.name}, tu tienda de confianza.`;
 
+  const canonicalUrl = getCanonicalBusinessUrl(business.slug);
+
   return {
     title,
     description,
     keywords: business.seoKeywords?.join(', '),
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      type: 'website',
+      ...(business.logoUrl && { images: [{ url: business.logoUrl }] }),
+    },
     other: {
       ...(business.geoRegion && { 'geo.region': business.geoRegion }),
       ...(business.geoPlacename && { 'geo.placename': business.geoPlacename }),
@@ -117,7 +134,7 @@ export default async function BusinessPage({ params }: Props) {
         '@type': 'LocalBusiness',
         name: business.name,
         description: business.seoDescription || business.description,
-        url: `${env.nextPublicAppUrl}/${business.slug}`,
+        url: getCanonicalBusinessUrl(business.slug),
         logo: business.logoUrl,
         image: business.coverImageUrl,
         address: {

@@ -1,7 +1,7 @@
 'use server';
 
-import { db } from '@/core/database/client';
 import { resolveBusinessSlug } from '@/core/business/slug';
+import { db } from '@/core/database/client';
 import { businesses } from '@/core/database/schema';
 import { eq } from 'drizzle-orm';
 

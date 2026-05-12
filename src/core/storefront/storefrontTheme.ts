@@ -148,7 +148,8 @@ export function normalizeStorefrontTheme(input: unknown): StorefrontTheme {
   return {
     version: 1,
     fontFamily:
-      typeof input.fontFamily === 'string' && FONT_OPTIONS.includes(input.fontFamily as StorefrontFontFamily)
+      typeof input.fontFamily === 'string' &&
+      FONT_OPTIONS.includes(input.fontFamily as StorefrontFontFamily)
         ? (input.fontFamily as StorefrontFontFamily)
         : fallback.fontFamily,
     palette: {
@@ -157,7 +158,8 @@ export function normalizeStorefrontTheme(input: unknown): StorefrontTheme {
       accent: isHexColor(palette.accent) ? palette.accent : fallback.palette.accent,
     },
     surfaceMode:
-      typeof input.surfaceMode === 'string' && SURFACE_MODES.includes(input.surfaceMode as StorefrontSurfaceMode)
+      typeof input.surfaceMode === 'string' &&
+      SURFACE_MODES.includes(input.surfaceMode as StorefrontSurfaceMode)
         ? (input.surfaceMode as StorefrontSurfaceMode)
         : fallback.surfaceMode,
   };
@@ -196,9 +198,7 @@ export function hasCustomStorefrontTheme(preferences: unknown): boolean {
  * Removes the storefrontTheme key from preferences, effectively resetting
  * the storefront to the platform's default MD3 color tokens.
  */
-export function clearStorefrontThemeFromPreferences(
-  preferences: unknown,
-): Record<string, unknown> {
+export function clearStorefrontThemeFromPreferences(preferences: unknown): Record<string, unknown> {
   const basePreferences = isRecord(preferences) ? { ...preferences } : {};
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { [STOREFRONT_THEME_PREFERENCES_KEY]: _, ...rest } = basePreferences;

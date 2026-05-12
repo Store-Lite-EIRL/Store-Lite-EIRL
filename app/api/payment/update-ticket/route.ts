@@ -12,10 +12,7 @@ export async function POST(req: Request) {
     const { orderNumber, ticketUrl } = await req.json();
 
     if (!orderNumber || !ticketUrl) {
-      return NextResponse.json(
-        { error: 'Missing orderNumber or ticketUrl' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing orderNumber or ticketUrl' }, { status: 400 });
     }
 
     // Update payment where orderNumber matches
@@ -28,7 +25,7 @@ export async function POST(req: Request) {
     if (!result || result.length === 0) {
       return NextResponse.json(
         { error: 'Payment not found with this order number' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -40,7 +37,7 @@ export async function POST(req: Request) {
     console.error('Error updating payment ticket:', error);
     return NextResponse.json(
       { error: 'Internal server error', details: String(error) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -17,7 +17,7 @@ export interface StoreLogoProps {
 
 /**
  * StoreLogo - Logo oficial de Store Lite
- * 
+ *
  * Diseño: Cubo isométrico con efecto 3D de aristas delgadas.
  * Color: Azul RGB (0, 97, 164)
  */
@@ -26,7 +26,7 @@ export function StoreLogo({
   variant = 'primary',
   iconOnly = false,
   className = '',
-  style = {}
+  style = {},
 }: StoreLogoProps) {
   // Azul RGB: (0, 97, 164) = #0061A4
   const primaryColor = '#0061A4';
@@ -43,7 +43,7 @@ export function StoreLogo({
         display: 'inline-flex',
         alignItems: 'center',
         gap: iconOnly ? 0 : '10px',
-        ...style
+        ...style,
       }}
     >
       {/* Icono SVG - Cubo isométrico con aristas delgadas */}

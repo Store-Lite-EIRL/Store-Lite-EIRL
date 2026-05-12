@@ -83,10 +83,34 @@
   z-index: 1;
 }
 
-.blue .decoration { background: var(--md-sys-color-primary); }
-.green .decoration { background: #10b981; }
-.purple .decoration { background: #8b5cf6; }
+.blue .decoration {
+  background: var(--md-sys-color-primary);
+}
+.green .decoration {
+  background: #10b981;
+}
+.purple .decoration {
+  background: #8b5cf6;
+}
 
-.blue { background: linear-gradient(135deg, var(--md-sys-color-surface-container-low), var(--md-sys-color-surface-container-high)); }
-.green { background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), var(--md-sys-color-surface-container-high)); }
-.purple { background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), var(--md-sys-color-surface-container-high)); }
+.blue {
+  background: linear-gradient(
+    135deg,
+    var(--md-sys-color-surface-container-low),
+    var(--md-sys-color-surface-container-high)
+  );
+}
+.green {
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.05),
+    var(--md-sys-color-surface-container-high)
+  );
+}
+.purple {
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.05),
+    var(--md-sys-color-surface-container-high)
+  );
+}

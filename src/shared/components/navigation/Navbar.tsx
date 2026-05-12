@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { clearBusinessSessionData, STORAGE_KEY } from '@/shared/hooks/useBusinessSession';
+import { getBusinessPath } from '@/shared/utils/url';
 import '@/styles/components/navbar.css';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter } from 'next/navigation';
@@ -66,11 +67,21 @@ export default function Navbar({ isCollapsed, onToggle, planName = 'Básico' }: 
   };
 
   const navItems = [
-    { id: 'home', icon: 'home', label: 'Inicio', path: `/${slug}` },
-    { id: 'chat', icon: 'chat', label: 'Mensajes', path: `/${slug}/chat` },
-    { id: 'storage', icon: 'package_2', label: 'Almacén', path: `/${slug}/storage` },
-    { id: 'dashboard', icon: 'dashboard', label: 'Dashboard', path: `/${slug}/dashboard` },
-    { id: 'settings', icon: 'settings', label: 'Ajustes', path: `/${slug}/settings` },
+    { id: 'home', icon: 'home', label: 'Inicio', path: getBusinessPath(slug) },
+    { id: 'chat', icon: 'chat', label: 'Mensajes', path: getBusinessPath(slug, '/chat') },
+    { id: 'storage', icon: 'package_2', label: 'Almacén', path: getBusinessPath(slug, '/storage') },
+    {
+      id: 'dashboard',
+      icon: 'dashboard',
+      label: 'Dashboard',
+      path: getBusinessPath(slug, '/dashboard'),
+    },
+    {
+      id: 'settings',
+      icon: 'settings',
+      label: 'Ajustes',
+      path: getBusinessPath(slug, '/settings'),
+    },
   ];
 
   const isActive = (path: string) => {

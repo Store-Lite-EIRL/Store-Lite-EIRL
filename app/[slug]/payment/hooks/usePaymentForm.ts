@@ -84,7 +84,8 @@ export function usePaymentForm({
   const validatePaymentInput = (): string | null => {
     if (activeTab === 'card') {
       if (!isValidEmail(email)) return 'Ingresa un correo valido.';
-      if (cardNumber.replace(/\s/g, '').length !== 16) return 'El numero de tarjeta debe tener 16 digitos.';
+      if (cardNumber.replace(/\s/g, '').length !== 16)
+        return 'El numero de tarjeta debe tener 16 digitos.';
       if (!/^\d{2}\/\d{2}$/.test(expiry)) return 'La fecha de expiracion debe tener formato MM/YY.';
       if (cvv.length !== 3) return 'El CVV debe tener 3 digitos.';
       return null;

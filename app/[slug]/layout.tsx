@@ -1,9 +1,9 @@
 import { env } from '@/config/env';
 import { resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
+import { productCategories, products } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { getMemberPermissions } from '@/lib/permissions/checkPermission';
-import { productCategories, products } from '@/core/database/schema';
 import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';

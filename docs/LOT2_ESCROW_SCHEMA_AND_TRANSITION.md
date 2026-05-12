@@ -22,6 +22,7 @@ Este documento define:
 ## Veredicto del Lote 2
 
 ### Estado
+
 **LISTO PARA IMPLEMENTACIÓN TÉCNICA**
 
 ### Qué significa
@@ -37,9 +38,11 @@ Todavía pueden aparecer ajustes chicos, obvio. Pero el diseño ya está lo sufi
 # Decisión macro de transición
 
 ## Decisión
+
 **No reemplazar `payments` de golpe.**
 
 ## Estrategia elegida
+
 Aplicar una transición por convivencia temporal:
 
 1. crear tablas nuevas del modelo escrow
@@ -49,6 +52,7 @@ Aplicar una transición por convivencia temporal:
 5. deprecar `payments` cuando el flujo nuevo esté estable
 
 ## Por qué
+
 Porque intentar reemplazar `payments` en una sola migración es exactamente la clase de apuro que rompe datos, soporte y producción.
 
 ---
@@ -58,9 +62,11 @@ Porque intentar reemplazar `payments` en una sola migración es exactamente la c
 ## 1. Tabla `orders`
 
 ## Propósito
+
 Fuente de verdad comercial de una compra.
 
 ## Columnas
+
 - `id` uuid pk default random
 - `order_number` text not null unique
 - `buyer_user_id` uuid null fk -> `profiles.id`
@@ -95,6 +101,7 @@ Fuente de verdad comercial de una compra.
 - `updated_at` timestamptz not null default now
 
 ## Constraints
+
 - `subtotal_amount >= 0`
 - `discount_amount >= 0`
 - `taxable_base_amount >= 0`
@@ -109,6 +116,7 @@ Fuente de verdad comercial de una compra.
 - `confirmation_expires_at > created_at` cuando no sea null
 
 ## Índices
+
 - unique `order_number`
 - unique `buyer_tracking_token`
 - `idx_orders_buyer_user_created_at (buyer_user_id, created_at desc)`
@@ -117,6 +125,7 @@ Fuente de verdad comercial de una compra.
 - `idx_orders_status_created_at (status, created_at desc)`
 
 ## Notas
+
 - `buyer_tracking_token` resuelve el checkout invitado controlado
 - `orders` reemplaza la idea vieja de usar `payments` como fuente comercial
 
@@ -125,9 +134,11 @@ Fuente de verdad comercial de una compra.
 ## 2. Tabla `order_items`
 
 ## Propósito
+
 Registrar los productos comprados dentro de una orden.
 
 ## Columnas
+
 - `id` uuid pk default random
 - `order_id` uuid not null fk -> `orders.id`
 - `product_id` uuid null fk -> `products.id` on delete set null
@@ -144,16 +155,19 @@ Registrar los productos comprados dentro de una orden.
 - `updated_at` timestamptz not null default now
 
 ## Constraints
+
 - `quantity > 0`
 - `unit_price_amount >= 0`
 - `subtotal_amount >= 0`
 - `total_amount >= 0`
 
 ## Índices
+
 - `idx_order_items_order_id`
 - `idx_order_items_product_id`
 
 ## Notas
+
 - el snapshot evita que cambios futuros del producto rompan historial
 
 ---
@@ -161,9 +175,11 @@ Registrar los productos comprados dentro de una orden.
 ## 3. Tabla `payment_transactions`
 
 ## Propósito
+
 Representar cada intento o transacción contra Culqi.
 
 ## Columnas
+
 - `id` uuid pk default random
 - `order_id` uuid not null fk -> `orders.id`
 - `provider` text not null default `culqi`
@@ -189,17 +205,20 @@ Representar cada intento o transacción contra Culqi.
 - `updated_at` timestamptz not null default now
 
 ## Constraints
+
 - `requested_amount > 0`
 - `refunded_amount >= 0`
 - `char_length(currency) = 3`
 
 ## Índices
+
 - `idx_payment_transactions_order_id`
 - `idx_payment_transactions_provider_charge_id`
 - `idx_payment_transactions_status_created_at (status, created_at desc)`
 - unique `idempotency_key`
 
 ## Notas
+
 - una orden puede tener múltiples intentos
 - `provider_charge_id` puede ser null antes de la respuesta del gateway
 
@@ -208,9 +227,11 @@ Representar cada intento o transacción contra Culqi.
 ## 4. Tabla `payment_events`
 
 ## Propósito
+
 Auditoría inmutable de eventos externos e internos.
 
 ## Columnas
+
 - `id` uuid pk default random
 - `payment_transaction_id` uuid not null fk -> `payment_transactions.id`
 - `event_type` text not null
@@ -222,10 +243,12 @@ Auditoría inmutable de eventos externos e internos.
 - `created_at` timestamptz not null default now
 
 ## Índices
+
 - `idx_payment_events_transaction_occurred_at (payment_transaction_id, occurred_at desc)`
 - `idx_payment_events_external_event_id`
 
 ## Nota
+
 - idealmente agregar unique parcial para `external_event_id` cuando aplique
 
 ---
@@ -233,9 +256,11 @@ Auditoría inmutable de eventos externos e internos.
 ## 5. Tabla `order_confirmations`
 
 ## Propósito
+
 Controlar el código de aceptación.
 
 ## Columnas
+
 - `id` uuid pk default random
 - `order_id` uuid not null unique fk -> `orders.id`
 - `code_hash` text not null
@@ -251,11 +276,13 @@ Controlar el código de aceptación.
 - `updated_at` timestamptz not null default now
 
 ## Constraints
+
 - `attempts_count >= 0`
 - `max_attempts > 0`
 - `expires_at > created_at`
 
 ## Índices
+
 - unique `order_id`
 - `idx_order_confirmations_status_expires_at (status, expires_at)`
 
@@ -264,9 +291,11 @@ Controlar el código de aceptación.
 ## 6. Tabla `order_fulfillments`
 
 ## Propósito
+
 Registrar el proceso operativo de entrega/recojo.
 
 ## Columnas
+
 - `id` uuid pk default random
 - `order_id` uuid not null unique fk -> `orders.id`
 - `fulfillment_type` fulfillment_type_enum not null
@@ -282,6 +311,7 @@ Registrar el proceso operativo de entrega/recojo.
 - `updated_at` timestamptz not null default now
 
 ## Índices
+
 - unique `order_id`
 - `idx_order_fulfillments_status_created_at (status, created_at desc)`
 
@@ -290,9 +320,11 @@ Registrar el proceso operativo de entrega/recojo.
 ## 7. Tabla `escrow_ledgers`
 
 ## Propósito
+
 Estado financiero interno de custodia para una orden.
 
 ## Columnas
+
 - `id` uuid pk default random
 - `order_id` uuid not null unique fk -> `orders.id`
 - `status` escrow_status_enum not null
@@ -312,6 +344,7 @@ Estado financiero interno de custodia para una orden.
 - `updated_at` timestamptz not null default now
 
 ## Constraints
+
 - `gross_amount >= 0`
 - `held_amount >= 0`
 - `releasable_amount >= 0`
@@ -319,6 +352,7 @@ Estado financiero interno de custodia para una orden.
 - `refunded_amount >= 0`
 
 ## Índices
+
 - unique `order_id`
 - `idx_escrow_ledgers_status_created_at (status, created_at desc)`
 
@@ -327,9 +361,11 @@ Estado financiero interno de custodia para una orden.
 ## 8. Tabla `seller_payouts`
 
 ## Propósito
+
 Registrar la liquidación al vendedor.
 
 ## Columnas
+
 - `id` uuid pk default random
 - `order_id` uuid not null unique fk -> `orders.id`
 - `seller_user_id` uuid not null fk -> `profiles.id`
@@ -353,11 +389,13 @@ Registrar la liquidación al vendedor.
 - `updated_at` timestamptz not null default now
 
 ## Constraints
+
 - `gross_amount >= 0`
 - `net_amount >= 0`
 - `char_length(currency) = 3`
 
 ## Índices
+
 - unique `order_id`
 - `idx_seller_payouts_seller_status_created_at (seller_user_id, status, created_at desc)`
 - `idx_seller_payouts_status_created_at (status, created_at desc)`
@@ -367,9 +405,11 @@ Registrar la liquidación al vendedor.
 ## 9. Tabla `refunds`
 
 ## Propósito
+
 Registrar devoluciones como proceso independiente.
 
 ## Columnas
+
 - `id` uuid pk default random
 - `order_id` uuid not null fk -> `orders.id`
 - `payment_transaction_id` uuid not null fk -> `payment_transactions.id`
@@ -388,11 +428,13 @@ Registrar devoluciones como proceso independiente.
 - `updated_at` timestamptz not null default now
 
 ## Constraints
+
 - `requested_amount > 0`
 - `approved_amount >= 0` cuando no sea null
 - `executed_amount >= 0` cuando no sea null
 
 ## Índices
+
 - `idx_refunds_order_id`
 - `idx_refunds_transaction_id`
 - `idx_refunds_status_created_at (status, created_at desc)`
@@ -402,6 +444,7 @@ Registrar devoluciones como proceso independiente.
 # Enums exactos a crear
 
 ## `order_status_enum`
+
 - `draft`
 - `awaiting_payment`
 - `payment_processing`
@@ -420,6 +463,7 @@ Registrar devoluciones como proceso independiente.
 - `disputed`
 
 ## `payment_transaction_status_enum`
+
 - `pending`
 - `authorized`
 - `captured`
@@ -429,6 +473,7 @@ Registrar devoluciones como proceso independiente.
 - `refunded_full`
 
 ## `order_confirmation_status_enum`
+
 - `code_generated`
 - `waiting_confirmation`
 - `confirmed`
@@ -437,11 +482,13 @@ Registrar devoluciones como proceso independiente.
 - `invalidated`
 
 ## `fulfillment_type_enum`
+
 - `pickup`
 - `delivery`
 - `shipment`
 
 ## `order_fulfillment_status_enum`
+
 - `pending`
 - `ready_for_pickup`
 - `in_delivery`
@@ -451,6 +498,7 @@ Registrar devoluciones como proceso independiente.
 - `cancelled`
 
 ## `escrow_status_enum`
+
 - `holding`
 - `release_pending`
 - `released`
@@ -458,6 +506,7 @@ Registrar devoluciones como proceso independiente.
 - `refunded`
 
 ## `seller_payout_status_enum`
+
 - `pending`
 - `scheduled`
 - `processing`
@@ -466,6 +515,7 @@ Registrar devoluciones como proceso independiente.
 - `cancelled`
 
 ## `refund_status_enum`
+
 - `refund_requested`
 - `refund_approved`
 - `refund_processing`
@@ -475,6 +525,7 @@ Registrar devoluciones como proceso independiente.
 - `refund_cancelled`
 
 ## `actor_type_enum` _(opcional ahora, recomendado después)_
+
 - `system`
 - `buyer`
 - `seller`
@@ -503,9 +554,11 @@ Registrar devoluciones como proceso independiente.
 # Qué hacer con `payments`
 
 ## Estado de `payments`
+
 **Legacy temporal**
 
 ## Decisión exacta
+
 - no eliminarla en el primer release
 - no extenderla con más lógica escrow
 - no usarla como fuente de verdad nueva
@@ -516,6 +569,7 @@ Registrar devoluciones como proceso independiente.
   - compatibilidad temporal
 
 ## Qué NO hacer
+
 - no seguir agregando columnas a `payments` para “zafar”
 - no usar `payments` para payout nuevo
 - no usar `payments` para refund nuevo
@@ -528,6 +582,7 @@ Eso sería volver al mismo error conceptual. No, hermano. Ya aprendimos la lecci
 # Mapeo de backfill desde `payments`
 
 ## Campos aprovechables
+
 - `payments.business_id -> orders.business_id`
 - `payments.product_id -> order_items.product_id`
 - `payments.seller_user_id -> orders.seller_user_id`
@@ -546,6 +601,7 @@ Eso sería volver al mismo error conceptual. No, hermano. Ya aprendimos la lecci
 - `payments.metadata -> metadata parcial`
 
 ## Campos que NO alcanzan solos
+
 - `buyer_user_id`
 - `order_number`
 - `buyer_tracking_token`
@@ -561,9 +617,11 @@ Eso sería volver al mismo error conceptual. No, hermano. Ya aprendimos la lecci
 - `order_fulfillments`
 
 ## Conclusión del backfill
+
 Se puede hacer **backfill parcial**, no perfecto.
 
 Eso significa:
+
 - algunas órdenes legacy quedarán migradas con bandera `legacy_imported = true` en metadata
 - varios montos desglosados deberán inferirse como `0` o `amount total` si no existen datos históricos reales
 - refunds/payouts legacy probablemente quedarán incompletos o como solo lectura
@@ -573,7 +631,9 @@ Eso significa:
 # Orden recomendado de migraciones
 
 ## Migración 1 — Enums y tablas nuevas
+
 Crear:
+
 - enums nuevos
 - `orders`
 - `order_items`
@@ -586,24 +646,30 @@ Crear:
 - `refunds`
 
 ## Migración 2 — Índices y constraints avanzados
+
 Agregar:
+
 - índices compuestos
 - checks de montos
 - uniques por tracking/order number/idempotency
 
 ## Migración 3 — Adaptación de servicios
+
 - escribir flujo nuevo en tablas nuevas
 - mantener lectura legacy donde haga falta
 
 ## Migración 4 — Backfill parcial desde `payments`
+
 - migrar históricos compatibles
 - marcar registros incompletos como legacy
 
 ## Migración 5 — Deprecación progresiva
+
 - remover dependencia funcional de `payments`
 - convertir `payments` en legacy read-only
 
 ## Migración 6 — Eliminación futura _(solo cuando ya no se use)_
+
 - archive o drop de `payments`
 
 ---
@@ -611,6 +677,7 @@ Agregar:
 # Recomendaciones para `schema.ts`
 
 ## Cambios recomendados
+
 1. mantener `paymentMethodEnum`
 2. deprecar `paymentStatusEnum` actual
 3. crear enums nuevos separados
@@ -618,6 +685,7 @@ Agregar:
 5. marcar `payments` explícitamente como legacy en comentario técnico
 
 ## Organización sugerida del archivo
+
 - enums
 - tablas core existentes
 - tablas commerce escrow nuevas
@@ -653,12 +721,15 @@ Cuando el Lote 2 se implemente de verdad, deberíamos tener:
 # Veredicto final
 
 ## ¿Quedó listo el Lote 2 como diseño?
+
 **Sí.**
 
 ## ¿Se puede implementar después de este documento?
+
 **Sí.**
 
 ## ¿Se resolvió la transición desde `payments`?
+
 **Sí, con convivencia temporal y backfill parcial.**
 
 Ese es el camino sano. No el heroísmo de cambiar todo de golpe.

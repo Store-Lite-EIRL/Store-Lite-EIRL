@@ -2,6 +2,7 @@
 
 import { AlertSnackbar, Icon } from '@/shared/components/ui';
 import { Button, IconButton } from '@/shared/components/ui/buttons';
+import { getBusinessPath } from '@/shared/utils/url';
 import Checkout from '@app/[slug]/components/Checkout';
 import { DeleteProductDialog } from '@app/[slug]/storage/components/DeleteProductDialog';
 import { CreateProductSheet } from '@app/[slug]/storage/components/createProduct/CreateProductSheet';
@@ -125,10 +126,13 @@ export function ProductItemView({
   businessLogoUrl,
 }: ProductItemViewProps) {
   const [copied, setCopied] = useState(false);
+  const [lastLoadedIndex, setLastLoadedIndex] = useState(currentImgIndex);
+  const isImageSwitching = lastLoadedIndex !== currentImgIndex && allImages.length > 1;
   const params = useParams();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
-  const slugPart = slug ? `/${slug}` : '';
-  const productUrl = `${slugPart}/product/${product.id}`;
+  const productUrl = slug
+    ? getBusinessPath(slug, `/product/${product.id}`)
+    : `/product/${product.id}`;
   const shouldUsePreview = Boolean(onOpenPreview);
 
   const productFeatures = product.tags || [];
@@ -164,6 +168,8 @@ export function ProductItemView({
             className={`${styles.image} ${isSaving ? styles.imageUpdating : ''}`}
             sizes="(max-width: 600px) 50vw, (max-width: 1024px) 33vw, 25vw"
             priority={false}
+            onLoad={() => setLastLoadedIndex(currentImgIndex)}
+            onError={() => setLastLoadedIndex(currentImgIndex)}
           />
         ) : (
           <span className={styles.noImage}>
@@ -274,19 +280,26 @@ export function ProductItemView({
           </div>
         )}
 
-        {/* Segmented Progress (At the Top) */}
+        {/* Segmented Progress — uses lastLoadedIndex to stay in sync with actually displayed image */}
         {allImages.length > 1 && (
           <div className={styles.segmentedProgress}>
             {allImages.map((_, idx) => (
               <div
                 key={idx}
-                className={`${styles.segment} ${idx === currentImgIndex ? styles.segmentActive : ''}`}
+                className={`${styles.segment} ${idx === lastLoadedIndex ? styles.segmentActive : ''} ${isImageSwitching ? styles.segmentPending : ''}`}
               />
             ))}
           </div>
         )}
 
-        {/* Progress Overlay (Highest Z-Index) */}
+        {/* Image switching spinner */}
+        {isImageSwitching && (
+          <div className={styles.imageLoaderOverlay}>
+            <div className={styles.imageSpinner} />
+          </div>
+        )}
+
+        {/* Saving overlay (owner only) */}
         {isSaving && (
           <div className={styles.loaderOverlay}>
             <div className={styles.spinner} />
@@ -398,8 +411,11 @@ export function ProductItemView({
           </span>
           <div className={styles.divider} />
           <div className={styles.rating}>
-            <Icon size={21}>star</Icon>
-            <span>{product.stars || 0}</span>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Icon key={i} size={16}>
+                {product.stars && i <= Math.round(product.stars) ? 'star' : 'star'}
+              </Icon>
+            ))}
           </div>
         </div>
 

@@ -11,12 +11,7 @@ import { db } from '@/core/database/client';
 import { businessSettings, businessSubscriptions, businesses } from '@/core/database/schema';
 import { and, desc, eq } from 'drizzle-orm';
 
-import {
-  DEFAULT_PLAN,
-  PLAN_ENTITLEMENTS,
-  type BusinessEntitlements,
-  type PlanType,
-} from './plans';
+import { DEFAULT_PLAN, PLAN_ENTITLEMENTS, type BusinessEntitlements, type PlanType } from './plans';
 
 /**
  * Calcula los entitlements de un negocio según su plan de suscripción activo.

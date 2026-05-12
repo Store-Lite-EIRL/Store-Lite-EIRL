@@ -3,6 +3,7 @@ import { db } from '@/core/database/client';
 import { businesses, businessTeamMembers } from '@/core/database/schema';
 import AppLayout from '@/shared/components/layout/AppLayout';
 import { Icon } from '@/shared/components/ui/data-display';
+import { getBusinessPath } from '@/shared/utils/url';
 import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
@@ -83,7 +84,7 @@ export default async function ListBusinessPage() {
   const allBusinesses = [...ownedBusinesses, ...teamBusinesses];
 
   if (selectedSlug && allBusinesses.some((business) => business.slug === selectedSlug)) {
-    redirect(`/${selectedSlug}`);
+    redirect(getBusinessPath(selectedSlug));
   }
 
   const myBusinesses = ownedBusinesses; // Keep this for limit calculations

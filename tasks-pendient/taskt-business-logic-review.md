@@ -1,14 +1,17 @@
 # Taskt Business Logic Review (Pre-Implementation)
 
 ## Purpose
+
 This document captures **business-logic risks** found during static analysis.
 All remediations are intentionally framed as **possible solutions** pending senior approval.
 
 ## Audience
+
 - Senior engineering reviewers
 - AI agents preparing safe implementation plans
 
 ## Scope
+
 - Tenant ownership logic (public vs private behaviors)
 - Plan/subscription upgrade flow
 - Storefront vs admin route expectations
@@ -16,6 +19,7 @@ All remediations are intentionally framed as **possible solutions** pending seni
 - Payment integrity consistency
 
 ## Review Context
+
 - Date: 2026-03-19
 - Type: Static review (no runtime exploit simulation)
 - Status: Pending senior validation
@@ -25,6 +29,7 @@ All remediations are intentionally framed as **possible solutions** pending seni
 ## Priority Findings
 
 ### 1) Critical - Ownership is partially derived from user-controlled cookie
+
 - Risk:
   - A manipulated `selected_business_slug` can make UI/server rendering paths treat a user as owner.
 - Evidence:
@@ -37,6 +42,7 @@ All remediations are intentionally framed as **possible solutions** pending seni
   - Keep cookie purely for UX/session routing hints, never authorization.
 
 ### 2) Critical - Cross-tenant data preload in shared business layout
+
 - Risk:
   - Full product/category data is preloaded in `/{slug}` layout before owner/public context is resolved.
 - Evidence:
@@ -49,6 +55,7 @@ All remediations are intentionally framed as **possible solutions** pending seni
   - Avoid hydrating storage provider with private data for public contexts.
 
 ### 3) Critical - Admin-like tenant routes are auth-only, not owner-validated
+
 - Risk:
   - Authenticated users may access another business’s `/storage`, `/chat`, `/settings`, `/dashboard` paths.
 - Evidence:
@@ -60,6 +67,7 @@ All remediations are intentionally framed as **possible solutions** pending seni
   - Treat client redirects as UX only, not security boundaries.
 
 ### 4) Critical - Subscription upgrade flow can activate plans without verified payment
+
 - Risk:
   - `upgradeBusinessPlan` inserts active plans with mock gateway IDs and no ownership verification.
 - Evidence:
@@ -72,6 +80,7 @@ All remediations are intentionally framed as **possible solutions** pending seni
   - Add idempotency key / duplicate-upgrade guard.
 
 ### 5) High - Chat business logic lacks actor boundaries
+
 - Risk:
   - Message/session operations do not consistently enforce who is guest vs store owner.
   - `isFromStore` can be client-influenced in owner UI flows.
@@ -85,6 +94,7 @@ All remediations are intentionally framed as **possible solutions** pending seni
   - Derive sender role server-side from authenticated identity.
 
 ### 6) High - Payment consistency gaps
+
 - Risk:
   - Product lookup is not tied to the business record in one atomic validation path.
   - No explicit stock decrement transaction in charge flow (oversell risk).
@@ -98,6 +108,7 @@ All remediations are intentionally framed as **possible solutions** pending seni
   - Persist canonical payment intent snapshot before charging.
 
 ### 7) High - Plan promises vs backend enforcement mismatch
+
 - Risk:
   - UI/marketing states advanced plan benefits, but backend limits/entitlements are mostly static or absent.
 - Evidence:
@@ -110,6 +121,7 @@ All remediations are intentionally framed as **possible solutions** pending seni
   - Enforce in all write paths (create business/product/import/users/features).
 
 ### 8) Medium - Business active/inactive state is weakly enforced
+
 - Risk:
   - `isActive` exists but storefront/payment access does not consistently gate on it.
 - Evidence:
@@ -123,6 +135,7 @@ All remediations are intentionally framed as **possible solutions** pending seni
     - owner-only visibility mode
 
 ### 9) Medium - `selected_business_slug` redirect can cause stale-routing behavior
+
 - Risk:
   - If cookie is stale/non-owned, user flow can bounce to wrong business URL.
 - Evidence:
@@ -134,6 +147,7 @@ All remediations are intentionally framed as **possible solutions** pending seni
   - Clear invalid cookie and stay in selector page.
 
 ### 10) Medium - Subscription source-of-truth inconsistency
+
 - Risk:
   - Legacy migration references plan columns on `businesses`, while app mainly consumes `business_subscriptions`.
 - Evidence:
@@ -157,6 +171,7 @@ All remediations are intentionally framed as **possible solutions** pending seni
 ---
 
 ## Notes for AI Agents
+
 - Treat this review as advisory context only.
 - Do not auto-implement all fixes at once.
 - Prefer phased PRs:
@@ -164,4 +179,3 @@ All remediations are intentionally framed as **possible solutions** pending seni
   - Subscription/payment flow integrity
   - Route/provider context split
   - Entitlement engine + tests
-

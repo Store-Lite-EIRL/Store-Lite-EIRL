@@ -438,7 +438,10 @@ export async function updateCulqiCredentials(
 
   const validation = keySchema.safeParse({ publicKey, secretKey });
   if (!validation.success) {
-    return { success: false, error: 'Formato de llave Culqi inválido. Debe empezar con pk_ y sk_.' };
+    return {
+      success: false,
+      error: 'Formato de llave Culqi inválido. Debe empezar con pk_ y sk_.',
+    };
   }
 
   // 🔥 SECURITY: Encrypt the secret key before DB storage
@@ -467,7 +470,6 @@ export async function updateCulqiCredentials(
         culqiSecretKey: encryptedSecretKey,
       });
     }
-
 
     revalidatePath('/', 'layout');
     return { success: true, message: 'Credenciales de Culqi actualizadas correctamente.' };

@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 
 import type { BusinessEntitlements } from '@/core/entitlements/plans';
 
+import type { Permission, Role } from '@/lib/permissions/definitions';
 import { BusinessEntitlementsProvider } from '../context/BusinessEntitlementsContext';
 import { PermissionsProvider } from '../context/PermissionsContext';
 import { CartProvider } from '../storage/context/CartContext';
@@ -11,7 +12,6 @@ import { CurrencyProvider } from '../storage/context/CurrencyContext';
 import { StorageProvider } from '../storage/context/StorageContext';
 import type { Product } from '../storage/data';
 import { getCurrencyByCountry } from '../storage/utils/currency';
-import type { Permission, Role } from '@/lib/permissions/definitions';
 
 interface BusinessProvidersProps {
   children: ReactNode;

@@ -118,12 +118,8 @@
           "name": "business_invitations_business_id_businesses_id_fk",
           "tableFrom": "business_invitations",
           "tableTo": "businesses",
-          "columnsFrom": [
-            "business_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["business_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -131,12 +127,8 @@
           "name": "business_invitations_created_by_profiles_id_fk",
           "tableFrom": "business_invitations",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -146,9 +138,7 @@
         "business_invitations_code_unique": {
           "name": "business_invitations_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -249,12 +239,8 @@
           "name": "business_settings_business_id_businesses_id_fk",
           "tableFrom": "business_settings",
           "tableTo": "businesses",
-          "columnsFrom": [
-            "business_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["business_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -264,9 +250,7 @@
         "unique_business_settings": {
           "name": "unique_business_settings",
           "nullsNotDistinct": false,
-          "columns": [
-            "business_id"
-          ]
+          "columns": ["business_id"]
         }
       },
       "policies": {},
@@ -356,12 +340,8 @@
           "name": "business_slug_aliases_business_id_businesses_id_fk",
           "tableFrom": "business_slug_aliases",
           "tableTo": "businesses",
-          "columnsFrom": [
-            "business_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["business_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -371,9 +351,7 @@
         "business_slug_aliases_slug_unique": {
           "name": "business_slug_aliases_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "policies": {},
@@ -524,12 +502,8 @@
           "name": "business_subscriptions_business_id_businesses_id_fk",
           "tableFrom": "business_subscriptions",
           "tableTo": "businesses",
-          "columnsFrom": [
-            "business_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["business_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -539,16 +513,12 @@
         "business_subscriptions_gateway_subscription_id_unique": {
           "name": "business_subscriptions_gateway_subscription_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "gateway_subscription_id"
-          ]
+          "columns": ["gateway_subscription_id"]
         },
         "unique_business_subscription": {
           "name": "unique_business_subscription",
           "nullsNotDistinct": false,
-          "columns": [
-            "business_id"
-          ]
+          "columns": ["business_id"]
         }
       },
       "policies": {},
@@ -642,12 +612,8 @@
           "name": "business_team_members_business_id_businesses_id_fk",
           "tableFrom": "business_team_members",
           "tableTo": "businesses",
-          "columnsFrom": [
-            "business_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["business_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -655,12 +621,8 @@
           "name": "business_team_members_user_id_profiles_id_fk",
           "tableFrom": "business_team_members",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -668,12 +630,8 @@
           "name": "business_team_members_invitation_id_business_invitations_id_fk",
           "tableFrom": "business_team_members",
           "tableTo": "business_invitations",
-          "columnsFrom": [
-            "invitation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["invitation_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -683,10 +641,7 @@
         "unique_business_user": {
           "name": "unique_business_user",
           "nullsNotDistinct": false,
-          "columns": [
-            "business_id",
-            "user_id"
-          ]
+          "columns": ["business_id", "user_id"]
         }
       },
       "policies": {},
@@ -767,12 +722,8 @@
           "name": "business_team_roles_business_id_businesses_id_fk",
           "tableFrom": "business_team_roles",
           "tableTo": "businesses",
-          "columnsFrom": [
-            "business_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["business_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -782,10 +733,7 @@
         "unique_business_role": {
           "name": "unique_business_role",
           "nullsNotDistinct": false,
-          "columns": [
-            "business_id",
-            "role"
-          ]
+          "columns": ["business_id", "role"]
         }
       },
       "policies": {},
@@ -1049,12 +997,8 @@
           "name": "businesses_owner_id_profiles_id_fk",
           "tableFrom": "businesses",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1064,9 +1008,7 @@
         "businesses_slug_unique": {
           "name": "businesses_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "policies": {},
@@ -1167,12 +1109,8 @@
           "name": "chat_sessions_business_id_businesses_id_fk",
           "tableFrom": "chat_sessions",
           "tableTo": "businesses",
-          "columnsFrom": [
-            "business_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["business_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1304,12 +1242,8 @@
           "name": "form_messages_business_id_businesses_id_fk",
           "tableFrom": "form_messages",
           "tableTo": "businesses",
-          "columnsFrom": [
-            "business_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["business_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1402,12 +1336,8 @@
           "name": "messages_session_id_chat_sessions_id_fk",
           "tableFrom": "messages",
           "tableTo": "chat_sessions",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1582,12 +1512,8 @@
           "name": "notifications_business_id_businesses_id_fk",
           "tableFrom": "notifications",
           "tableTo": "businesses",
-          "columnsFrom": [
-            "business_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["business_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1905,12 +1831,8 @@
           "name": "payments_business_id_businesses_id_fk",
           "tableFrom": "payments",
           "tableTo": "businesses",
-          "columnsFrom": [
-            "business_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["business_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1918,12 +1840,8 @@
           "name": "payments_product_id_products_id_fk",
           "tableFrom": "payments",
           "tableTo": "products",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1931,12 +1849,8 @@
           "name": "payments_seller_user_id_profiles_id_fk",
           "tableFrom": "payments",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "seller_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["seller_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1946,16 +1860,12 @@
         "payments_culqi_charge_id_unique": {
           "name": "payments_culqi_charge_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "culqi_charge_id"
-          ]
+          "columns": ["culqi_charge_id"]
         },
         "payments_tracking_token_unique": {
           "name": "payments_tracking_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "tracking_token"
-          ]
+          "columns": ["tracking_token"]
         }
       },
       "policies": {},
@@ -2216,12 +2126,8 @@
           "name": "plan_payments_business_id_businesses_id_fk",
           "tableFrom": "plan_payments",
           "tableTo": "businesses",
-          "columnsFrom": [
-            "business_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["business_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -2231,17 +2137,12 @@
         "plan_payments_culqi_charge_id_unique": {
           "name": "plan_payments_culqi_charge_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "culqi_charge_id"
-          ]
+          "columns": ["culqi_charge_id"]
         },
         "unique_plan_payment_correlative": {
           "name": "unique_plan_payment_correlative",
           "nullsNotDistinct": false,
-          "columns": [
-            "ticket_series",
-            "ticket_correlative"
-          ]
+          "columns": ["ticket_series", "ticket_correlative"]
         }
       },
       "policies": {},
@@ -2369,12 +2270,8 @@
           "name": "product_categories_business_id_businesses_id_fk",
           "tableFrom": "product_categories",
           "tableTo": "businesses",
-          "columnsFrom": [
-            "business_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["business_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2384,10 +2281,7 @@
         "unique_business_category": {
           "name": "unique_business_category",
           "nullsNotDistinct": false,
-          "columns": [
-            "business_id",
-            "slug"
-          ]
+          "columns": ["business_id", "slug"]
         }
       },
       "policies": {},
@@ -2447,12 +2341,8 @@
           "name": "product_likes_product_id_products_id_fk",
           "tableFrom": "product_likes",
           "tableTo": "products",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2462,10 +2352,7 @@
         "unique_product_like": {
           "name": "unique_product_like",
           "nullsNotDistinct": false,
-          "columns": [
-            "product_id",
-            "ip_address"
-          ]
+          "columns": ["product_id", "ip_address"]
         }
       },
       "policies": {},
@@ -2566,12 +2453,8 @@
           "name": "product_media_product_id_products_id_fk",
           "tableFrom": "product_media",
           "tableTo": "products",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2854,12 +2737,8 @@
           "name": "products_business_id_businesses_id_fk",
           "tableFrom": "products",
           "tableTo": "businesses",
-          "columnsFrom": [
-            "business_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["business_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2867,12 +2746,8 @@
           "name": "products_category_id_product_categories_id_fk",
           "tableFrom": "products",
           "tableTo": "product_categories",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2882,10 +2757,7 @@
         "unique_business_product_slug": {
           "name": "unique_business_product_slug",
           "nullsNotDistinct": false,
-          "columns": [
-            "business_id",
-            "slug"
-          ]
+          "columns": ["business_id", "slug"]
         }
       },
       "policies": {},
@@ -2997,9 +2869,7 @@
         "profiles_email_unique": {
           "name": "profiles_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -3193,12 +3063,8 @@
           "name": "seller_payout_accounts_seller_user_id_profiles_id_fk",
           "tableFrom": "seller_payout_accounts",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "seller_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["seller_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3208,9 +3074,7 @@
         "seller_payout_accounts_seller_user_id_unique": {
           "name": "seller_payout_accounts_seller_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "seller_user_id"
-          ]
+          "columns": ["seller_user_id"]
         }
       },
       "policies": {},
@@ -3222,30 +3086,17 @@
     "public.contrast_level": {
       "name": "contrast_level",
       "schema": "public",
-      "values": [
-        "standard",
-        "medium",
-        "high"
-      ]
+      "values": ["standard", "medium", "high"]
     },
     "public.media_type": {
       "name": "media_type",
       "schema": "public",
-      "values": [
-        "image",
-        "video"
-      ]
+      "values": ["image", "video"]
     },
     "public.notification_category": {
       "name": "notification_category",
       "schema": "public",
-      "values": [
-        "chat",
-        "almacen",
-        "plan",
-        "pedidos",
-        "sistema"
-      ]
+      "values": ["chat", "almacen", "plan", "pedidos", "sistema"]
     },
     "public.notification_type": {
       "name": "notification_type",
@@ -3267,11 +3118,7 @@
     "public.payment_method": {
       "name": "payment_method",
       "schema": "public",
-      "values": [
-        "card",
-        "yape",
-        "plin"
-      ]
+      "values": ["card", "yape", "plin"]
     },
     "public.payment_status": {
       "name": "payment_status",
@@ -3291,52 +3138,27 @@
     "public.plan_payment_status": {
       "name": "plan_payment_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "paid",
-        "failed",
-        "refunded",
-        "disputed"
-      ]
+      "values": ["pending", "paid", "failed", "refunded", "disputed"]
     },
     "public.shipping_type": {
       "name": "shipping_type",
       "schema": "public",
-      "values": [
-        "agencia",
-        "domicilio",
-        "recojo"
-      ]
+      "values": ["agencia", "domicilio", "recojo"]
     },
     "public.subscription_plan": {
       "name": "subscription_plan",
       "schema": "public",
-      "values": [
-        "basico",
-        "emprendedor",
-        "business_pro",
-        "enterprise_ai"
-      ]
+      "values": ["basico", "emprendedor", "business_pro", "enterprise_ai"]
     },
     "public.subscription_status": {
       "name": "subscription_status",
       "schema": "public",
-      "values": [
-        "active",
-        "inactive",
-        "past_due",
-        "canceled",
-        "expired",
-        "trialing"
-      ]
+      "values": ["active", "inactive", "past_due", "canceled", "expired", "trialing"]
     },
     "public.theme_mode": {
       "name": "theme_mode",
       "schema": "public",
-      "values": [
-        "light",
-        "dark"
-      ]
+      "values": ["light", "dark"]
     }
   },
   "schemas": {},

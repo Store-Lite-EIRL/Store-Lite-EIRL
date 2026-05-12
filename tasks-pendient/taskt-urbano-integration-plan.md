@@ -7,19 +7,21 @@
 ## 🔍 1. InvestigaciÃ³n de la API de Urbano (Pendiente)
 
 El usuario proporcionarÃ¡ los tokens y secretos pronto. Por ahora la UI estÃ¡ preparada con:
+
 1. Urbano (Agencia)
 2. Urbano (Domicilio)
 
 ## âš™ï¸ 2. LÃ³gica de Negocio
 
 ### RestricciÃ³n por Plan
+
 Se mantiene la restricciÃ³n para los planes:
-| Plan            | EnvÃos Integrados |
+| Plan | EnvÃos Integrados |
 | --------------- | ------------------ |
-| `basico`        | âŒ                  |
-| `emprendedor`   | âŒ                  |
-| `business_pro`  | âœ…                  |
-| `enterprise_ai` | âœ…                  |
+| `basico` | âŒ |
+| `emprendedor` | âŒ |
+| `business_pro` | âœ… |
+| `enterprise_ai` | âœ… |
 
 ## ï¸âœ… 3. Checklist de ImplementaciÃ³n
 

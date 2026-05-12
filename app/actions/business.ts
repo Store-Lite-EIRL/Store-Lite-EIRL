@@ -151,6 +151,9 @@ export async function updateBusinessData(
     name: string;
     description: string;
     address: string;
+    departamento: string;
+    provincia: string;
+    distrito: string;
     storeType: string;
     whatsappNumber: string;
     taxId: string;

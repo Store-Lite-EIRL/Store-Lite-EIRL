@@ -70,9 +70,7 @@ export function useProductFilters(initialProducts: ProductWithRelations[]) {
 
     if (showDiscountedOnly) {
       result = result.filter((p) => {
-        const metadata = (p.metadata as Record<string, unknown>) || {};
-        const originalPrice = metadata.originalPrice ? Number(metadata.originalPrice) : null;
-        return originalPrice !== null && originalPrice > Number(p.price);
+        return p.secondPrice !== null && p.secondPrice !== undefined;
       });
     }
 

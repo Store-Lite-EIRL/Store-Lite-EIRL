@@ -373,6 +373,21 @@
   background-color: var(--md-sys-color-primary);
 }
 
+.segmentPending {
+  opacity: 0.4;
+  animation: segmentPulse 1s ease-in-out infinite;
+}
+
+@keyframes segmentPulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
 /* ── Carousel Nav Overlay ── */
 .carouselNavOverlay {
   position: absolute;
@@ -386,6 +401,34 @@
   height: 100%;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Image Switching Spinner ── */
+.imageLoaderOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(2px);
+  z-index: 30;
+  border-radius: 1rem;
+}
+
+.imageSpinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-top-color: var(--md-sys-color-primary, #65558f);
+  border-radius: 50%;
+  animation: imageSpin 0.7s linear infinite;
+}
+
+@keyframes imageSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Custom indicator if no images (avoiding clutter) */

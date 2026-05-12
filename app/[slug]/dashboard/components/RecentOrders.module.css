@@ -197,7 +197,11 @@
 
 /* PRIMER ESTADO - Rojo opaco plomo */
 .statusPending {
-  background: color-mix(in srgb, var(--md-sys-color-error-container) 60%, var(--md-sys-color-surface));
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-error-container) 60%,
+    var(--md-sys-color-surface)
+  );
   color: var(--md-sys-color-on-error-container);
 }
 
@@ -453,7 +457,7 @@
 
 /* Agregamos padding-right al input para que el texto no quede debajo del botón */
 .searchContainer .searchInputMD3 {
-  padding-right: 3rem; 
+  padding-right: 3rem;
 }
 
 .searchButtonInside {
@@ -595,7 +599,11 @@
 
 /* ─── Status Colors for Hero Badge (must come after .statusHeroBadge) ─── */
 .statusHeroBadge.statusPending {
-  background: color-mix(in srgb, var(--md-sys-color-error-container) 60%, var(--md-sys-color-surface));
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-error-container) 60%,
+    var(--md-sys-color-surface)
+  );
   color: var(--md-sys-color-on-error-container);
 }
 
@@ -2156,7 +2164,11 @@
 
 /* Tips Section */
 .tipsSection {
-  background: linear-gradient(135deg, var(--md-sys-color-tertiary-container) 0%, var(--md-sys-color-secondary-container) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--md-sys-color-tertiary-container) 0%,
+    var(--md-sys-color-secondary-container) 100%
+  );
   border-radius: 20px;
   padding: 1.5rem;
   border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 40%, transparent);
@@ -2984,7 +2996,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.85rem;  /* Aumentado de 0.75rem */
+  font-size: 0.85rem; /* Aumentado de 0.75rem */
   font-weight: 800;
   color: var(--md-sys-color-outline);
   text-transform: uppercase;
@@ -2994,7 +3006,7 @@
 }
 
 .sectionTitle svg {
-  width: 18px;  /* Aumentado de 16px */
+  width: 18px; /* Aumentado de 16px */
   height: 18px; /* Aumentado de 16px */
   color: var(--md-sys-color-primary);
 }
@@ -3073,7 +3085,7 @@
 
 .productMetaItem {
   font-size: 0.85rem;
-  color: var(--md-sys-color-on-surface);  /* Texto más oscuro */
+  color: var(--md-sys-color-on-surface); /* Texto más oscuro */
   display: flex;
   align-items: center;
   gap: 0.3rem;
@@ -3138,7 +3150,7 @@
   left: 50%;
   transform: translateX(-50%);
   margin-top: 0.75rem; /* Espacio entre icono y tooltip */
-  
+
   /* Estilos tipo Card MD3 */
   background: var(--md-sys-color-surface-container-high);
   color: var(--md-sys-color-on-surface);
@@ -3151,10 +3163,12 @@
   min-width: 200px;
   max-width: 300px;
   text-align: center;
-  
+
   /* Transición suave */
   opacity: 0;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
   pointer-events: none;
   transform: translateX(-50%) translateY(-5px); /* Efecto "bajar" al aparecer */
 }
@@ -3283,7 +3297,7 @@
 }
 
 .productImageWrapper {
-  width: 100px;  /* Aumentado a 100px */
+  width: 100px; /* Aumentado a 100px */
   height: 100px; /* Aumentado a 100px */
   border-radius: 12px;
   overflow: hidden;
@@ -3335,7 +3349,7 @@
 .itemPrice {
   font-weight: 800;
   color: var(--md-sys-color-on-surface);
-  font-size: 1.1rem;  /* Aumentado para que se vea más */
+  font-size: 1.1rem; /* Aumentado para que se vea más */
   margin: 0;
 }
 

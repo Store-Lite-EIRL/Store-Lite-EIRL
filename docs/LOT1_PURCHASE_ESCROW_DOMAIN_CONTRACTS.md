@@ -59,25 +59,32 @@ Además, deben cumplirse estas condiciones:
 ## E01-T01 — Definir estados finales por agregado
 
 ### Objetivo
+
 Definir el conjunto oficial de estados por entidad para que backend, frontend, soporte y reporting hablen el mismo idioma.
 
 ### Prioridad
+
 **Crítica**
 
 ### Estimación
+
 **1 sesión de definición + 1 validación**
 
 ### Owner sugerido
+
 - Arquitectura / producto
 
 ### Dependencias
+
 - ninguna
 
 ### Entradas
+
 - `docs/README_PURCHASE_ESCROW_FLOW.md`
 - `docs/BACKLOG_PURCHASE_ESCROW.md`
 
 ### Trabajo a realizar
+
 Definir estados oficiales para:
 
 - `orders`
@@ -98,6 +105,7 @@ Para cada agregado hay que marcar:
 ### Propuesta base
 
 #### `orders`
+
 - `draft`
 - `awaiting_payment`
 - `payment_processing`
@@ -116,6 +124,7 @@ Para cada agregado hay que marcar:
 - `disputed`
 
 #### `payment_transactions`
+
 - `pending`
 - `authorized`
 - `captured`
@@ -125,6 +134,7 @@ Para cada agregado hay que marcar:
 - `refunded_full`
 
 #### `order_confirmations`
+
 - `code_generated`
 - `waiting_confirmation`
 - `confirmed`
@@ -133,6 +143,7 @@ Para cada agregado hay que marcar:
 - `invalidated`
 
 #### `seller_payouts`
+
 - `pending`
 - `scheduled`
 - `processing`
@@ -141,6 +152,7 @@ Para cada agregado hay que marcar:
 - `cancelled`
 
 #### `refunds`
+
 - `refund_requested`
 - `refund_approved`
 - `refund_processing`
@@ -150,12 +162,14 @@ Para cada agregado hay que marcar:
 - `refund_cancelled`
 
 ### Criterios de aceptación
+
 - existe una lista única de estados por agregado
 - cada estado tiene definición funcional en lenguaje claro
 - se distinguen estados terminales e intermedios
 - no hay nombres duplicados con significados distintos
 
 ### Estado actual
+
 **Listo para revisión**
 
 ---
@@ -163,21 +177,27 @@ Para cada agregado hay que marcar:
 ## E01-T02 — Definir transiciones permitidas
 
 ### Objetivo
+
 Evitar saltos arbitrarios de estado y documentar la máquina de estados del negocio.
 
 ### Prioridad
+
 **Crítica**
 
 ### Estimación
+
 **1 a 2 sesiones**
 
 ### Owner sugerido
+
 - Arquitectura / backend
 
 ### Dependencias
+
 - E01-T01
 
 ### Trabajo a realizar
+
 Por cada agregado, definir:
 
 - estado origen
@@ -189,6 +209,7 @@ Por cada agregado, definir:
 ### Propuesta base
 
 #### `orders`
+
 - `draft -> awaiting_payment`
 - `awaiting_payment -> payment_processing`
 - `payment_processing -> paid_in_escrow`
@@ -207,18 +228,21 @@ Por cada agregado, definir:
 - `disputed -> completed`
 
 #### Reglas de transición importantes
+
 - `completed` no vuelve a `awaiting_fulfillment`
 - `refunded_full` es terminal
 - `payment_failed` es terminal salvo nuevo intento con otra transacción
 - `paid_in_escrow` no significa payout ejecutado
 
 ### Criterios de aceptación
+
 - existe matriz de transición por agregado
 - cada transición tiene actor y condición
 - se identifican transiciones prohibidas
 - queda claro qué cambios son automáticos y cuáles manuales
 
 ### Estado actual
+
 **Listo para revisión**
 
 ---
@@ -226,22 +250,28 @@ Por cada agregado, definir:
 ## E01-T03 — Definir reglas de expiración
 
 ### Objetivo
+
 Cerrar la política temporal del flujo. Un sistema sin expiraciones definidas termina lleno de órdenes zombie.
 
 ### Prioridad
+
 **Crítica**
 
 ### Estimación
+
 **1 sesión**
 
 ### Owner sugerido
+
 - Producto / operaciones / arquitectura
 
 ### Dependencias
+
 - E01-T01
 - E01-T02
 
 ### Trabajo a realizar
+
 Definir con tiempos concretos:
 
 - expiración de orden no pagada
@@ -257,17 +287,20 @@ Definir con tiempos concretos:
 - si existe evidencia de entrega incompleta: pasa a revisión manual antes de refund
 
 ### Decisiones a cerrar
+
 - ¿el mismo plazo aplica para pickup y delivery?
 - ¿el refund al vencer será automático o condicionado?
 - ¿qué actor puede extender el plazo?
 
 ### Criterios de aceptación
+
 - cada expiración tiene duración definida
 - cada expiración tiene consecuencia definida
 - se sabe qué proceso automático la evalúa
 - se sabe cuándo entra soporte/manual review
 
 ### Estado actual
+
 **Pendiente de aprobación de negocio**
 
 ---
@@ -275,22 +308,28 @@ Definir con tiempos concretos:
 ## E01-T04 — Definir política de refund
 
 ### Objetivo
+
 Determinar cuándo, cómo y quién puede devolver dinero.
 
 ### Prioridad
+
 **Crítica**
 
 ### Estimación
+
 **1 sesión**
 
 ### Owner sugerido
+
 - Producto / finanzas / backend
 
 ### Dependencias
+
 - E01-T02
 - E01-T03
 
 ### Trabajo a realizar
+
 Definir:
 
 - refund total
@@ -305,35 +344,43 @@ Definir:
 ### Propuesta base
 
 #### Refund total
+
 Aplica cuando:
+
 - no se confirmó entrega
 - la orden expiró sin resolución favorable al vendedor
 - hubo fraude o cobro inválido
 
 #### Refund parcial
+
 Aplica cuando:
+
 - hay ajuste comercial
 - hubo entrega parcial
 - hay compensación limitada
 
 #### Actores posibles
+
 - sistema
 - soporte/admin
 - comprador (solicita)
 - backend financiero (ejecuta)
 
 ### Reglas obligatorias
+
 - no puede existir `refunded_full` si ya hubo payout `paid` sin política de reversa definida
 - todo refund debe dejar trazabilidad de motivo y actor
 - refund y disputa no son lo mismo
 
 ### Criterios de aceptación
+
 - existen causales válidas documentadas
 - se distingue solicitud, aprobación y ejecución
 - queda claro cuándo bloquea payout
 - queda claro cuándo puede ser automático
 
 ### Estado actual
+
 **Pendiente de aprobación de negocio/finanzas**
 
 ---
@@ -341,23 +388,29 @@ Aplica cuando:
 ## E01-T05 — Definir política de payout
 
 ### Objetivo
+
 Definir las reglas de liberación de fondos al vendedor.
 
 ### Prioridad
+
 **Crítica**
 
 ### Estimación
+
 **1 sesión**
 
 ### Owner sugerido
+
 - Finanzas / operaciones / arquitectura
 
 ### Dependencias
+
 - E01-T02
 - E01-T04
 - E01-T07
 
 ### Trabajo a realizar
+
 Definir:
 
 - cuándo nace el payout
@@ -378,17 +431,20 @@ Definir:
   - inconsistencia financiera
 
 ### Decisiones a cerrar
+
 - ¿el payout será manual al inicio o automático?
 - ¿en cuánto tiempo se paga al vendedor luego de `completed`?
 - ¿qué hacemos si el payout falla dos veces?
 
 ### Criterios de aceptación
+
 - se sabe exactamente qué evento crea el payout
 - se saben los bloqueos funcionales
 - se sabe el SLA esperado de liberación
 - se sabe la estrategia de retry/falla
 
 ### Estado actual
+
 **Pendiente de aprobación operativa/financiera**
 
 ---
@@ -396,21 +452,27 @@ Definir:
 ## E01-T06 — Definir checkout invitado vs autenticado
 
 ### Objetivo
+
 Cerrar si el comprador debe existir como usuario formal o si permitiremos invitado.
 
 ### Prioridad
+
 **Alta**
 
 ### Estimación
+
 **1 sesión corta**
 
 ### Owner sugerido
+
 - Producto / arquitectura
 
 ### Dependencias
+
 - ninguna
 
 ### Trabajo a realizar
+
 Definir:
 
 - si `buyer_user_id` será obligatorio
@@ -421,24 +483,31 @@ Definir:
 ### Alternativas
 
 #### Opción A — Solo autenticado
+
 **Ventajas**
+
 - mejor trazabilidad
 - mejor soporte
 - mejor historial de compras
 
 **Desventajas**
+
 - más fricción en checkout
 
 #### Opción B — Invitado permitido
+
 **Ventajas**
+
 - menos fricción
 - más conversión potencial
 
 **Desventajas**
+
 - identidad más débil
 - más complejidad en soporte, tracking y seguridad
 
 ### Recomendación técnica
+
 Si quieren empezar ordenado, recomiendo:
 
 - permitir **invitado controlado**, pero exigir:
@@ -448,11 +517,13 @@ Si quieren empezar ordenado, recomiendo:
   - posibilidad futura de vincular la compra a cuenta
 
 ### Criterios de aceptación
+
 - queda definido si `buyer_user_id` es nullable
 - queda definido el mecanismo de tracking del invitado
 - queda definido el set mínimo de datos del comprador
 
 ### Estado actual
+
 **Pendiente de decisión de producto**
 
 ---
@@ -460,21 +531,27 @@ Si quieren empezar ordenado, recomiendo:
 ## E01-T07 — Definir fórmula financiera oficial
 
 ### Objetivo
+
 Evitar cálculos inconsistentes entre checkout, base de datos, payout y refund.
 
 ### Prioridad
+
 **Crítica**
 
 ### Estimación
+
 **1 sesión**
 
 ### Owner sugerido
+
 - Finanzas / arquitectura / backend
 
 ### Dependencias
+
 - ninguna
 
 ### Trabajo a realizar
+
 Definir:
 
 - subtotal
@@ -490,6 +567,7 @@ Definir:
 ### Propuesta base
 
 #### Variables
+
 - `subtotal_amount`
 - `discount_amount`
 - `tax_amount`
@@ -500,23 +578,27 @@ Definir:
 - `net_seller_amount`
 
 #### Fórmulas
+
 - `taxable_base = subtotal_amount - discount_amount`
 - `total_amount = taxable_base + tax_amount`
 - `net_seller_amount = total_amount - gateway_fee_amount - platform_fee_amount - adjustment_amount`
 
 ### Decisiones a cerrar
+
 - si el impuesto va incluido en precio o se suma encima
 - si la comisión gateway la absorbe plataforma o vendedor
 - si habrá redondeo bancario y cómo se maneja
 - si el refund devuelve comisión al comprador o no
 
 ### Criterios de aceptación
+
 - existe glosario financiero único
 - las fórmulas están escritas y aprobadas
 - se define política de redondeo
 - payout y refund usan la misma base de cálculo
 
 ### Estado actual
+
 **Pendiente de aprobación financiera**
 
 ---
@@ -538,12 +620,15 @@ Queda preparado el Lote 1 con:
 ## Veredicto
 
 ### ¿Se ejecutó correctamente?
+
 **Sí.** Se ejecutó correctamente como **documentación de ejecución y checklist de cierre**.
 
 ### ¿Ya está cerrado para pasar al siguiente lote?
+
 **Todavía no.**
 
 ### ¿Qué falta para habilitar Lote 2?
+
 Falta aprobar explícitamente:
 
 1. estados finales

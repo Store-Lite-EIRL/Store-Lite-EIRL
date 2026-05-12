@@ -7,6 +7,7 @@ import { BasicContactDialog } from '../../../components/BasicContactDialog';
 import Checkout from '../../../components/Checkout';
 import { useCart } from '../../../storage/context/CartContext';
 import type { Product } from '../../../storage/data';
+import LikeSection from './LikeSection';
 import styles from './ProductDetail.module.css';
 
 interface PurchaseActionsProps {
@@ -14,6 +15,11 @@ interface PurchaseActionsProps {
   business: Business;
   hasPaymentGateway: boolean;
   culqiPublicKey?: string;
+  // LikeSection props — se renderiza inline con el botón principal
+  likesCount: number;
+  hasLiked: boolean;
+  productId: string;
+  businessSlug: string;
 }
 
 export default function PurchaseActions({
@@ -21,6 +27,10 @@ export default function PurchaseActions({
   business,
   hasPaymentGateway,
   culqiPublicKey,
+  likesCount,
+  hasLiked,
+  productId,
+  businessSlug,
 }: PurchaseActionsProps) {
   const { addToCart } = useCart();
   const [isAdding, setIsAdding] = useState(false);
@@ -29,16 +39,7 @@ export default function PurchaseActions({
 
   const handleAddToCart = async () => {
     setIsAdding(true);
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      currency: product.currency,
-      image: product.image,
-      category: product.category,
-      stock: product.stock,
-      status: product.status,
-    });
+    addToCart(product);
     setIsAdding(false);
   };
 
@@ -72,19 +73,25 @@ export default function PurchaseActions({
           className={styles.addToCartButton}
           onClick={handleAddToCart}
           disabled={isAdding || isOutOfStock}
-          style={{ width: '100%' }}
         >
           {addToCartText}
         </Button>
-        <Button
-          variant="filled"
-          className={styles.buyNowButton}
-          onClick={handleBuyNow}
-          disabled={isOutOfStock}
-          style={{ width: '100%' }}
-        >
-          {buyNowText}
-        </Button>
+        <div className={styles.mainActionRow}>
+          <Button
+            variant="filled"
+            className={styles.buyNowButton}
+            onClick={handleBuyNow}
+            disabled={isOutOfStock}
+          >
+            {buyNowText}
+          </Button>
+          <LikeSection
+            productId={productId}
+            businessSlug={businessSlug}
+            initialLikesCount={likesCount}
+            initialHasLiked={hasLiked}
+          />
+        </div>
       </div>
 
       {isPaymentModalOpen && (

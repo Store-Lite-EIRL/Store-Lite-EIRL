@@ -49,7 +49,7 @@ export default async function PricingPage({
     }));
   }
 
-  const preselectedBusinessId = myBusinesses.find(b => b.slug === slug)?.id;
+  const preselectedBusinessId = myBusinesses.find((b) => b.slug === slug)?.id;
 
   const plans: PricingCardProps[] = [
     {
@@ -125,7 +125,12 @@ export default async function PricingPage({
 
       <div className="pricing-grid">
         {plans.map((plan, index) => (
-          <PricingCard key={index} {...plan} businesses={myBusinesses} preselectedBusinessId={preselectedBusinessId} />
+          <PricingCard
+            key={index}
+            {...plan}
+            businesses={myBusinesses}
+            preselectedBusinessId={preselectedBusinessId}
+          />
         ))}
       </div>
     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { Icon } from '@/shared/components/ui';
+import { getBusinessPath } from '@/shared/utils/url';
 import { useRouter } from 'next/navigation';
 
 export default function LogoutButton({
@@ -14,7 +15,7 @@ export default function LogoutButton({
 
   const handleLogout = () => {
     localStorage.removeItem(`order_session_${token}`);
-    router.push(`/${businessSlug}`);
+    router.push(getBusinessPath(businessSlug));
   };
 
   return (

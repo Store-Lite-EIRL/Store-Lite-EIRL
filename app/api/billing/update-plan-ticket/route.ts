@@ -12,10 +12,7 @@ export async function POST(req: Request) {
     const { planPaymentId, ticketUrl } = await req.json();
 
     if (!planPaymentId || !ticketUrl) {
-      return NextResponse.json(
-        { error: 'Falta planPaymentId o ticketUrl' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Falta planPaymentId o ticketUrl' }, { status: 400 });
     }
 
     const [result] = await db
@@ -25,10 +22,7 @@ export async function POST(req: Request) {
       .returning();
 
     if (!result) {
-      return NextResponse.json(
-        { error: 'Pago de plan no encontrado' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Pago de plan no encontrado' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -37,9 +31,6 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error('[update-plan-ticket] Error updating ticket URL:', error);
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

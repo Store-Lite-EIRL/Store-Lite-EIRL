@@ -43,6 +43,17 @@ export const Sheet = ({
     }
   }, [close, show]);
 
+  /* Lock body scroll while sheet is open */
+  React.useEffect(() => {
+    if (isOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [isOpen]);
+
   return (
     <>
       <div className={`md-sheet-scrim ${isOpen ? 'open' : ''}`} onClick={close} />

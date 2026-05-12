@@ -34,7 +34,7 @@ export async function updateProxy(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        // Propagate cookies to request
+        // Propagate cookies to request (solo value, no necesita options)
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
 
         // Update response to include mutated request so server components see the refreshed token
@@ -42,7 +42,8 @@ export async function updateProxy(request: NextRequest) {
           request,
         });
 
-        // Propagate cookies to response for the browser
+        // Propagate cookies to response for the browser.
+        // Mantener options originales: el flujo admin local es path-based.
         cookiesToSet.forEach(({ name, value, options }) =>
           supabaseResponse.cookies.set(name, value, options),
         );

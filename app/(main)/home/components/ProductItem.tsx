@@ -37,7 +37,7 @@ export default function ProductItem({
   return (
     <ProductItemView
       product={{
-// ... (rest is same)
+        // ... (rest is same)
         id: product.id,
         title: product.title,
         stock: product.stock,

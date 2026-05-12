@@ -1,5 +1,5 @@
-import Link from 'next/link';
 import { StoreLogo } from '@/shared/components/ui/data-display/StoreLogo';
+import Link from 'next/link';
 
 export default function FooterSection() {
   return (
