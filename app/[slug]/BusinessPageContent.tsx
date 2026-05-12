@@ -577,6 +577,17 @@ function StorefrontProductGridSection({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {isGridVisible ? (
             <>
+              {!isOwner && !paymentsEnabled && (
+                <div className={styles.paymentBanner} tabIndex={0}>
+                  <Icon className={styles.paymentBannerIcon}>info</Icon>
+                  <span>Pagos automáticos no disponibles</span>
+                  <div className={styles.paymentTooltip} role="tooltip">
+                    {hasPaymentGateway
+                      ? 'Nuestro negocio aún no ha terminado de configurar sus credenciales de pago. Mientras tanto, puedes contactarnos para comprar.'
+                      : 'Nuestro negocio aún no cuenta con la función de pasarela de pagos. Mientras tanto, puedes contactarnos para comprar.'}
+                  </div>
+                </div>
+              )}
               <ProductFiltersTopBar
                 categories={categories}
                 selectedCategories={selectedCategories}
@@ -643,6 +654,13 @@ function StorefrontProductGridSection({
                   </Button>
                 </div>
               )}
+              {filteredProducts.length > 0 && (
+                <div className={styles.productCount}>
+                  {totalPages > 1
+                    ? `Mostrando ${start + 1}-${start + paginatedProducts.length} de ${filteredProducts.length} productos`
+                    : `${filteredProducts.length} producto${filteredProducts.length !== 1 ? 's' : ''}`}
+                </div>
+              )}
               <Feed
                 products={paginatedProducts}
                 isOwner={isOwner}
@@ -658,16 +676,6 @@ function StorefrontProductGridSection({
                 businessId={business.id}
                 businessLogoUrl={business.logoUrl ?? undefined}
               />
-              {!isOwner && !paymentsEnabled && (
-                <div className={filterStyles.infoCard}>
-                  <h3 className={filterStyles.infoTitle}>Pagos automáticos no disponibles</h3>
-                  <p className={filterStyles.description}>
-                    {hasPaymentGateway
-                      ? 'Este negocio aún no terminó de configurar sus credenciales de pago. Mientras tanto, puedes contactar al negocio para comprar.'
-                      : 'Este negocio necesita un plan premium para habilitar pagos automáticos. Mientras tanto, puedes contactar al negocio para comprar.'}
-                  </p>
-                </div>
-              )}
               <Pagination
                 totalPages={totalPages}
                 currentPage={currentPage}

@@ -65,9 +65,9 @@ export default function ProductFiltersTopBar({
 
       <div className={styles.divider} />
 
-      <div className={styles.filterGroup}>
-        <span className={styles.filterLabel}>Filtrar por:</span>
-        <div className={styles.filterItem}>
+      <div className={styles.dropdownSection}>
+        <span className={styles.filterLabel}>Filtrar por</span>
+        <div className={styles.dropdownsRow}>
           <DropdownCheckbox
             label="Categorías"
             options={categoryOptions}
@@ -76,9 +76,7 @@ export default function ProductFiltersTopBar({
             disabled={categories.length === 0}
             emptyLabel="No hay categorías"
           />
-        </div>
 
-        <div className={styles.filterItem}>
           <DropdownCheckbox
             label="Marcas"
             options={brandOptions}

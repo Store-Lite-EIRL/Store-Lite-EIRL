@@ -1,12 +1,18 @@
 import { env } from '@/config/env';
 import { resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
-import { products as productsTable } from '@/core/database/schema';
+import {
+  businessTeamMembers,
+  productLikes,
+  products as productsTable,
+  profiles,
+} from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { createServerClient } from '@supabase/ssr';
-import { and, eq, or } from 'drizzle-orm';
-import { cookies } from 'next/headers';
+import { and, eq, inArray, ne, notInArray, or } from 'drizzle-orm';
+import { cookies, headers } from 'next/headers';
 
+import { Icon } from '@/shared/components/ui/data-display/Icon';
 import { notFound } from 'next/navigation';
 import {
   formatPrice,
@@ -14,9 +20,11 @@ import {
   parsePriceValue,
 } from '../../../storage/utils/currency';
 import BackButton from './BackButton';
+import LikeSection from './LikeSection';
 import styles from './ProductDetail.module.css';
 import ProductGallery from './ProductGallery';
 import PurchaseActions from './PurchaseActions';
+import RelatedProductsSection from './RelatedProductsSection';
 
 interface ProductDetailContentProps {
   slug: string;
@@ -121,6 +129,164 @@ export default async function ProductDetailContent({
   // Consideramos pagos habilitados solo si el plan lo permite Y las llaves están configuradas
   const paymentsEnabled = hasPaymentGateway && isPaymentConfigured;
 
+  // Consultamos si el usuario actual ya le dio like al producto (por IP)
+  const headersList = await headers();
+  const xForwardedFor = headersList.get('x-forwarded-for');
+  const xRealIp = headersList.get('x-real-ip');
+  const rawIp = xForwardedFor ? xForwardedFor.split(',')[0] : xRealIp || 'unknown';
+  const ipAddress = rawIp.trim() || 'unknown';
+
+  const existingLike = await db
+    .select({ id: productLikes.id })
+    .from(productLikes)
+    .where(and(eq(productLikes.productId, product.id), eq(productLikes.ipAddress, ipAddress)))
+    .limit(1);
+
+  const hasLiked = existingLike.length > 0;
+  const likesCount = rawProduct.stars ?? 0;
+
+  // Consultamos los miembros del equipo del negocio
+  const teamMembers = await db
+    .select({
+      id: businessTeamMembers.id,
+      role: businessTeamMembers.role,
+      userId: profiles.id,
+      name: profiles.fullName,
+      email: profiles.email,
+      phone: profiles.phone,
+      avatarUrl: profiles.avatarUrl,
+    })
+    .from(businessTeamMembers)
+    .innerJoin(profiles, eq(businessTeamMembers.userId, profiles.id))
+    .where(eq(businessTeamMembers.businessId, businessDetail.id));
+
+  // ── Productos Relacionados ──
+  // Prioridad: misma marca → misma categoría → cualquier otro producto del negocio
+  const RELATED_COUNT = 4;
+  const baseRelatedWhere = and(
+    eq(productsTable.businessId, businessDetail.id),
+    eq(productsTable.isAvailable, true),
+    ne(productsTable.id, rawProduct.id),
+  );
+
+  const relatedProducts: (typeof rawProduct)[] = [];
+  const relatedIds = new Set<string>([rawProduct.id]);
+
+  // 1) Misma marca — más antiguos primero + más likes
+  if (rawProduct.brand && relatedProducts.length < RELATED_COUNT) {
+    const brandProducts = await db.query.products.findMany({
+      where: and(baseRelatedWhere, eq(productsTable.brand, rawProduct.brand)),
+      orderBy: (p, { asc, desc }) => [asc(p.createdAt), desc(p.stars)],
+      with: {
+        category: { columns: { name: true } },
+        media: {
+          orderBy: (m, { asc }) => [asc(m.displayOrder)],
+          columns: { mediaUrl: true, displayOrder: true },
+        },
+      },
+      limit: RELATED_COUNT,
+    });
+    for (const p of brandProducts) {
+      if (!relatedIds.has(p.id)) {
+        relatedIds.add(p.id);
+        relatedProducts.push(p);
+      }
+    }
+  }
+
+  // 2) Misma categoría
+  if (rawProduct.categoryId && relatedProducts.length < RELATED_COUNT) {
+    const missing = RELATED_COUNT - relatedProducts.length;
+    const catProducts = await db.query.products.findMany({
+      where: and(
+        baseRelatedWhere,
+        eq(productsTable.categoryId, rawProduct.categoryId),
+        notInArray(productsTable.id, [...relatedIds]),
+      ),
+      orderBy: (p, { asc, desc }) => [asc(p.createdAt), desc(p.stars)],
+      with: {
+        category: { columns: { name: true } },
+        media: {
+          orderBy: (m, { asc }) => [asc(m.displayOrder)],
+          columns: { mediaUrl: true, displayOrder: true },
+        },
+      },
+      limit: missing,
+    });
+    for (const p of catProducts) {
+      if (!relatedIds.has(p.id)) {
+        relatedIds.add(p.id);
+        relatedProducts.push(p);
+      }
+    }
+  }
+
+  // 3) Cualquier otro
+  if (relatedProducts.length < RELATED_COUNT) {
+    const missing = RELATED_COUNT - relatedProducts.length;
+    const anyProducts = await db.query.products.findMany({
+      where: and(baseRelatedWhere, notInArray(productsTable.id, [...relatedIds])),
+      orderBy: (p, { asc, desc }) => [asc(p.createdAt), desc(p.stars)],
+      with: {
+        category: { columns: { name: true } },
+        media: {
+          orderBy: (m, { asc }) => [asc(m.displayOrder)],
+          columns: { mediaUrl: true, displayOrder: true },
+        },
+      },
+      limit: missing,
+    });
+    for (const p of anyProducts) {
+      if (!relatedIds.has(p.id)) {
+        relatedProducts.push(p);
+      }
+    }
+  }
+
+  // Likes de productos relacionados
+  const relatedLikesMap = new Map<string, { count: number; hasLiked: boolean }>();
+  if (relatedProducts.length > 0) {
+    const relatedLikesData = await db
+      .select({ productId: productLikes.productId, id: productLikes.id })
+      .from(productLikes)
+      .where(
+        and(
+          inArray(
+            productLikes.productId,
+            relatedProducts.map((p) => p.id),
+          ),
+          eq(productLikes.ipAddress, ipAddress),
+        ),
+      );
+
+    const likedSet = new Set(relatedLikesData.map((l) => l.productId));
+    for (const rp of relatedProducts) {
+      relatedLikesMap.set(rp.id, {
+        count: rp.stars ?? 0,
+        hasLiked: likedSet.has(rp.id),
+      });
+    }
+  }
+
+  // Mapeamos los relacionados al formato del componente
+  const relatedProductsData = relatedProducts.map((rp) => {
+    const likeInfo = relatedLikesMap.get(rp.id) ?? { count: 0, hasLiked: false };
+    return {
+      id: rp.id,
+      title: rp.title,
+      price: String(rp.price),
+      currency: rp.currency,
+      secondPrice: rp.secondPrice ? String(rp.secondPrice) : null,
+      stock: rp.stock,
+      image: rp.media[0]?.mediaUrl ?? '',
+      images: rp.media.map((m) => m.mediaUrl),
+      description: rp.description ?? '',
+      categoryName: rp.category?.name ?? 'Producto',
+      likesCount: likeInfo.count,
+      hasLiked: likeInfo.hasLiked,
+    };
+  });
+
   return (
     <div className={`${styles.pageContainer} ${isModal ? styles.modalContent : ''}`}>
       {!isModal && (
@@ -138,35 +304,71 @@ export default async function ProductDetailContent({
         <div className={styles.productInfoSidebar}>
           <div>
             <h1 className={styles.productTitle}>{product.name}</h1>
-            <div className={styles.ratingCompact}>
-              <div className={styles.ratingCompactStars}>
-                <span>★</span>
-                <span>★</span>
-                <span>★</span>
-                <span>★</span>
-                <span className={styles.starEmpty}>★</span>
-              </div>
-              <span className={styles.ratingCompactText}>5.0</span>
-            </div>
           </div>
 
-           <div>
-             <p className={styles.productPrice}>{finalPrice}</p>
-             {product.stock === 0 && (
-               <p className={styles.stockStatusOutOfStock}>AGOTADO*</p>
-             )}
-             {product.stock > 0 && product.stock <= 5 && (
-               <p className={styles.stockStatusLowStock}>Quedan {product.stock} unidades</p>
-             )}
-           </div>
+          <div className={`${styles.priceBlock} ${product.stock === 0 ? styles.priceDimmed : ''}`}>
+            {product.secondPrice ? (
+              <div className={styles.priceWithDiscount}>
+                <p className={styles.productPrice}>
+                  {formatPrice(Number(product.secondPrice), mappedSymbol)}
+                </p>
+                <p className={styles.originalPrice}>{formatPrice(numericPrice, mappedSymbol)}</p>
+                {numericPrice > 0 && (
+                  <span className={styles.discountBadge}>
+                    -
+                    {Math.round(
+                      ((numericPrice - Number(product.secondPrice)) / numericPrice) * 100,
+                    )}
+                    %
+                  </span>
+                )}
+              </div>
+            ) : (
+              <p className={styles.productPrice}>{finalPrice}</p>
+            )}
+            {product.stock === 0 && <p className={styles.stockStatusOutOfStock}>AGOTADO</p>}
+            {product.stock > 0 && product.stock <= 5 && (
+              <p className={styles.stockStatusLowStock}>
+                ¡Últimos! Quedan {product.stock} unidades
+              </p>
+            )}
+          </div>
+
+          {/* Metadata: brand, saleStatus, tags */}
+          {(product.brand ||
+            (product.saleStatus && product.saleStatus !== 'NORMAL') ||
+            (product.tags && product.tags.length > 0)) && (
+            <div className={styles.metadataRow}>
+              {product.brand && (
+                <span className={styles.badgeBrand}>{product.brand.toUpperCase()}</span>
+              )}
+              {product.saleStatus === 'MAS_VENDIDO' && (
+                <span className={styles.badgeHot}>MÁS VENDIDO</span>
+              )}
+              {product.saleStatus === 'NUEVO_PRODUCTO' && (
+                <span className={styles.badgeNew}>NUEVO</span>
+              )}
+              {product.tags && product.tags.length > 0 && (
+                <div className={styles.tagsRow}>
+                  {product.tags.map((tag) => (
+                    <span key={tag} className={styles.tagChip}>
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className={styles.accordion}>
             <div className={styles.accordionHeader}>
-              <span className={styles.accordionHeaderTitle}>Description</span>
+              <span className={styles.accordionHeaderTitle}>Descripción</span>
             </div>
-            <p className={styles.accordionContentText}>
-              {product.description || 'No description available for this product.'}
-            </p>
+            {product.description ? (
+              <p className={styles.accordionContentText}>{product.description}</p>
+            ) : (
+              <p className={styles.accordionContentTextEmpty}>Sin descripción disponible.</p>
+            )}
           </div>
 
           {product.stock > 0 ? (
@@ -175,186 +377,511 @@ export default async function ProductDetailContent({
               business={businessDetail}
               hasPaymentGateway={paymentsEnabled}
               culqiPublicKey={culqiPublicKey || entitlements.culqiPublicKey}
+              likesCount={likesCount}
+              hasLiked={hasLiked}
+              productId={product.id}
+              businessSlug={slug}
             />
           ) : (
-            <button className={styles.outOfStockButton} disabled>
-              SIN STOCK
-            </button>
+            <div className={styles.outOfStockRow}>
+              <button className={styles.outOfStockButton} disabled>
+                SIN STOCK
+              </button>
+              <LikeSection
+                productId={product.id}
+                businessSlug={slug}
+                initialLikesCount={likesCount}
+                initialHasLiked={hasLiked}
+              />
+            </div>
           )}
 
           <div className={styles.accordion}>
             <div className={styles.accordionHeader}>
-              <span className={styles.accordionHeaderTitle}>Shipping</span>
+              <span className={styles.accordionHeaderTitle}>Envío y disponibilidad</span>
             </div>
             <div className={styles.shippingGrid}>
+              {product.shippingInfo && (
+                <div className={styles.shippingItemFull}>
+                  <div className={styles.shippingIconContainer}>
+                    <span className={styles.shippingIcon}>📦</span>
+                  </div>
+                  <div>
+                    <p className={styles.shippingInfoTitle}>Información de envío</p>
+                    <p className={styles.shippingInfoValue}>{product.shippingInfo}</p>
+                  </div>
+                </div>
+              )}
               <div className={styles.shippingItem}>
                 <div className={styles.shippingIconContainer}>
-                  <span className={styles.shippingIconText}>%</span>
+                  <span className={styles.shippingIcon}>📋</span>
                 </div>
                 <div>
-                  <p className={styles.shippingInfoTitle}>Discount</p>
-                  <p className={styles.shippingInfoValue}>Disc 50%</p>
+                  <p className={styles.shippingInfoTitle}>Disponibilidad</p>
+                  <p className={styles.shippingInfoValue}>
+                    {product.stock > 0
+                      ? `${product.stock} unidad${product.stock !== 1 ? 'es' : ''}`
+                      : 'Agotado'}
+                  </p>
                 </div>
               </div>
-              <div className={styles.shippingItem}>
-                <div className={styles.shippingIconContainer}>
-                  <span className={styles.shippingIconText}>%</span>
+              {businessDetail.whatsappNumber && (
+                <div className={styles.shippingItem}>
+                  <div className={styles.shippingIconContainer}>
+                    <span className={styles.shippingIcon}>📞</span>
+                  </div>
+                  <div>
+                    <p className={styles.shippingInfoTitle}>Consultas</p>
+                    <p className={styles.shippingInfoValue}>
+                      <a
+                        href={`https://wa.me/${businessDetail.whatsappNumber.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.whatsappInline}
+                      >
+                        {businessDetail.whatsappNumber}
+                        <Icon size={14} style={{ opacity: 0.5 }}>
+                          open_in_new
+                        </Icon>
+                      </a>
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className={styles.shippingInfoTitle}>Package</p>
-                  <p className={styles.shippingInfoValue}>Reg</p>
+              )}
+              {(() => {
+                // Si hay direccón, se muestra solo la direccón
+                // Si no, se muestran los datos geográficos (departamento, provincia, distrito)
+                let locationValue = '';
+                if (businessDetail.address) {
+                  locationValue = businessDetail.address;
+                } else {
+                  const parts = [];
+                  if (businessDetail.departamento) parts.push(businessDetail.departamento);
+                  if (businessDetail.provincia) parts.push(businessDetail.provincia);
+                  if (businessDetail.distrito) parts.push(businessDetail.distrito);
+                  if (businessDetail.city) parts.push(businessDetail.city);
+                  if (parts.length > 0) locationValue = parts.join(', ');
+                }
+                return locationValue ? (
+                  <div className={styles.shippingItem}>
+                    <div className={styles.shippingIconContainer}>
+                      <span className={styles.shippingIcon}>📍</span>
+                    </div>
+                    <div>
+                      <p className={styles.shippingInfoTitle}>Ubicación</p>
+                      <p className={styles.shippingInfoValue}>{locationValue}</p>
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+              {businessDetail.email && (
+                <div className={styles.shippingItem}>
+                  <div className={styles.shippingIconContainer}>
+                    <span className={styles.shippingIcon}>✉️</span>
+                  </div>
+                  <div>
+                    <p className={styles.shippingInfoTitle}>Email</p>
+                    <p className={styles.shippingInfoValue}>{businessDetail.email}</p>
+                  </div>
                 </div>
-              </div>
-              <div className={styles.shippingItem}>
-                <div className={styles.shippingIconContainer}>
-                  <span className={styles.shippingIconText}>%</span>
-                </div>
-                <div>
-                  <p className={styles.shippingInfoTitle}>Delivery Time</p>
-                  <p className={styles.shippingInfoValue}>3-4 Working Days</p>
-                </div>
-              </div>
-              <div className={styles.shippingItem}>
-                <div className={styles.shippingIconContainer}>
-                  <span className={styles.shippingIconText}>%</span>
-                </div>
-                <div>
-                  <p className={styles.shippingInfoTitle}>Arrive</p>
-                  <p className={styles.shippingInfoValue}>0 - 12 Oct 2024</p>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
       </section>
 
-      {/* BEGIN: Related Products Section - Omitted in modal for brevity if needed, or keep for Pinterest feel */}
-      {!isModal && (
-        <section className={styles.relatedProductsSection}>
-          <h2 className={styles.relatedProductsTitle}>Productos Relacionados</h2>
-          <div className={styles.relatedProductsGrid}>
-            {[
-              {
-                id: 1,
-                name: 'Smart Watch Pro',
-                price: 'S/ 299',
-                img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop',
-              },
-              {
-                id: 2,
-                name: 'Premium Headphones',
-                price: 'S/ 450',
-                img: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=400&auto=format&fit=crop',
-              },
-              {
-                id: 3,
-                name: 'Wireless Mouse',
-                price: 'S/ 89',
-                img: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?q=80&w=400&auto=format&fit=crop',
-              },
-              {
-                id: 4,
-                name: 'Mechanical Keyboard',
-                price: 'S/ 320',
-                img: 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?q=80&w=400&auto=format&fit=crop',
-              },
-            ].map((p) => (
-              <div key={p.id} className={styles.productCardMock}>
-                <div
-                  className={styles.cardImagePlaceholder}
-                  style={{ backgroundImage: `url('${p.img}')` }}
-                />
-                <p className={styles.cardTitle}>{p.name}</p>
-                <p className={styles.cardPrice}>{p.price}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      {!isModal && <RelatedProductsSection slug={slug} products={relatedProductsData} />}
 
-      {/* BEGIN: Rating & Reviews Section */}
+      {/* BEGIN: How to Buy Section */}
       <section className={styles.purchaseProcessSection}>
-        <h2 className={styles.purchaseProcessTitle}>¿Cómo comprar?</h2>
-        <div className={styles.processSteps}>
-          {paymentsEnabled ? (
-            <>
-              <div className={styles.processStep}>
-                <span className={styles.stepNumber}>1</span>
-                <div>
-                  <p className={styles.stepTitle}>Paga en línea</p>
-                  <p className={styles.stepDesc}>Completa tu pago seguro con Culqi, Plin o Yape.</p>
+        <h2 className={styles.purchaseProcessTitle}>
+          <Icon size={28} style={{ verticalAlign: 'middle', marginRight: '10px' }}>
+            info
+          </Icon>
+          ¿Cómo comprar?
+        </h2>
+
+        {paymentsEnabled ? (
+          <div className={styles.processSteps}>
+            <div className={styles.processStep}>
+              <span className={styles.stepNumber}>1</span>
+              <div>
+                <p className={styles.stepTitle}>Elige cómo recibirlo</p>
+                <p className={styles.stepDesc}>
+                  Recoge en <strong>tienda</strong> (gratis), elige <strong>agencia Urbano</strong>{' '}
+                  (S/ 7.50) o <strong>delivery a domicilio</strong> (S/ 10.00).
+                </p>
+              </div>
+            </div>
+            <div className={styles.processStep}>
+              <span className={styles.stepNumber}>2</span>
+              <div>
+                <p className={styles.stepTitle}>Ingresa tus datos de contacto</p>
+                <p className={styles.stepDesc}>
+                  <strong>DNI</strong>, <strong>correo electrónico</strong> y dirección de entrega.
+                  Datos válidos = el negocio puede ubicarte ante cualquier eventualidad.
+                </p>
+              </div>
+            </div>
+            <div className={styles.processStep}>
+              <span className={styles.stepNumber}>3</span>
+              <div>
+                <p className={styles.stepTitle}>Paga seguro con Culqi</p>
+                <p className={styles.stepDesc}>
+                  Tarjeta, Yape, Billetera, Banca Móvil o Agente &mdash; pasarela 100% segura con
+                  cifrado SSL 256-bit.
+                </p>
+              </div>
+            </div>
+            <details className={styles.processDetails} open>
+              <summary className={styles.processSummary}>
+                <div className={styles.processStep} style={{ flex: 1, cursor: 'pointer' }}>
+                  <span className={styles.stepNumber}>4</span>
+                  <div style={{ flex: 1 }}>
+                    <p className={styles.stepTitle}>
+                      Recibe tu comprobante
+                      <span className={styles.importantBadge}>IMPORTANTE</span>
+                    </p>
+                    <p className={styles.stepDesc}>
+                      Confirmación al instante, descarga tu <strong>ticket</strong> y sigue tu
+                      pedido paso a paso.
+                    </p>
+                  </div>
+                  <Icon size={20} className={styles.chevron}>
+                    expand_more
+                  </Icon>
+                </div>
+              </summary>
+
+              <div className={styles.subStepsWrapper}>
+                <div className={styles.processStepSub}>
+                  <span className={styles.stepNumberSub}>4.1</span>
+                  <div>
+                    <p className={styles.stepTitle}>Sigue tu pedido</p>
+                    <p className={styles.stepDesc}>
+                      Ingresa a la página del negocio y haz clic en <strong>VER PEDIDO</strong>.
+                      Desde allí podrás dar seguimiento al estado de tu orden en tiempo real.
+                    </p>
+                  </div>
+                </div>
+                <div className={styles.processStepSub}>
+                  <span className={styles.stepNumberSub}>4.2</span>
+                  <div>
+                    <p className={styles.stepTitle}>Confirma el envío</p>
+                    <p className={styles.stepDesc}>
+                      El vendedor registrará el <strong>ticket de envío</strong> en tu orden.
+                      Revísalo, verifica que los datos sean correctos y confírmalo para autorizar el
+                      despacho.
+                    </p>
+                  </div>
+                </div>
+                <div className={styles.processStepSub}>
+                  <span className={styles.stepNumberSub}>4.3</span>
+                  <div>
+                    <p className={styles.stepTitle}>Rastrea tu entrega</p>
+                    <p className={styles.stepDesc}>
+                      El vendedor te notificará cuando el producto esté en ruta. También puedes
+                      rastrear el paquete directamente en la plataforma del <strong>courier</strong>{' '}
+                      que elegiste.
+                    </p>
+                  </div>
+                </div>
+                <div className={styles.processStepSub}>
+                  <span className={styles.stepNumberSub}>4.4</span>
+                  <div>
+                    <p className={styles.stepTitle}>Finaliza tu compra</p>
+                    <p className={styles.stepDesc}>
+                      Cuando recibas el producto, acepta la <strong>FINALIZACIÓN</strong> que te
+                      enviará el vendedor. Esto cierra tu compra de manera exitosa.
+                    </p>
+                  </div>
+                </div>
+                <div className={styles.processStepSub}>
+                  <span className={styles.stepNumberSub}>4.5</span>
+                  <div>
+                    <p className={styles.stepTitle}>Reporta incidencias</p>
+                    <p className={styles.stepDesc}>
+                      Si algo no está bien, repórtalo durante <strong>VERIFICAR</strong> o{' '}
+                      <strong>FINALIZAR</strong>. El vendedor recibirá tu notificación y podrá
+                      asistirte.
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div className={styles.processStep}>
-                <span className={styles.stepNumber}>2</span>
-                <div>
-                  <p className={styles.stepTitle}>Confirmación</p>
-                  <p className={styles.stepDesc}>Recibirás una confirmación inmediata por WhatsApp y Email.</p>
-                </div>
+            </details>
+
+            {/* Step 5 — Closing */}
+            <div className={styles.stepClosing}>
+              <span className={styles.stepClosingCircle}>5</span>
+              <div>
+                <p className={styles.stepTitle}>¡Compra exitosa!</p>
+                <p className={styles.stepDesc}>
+                  Tanto el vendedor como tú quedan satisfechos con la transacción.{' '}
+                  <strong>¡Felicitaciones por tu compra en {businessDetail.name}!</strong> Esperamos
+                  verte de nuevo pronto &mdash; tu satisfacción es lo más importante para nosotros.
+                </p>
               </div>
-              <div className={styles.processStep}>
-                <span className={styles.stepNumber}>3</span>
-                <div>
-                  <p className={styles.stepTitle}>Entrega</p>
-                  <p className={styles.stepDesc}>Despachamos tu pedido en un plazo máximo de 24-48 horas.</p>
-                </div>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.processSteps}>
+            <div className={styles.processStep}>
+              <span className={styles.stepNumber}>1</span>
+              <div>
+                <p className={styles.stepTitle}>Agrega al carrito</p>
+                <p className={styles.stepDesc}>
+                  Añade el producto y presiona <strong>&quot;Contactar Negocio&quot;</strong>.
+                </p>
               </div>
-            </>
-          ) : (
-            <>
-              <div className={styles.processStep}>
-                <span className={styles.stepNumber}>1</span>
-                <div>
-                  <p className={styles.stepTitle}>Agrega al carrito</p>
-                  <p className={styles.stepDesc}>Añade tus productos y presiona &quot;Contactar Vendedor&quot;.</p>
-                </div>
+            </div>
+            <div className={styles.processStep}>
+              <span className={styles.stepNumber}>2</span>
+              <div>
+                <p className={styles.stepTitle}>Coordina por WhatsApp</p>
+                <p className={styles.stepDesc}>
+                  Acuerda el método de pago y la entrega directamente con el vendedor.
+                </p>
               </div>
-              <div className={styles.processStep}>
-                <span className={styles.stepNumber}>2</span>
-                <div>
-                  <p className={styles.stepTitle}>Coordinación Directa</p>
-                  <p className={styles.stepDesc}>Te atenderemos vía WhatsApp para definir el método de pago y entrega.</p>
-                </div>
+            </div>
+            <div className={styles.processStep}>
+              <span className={styles.stepNumber}>3</span>
+              <div>
+                <p className={styles.stepTitle}>Recibe tu producto</p>
+                <p className={styles.stepDesc}>
+                  Una vez coordinado, recibe tu pedido según lo acordado con el negocio.
+                </p>
               </div>
-              <div className={styles.processStep}>
-                <span className={styles.stepNumber}>3</span>
-                <div>
-                  <p className={styles.stepTitle}>Pago y Envío</p>
-                  <p className={styles.stepDesc}>Aceptamos transferencias y pago contra entrega según el vendedor.</p>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
+
+        {paymentsEnabled && (
+          <div className={styles.processFooter}>
+            <span className={styles.processFooterIcon}>
+              <Icon size={16}>verified_user</Icon>
+            </span>
+            <p className={styles.processFooterText}>
+              Pago procesado por <strong>Culqi</strong> &mdash; tus datos financieros viajan
+              cifrados y nunca los almacenamos. Compra respaldada por la pasarela líder en
+              Latinoamérica.
+            </p>
+          </div>
+        )}
       </section>
 
       {/* BEGIN: Business Contact Info Section */}
       <section className={styles.businessContactSection}>
-        <h2 className={styles.businessContactTitle}>Atención al Cliente</h2>
-        <div className={styles.businessContactGrid}>
-          <div className={styles.contactCard}>
-            <span className={styles.contactLabel}>Empresa</span>
-            <span className={styles.contactValue}>{businessDetail.name}</span>
-          </div>
-          {businessDetail.address && (
-            <div className={styles.contactCard}>
-              <span className={styles.contactLabel}>Dirección</span>
-              <span className={styles.contactValue}>{businessDetail.address}</span>
-            </div>
-          )}
-          {businessDetail.email && (
-            <div className={styles.contactCard}>
-              <span className={styles.contactLabel}>Email</span>
-              <span className={styles.contactValue}>{businessDetail.email}</span>
-            </div>
-          )}
-          <div className={styles.contactCard}>
-            <span className={styles.contactLabel}>Teléfono / WhatsApp</span>
-            <span className={styles.contactValue}>
-              {businessDetail.whatsappNumber || 'Consultar por chat'}
-            </span>
-          </div>
-        </div>
+        <h2 className={styles.businessContactTitle}>
+          <Icon size={28} style={{ verticalAlign: 'middle', marginRight: '10px' }}>
+            headset_mic
+          </Icon>
+          Atención al Cliente
+        </h2>
+
+        {(() => {
+          // Deduplicación: si el rep tiene el mismo email/phone que el negocio, no se repite
+          const repEmailSame =
+            !!businessDetail.legalRepEmail &&
+            !!businessDetail.email &&
+            businessDetail.legalRepEmail.toLowerCase() === businessDetail.email.toLowerCase();
+          const repPhoneSame =
+            !!businessDetail.legalRepPhone &&
+            !!businessDetail.whatsappNumber &&
+            businessDetail.legalRepPhone.replace(/\D/g, '') ===
+              businessDetail.whatsappNumber.replace(/\D/g, '');
+
+          const hasLegalRep = !!businessDetail.legalRepName;
+
+          return (
+            <>
+              {/* Row: Business Info + Legal Rep side by side */}
+              <div className={styles.contactColumns}>
+                {/* Block 1: Business Info */}
+                <div className={styles.contactBlock}>
+                  <p className={styles.contactBlockTitle}>
+                    <Icon size={18} style={{ verticalAlign: 'middle', marginRight: '6px' }}>
+                      store
+                    </Icon>
+                    Negocio
+                  </p>
+                  <div className={styles.contactBlockCards}>
+                    <div className={styles.contactCard}>
+                      <span className={styles.contactLabel}>Razón Social</span>
+                      <span className={styles.contactValue}>{businessDetail.name}</span>
+                    </div>
+                    {businessDetail.taxId && (
+                      <div className={styles.contactCard}>
+                        <span className={styles.contactLabel}>RUC</span>
+                        <span className={styles.contactValue}>{businessDetail.taxId}</span>
+                      </div>
+                    )}
+                    {businessDetail.email && (
+                      <div className={styles.contactCard}>
+                        <span className={styles.contactLabel}>Email</span>
+                        <span className={styles.contactValue}>{businessDetail.email}</span>
+                      </div>
+                    )}
+                    {businessDetail.whatsappNumber && (
+                      <div className={styles.contactCard}>
+                        <span className={styles.contactLabel}>WhatsApp</span>
+                        <span className={styles.contactValue}>
+                          <a
+                            href={`https://wa.me/${businessDetail.whatsappNumber.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.whatsappInline}
+                          >
+                            {businessDetail.whatsappNumber}
+                            <Icon size={14} style={{ opacity: 0.5 }}>
+                              open_in_new
+                            </Icon>
+                          </a>
+                        </span>
+                      </div>
+                    )}
+                    {businessDetail.address && (
+                      <div className={styles.contactCard}>
+                        <span className={styles.contactLabel}>Dirección</span>
+                        <span className={styles.contactValue}>{businessDetail.address}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Block 2: Legal Rep (only if exists) */}
+                {hasLegalRep && (
+                  <div className={styles.contactBlock}>
+                    <p className={styles.contactBlockTitle}>
+                      <Icon size={18} style={{ verticalAlign: 'middle', marginRight: '6px' }}>
+                        badge
+                      </Icon>
+                      Representante Legal
+                    </p>
+                    <div className={styles.contactBlockCards}>
+                      <div className={styles.contactCard}>
+                        <span className={styles.contactLabel}>Nombre</span>
+                        <span className={styles.contactValue}>{businessDetail.legalRepName}</span>
+                      </div>
+                      {businessDetail.legalRepRole && (
+                        <div className={styles.contactCard}>
+                          <span className={styles.contactLabel}>Cargo</span>
+                          <span className={styles.contactValue}>{businessDetail.legalRepRole}</span>
+                        </div>
+                      )}
+                      {businessDetail.legalRepEmail && !repEmailSame && (
+                        <div className={styles.contactCard}>
+                          <span className={styles.contactLabel}>Email</span>
+                          <span className={styles.contactValue}>
+                            {businessDetail.legalRepEmail}
+                          </span>
+                        </div>
+                      )}
+                      {businessDetail.legalRepPhone && !repPhoneSame && (
+                        <div className={styles.contactCard}>
+                          <span className={styles.contactLabel}>Teléfono</span>
+                          <span className={styles.contactValue}>
+                            <a
+                              href={`https://wa.me/${businessDetail.legalRepPhone.replace(/\D/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.whatsappInline}
+                            >
+                              {businessDetail.legalRepPhone}
+                              <Icon size={14} style={{ opacity: 0.5 }}>
+                                open_in_new
+                              </Icon>
+                            </a>
+                          </span>
+                        </div>
+                      )}
+                      {repEmailSame && repPhoneSame && (
+                        <p className={styles.contactSameInfo}>
+                          Mismos datos de contacto que el negocio.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Block 3: Team (only if has members) */}
+              {teamMembers.length > 0 && (
+                <div className={styles.contactBlock} style={{ marginTop: '2rem' }}>
+                  <p className={styles.contactBlockTitle}>
+                    <Icon size={18} style={{ verticalAlign: 'middle', marginRight: '6px' }}>
+                      group
+                    </Icon>
+                    Equipo de Trabajo
+                    <span className={styles.teamCount}>
+                      {teamMembers.length} miembro{teamMembers.length !== 1 ? 's' : ''}
+                    </span>
+                  </p>
+                  <div className={styles.teamGrid}>
+                    {teamMembers.map((member) => (
+                      <div key={member.id} className={styles.teamCard}>
+                        <div className={styles.teamCardHeader}>
+                          <span className={styles.teamAvatar}>
+                            {member.avatarUrl ? (
+                              <img src={member.avatarUrl} alt="" className={styles.teamAvatarImg} />
+                            ) : (
+                              member.name.charAt(0).toUpperCase()
+                            )}
+                          </span>
+                          <div>
+                            <p className={styles.teamMemberName}>{member.name}</p>
+                            <span
+                              className={`${styles.teamRoleBadge} ${
+                                member.role === 'admin'
+                                  ? styles.teamRoleAdmin
+                                  : styles.teamRoleMember
+                              }`}
+                            >
+                              {member.role === 'admin' ? 'Admin' : 'Miembro'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className={styles.teamCardBody}>
+                          {member.email && (
+                            <span className={styles.teamDetail}>
+                              <Icon
+                                size={14}
+                                style={{ verticalAlign: 'middle', marginRight: '4px' }}
+                              >
+                                mail
+                              </Icon>
+                              {member.email}
+                            </span>
+                          )}
+                          {member.phone && (
+                            <span className={styles.teamDetail}>
+                              <Icon
+                                size={14}
+                                style={{ verticalAlign: 'middle', marginRight: '4px' }}
+                              >
+                                phone
+                              </Icon>
+                              <a
+                                href={`https://wa.me/${member.phone.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.whatsappInline}
+                              >
+                                {member.phone}
+                                <Icon size={14} style={{ opacity: 0.5 }}>
+                                  open_in_new
+                                </Icon>
+                              </a>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          );
+        })()}
       </section>
     </div>
   );

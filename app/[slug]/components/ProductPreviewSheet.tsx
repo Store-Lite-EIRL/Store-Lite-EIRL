@@ -6,6 +6,7 @@ import { Icon } from '@/shared/components/ui/data-display/Icon';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { toCartProduct } from '../product/utils/cartHelpers';
 import { useCart } from '../storage/context/CartContext';
 import { formatPrice } from '../storage/utils/currency';
 import Checkout from './Checkout';
@@ -63,7 +64,10 @@ export default function ProductPreviewSheet({
     if (!product) return;
     const node = document.getElementById(SHEET_ID) as SheetElement | null;
     node?.show?.();
-    setCurrentImageIndex(initialImageIndex);
+    // Clamp el índice para que nunca quede out of bounds
+    const maxIndex = Math.max(0, (product.media?.length ?? 1) - 1);
+    const safeIndex = Math.min(initialImageIndex, maxIndex);
+    setCurrentImageIndex(safeIndex);
     setIsPaymentModalOpen(false);
   }, [product, openSignal, initialImageIndex]);
 
@@ -90,52 +94,69 @@ export default function ProductPreviewSheet({
         <div className={styles.content}>
           <div className={styles.media}>
             {product.media && product.media.length > 0 ? (
-              <div className={styles.carouselContainer}>
-                <button
-                  className={styles.carouselButton}
-                  title="Imagen anterior"
-                  onClick={() =>
-                    setCurrentImageIndex(
-                      (prev: number) => (prev - 1 + product.media!.length) % product.media!.length,
-                    )
-                  }
-                  disabled={product.media.length <= 1}
-                >
-                  <Icon size={24}>chevron_left</Icon>
-                </button>
-                <div className={styles.imageWrapper}>
-                  <Image
-                    src={product.media[currentImageIndex].mediaUrl}
-                    alt={product.title}
-                    width={400}
-                    height={400}
-                    className={styles.image}
-                    priority
-                  />
+              <>
+                <div className={styles.carouselContainer}>
+                  <button
+                    className={styles.carouselButton}
+                    title="Imagen anterior"
+                    onClick={() =>
+                      setCurrentImageIndex(
+                        (prev: number) =>
+                          (prev - 1 + product.media!.length) % product.media!.length,
+                      )
+                    }
+                    disabled={product.media.length <= 1}
+                  >
+                    <Icon size={24}>chevron_left</Icon>
+                  </button>
+                  <div className={styles.imageWrapper}>
+                    <Image
+                      src={
+                        product.media[currentImageIndex]?.mediaUrl ??
+                        product.media[0]?.mediaUrl ??
+                        ''
+                      }
+                      alt={product.title}
+                      fill
+                      className={styles.image}
+                      sizes="(max-width: 900px) 100vw, 400px"
+                      priority
+                    />
+                  </div>
+                  <button
+                    className={styles.carouselButton}
+                    title="Siguiente imagen"
+                    onClick={() =>
+                      setCurrentImageIndex((prev: number) => (prev + 1) % product.media!.length)
+                    }
+                    disabled={product.media.length <= 1}
+                  >
+                    <Icon size={24}>chevron_right</Icon>
+                  </button>
+                  {product.media.length > 1 && (
+                    <div className={styles.dots}>
+                      {product.media.map((_, i) => (
+                        <div
+                          key={i}
+                          className={`${styles.dot} ${
+                            i === currentImageIndex ? styles.activeDot : ''
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <button
-                  className={styles.carouselButton}
-                  title="Siguiente imagen"
-                  onClick={() =>
-                    setCurrentImageIndex((prev: number) => (prev + 1) % product.media!.length)
-                  }
-                  disabled={product.media.length <= 1}
-                >
-                  <Icon size={24}>chevron_right</Icon>
-                </button>
-                {product.media.length > 1 && (
-                  <div className={styles.dots}>
-                    {product.media.map((_, i) => (
-                      <div
-                        key={i}
-                        className={`${styles.dot} ${
-                          i === currentImageIndex ? styles.activeDot : ''
-                        }`}
-                      />
-                    ))}
+                {businessName && (
+                  <div className={styles.storeBadge}>
+                    {businessLogoUrl ? (
+                      <img src={businessLogoUrl} alt={businessName} className={styles.storeLogo} />
+                    ) : (
+                      <Icon size={18}>store</Icon>
+                    )}
+                    <span>{businessName}</span>
                   </div>
                 )}
-              </div>
+              </>
             ) : (
               <div className={styles.noImage}>Sin imagen</div>
             )}
@@ -206,9 +227,12 @@ export default function ProductPreviewSheet({
             </div>
 
             {product.shippingInfo && (
-              <div className={styles.quickShipping}>
-                <Icon size={18}>local_shipping</Icon>
-                {product.shippingInfo}
+              <div className={styles.shippingCard}>
+                <div className={styles.shippingHeader}>
+                  <Icon size={18}>local_shipping</Icon>
+                  <span className={styles.shippingLabel}>Envío</span>
+                </div>
+                <p className={styles.shippingText}>{product.shippingInfo}</p>
               </div>
             )}
 
@@ -246,18 +270,20 @@ export default function ProductPreviewSheet({
                       <>
                         <Button
                           onClick={() =>
-                            toggleCartItem({
-                              id: product.id,
-                              name: product.title,
-                              category,
-                              stock: product.stock,
-                              price: String(product.price),
-                              currency: product.currency,
-                              status: product.isAvailable ? 'ACTIVO' : 'NO ACTIVO',
-                              image: mainImage,
-                              images: product.media?.map((item) => item.mediaUrl) || [],
-                              description: product.description || '',
-                            })
+                            toggleCartItem(
+                              toCartProduct({
+                                id: product.id,
+                                name: product.title,
+                                category,
+                                stock: product.stock,
+                                price: String(product.price),
+                                currency: product.currency,
+                                status: product.isAvailable ? 'ACTIVO' : 'NO ACTIVO',
+                                image: mainImage,
+                                images: product.media?.map((item) => item.mediaUrl) || [],
+                                description: product.description || '',
+                              }),
+                            )
                           }
                           aria-label={isProductInCart ? 'Quitar del carrito' : 'Agregar al carrito'}
                           style={
@@ -309,7 +335,7 @@ export default function ProductPreviewSheet({
                       </Button>
                     )}
                     <Link href={`/${slug}/product/${product.id}`} className={styles.fullLink}>
-                      {paymentsEnabled ? 'Ver más' : 'Comprar / Ver más'}
+                      {paymentsEnabled ? 'Ver más' : 'Ver más'}
                     </Link>
                   </div>
                 </>
