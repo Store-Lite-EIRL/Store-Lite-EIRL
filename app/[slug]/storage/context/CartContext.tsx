@@ -1,10 +1,20 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { Product } from '../data';
 
 export interface CartItem extends Product {
   quantity: number;
+}
+
+/** Datos frescos de un producto desde el servidor */
+export interface CartServerItem {
+  id: string;
+  stock: number;
+  price: string;
+  secondPrice: string | null;
+  currency: string;
+  isAvailable: boolean;
 }
 
 interface CartContextType {
@@ -19,6 +29,11 @@ interface CartContextType {
   setIsCartOpen: (isOpen: boolean) => void;
   totalItems: number;
   totalPrice: number;
+  /** Resultado de la última validación contra el servidor */
+  cartValidation: Record<string, CartServerItem> | null;
+  isCartValidating: boolean;
+  /** Valida el carrito contra el servidor (productos eliminados, stock, precios) */
+  validateCart: () => Promise<void>;
 }
 
 export const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -36,6 +51,8 @@ export const CartProvider = ({
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [cartValidation, setCartValidation] = useState<Record<string, CartServerItem> | null>(null);
+  const [isCartValidating, setIsCartValidating] = useState(false);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -94,7 +111,7 @@ export const CartProvider = ({
       removeFromCart(productId);
       return;
     }
-    
+
     setCartItems((prevItems) =>
       prevItems.map((item) => {
         if (item.id === productId) {
@@ -111,7 +128,36 @@ export const CartProvider = ({
     return cartItems.some((item) => item.id === productId);
   };
 
-  const clearCart = () => setCartItems([]);
+  const clearCart = () => {
+    setCartItems([]);
+    setCartValidation(null);
+  };
+
+  const validateCart = useCallback(async () => {
+    const ids = cartItems.map((item) => item.id);
+    if (ids.length === 0) return;
+
+    setIsCartValidating(true);
+    try {
+      const res = await fetch('/api/cart/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      if (!res.ok) throw new Error('Validation request failed');
+      const data = await res.json();
+
+      const validationMap: Record<string, CartServerItem> = {};
+      for (const item of data.items) {
+        validationMap[item.id] = item;
+      }
+      setCartValidation(validationMap);
+    } catch (e) {
+      console.error('[CartContext] validate error:', e);
+    } finally {
+      setIsCartValidating(false);
+    }
+  }, [cartItems]);
 
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
   const totalPrice = cartItems.reduce((acc, item) => {
@@ -133,6 +179,9 @@ export const CartProvider = ({
         setIsCartOpen,
         totalItems,
         totalPrice,
+        cartValidation,
+        isCartValidating,
+        validateCart,
       }}
     >
       {children}
