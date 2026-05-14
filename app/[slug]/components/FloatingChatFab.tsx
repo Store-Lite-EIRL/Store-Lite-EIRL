@@ -1,17 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChatDialog } from './ChatDialog';
 import styles from './FloatingChatFab.module.css';
 
 interface FloatingChatFabProps {
   businessName: string;
   businessId: string;
+  slug: string;
   businessLogo?: string | null;
+  initialOpen?: boolean;
 }
 
-export function FloatingChatFab({ businessName, businessId, businessLogo }: FloatingChatFabProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function FloatingChatFab({
+  businessName,
+  businessId,
+  slug,
+  businessLogo,
+  initialOpen = false,
+}: FloatingChatFabProps) {
+  const [isOpen, setIsOpen] = useState(initialOpen);
+
+  // Auto-open on mount if returning from Google OAuth
+  useEffect(() => {
+    if (initialOpen) {
+      setIsOpen(true);
+    }
+  }, [initialOpen]);
 
   return (
     <>
@@ -24,6 +39,7 @@ export function FloatingChatFab({ businessName, businessId, businessLogo }: Floa
           businessName={businessName}
           businessId={businessId}
           businessLogo={businessLogo}
+          slug={slug}
           onClose={() => setIsOpen(false)}
         />
       )}

@@ -1,8 +1,97 @@
-import { CircularProgress, Icon } from '@/shared/components/ui';
+import { Icon } from '@/shared/components/ui';
 import { IconButton } from '@/shared/components/ui/buttons';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { Chat, Message } from './ChatClient';
 import styles from './ChatWindow.module.css';
+
+/** Regex para detectar URLs en texto — soporta http/https y www. */
+const URL_REGEX = /(https?:\/\/[^\s<]+)|(www\.[^\s<]+\.[^\s<]+)/gi;
+
+/**
+ * Renderiza texto de mensaje con URLs convertidas a <a> clickeables.
+ * Separa el texto por URLs, y cada segmento que matchea lo envuelve en un link.
+ */
+function renderMessageText(text: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  // Reset regex state (important because of the `g` flag)
+  URL_REGEX.lastIndex = 0;
+
+  while ((match = URL_REGEX.exec(text)) !== null) {
+    // Texto antes de la URL
+    if (match.index > lastIndex) {
+      nodes.push(text.slice(lastIndex, match.index));
+    }
+
+    const rawUrl = match[0];
+    // Si arranca con www, agregamos https://
+    const href = rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`;
+
+    nodes.push(
+      <a
+        key={match.index}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={styles.messageLink}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {rawUrl}
+      </a>,
+    );
+
+    lastIndex = match.index + rawUrl.length;
+  }
+
+  // Texto restante después de la última URL
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex));
+  }
+
+  return nodes.length > 0 ? nodes : [text];
+}
+
+function padTwo(n: number): string {
+  return n < 10 ? `0${n}` : `${n}`;
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  if (isNaN(a.getTime()) || isNaN(b.getTime())) return false;
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function daysBetween(from: Date, to: Date): number {
+  const f = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  const t = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+  return Math.round((t.getTime() - f.getTime()) / 86400000);
+}
+
+function formatDateLabel(date: Date): string {
+  if (isNaN(date.getTime())) return '';
+
+  const now = new Date();
+  const diff = daysBetween(date, now);
+
+  if (diff === 0) return 'Hoy';
+  if (diff === 1) return 'Ayer';
+
+  if (diff < 7) {
+    const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    return dayNames[date.getDay()];
+  }
+
+  if (date.getFullYear() === now.getFullYear()) {
+    return `${padTwo(date.getDate())}/${padTwo(date.getMonth() + 1)}`;
+  }
+
+  return `${padTwo(date.getDate())}/${padTwo(date.getMonth() + 1)}/${String(date.getFullYear()).slice(-2)}`;
+}
 
 interface ChatWindowProps {
   session: Chat | null;
@@ -10,7 +99,6 @@ interface ChatWindowProps {
   storeName: string;
   storeDescription: string;
   onSendMessage: (text: string) => void;
-  onSendImage: (imageUrl: string) => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
   onDeleteChat: () => void;
@@ -27,7 +115,6 @@ export function ChatWindow({
   storeName,
   storeDescription,
   onSendMessage,
-  onSendImage,
   searchQuery,
   onSearchChange,
   onDeleteChat,
@@ -38,8 +125,12 @@ export function ChatWindow({
   const [inputText, setInputText] = useState('');
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const [now, setNow] = useState(0);
+
+  useEffect(() => {
+    setNow(Date.now());
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -52,6 +143,31 @@ export function ChatWindow({
     }
   }, [isSearchVisible]);
 
+  // Calculate delete availability — useMemo to avoid Date.now() during render
+  const deleteButton = useMemo(() => {
+    const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
+    const daysSinceLastMsg = lastMsg
+      ? Math.floor((now - new Date(lastMsg.createdAt).getTime()) / 86400000)
+      : 0;
+    const canDelete = daysSinceLastMsg >= 30;
+    const tooltipMsg = canDelete
+      ? 'Eliminar chat'
+      : `No se puede eliminar hasta 30 días después del último mensaje (${30 - daysSinceLastMsg} días restantes)`;
+
+    return (
+      <div className={styles.tooltipWrap} data-tooltip={tooltipMsg}>
+        <IconButton
+          variant="standard"
+          aria-label="Eliminar chat"
+          disabled={!canDelete}
+          onClick={canDelete ? onDeleteChat : undefined}
+        >
+          <Icon>delete</Icon>
+        </IconButton>
+      </div>
+    );
+  }, [messages, onDeleteChat, now]);
+
   const handleSend = () => {
     if (inputText.trim()) {
       onSendMessage(inputText);
@@ -62,18 +178,6 @@ export function ChatWindow({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSend();
-    }
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      const url = URL.createObjectURL(file);
-      onSendImage(url);
-    }
-    // Reset file input so the same file can be re-selected
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
     }
   };
 
@@ -127,16 +231,38 @@ export function ChatWindow({
               </IconButton>
             )}
             <div className={styles.avatarContainer}>
-              <div className={styles.avatarPlaceholder} />
+              <div className={styles.skeletonAvatar} />
             </div>
             <div className={styles.userDetails}>
-              <h3 className={styles.userName}>Cargando...</h3>
+              <div className={styles.skeletonName} />
+              <div className={styles.skeletonStatus} />
             </div>
           </div>
         </header>
-        <div className={styles.loadingArea}>
-          <CircularProgress indeterminate />
+        <div className={styles.messagesArea}>
+          <div className={styles.skeletonMessages}>
+            <div className={`${styles.skeletonRow} ${styles.skeletonRowThem}`}>
+              <div className={`${styles.skeletonBubble} ${styles.skeletonBubbleThem1}`} />
+            </div>
+            <div className={`${styles.skeletonRow} ${styles.skeletonRowMe}`}>
+              <div className={`${styles.skeletonBubble} ${styles.skeletonBubbleMe1}`} />
+            </div>
+            <div className={`${styles.skeletonRow} ${styles.skeletonRowThem}`}>
+              <div className={`${styles.skeletonBubble} ${styles.skeletonBubbleThem2}`} />
+            </div>
+            <div className={`${styles.skeletonRow} ${styles.skeletonRowMe}`}>
+              <div className={`${styles.skeletonBubble} ${styles.skeletonBubbleMe2}`} />
+            </div>
+            <div className={`${styles.skeletonRow} ${styles.skeletonRowMe}`}>
+              <div className={`${styles.skeletonBubble} ${styles.skeletonBubbleMe3}`} />
+            </div>
+          </div>
         </div>
+        <footer className={styles.inputArea}>
+          <div className={styles.inputContainer}>
+            <div className={styles.skeletonInput} />
+          </div>
+        </footer>
       </main>
     );
   }
@@ -173,10 +299,26 @@ export function ChatWindow({
             {session.online && <span className={styles.onlineBadge} />}
           </div>
           <div className={styles.userDetails}>
-            <h3 className={styles.userName}>{session.name}</h3>
-            <span className={styles.userStatus}>
-              {session.online ? 'En línea' : 'Desconectado'}
-            </span>
+            <div className={styles.userNameRow}>
+              <h3 className={styles.userName}>{session.name}</h3>
+              {session.isOrderChat && (
+                <span className={styles.orderBadge}>
+                  {session.orderNumber ? `#${session.orderNumber}` : 'Orden'}
+                </span>
+              )}
+              {session.isGoogleAuth && (
+                <span className={styles.verifiedBadge} title="Verificado con Google">
+                  <Icon size={14}>verified</Icon>
+                </span>
+              )}
+            </div>
+            <div className={styles.userMeta}>
+              <span className={styles.userEmail}>{session.email || 'Sin correo'}</span>
+              <span className={styles.userDot}>·</span>
+              <span className={styles.userStatus}>
+                {session.online ? 'En línea' : 'Desconectado'}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -214,68 +356,79 @@ export function ChatWindow({
             <IconButton variant="standard" aria-label="Buscar en chat" onClick={openSearchBar}>
               <Icon>search</Icon>
             </IconButton>
-            <IconButton variant="standard" aria-label="Eliminar chat" onClick={onDeleteChat}>
-              <Icon>delete</Icon>
-            </IconButton>
+            {deleteButton}
           </div>
         </div>
       </header>
 
       {/* Messages Area */}
       <div className={styles.messagesArea}>
-        <div className={styles.dateSeparator}>
-          <span className={styles.dateText}>Hoy</span>
-        </div>
+        {filteredMessages.map((msg, index) => {
+          const showDateSeparator =
+            msg.createdAt &&
+            (index === 0 ||
+              !isSameDay(new Date(filteredMessages[index - 1].createdAt), new Date(msg.createdAt)));
 
-        {filteredMessages.map((msg) => {
           const isMe = msg.sender === 'me';
           const isImage = !!msg.imageUrl;
 
           return (
-            <div
-              key={msg.id}
-              className={`${styles.messageRow} ${isMe ? styles.messageRowMe : styles.messageRowThem}`}
-            >
-              {!isMe && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={session.avatarUrl} alt={session.name} className={styles.messageAvatar} />
+            <React.Fragment key={msg.id}>
+              {showDateSeparator && (
+                <div className={styles.dateSeparator}>
+                  <span className={styles.dateText}>
+                    {formatDateLabel(new Date(msg.createdAt))}
+                  </span>
+                </div>
               )}
+              <div
+                className={`${styles.messageRow} ${isMe ? styles.messageRowMe : styles.messageRowThem}`}
+              >
+                {!isMe && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={session.avatarUrl}
+                    alt={session.name}
+                    className={styles.messageAvatar}
+                  />
+                )}
 
-              {isImage ? (
-                <div
-                  className={`${styles.imageBubble} ${isMe ? styles.bubbleMe : styles.bubbleThem}`}
-                >
-                  <div className={styles.imageWrapper}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={msg.imageUrl}
-                      alt="Imagen compartida"
-                      className={styles.messageImage}
-                    />
-                  </div>
-                  <div className={styles.imageTimeOverlay}>
-                    <span>{msg.time}</span>
-                    {isMe && <Icon size={14}>done_all</Icon>}
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className={`${styles.messageBubble} ${isMe ? styles.bubbleMe : styles.bubbleThem}`}
-                >
-                  <p className={styles.messageText}>{msg.text}</p>
+                {isImage ? (
                   <div
-                    className={`${styles.messageTime} ${isMe ? styles.timeMe : styles.timeThem}`}
+                    className={`${styles.imageBubble} ${isMe ? styles.bubbleMe : styles.bubbleThem}`}
                   >
-                    {msg.time}
-                    {isMe && (
-                      <Icon size={14} className={styles.readIcon}>
-                        done_all
-                      </Icon>
-                    )}
+                    <div className={styles.imageWrapper}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={msg.imageUrl}
+                        alt="Imagen compartida"
+                        className={styles.messageImage}
+                      />
+                    </div>
+                    <div className={styles.imageTimeOverlay}>
+                      <span>{msg.time}</span>
+                      {isMe && <Icon size={14}>done_all</Icon>}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                ) : (
+                  <div
+                    className={`${styles.messageBubble} ${isMe ? styles.bubbleMe : styles.bubbleThem}`}
+                  >
+                    <p className={styles.messageText}>{renderMessageText(msg.text)}</p>
+                    <div
+                      className={`${styles.messageTime} ${isMe ? styles.timeMe : styles.timeThem}`}
+                    >
+                      {msg.time}
+                      {isMe && (
+                        <Icon size={14} className={styles.readIcon}>
+                          done_all
+                        </Icon>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </React.Fragment>
           );
         })}
 
@@ -285,27 +438,9 @@ export function ChatWindow({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Hidden file input for image uploads */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        aria-label="Seleccionar imagen"
-        onChange={handleFileSelect}
-        style={{ display: 'none' }}
-      />
-
       {/* Input Area */}
       <footer className={styles.inputArea}>
         <div className={styles.inputContainer}>
-          <IconButton
-            variant="standard"
-            aria-label="Adjuntar imagen"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Icon>image</Icon>
-          </IconButton>
-
           <input
             type="text"
             placeholder="Escribe un mensaje..."
@@ -318,12 +453,14 @@ export function ChatWindow({
           <IconButton
             variant="filled"
             aria-label="Enviar mensaje"
+            disabled={!inputText.trim()}
             onClick={handleSend}
             style={
               {
                 '--md-icon-button-container-color': 'var(--md-sys-color-primary, #135bec)',
                 '--md-icon-button-icon-color': 'var(--md-sys-color-on-primary, #ffffff)',
                 marginLeft: '8px',
+                opacity: !inputText.trim() ? 0.5 : 1,
               } as React.CSSProperties
             }
           >

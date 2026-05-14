@@ -61,6 +61,7 @@ export async function updateProxy(request: NextRequest) {
 
     const pathname = request.nextUrl.pathname;
     const isAuthPage = pathname.startsWith('/auth');
+    const isCustomerAuthPopup = pathname === '/auth/customer';
     const isCreatePage = pathname.startsWith('/created');
     const isListPage = pathname.startsWith('/list-business');
     const isPricingPage = pathname.startsWith('/pricing');
@@ -72,6 +73,11 @@ export async function updateProxy(request: NextRequest) {
       !['auth', 'created', 'list-business', 'pricing'].includes(pathSegments[0]);
     const isProductDetail = pathSegments.length === 3 && pathSegments[1] === 'product';
     const isPublicStorefront = isStorefrontBase || isProductDetail;
+
+    // Las API routes son server-side y manejan su propia autorización.
+    // El proxy no debe interceptarlas — permite que requests del storefront
+    // público (ej: validación de carrito sin sesión) lleguen al handler.
+    const isApiRoute = pathname.startsWith('/api/');
 
     // Helper to return redirects while preserving refreshed cookies
     const redirectWithCookies = (url: URL) => {
@@ -85,14 +91,17 @@ export async function updateProxy(request: NextRequest) {
     const isRootPage = pathname === '/';
 
     // Handle unauthenticated users
-    if (!user && !isAuthPage && !isPublicStorefront && !isRootPage) {
+    if (!user && !isAuthPage && !isPublicStorefront && !isRootPage && !isApiRoute) {
       const url = request.nextUrl.clone();
       url.pathname = '/auth';
       return redirectWithCookies(url);
     }
 
-    // Handle authenticated users on auth page
-    if (user && isAuthPage) {
+    // Handle authenticated users on auth page (EXCEPT /auth/customer popup).
+    // /auth/customer is designed to handle already-authenticated users by sending
+    // existing tokens via postMessage to the storefront popup opener. Redirecting it
+    // would break the flow — the popup would show the user's own business instead.
+    if (user && isAuthPage && !isCustomerAuthPopup) {
       const url = request.nextUrl.clone();
       url.pathname = '/';
       return redirectWithCookies(url);

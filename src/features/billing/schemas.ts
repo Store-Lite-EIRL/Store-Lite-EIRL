@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+const customerAuthSchema = z.object({
+  provider: z.string(),
+  authId: z.string().min(1, 'authId es requerido'),
+  name: z.string().optional(),
+  email: z.string().email().optional(),
+  avatarUrl: z.string().nullable().optional(),
+});
+
 export const chargeRequestSchema = z.object({
   token: z.string().min(1, 'El token de Culqi es obligatorio'),
   amount: z.number().int().min(100, 'El monto mínimo es S/ 1.00 (100 céntimos)'),
@@ -8,6 +16,7 @@ export const chargeRequestSchema = z.object({
   phone: z.string().optional().nullable(),
   businessId: z.string().uuid('ID de negocio inválido'),
   productId: z.string().uuid('ID de producto inválido'),
+  customerAuth: customerAuthSchema.optional(),
   metadata: z
     .object({
       orderNumber: z.string().optional(),

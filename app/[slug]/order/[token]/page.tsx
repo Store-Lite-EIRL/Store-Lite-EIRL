@@ -866,116 +866,343 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
           </div>
         </div>
 
-        {/* Modal Detalles Detallado */}
+        {/* Modal Detalles de Compra */}
         <div id="details-modal" className="modal-overlay">
-          <div className="m-box" style={{ maxWidth: '500px', padding: '3rem' }}>
+          <div className="m-box" style={{ maxWidth: '520px', padding: '2.5rem' }}>
             <a
               href="#"
-              style={{ position: 'absolute', top: '2rem', right: '2rem', color: 'inherit' }}
+              style={{
+                position: 'absolute',
+                top: '1.5rem',
+                right: '1.5rem',
+                color: 'inherit',
+                zIndex: 10,
+              }}
             >
               <Icon>close</Icon>
             </a>
-            <h3
-              style={{
-                fontSize: '1.75rem',
-                fontWeight: 950,
-                marginBottom: '2rem',
-                letterSpacing: '-0.03em',
-              }}
-            >
-              Detalles de Compra
-            </h3>
 
-            <div style={{ display: 'grid', gap: '2rem' }}>
-              <div style={{ display: 'flex', gap: '1rem' }}>
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              <h3
+                style={{
+                  fontSize: '1.5rem',
+                  fontWeight: 950,
+                  margin: '0 0 0.25rem',
+                  letterSpacing: '-0.03em',
+                }}
+              >
+                Detalles de Compra
+              </h3>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: '0.75rem',
+                  fontWeight: 900,
+                  opacity: 0.5,
+                  letterSpacing: '0.05em',
+                }}
+              >
+                N° Orden: {order.orderNumber || order.id.slice(0, 8).toUpperCase()}
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gap: '1.25rem' }}>
+              {/* ── Producto ── */}
+              <div className="detail-row">
                 <div
+                  className="detail-icon"
                   style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '12px',
                     background: 'var(--md-sys-color-primary-container)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
                     color: 'var(--md-sys-color-primary)',
                   }}
                 >
                   <Icon>shopping_cart</Icon>
                 </div>
-                <div>
-                  <p style={{ margin: 0, fontSize: '10px', fontWeight: 900, opacity: 0.5 }}>
-                    PRODUCTO
-                  </p>
-                  <p style={{ margin: 0, fontWeight: 800 }}>{order.product.title}</p>
-                  <p
+                <div className="detail-body">
+                  <span className="detail-label">PRODUCTO</span>
+                  <span className="detail-value">{order.product.title}</span>
+                  <div
                     style={{
-                      margin: 0,
-                      fontSize: '0.9rem',
-                      color: 'var(--md-sys-color-primary)',
-                      fontWeight: 900,
+                      display: 'flex',
+                      gap: '0.75rem',
+                      alignItems: 'center',
+                      marginTop: '2px',
                     }}
                   >
-                    {order.currency} {order.amount}
-                  </p>
+                    <span className="detail-price">
+                      {order.currency} {order.amount}
+                    </span>
+                    {order.shippingCost && Number(order.shippingCost) > 0 && (
+                      <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>
+                        + Envío: {order.currency} {order.shippingCost}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '1rem' }}>
+              {/* ── Estado y Fechas ── */}
+              <div className="detail-row">
                 <div
+                  className="detail-icon"
                   style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '12px',
                     background: 'var(--md-sys-color-secondary-container)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
                     color: 'var(--md-sys-color-secondary)',
                   }}
                 >
-                  <Icon>location_on</Icon>
+                  <Icon>schedule</Icon>
                 </div>
-                <div>
-                  <p style={{ margin: 0, fontSize: '10px', fontWeight: 900, opacity: 0.5 }}>
-                    DIRECCIÓN DE ENTREGA
-                  </p>
-                  <p style={{ margin: 0, fontWeight: 800 }}>
-                    {order.shippingAddress || 'Recojo en Tienda'}
-                  </p>
-                  <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.7 }}>
-                    {order.shippingDistrict
-                      ? `${order.shippingDistrict}, ${order.shippingProvince}`
-                      : ''}
-                  </p>
+                <div className="detail-body">
+                  <span className="detail-label">ESTADO Y FECHAS</span>
+                  <div className="detail-grid">
+                    <div>
+                      <span className="detail-sub">Estado</span>
+                      <span className="detail-value" style={{ textTransform: 'capitalize' }}>
+                        {currentStatus.label}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="detail-sub">Comprado</span>
+                      <span className="detail-value" style={{ fontSize: '0.8rem' }}>
+                        {order.createdAt ? formatDate(order.createdAt) : '—'}
+                      </span>
+                    </div>
+                    {order.completedAt && (
+                      <div>
+                        <span className="detail-sub">Finalizado</span>
+                        <span className="detail-value" style={{ fontSize: '0.8rem' }}>
+                          {formatDate(order.completedAt)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '1rem' }}>
+              {/* ── Pago ── */}
+              <div className="detail-row">
                 <div
+                  className="detail-icon"
                   style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '12px',
                     background: 'var(--md-sys-color-tertiary-container)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
                     color: 'var(--md-sys-color-tertiary)',
                   }}
                 >
-                  <Icon>person</Icon>
+                  <Icon>credit_card</Icon>
                 </div>
-                <div>
-                  <p style={{ margin: 0, fontSize: '10px', fontWeight: 900, opacity: 0.5 }}>
-                    COMPRADOR
-                  </p>
-                  <p style={{ margin: 0, fontWeight: 800 }}>{order.buyerEmail}</p>
-                  <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.7 }}>
-                    DNI: {order.buyerDni || 'No registrado'}
-                  </p>
+                <div className="detail-body">
+                  <span className="detail-label">PAGO</span>
+                  <div className="detail-grid">
+                    <div>
+                      <span className="detail-sub">Método</span>
+                      <span className="detail-value" style={{ textTransform: 'capitalize' }}>
+                        {order.paymentMethod === 'card'
+                          ? 'Tarjeta'
+                          : order.paymentMethod === 'yape'
+                            ? 'Yape'
+                            : order.paymentMethod === 'plin'
+                              ? 'Plin'
+                              : order.paymentMethod || '—'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="detail-sub">Total</span>
+                      <span
+                        className="detail-value"
+                        style={{ fontWeight: 950, color: 'var(--md-sys-color-primary)' }}
+                      >
+                        {order.currency} {Number(order.amount) + Number(order.shippingCost || 0)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              {/* ── Envío ── */}
+              <div className="detail-row">
+                <div
+                  className="detail-icon"
+                  style={{
+                    background: 'var(--md-sys-color-surface-variant)',
+                    color: 'var(--md-sys-color-on-surface-variant)',
+                  }}
+                >
+                  <Icon>local_shipping</Icon>
+                </div>
+                <div className="detail-body">
+                  <span className="detail-label">ENVÍO</span>
+                  <div className="detail-grid">
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <span className="detail-sub">Dirección</span>
+                      <span className="detail-value">
+                        {order.shippingAddress || 'Recojo en Tienda'}
+                      </span>
+                      {order.shippingDistrict && (
+                        <span style={{ fontSize: '0.75rem', opacity: 0.6, display: 'block' }}>
+                          {order.shippingDistrict}
+                          {order.shippingProvince ? `, ${order.shippingProvince}` : ''}
+                          {order.shippingDepartment ? `, ${order.shippingDepartment}` : ''}
+                        </span>
+                      )}
+                    </div>
+                    {order.shippingAgency && (
+                      <div>
+                        <span className="detail-sub">Agencia</span>
+                        <span className="detail-value" style={{ textTransform: 'capitalize' }}>
+                          {order.shippingAgency}
+                        </span>
+                      </div>
+                    )}
+                    {order.shippingReference && (
+                      <div>
+                        <span className="detail-sub">Referencia</span>
+                        <span className="detail-value">{order.shippingReference}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Contacto ── */}
+              <div className="detail-row">
+                <div
+                  className="detail-icon"
+                  style={{
+                    background: 'var(--md-sys-color-surface-variant)',
+                    color: 'var(--md-sys-color-on-surface-variant)',
+                  }}
+                >
+                  <Icon>contact_mail</Icon>
+                </div>
+                <div className="detail-body">
+                  <span className="detail-label">CONTACTO</span>
+                  <div className="detail-grid">
+                    <div>
+                      <span className="detail-sub">Email</span>
+                      <span className="detail-value" style={{ fontSize: '0.8rem' }}>
+                        {order.buyerEmail}
+                      </span>
+                    </div>
+                    {order.buyerPhone && (
+                      <div>
+                        <span className="detail-sub">Teléfono</span>
+                        <span className="detail-value">{order.buyerPhone}</span>
+                      </div>
+                    )}
+                    {order.buyerDni && (
+                      <div>
+                        <span className="detail-sub">DNI</span>
+                        <span className="detail-value">{order.buyerDni}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Verificación ── */}
+              {(() => {
+                const metadata = order.metadata as Record<string, unknown> | null;
+                const customerAuth = metadata?.customerAuth as Record<string, unknown> | null;
+                const googleName = customerAuth?.name as string | undefined;
+                const googleEmail = customerAuth?.email as string | undefined;
+                const googlePicture = customerAuth?.picture as string | undefined;
+                const isVerified = !!customerAuth;
+
+                return (
+                  <div className="detail-row">
+                    <div
+                      className="detail-icon"
+                      style={{
+                        background: isVerified
+                          ? 'var(--md-sys-color-primary-container)'
+                          : 'var(--md-sys-color-surface-variant)',
+                        color: isVerified
+                          ? 'var(--md-sys-color-primary)'
+                          : 'var(--md-sys-color-on-surface-variant)',
+                      }}
+                    >
+                      <Icon>{isVerified ? 'verified' : 'help_outline'}</Icon>
+                    </div>
+                    <div className="detail-body">
+                      <span className="detail-label">VERIFICACIÓN</span>
+                      {isVerified ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          {googlePicture && (
+                            <img
+                              src={googlePicture}
+                              alt=""
+                              style={{
+                                width: 36,
+                                height: 36,
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                                flexShrink: 0,
+                              }}
+                              referrerPolicy="no-referrer"
+                            />
+                          )}
+                          <div>
+                            <span
+                              className="detail-value"
+                              style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              <Icon size={14} style={{ color: 'var(--md-sys-color-primary)' }}>
+                                verified
+                              </Icon>
+                              Verificado con Google
+                            </span>
+                            <span style={{ fontSize: '0.75rem', opacity: 0.6, display: 'block' }}>
+                              {googleName || googleEmail || 'Cuenta verificada'}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="detail-value" style={{ opacity: 0.5 }}>
+                            Sin verificar
+                          </span>
+                          <span style={{ fontSize: '0.7rem', opacity: 0.4, display: 'block' }}>
+                            No se usó autenticación con Google
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
+
+            <style>{`
+              .detail-row { display: flex; gap: 1rem; align-items: flex-start; }
+              .detail-icon {
+                width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+                display: flex; align-items: center; justify-content: center;
+              }
+              .detail-body { flex: 1; min-width: 0; }
+              .detail-label {
+                display: block; font-size: 0.6rem; font-weight: 900; letter-spacing: 0.1em;
+                opacity: 0.5; margin-bottom: 4px; text-transform: uppercase;
+              }
+              .detail-value {
+                display: block; font-weight: 800; font-size: 0.9rem;
+                color: var(--md-sys-color-on-surface);
+              }
+              .detail-sub {
+                display: block; font-size: 0.65rem; font-weight: 700;
+                opacity: 0.5; margin-bottom: 1px;
+              }
+              .detail-price {
+                font-weight: 950; font-size: 1rem;
+                color: var(--md-sys-color-primary);
+              }
+              .detail-grid {
+                display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1.5rem;
+              }
+              @media (max-width: 480px) {
+                .detail-grid { grid-template-columns: 1fr; }
+              }
+            `}</style>
           </div>
         </div>
 

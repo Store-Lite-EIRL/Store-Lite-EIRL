@@ -59,6 +59,7 @@ export async function POST(request: Request) {
       productId,
       currency = 'PEN',
       phone,
+      customerAuth,
       metadata = {},
     } = validationResult.data;
 
@@ -179,7 +180,11 @@ export async function POST(request: Request) {
           shippingPhone: (shippingInfo as any).phone || null,
           shippingCost: String((shippingInfo as any).cost || 0),
           shippingReference: (shippingInfo as any).reference || null,
-          metadata: { ...metadata, culqiId: culqiData.id },
+          metadata: {
+            ...metadata,
+            culqiId: culqiData.id,
+            ...(customerAuth ? { customerAuth } : {}),
+          },
           trackingToken: generateTrackingToken(),
         })
         .returning();

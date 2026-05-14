@@ -168,11 +168,12 @@
   flex-shrink: 0;
 }
 
-.avatarPlaceholder {
+.skeletonAvatar {
   width: 100%;
   height: 100%;
   border-radius: 50%;
   background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  animation: shimmer 1.6s ease-in-out infinite;
 }
 
 .avatar {
@@ -199,6 +200,13 @@
   min-width: 0;
 }
 
+.userNameRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 .userName {
   font-family: var(--md-sys-typescale-title-medium-font-family-name, sans-serif);
   font-size: var(--md-sys-typescale-title-medium-font-size, 16px);
@@ -211,10 +219,52 @@
   text-overflow: ellipsis;
 }
 
+.orderBadge {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: var(--md-sys-color-tertiary, #6750a4);
+  background-color: var(--md-sys-color-tertiary-container, #e8def8);
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.5;
+}
+
+.verifiedBadge {
+  display: inline-flex;
+  align-items: center;
+  color: var(--md-sys-color-primary, #135bec);
+  flex-shrink: 0;
+}
+
 .userStatus {
   font-size: 13px;
   color: var(--md-sys-color-primary, #135bec);
   font-weight: 500;
+}
+
+.userMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.userDot {
+  font-size: 10px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0.4;
+}
+
+.userEmail {
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
 }
 
 .headerRight {
@@ -269,6 +319,54 @@
   pointer-events: none;
 }
 
+/* Tooltip for disabled actions (e.g. delete chat) */
+.tooltipWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.tooltipWrap[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--md-sys-color-inverse-surface, #313033);
+  color: var(--md-sys-color-inverse-on-surface, #f4eff4);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.3;
+  white-space: nowrap;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 1000;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  animation: tooltipFadeIn 0.15s ease;
+}
+
+@media (max-width: 768px) {
+  .tooltipWrap[data-tooltip]:hover::after {
+    max-width: 200px;
+    font-size: 0.7rem;
+    right: auto;
+    left: 0;
+  }
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .searchInput {
   flex: 1;
   border: none;
@@ -304,6 +402,98 @@
   align-items: center;
   justify-content: center;
   background-color: var(--md-sys-color-surface-container-lowest, #f9f9fb);
+}
+
+/* ── Skeleton Loading ── */
+
+.skeletonMessages {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.skeletonRow {
+  display: flex;
+  max-width: 65%;
+}
+
+.skeletonRowThem {
+  align-self: flex-start;
+}
+
+.skeletonRowMe {
+  align-self: flex-end;
+}
+
+.skeletonBubble {
+  height: 40px;
+  border-radius: 16px;
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+.skeletonBubbleThem1 {
+  width: 200px;
+  border-radius: 16px 16px 16px 4px;
+}
+
+.skeletonBubbleMe1 {
+  width: 140px;
+  border-radius: 16px 16px 4px 16px;
+}
+
+.skeletonBubbleThem2 {
+  width: 260px;
+  height: 56px;
+  border-radius: 16px 16px 16px 4px;
+}
+
+.skeletonBubbleMe2 {
+  width: 180px;
+  border-radius: 16px 16px 4px 16px;
+}
+
+.skeletonBubbleMe3 {
+  width: 100px;
+  border-radius: 16px 16px 4px 16px;
+}
+
+.skeletonName {
+  width: 120px;
+  height: 16px;
+  border-radius: 8px;
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  animation: shimmer 1.6s ease-in-out infinite;
+  margin-bottom: 6px;
+}
+
+.skeletonStatus {
+  width: 80px;
+  height: 12px;
+  border-radius: 6px;
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+.skeletonInput {
+  width: 100%;
+  height: 40px;
+  border-radius: 20px;
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
 }
 
 .dateSeparator {
@@ -421,6 +611,29 @@
   line-height: 1.4;
 }
 
+/* Links dentro de burbujas de mensaje */
+.messageLink {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1.5px;
+  opacity: 0.9;
+  transition: opacity 0.15s ease;
+  word-break: break-all;
+}
+
+.messageLink:hover {
+  opacity: 1;
+}
+
+.bubbleThem .messageLink {
+  color: var(--md-sys-color-primary, #135bec);
+}
+
+.bubbleMe .messageLink {
+  color: #cce5ff;
+}
+
 .messageTime {
   display: flex;
   align-items: center;
@@ -529,5 +742,22 @@
   }
   .emptyPlatform {
     color: var(--md-sys-color-outline, #938f99);
+  }
+
+  .orderBadge {
+    color: var(--md-sys-color-tertiary, #d0bcff);
+    background-color: var(--md-sys-color-tertiary-container, #4a4458);
+  }
+
+  .verifiedBadge {
+    color: var(--md-sys-color-primary, #9bb9f0);
+  }
+
+  .bubbleThem .messageLink {
+    color: var(--md-sys-color-primary, #4f9aff);
+  }
+
+  .bubbleMe .messageLink {
+    color: #cce5ff;
   }
 }

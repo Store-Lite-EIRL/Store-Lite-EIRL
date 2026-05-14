@@ -39,7 +39,7 @@
 
 @media (min-width: 769px) {
   .sidebarWrapper {
-    width: 320px;
+    width: 380px;
     height: 100%;
     min-height: 0;
     display: flex;
@@ -53,6 +53,13 @@
     flex-direction: column;
     height: 100%;
     min-height: 0;
+    box-shadow: inset 1px 0 0 rgba(0, 0, 0, 0.04);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .windowWrapper {
+    box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.04);
   }
 }
 

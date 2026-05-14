@@ -13,7 +13,7 @@ import { AlertSnackbar } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
 import { useRouter } from 'next/navigation';
-import { useState, type CSSProperties, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useState, type CSSProperties, type Dispatch, type SetStateAction } from 'react';
 import FeaturedItems from '../(main)/home/FeaturedItems';
 import Feed from '../(main)/home/Feed';
 import FilterBar from '../(main)/home/FilterBar';
@@ -172,6 +172,18 @@ function BusinessPageContentUI({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [showLookupModal, setShowLookupModal] = useState(false);
+  const [autoOpenChat, setAutoOpenChat] = useState(false);
+
+  // Detect ?chat_ready=true from Google OAuth redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('chat_ready') === 'true') {
+      setAutoOpenChat(true);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('chat_ready');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, []);
   const [alert, setAlert] = useState<{
     open: boolean;
     description: string;
@@ -433,8 +445,14 @@ function BusinessPageContentUI({
             businessLogoUrl={business.logoUrl ?? undefined}
             onContactClick={() => setIsContactDialogOpen(true)}
           />
-          {chatEnabled && !isLoggedIn && (
-            <FloatingChatFab businessName={business.name} businessId={business.id} />
+          {chatEnabled && !isStaff && (
+            <FloatingChatFab
+              businessName={business.name}
+              businessId={business.id}
+              slug={business.slug}
+              businessLogo={business.logoUrl ?? undefined}
+              initialOpen={autoOpenChat}
+            />
           )}
         </>
       )}
@@ -477,6 +495,7 @@ function BusinessPageContentUI({
         open={showLookupModal}
         onClose={() => setShowLookupModal(false)}
         businessSlug={business.slug}
+        businessName={business.name}
       />
     </>
   );

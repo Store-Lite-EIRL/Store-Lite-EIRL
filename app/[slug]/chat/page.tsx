@@ -61,6 +61,7 @@ export default async function ChatPage({ params }: Props) {
       slug={resolvedBusiness.canonicalSlug}
       storeName={business.name}
       storeDescription={business.description || ''}
+      storeLogo={business.logoUrl || ''}
       businessId={business.id}
       canRespond={canRespond}
       canManage={canManage}
