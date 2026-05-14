@@ -5,7 +5,7 @@ import { businesses, businessTeamMembers, chatSessions, messages } from '@/core/
 import { notifyNewMessage } from '@/lib/notifications';
 import { checkPermission } from '@/lib/permissions';
 import { createClient } from '@/lib/supabase/server';
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 
 async function getAuthenticatedUserId() {
   const supabase = await createClient();
@@ -64,6 +64,14 @@ async function resolveSessionActor(sessionId: string, guestId?: string) {
         };
       }
     }
+
+    // Check if the authenticated user is the guest of this session.
+    // This happens when a business owner from business A chats as a
+    // customer with business B — they're authenticated but NOT the
+    // owner/team of business B, they're the guest.
+    if (session.guestId === userId) {
+      return { allowed: true as const, role: 'guest' as const, session };
+    }
   }
 
   if (guestId && session.guestId === guestId) {
@@ -77,7 +85,10 @@ export async function startChatSession(data: {
   businessId: string;
   guestId: string;
   guestName: string;
-  guestGender: string;
+  guestGender?: string;
+  authUserId?: string;
+  guestEmail?: string;
+  guestAvatarUrl?: string;
 }) {
   try {
     const business = await db.query.businesses.findFirst({
@@ -114,8 +125,11 @@ export async function startChatSession(data: {
         businessId: data.businessId,
         guestId: data.guestId,
         guestName: data.guestName,
-        guestGender: data.guestGender,
+        guestGender: data.guestGender ?? '',
         status: 'active',
+        authUserId: data.authUserId ?? null,
+        guestEmail: data.guestEmail ?? null,
+        guestAvatarUrl: data.guestAvatarUrl ?? null,
       })
       .returning();
 
@@ -246,10 +260,50 @@ export async function fetchChatSessions(businessId: string) {
       return { success: false, error: 'No autorizado', sessions: [] };
     }
 
-    const sessions = await db.query.chatSessions.findMany({
-      where: (table, { eq }) => eq(table.businessId, businessId),
-      orderBy: (table, { desc }) => [desc(table.createdAt)],
+    const rawSessions = await db.query.chatSessions.findMany({
+      where: eq(chatSessions.businessId, businessId),
+      orderBy: [desc(chatSessions.createdAt)],
+      with: {
+        messages: {
+          orderBy: [desc(messages.createdAt)],
+          limit: 1,
+          columns: {
+            content: true,
+            isFromStore: true,
+            createdAt: true,
+          },
+        },
+        payment: {
+          columns: {
+            id: true,
+            orderNumber: true,
+            amount: true,
+            currency: true,
+          },
+        },
+      },
     });
+
+    // Deduplicate: keep only the latest session per guestId
+    // Si un guest tiene varias sesiones, priorizar la que tiene paymentId (orden)
+    // sobre la más reciente sin orden, para que el vendedor vea el contexto de compra.
+    const seen = new Map<string, (typeof rawSessions)[number]>();
+    for (const session of rawSessions) {
+      const existing = seen.get(session.guestId);
+      if (!existing) {
+        seen.set(session.guestId, session);
+      } else if (session.paymentId && !existing.paymentId) {
+        // La nueva sesión TIENE orden y la existente NO → reemplazar
+        seen.set(session.guestId, session);
+      } else if (!session.paymentId && existing.paymentId) {
+        // La existente ya tiene orden, mantenerla
+        continue;
+      } else if (session.createdAt! > existing.createdAt!) {
+        // Ambas tienen (o ninguna) orden, quedarse con la más reciente
+        seen.set(session.guestId, session);
+      }
+    }
+    const sessions = Array.from(seen.values());
 
     return { success: true, sessions };
   } catch (error) {

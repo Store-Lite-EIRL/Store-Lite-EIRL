@@ -30,7 +30,10 @@ function getItemValidation(
   item: CartItem,
   cartValidation: Record<string, CartServerItem> | null,
 ): { status: ItemValidation; server?: CartServerItem } {
-  if (!cartValidation) return { status: 'valid' };
+  // null = no se validó aún, {} = falló la validación — ambos se tratan como "válido"
+  if (!cartValidation || Object.keys(cartValidation).length === 0) {
+    return { status: 'valid' };
+  }
 
   const server = cartValidation[item.id];
   if (!server) return { status: 'removed' };

@@ -188,13 +188,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const signInWithGoogleForChat = async (slug: string) => {
+    // Usa un callback DEDICADO que NO crea profiles ni verifica businesses
+    const redirectUrl = `${window.location.origin}/auth/chat-callback?slug=${slug}`;
+    console.warn('🔗 Redirecting to (chat callback):', redirectUrl);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl,
+      },
+    });
+    if (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
+  };
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signInWithGoogle, signOut }}>
+    <AuthContext.Provider
+      value={{ user, session, loading, signInWithGoogle, signInWithGoogleForChat, signOut }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -211,6 +229,9 @@ export const useAuth = () => {
       loading: false,
       signInWithGoogle: async () => {
         console.warn('[useAuth] signInWithGoogle called outside AuthProvider');
+      },
+      signInWithGoogleForChat: async () => {
+        console.warn('[useAuth] signInWithGoogleForChat called outside AuthProvider');
       },
       signOut: async () => {
         console.warn('[useAuth] signOut called outside AuthProvider');

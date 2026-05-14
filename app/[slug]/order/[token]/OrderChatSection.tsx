@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { Icon } from '@/shared/components/ui';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { fetchMessages, sendMessage } from '../../chat/actions/chatActions';
 import { syncChatSession } from './actions';
 
@@ -41,6 +41,8 @@ export default function OrderChatSection({
   const [isLoading, setIsLoading] = useState(true);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  // IDs confirmados por server response — Realtime los saltea para evitar duplicados
+  const confirmedIdsRef = useRef<Set<string>>(new Set());
 
   // Sincronización de Identidad y Sesión
   useEffect(() => {
@@ -72,37 +74,53 @@ export default function OrderChatSection({
     initChat();
   }, [businessId, paymentId, buyerDni, buyerEmail, buyerName]);
 
-  // Carga de mensajes y suscripción Realtime
+  // Carga inicial de mensajes
   useEffect(() => {
     if (!sessionId || !guestId) return;
 
     const loadMessages = async () => {
-      const result = await fetchMessages(sessionId, guestId);
-      if (result.success && result.messages) {
-        setMessages(
-          result.messages.map((m) => ({
-            id: m.id,
-            text: m.content,
-            isFromStore: !!m.isFromStore,
-            createdAt: m.createdAt ? new Date(m.createdAt) : new Date(),
-          })),
-        );
+      try {
+        const result = await fetchMessages(sessionId, guestId);
+        if (result.success && result.messages) {
+          setMessages(
+            result.messages.map((m) => ({
+              id: m.id,
+              text: m.content,
+              isFromStore: !!m.isFromStore,
+              createdAt: m.createdAt ? new Date(m.createdAt) : new Date(),
+            })),
+          );
+        }
+      } catch (err) {
+        console.error('[OrderChat] Error loading messages:', err);
       }
     };
     loadMessages();
+  }, [sessionId, guestId]);
 
+  // ─── Real-time subscription + polling fallback ─────────────────────
+  // Igual que ChatClient: Realtime es el "fast path", polling es safety net.
+  useEffect(() => {
+    if (!sessionId || !guestId) return;
+
+    // ── Realtime subscription (sin server-side filter) ──
     const channel = supabase
-      .channel(`chat-realtime-${sessionId}`)
+      .channel(`order-chat-${sessionId}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `session_id=eq.${sessionId}`,
         },
         (payload: any) => {
           const m = payload.new;
+          // Client-side filter: solo mensajes de esta sesión
+          if (String(m.session_id) !== sessionId) return;
+
+          // Saltar mensajes ya confirmados por server response (evitar duplicados)
+          if (confirmedIdsRef.current.has(m.id)) return;
+
           setMessages((prev) => {
             if (prev.find((item) => item.id === m.id)) return prev;
             return [
@@ -117,12 +135,106 @@ export default function OrderChatSection({
           });
         },
       )
-      .subscribe();
+      .subscribe((status: string, err?: Error) => {
+        console.log('[OrderChat] Realtime status:', { sessionId, status, error: err?.message });
+      });
+
+    // ── Polling fallback cada 5s (igual que ChatClient) ──
+    const pollMessages = async () => {
+      try {
+        const result = await fetchMessages(sessionId, guestId);
+        if (!result.success || !result.messages) return;
+
+        setMessages((prev) => {
+          const mapped = result.messages!.map((m) => ({
+            id: m.id,
+            text: m.content,
+            isFromStore: !!m.isFromStore,
+            createdAt: m.createdAt ? new Date(m.createdAt) : new Date(),
+          }));
+
+          // Merge: deduplicar por id, mantener mensajes temporales
+          const pendingTemps = prev.filter(
+            (m) =>
+              m.id.startsWith('temp-') &&
+              !mapped.some(
+                (db) =>
+                  db.text === m.text &&
+                  Math.abs(db.createdAt.getTime() - m.createdAt.getTime()) < 5000,
+              ),
+          );
+
+          const merged = [...mapped, ...pendingTemps];
+          const seen = new Set<string>();
+          const deduped = merged.filter((m) => {
+            if (seen.has(m.id)) return false;
+            seen.add(m.id);
+            return true;
+          });
+          deduped.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+          // Evitar re-renders si no hubo cambios
+          if (
+            deduped.length === prev.length &&
+            deduped.every((m, i) => m.id === prev[i].id && m.text === prev[i].text)
+          ) {
+            return prev;
+          }
+          return deduped;
+        });
+      } catch {
+        // Silencioso — el polling no debe mostrar errores
+      }
+    };
+
+    const intervalId = setInterval(pollMessages, 5000);
 
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(intervalId);
     };
   }, [sessionId, guestId, supabase]);
+
+  // ─── WhatsApp-style date helpers ────────────────────────────────────
+  function padTwo(n: number): string {
+    return n < 10 ? `0${n}` : `${n}`;
+  }
+
+  function isSameDay(a: Date, b: Date): boolean {
+    if (isNaN(a.getTime()) || isNaN(b.getTime())) return false;
+    return (
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate()
+    );
+  }
+
+  function daysBetween(from: Date, to: Date): number {
+    const f = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+    const t = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+    return Math.round((t.getTime() - f.getTime()) / 86400000);
+  }
+
+  function formatDateLabel(date: Date): string {
+    if (isNaN(date.getTime())) return '';
+
+    const now = new Date();
+    const diff = daysBetween(date, now);
+
+    if (diff === 0) return 'Hoy';
+    if (diff === 1) return 'Ayer';
+
+    if (diff < 7) {
+      const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+      return dayNames[date.getDay()];
+    }
+
+    if (date.getFullYear() === now.getFullYear()) {
+      return `${padTwo(date.getDate())}/${padTwo(date.getMonth() + 1)}`;
+    }
+
+    return `${padTwo(date.getDate())}/${padTwo(date.getMonth() + 1)}/${String(date.getFullYear()).slice(-2)}`;
+  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -149,12 +261,16 @@ export default function OrderChatSection({
       // Si el servidor responde con éxito, reemplazamos el mensaje temporal
       // con el real (el realtime de Supabase también lo hará, pero esto es fallback)
       if (result.success && result.message) {
+        const realId = result.message.id;
+        confirmedIdsRef.current.add(realId);
+        setTimeout(() => confirmedIdsRef.current.delete(realId), 2000);
+
         setMessages((prev) =>
           prev.map((m) =>
             m.id === optimisticId
               ? {
                   ...m,
-                  id: result.message!.id,
+                  id: realId,
                   createdAt: result.message!.createdAt ? new Date(result.message!.createdAt) : now,
                 }
               : m,
@@ -273,14 +389,48 @@ export default function OrderChatSection({
             </p>
           </div>
         ) : (
-          messages.map((m) => (
-            <div key={m.id} className={`msg-bubble ${m.isFromStore ? 'msg-store' : 'msg-user'}`}>
-              {m.text}
-              <span className="msg-time" style={{ textAlign: m.isFromStore ? 'left' : 'right' }}>
-                {m.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </div>
-          ))
+          messages.map((m, index) => {
+            const showDateSeparator =
+              index === 0 || !isSameDay(messages[index - 1].createdAt, m.createdAt);
+
+            return (
+              <React.Fragment key={m.id}>
+                {showDateSeparator && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      margin: '1rem 0',
+                    }}
+                  >
+                    <span
+                      style={{
+                        background: 'var(--md-sys-color-surface-container-high, rgba(0,0,0,0.04))',
+                        padding: '4px 16px',
+                        borderRadius: '100px',
+                        fontSize: '0.7rem',
+                        fontWeight: 900,
+                        letterSpacing: '0.05em',
+                        textTransform: 'uppercase',
+                        color: 'var(--md-sys-color-on-surface-variant, #666)',
+                      }}
+                    >
+                      {formatDateLabel(m.createdAt)}
+                    </span>
+                  </div>
+                )}
+                <div className={`msg-bubble ${m.isFromStore ? 'msg-store' : 'msg-user'}`}>
+                  {m.text}
+                  <span
+                    className="msg-time"
+                    style={{ textAlign: m.isFromStore ? 'left' : 'right' }}
+                  >
+                    {m.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              </React.Fragment>
+            );
+          })
         )}
         <div ref={messagesEndRef} />
       </div>

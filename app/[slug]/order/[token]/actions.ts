@@ -161,9 +161,11 @@ async function getBusinessSlug(businessId: string): Promise<string | null> {
  * Sincroniza la sesión de chat vinculada a un pedido específico.
  *
  * Lógica:
- * 1. Busca una sesión activa vinculada al paymentId exacto.
- * 2. Si no existe, cierra sesiones viejas del mismo buyer (para evitar chat cruzado).
- * 3. Crea una nueva sesión vinculada al paymentId con mensaje de bienvenida.
+ * 1. Busca una sesión activa vinculada al paymentId exacto → si existe, la reusa.
+ * 2. Si no, busca una sesión activa del mismo buyer (guestId) → la REUSA y
+ *    la vincula al paymentId. Esto es CLAVE para mantener el historial del
+ *    chat pre-compra (donde el seller ya mandó mensajes).
+ * 3. Si no hay ninguna, CREA una nueva sesión vinculada al paymentId.
  */
 export async function syncChatSession(params: {
   guestIdFromStorage: string | null;
@@ -175,8 +177,8 @@ export async function syncChatSession(params: {
   try {
     const dniGuestId = `dni-${params.dni}`;
 
-    // 1. Buscamos si ya existe una sesión vinculada a ESTE paymentId
-    const session = await db.query.chatSessions.findFirst({
+    // 1. Buscar sesión activa vinculada EXACTAMENTE a este paymentId
+    const exactSession = await db.query.chatSessions.findFirst({
       where: and(
         eq(chatSessions.paymentId, params.paymentId),
         eq(chatSessions.businessId, params.businessId),
@@ -185,24 +187,33 @@ export async function syncChatSession(params: {
       orderBy: [desc(chatSessions.createdAt)],
     });
 
-    if (session) {
-      return { success: true, sessionId: session.id, guestId: session.guestId };
+    if (exactSession) {
+      return { success: true, sessionId: exactSession.id, guestId: exactSession.guestId };
     }
 
-    // 2. No hay sesión para este pedido → cerramos sesiones viejas del mismo buyer
-    // para evitar que mensajes de otra orden aparezcan aquí
-    await db
-      .update(chatSessions)
-      .set({ status: 'closed', updatedAt: new Date() })
-      .where(
-        and(
-          eq(chatSessions.guestId, dniGuestId),
-          eq(chatSessions.businessId, params.businessId),
-          eq(chatSessions.status, 'active'),
-        ),
-      );
+    // 2. Buscar sesión activa del mismo buyer (guestId) para REUSARLA
+    //    y mantener el historial del chat pre-compra
+    const existingSession = await db.query.chatSessions.findFirst({
+      where: and(
+        eq(chatSessions.guestId, dniGuestId),
+        eq(chatSessions.businessId, params.businessId),
+        eq(chatSessions.status, 'active'),
+      ),
+      orderBy: [desc(chatSessions.createdAt)],
+    });
 
-    // 3. Creamos una nueva sesión vinculada al paymentId
+    if (existingSession) {
+      // Reusamos la sesión existente: solo vinculamos el paymentId
+      // así el cliente ve el historial completo del chat pre-compra
+      await db
+        .update(chatSessions)
+        .set({ paymentId: params.paymentId, updatedAt: new Date() })
+        .where(eq(chatSessions.id, existingSession.id));
+
+      return { success: true, sessionId: existingSession.id, guestId: dniGuestId };
+    }
+
+    // 3. No hay sesión previa → CREAMOS una nueva vinculada al paymentId
     const [newSession] = await db
       .insert(chatSessions)
       .values({
@@ -226,5 +237,63 @@ export async function syncChatSession(params: {
   } catch (error) {
     console.error('[Action Error] syncChatSession:', error);
     return { success: false, error: 'Error al sincronizar chat' };
+  }
+}
+
+/**
+ * Verifica el acceso a una orden usando la identidad de Google.
+ *
+ * Busca en el metadata de payments si el `customerAuth.authId` coincide
+ * con el `authId` del usuario autenticado.
+ */
+export async function verifyOrderByGoogleIdentity(
+  trackingToken: string,
+  authId: string,
+  orderNumber?: string,
+) {
+  try {
+    // 1. Primero verificar si la orden existe (por trackingToken)
+    const order = await db.query.payments.findFirst({
+      where: eq(payments.trackingToken, trackingToken),
+      columns: {
+        id: true,
+        orderNumber: true,
+        metadata: true,
+      },
+    });
+
+    if (!order) {
+      return { success: false, reason: 'not_found' };
+    }
+
+    // 2. Verificar si la orden tiene Google vinculado
+    const metadata = order.metadata as Record<string, unknown> | null;
+    const customerAuth = metadata?.customerAuth as Record<string, unknown> | null;
+    const storedAuthId = customerAuth?.authId as string | undefined;
+
+    if (!storedAuthId) {
+      // La orden existe pero NO fue vinculada a Google
+      return { success: false, reason: 'no_google_link' };
+    }
+
+    if (storedAuthId !== authId) {
+      // Hay Google vinculado pero es otra cuenta
+      return { success: false, reason: 'wrong_account' };
+    }
+
+    // 3. Si se provee orderNumber, validar que coincida
+    if (orderNumber) {
+      const dbOrderNumber = order.orderNumber || null;
+      const providedOrderNumber = orderNumber.trim() || null;
+
+      if (providedOrderNumber !== dbOrderNumber) {
+        return { success: false, reason: 'wrong_order' };
+      }
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('[Action Error] verifyOrderByGoogleIdentity:', error);
+    return { success: false, reason: 'error' };
   }
 }

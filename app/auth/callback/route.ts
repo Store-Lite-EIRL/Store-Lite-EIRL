@@ -41,6 +41,15 @@ export async function GET(request: Request) {
   if (data.user) {
     await syncUserProfile(supabase, data.user);
 
+    // Check for chat intent from storefront
+    const chat = requestUrl.searchParams.get('chat');
+    const slug = requestUrl.searchParams.get('slug');
+
+    if (chat === 'true' && slug) {
+      // Redirect back to the store with chat_ready signal
+      return NextResponse.redirect(`${origin}/${slug}?chat_ready=true`);
+    }
+
     // Check if user has any businesses
     const userBusinesses = await db.query.businesses.findMany({
       where: eq(businesses.ownerId, data.user.id),

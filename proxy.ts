@@ -30,8 +30,14 @@ export async function proxy(request: NextRequest) {
     const slug = extractTenantSlugFromHost(hostname);
 
     if (slug && isTenantHost(hostname)) {
-      // Guard: No reescribir si el slug ya esta en el path (evita doble rewrite)
-      if (!request.nextUrl.pathname.startsWith(`/${slug}`)) {
+      // 🚨 IMPORTANTE: Las rutas /api/* NO se reescriben
+      // Las API routes existen en app/api/... y deben resolver en su path
+      // canónico, no en /{slug}/api/... Si las reescribimos, dan 404.
+      if (request.nextUrl.pathname.startsWith('/api/')) {
+        // API routes: no tocar el pathname, dejar que resuelvan en /api/...
+        // El proxy igual va a correr updateProxy() para session management.
+      } else if (!request.nextUrl.pathname.startsWith(`/${slug}`)) {
+        // Guard: No reescribir si el slug ya esta en el path (evita doble rewrite)
         rewriteUrl = request.nextUrl.clone();
         rewriteUrl.pathname = `/${slug}${request.nextUrl.pathname}`;
 

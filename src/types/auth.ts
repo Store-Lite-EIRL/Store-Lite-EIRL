@@ -38,6 +38,7 @@ export interface AuthState {
  */
 export interface AuthContextType extends AuthState {
   signInWithGoogle: () => Promise<void>;
+  signInWithGoogleForChat: (slug: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 

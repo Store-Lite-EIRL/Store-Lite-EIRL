@@ -1,7 +1,10 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { Product } from '../data';
+
+/** Valida que un string sea un UUID v4 (formato 8-4-4-4-12) */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface CartItem extends Product {
   quantity: number;
@@ -54,6 +57,10 @@ export const CartProvider = ({
   const [cartValidation, setCartValidation] = useState<Record<string, CartServerItem> | null>(null);
   const [isCartValidating, setIsCartValidating] = useState(false);
 
+  // Generación de validación — incrementa cada vez que se pide validateCart.
+  // Sirve para descartar respuestas stale cuando se agregan items mientras se valida.
+  const validationGenRef = useRef(0);
+
   // Load from localStorage on mount
   useEffect(() => {
     const savedCart = localStorage.getItem(STORAGE_KEY);
@@ -92,10 +99,13 @@ export const CartProvider = ({
       }
       return [...prevItems, { ...product, quantity: 1 }];
     });
+    // Invalidar validación previa — el carrito cambió, hay que re-validar
+    setCartValidation(null);
   };
 
   const removeFromCart = (productId: string) => {
     setCartItems((prevItems) => prevItems.filter((item) => item.id !== productId));
+    setCartValidation(null);
   };
 
   const toggleCartItem = (product: Product) => {
@@ -122,6 +132,7 @@ export const CartProvider = ({
         return item;
       }),
     );
+    setCartValidation(null);
   };
 
   const isInCart = (productId: string) => {
@@ -137,14 +148,36 @@ export const CartProvider = ({
     const ids = cartItems.map((item) => item.id);
     if (ids.length === 0) return;
 
+    // Filtrar solo UUIDs válidos — PostgreSQL rechaza IDs no-UUID en columna uuid
+    const validIds = ids.filter((id): id is string => UUID_RE.test(id));
+    if (validIds.length === 0) return;
+
+    // Marcar generación para detectar respuestas stale
+    const gen = ++validationGenRef.current;
     setIsCartValidating(true);
+
     try {
       const res = await fetch('/api/cart/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids }),
+        body: JSON.stringify({ ids: validIds }),
       });
-      if (!res.ok) throw new Error('Validation request failed');
+
+      if (!res.ok) {
+        let detail = `HTTP ${res.status}`;
+        try {
+          const errBody = await res.json();
+          if (errBody?.error) detail += ` — ${errBody.error}`;
+        } catch {
+          // ignore if body isn't valid JSON
+        }
+        throw new Error(`Error al validar carrito (${detail})`);
+      }
+
+      // Si entre que se disparó la request y ahora se agregaron/quitaron items,
+      // descartamos esta respuesta — la nueva generación ya se está ejecutando.
+      if (gen !== validationGenRef.current) return;
+
       const data = await res.json();
 
       const validationMap: Record<string, CartServerItem> = {};
@@ -154,6 +187,9 @@ export const CartProvider = ({
       setCartValidation(validationMap);
     } catch (e) {
       console.error('[CartContext] validate error:', e);
+      // Setear validation como vacío para ROMPER el bucle infinito:
+      // si lo dejamos null, el efecto en CartDrawer lo vuelve a llamar.
+      setCartValidation({});
     } finally {
       setIsCartValidating(false);
     }
