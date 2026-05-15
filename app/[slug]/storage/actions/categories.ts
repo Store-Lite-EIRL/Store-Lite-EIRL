@@ -63,11 +63,12 @@ export async function syncProductCategories(slug: string, categoryNames: string[
       // --- Entitlements Check for New Categories ---
       const entitlements = await getBusinessEntitlements(businessId);
       if (entitlements.maxCategories !== -1) {
-        const [{ count: currentCategoryCount }] = await db
+        const [{ count: rawCount }] = await db
           .select({ count: sql<number>`count(*)` })
           .from(productCategories)
           .where(eq(productCategories.businessId, businessId));
 
+        const currentCategoryCount = Number(rawCount) || 0;
         if (currentCategoryCount + toAdd.length > entitlements.maxCategories) {
           return {
             success: false,

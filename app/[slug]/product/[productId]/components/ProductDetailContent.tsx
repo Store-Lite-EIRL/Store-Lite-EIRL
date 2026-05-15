@@ -378,6 +378,7 @@ export default async function ProductDetailContent({
               business={businessDetail}
               hasPaymentGateway={paymentsEnabled}
               culqiPublicKey={culqiPublicKey || entitlements.culqiPublicKey}
+              isOwner={isOwner}
               likesCount={likesCount}
               hasLiked={hasLiked}
               productId={product.id}

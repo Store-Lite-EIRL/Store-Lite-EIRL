@@ -30,6 +30,7 @@ interface ProductActionInput {
   saleStatus?: SaleStatus;
   seoTitle?: string | null;
   seoDescription?: string | null;
+  metadata?: Record<string, unknown> | null;
 }
 
 function normalizeProductInput(input: ProductActionInput): ProductActionInput {
@@ -51,6 +52,7 @@ function normalizeProductInput(input: ProductActionInput): ProductActionInput {
     saleStatus: input.saleStatus,
     seoTitle: input.seoTitle?.trim() || null,
     seoDescription: input.seoDescription?.trim() || null,
+    metadata: input.metadata || null,
   };
 }
 
@@ -93,6 +95,7 @@ export async function getProductsByBusinessSlug(slug: string) {
       shippingInfo: product.shippingInfo,
       saleStatus: product.saleStatus,
       secondPrice: product.secondPrice ? String(product.secondPrice) : null,
+      metadata: (product.metadata as Record<string, unknown>) || null,
     }));
 
     const entitlements = await getBusinessEntitlements(id);
@@ -280,6 +283,7 @@ export async function createProduct(businessSlug: string, productData: ProductAc
             : null,
         seoTitle: normalizedProduct.seoTitle,
         seoDescription: normalizedProduct.seoDescription,
+        metadata: normalizedProduct.metadata || {},
       })
       .returning({ id: products.id });
 
@@ -398,6 +402,7 @@ export async function updateProduct(
             : null,
         seoTitle: normalizedProduct.seoTitle,
         seoDescription: normalizedProduct.seoDescription,
+        metadata: normalizedProduct.metadata || {},
       })
       .where(and(eq(products.id, productId), eq(products.businessId, businessId)));
 

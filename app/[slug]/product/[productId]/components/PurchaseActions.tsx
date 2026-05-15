@@ -2,6 +2,7 @@
 
 import type { Business } from '@/core/database/schema';
 import { Button } from '@/shared/components/ui/buttons/Button';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { BasicContactDialog } from '../../../components/BasicContactDialog';
 import Checkout from '../../../components/Checkout';
@@ -15,6 +16,7 @@ interface PurchaseActionsProps {
   business: Business;
   hasPaymentGateway: boolean;
   culqiPublicKey?: string;
+  isOwner: boolean;
   // LikeSection props — se renderiza inline con el botón principal
   likesCount: number;
   hasLiked: boolean;
@@ -27,11 +29,13 @@ export default function PurchaseActions({
   business,
   hasPaymentGateway,
   culqiPublicKey,
+  isOwner,
   likesCount,
   hasLiked,
   productId,
   businessSlug,
 }: PurchaseActionsProps) {
+  const router = useRouter();
   const { addToCart } = useCart();
   const [isAdding, setIsAdding] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -63,6 +67,29 @@ export default function PurchaseActions({
   let buyNowText = hasPaymentGateway ? 'Comprar' : 'Contactar Negocio';
   if (isOutOfStock) {
     buyNowText = 'Agotado';
+  }
+
+  // ── Owner view: no puede comprar su propio producto ──
+  if (isOwner) {
+    return (
+      <div className={styles.purchaseActions}>
+        <div className={styles.mainActionRow}>
+          <Button
+            variant="filled"
+            className={styles.buyNowButton}
+            onClick={() => router.push(`/${businessSlug}/storage`)}
+          >
+            Ir al inventario
+          </Button>
+          <LikeSection
+            productId={productId}
+            businessSlug={businessSlug}
+            initialLikesCount={likesCount}
+            initialHasLiked={hasLiked}
+          />
+        </div>
+      </div>
+    );
   }
 
   return (

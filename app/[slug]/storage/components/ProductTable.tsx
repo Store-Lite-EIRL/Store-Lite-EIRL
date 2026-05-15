@@ -1,10 +1,11 @@
 'use client';
 
+import type { ProductWithRelations } from '@/features/products/types/productTypes';
 import { AlertSnackbar, Icon, IconButton } from '@/shared/components/ui';
 import { getBusinessPath } from '@/shared/utils/url';
 import ProductPreviewSheet from '@app/[slug]/components/ProductPreviewSheet';
 import { useParams, useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { usePermissions } from '../../context/PermissionsContext';
 import { useCurrency } from '../context/CurrencyContext';
 import type { Product } from '../data';
@@ -25,6 +26,51 @@ interface ProductTableProps {
   onSort: (key: keyof Product) => void;
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
+  visibleExtraColumns?: string[];
+}
+
+/** Convierte un Product del storage al formato ProductWithRelations que espera el PreviewSheet */
+function toPreviewProduct(sp: Product): ProductWithRelations {
+  const media: { mediaUrl: string; displayOrder: number }[] = [];
+  if (sp.image) {
+    media.push({ mediaUrl: sp.image, displayOrder: 0 });
+  }
+  if (sp.images) {
+    sp.images.forEach((url, i) => {
+      const exists = media.some((m) => m.mediaUrl === url);
+      if (!exists) {
+        media.push({ mediaUrl: url, displayOrder: media.length + i });
+      }
+    });
+  }
+
+  return {
+    id: sp.id,
+    title: sp.name,
+    description: sp.description ?? null,
+    price: sp.price,
+    secondPrice: sp.secondPrice ?? null,
+    stock: sp.stock,
+    currency: sp.currency,
+    isAvailable: sp.status === 'ACTIVO',
+    brand: sp.brand ?? null,
+    tags: sp.tags ?? null,
+    shippingInfo: sp.shippingInfo ?? null,
+    saleStatus: (sp.saleStatus ?? 'NORMAL') as 'MAS_VENDIDO' | 'NUEVO_PRODUCTO' | 'NORMAL',
+    slug: sp.seoTitle ?? null,
+    seoTitle: sp.seoTitle ?? null,
+    seoDescription: sp.seoDescription ?? null,
+    stars: 0,
+    externalCode: null,
+    displayOrder: 0,
+    metadata: sp.metadata ?? null,
+    businessId: '',
+    categoryId: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    category: sp.category ? { id: '', name: sp.category, businessId: '' } : null,
+    media,
+  } as unknown as ProductWithRelations;
 }
 
 export const ProductTable = ({
@@ -33,6 +79,7 @@ export const ProductTable = ({
   onSort,
   onEdit,
   onDelete,
+  visibleExtraColumns = [],
 }: ProductTableProps) => {
   const { symbol: currencySymbol } = useCurrency();
   const params = useParams();
@@ -43,8 +90,14 @@ export const ProductTable = ({
   const [menuProduct, setMenuProduct] = useState<Product | null>(null);
   const [copiedAlert, setCopiedAlert] = useState(false);
   const actionsMenuRef = useRef<MaterialMenuElement | null>(null);
-  const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
+  const [rawPreviewProduct, setRawPreviewProduct] = useState<Product | null>(null);
   const [previewSignal, setPreviewSignal] = useState(0);
+
+  /** Producto mapeado para el PreviewSheet — se actualiza cuando cambia rawPreviewProduct */
+  const previewProduct = useMemo(
+    () => (rawPreviewProduct ? toPreviewProduct(rawPreviewProduct) : null),
+    [rawPreviewProduct],
+  );
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>, product: Product) => {
     const menu = actionsMenuRef.current;
@@ -74,6 +127,14 @@ export const ProductTable = ({
     }
   };
 
+  const handlePreviewEdit = () => {
+    if (rawPreviewProduct) onEdit(rawPreviewProduct);
+  };
+
+  const handlePreviewDelete = () => {
+    if (rawPreviewProduct) onDelete(rawPreviewProduct);
+  };
+
   return (
     <>
       <div className="table-wrapper">
@@ -100,13 +161,22 @@ export const ProductTable = ({
                 sortConfig={sortConfig}
                 onSort={onSort}
               />
+              {visibleExtraColumns.map((col) => (
+                <th key={col} className="extra-col">
+                  <span style={{ textTransform: 'capitalize' }}>{col}</span>
+                  <span className="extra-col-chip">extra</span>
+                </th>
+              ))}
               <th style={{ textAlign: 'center' }}>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {products.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: 0 }}>
+                <td
+                  colSpan={6 + visibleExtraColumns.length}
+                  style={{ textAlign: 'center', padding: 0 }}
+                >
                   <EmptyState />
                 </td>
               </tr>
@@ -118,7 +188,7 @@ export const ProductTable = ({
                       className="product-info"
                       style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
                       onClick={() => {
-                        setPreviewProduct(product);
+                        setRawPreviewProduct(product);
                         setPreviewSignal((prev) => prev + 1);
                       }}
                     >
@@ -153,7 +223,6 @@ export const ProductTable = ({
                         </div>
                       </div>
                       <span>{product.name}</span>
-                      <div className="mt-2 text-xs text-muted-foreground">Ver vista previa</div>
                     </div>
                   </td>
                   <td className="secondary-text">{product.category}</td>
@@ -174,6 +243,13 @@ export const ProductTable = ({
                       {product.status}
                     </span>
                   </td>
+                  {visibleExtraColumns.map((col) => (
+                    <td key={col} className="extra-col-value">
+                      {product.metadata?.[col] !== undefined && product.metadata?.[col] !== null
+                        ? String(product.metadata[col])
+                        : '—'}
+                    </td>
+                  ))}
                   <td>
                     <div className="actions-cell">
                       {(isOwner || can('products.edit')) && (
@@ -210,11 +286,13 @@ export const ProductTable = ({
 
       <ProductPreviewSheet
         slug={businessSlug}
-        product={previewProduct as any}
+        product={previewProduct}
         openSignal={previewSignal}
         isOwner={isOwner}
         hasPaymentGateway={true}
-        culqiPublicKey={undefined} // Owners don't need to buy
+        culqiPublicKey={undefined}
+        onEdit={handlePreviewEdit}
+        onDelete={handlePreviewDelete}
       />
 
       <AlertSnackbar

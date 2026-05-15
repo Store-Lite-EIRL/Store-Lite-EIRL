@@ -73,7 +73,7 @@ export const PLAN_ENTITLEMENTS: Record<
   basico: {
     hasPaymentGateway: false,
     maxProducts: 50,
-    maxCategories: 5,
+    maxCategories: -1, // ilimitado
     canImportProducts: false,
     canCustomizeStorefront: false,
     chatEnabled: false,
@@ -86,7 +86,7 @@ export const PLAN_ENTITLEMENTS: Record<
   emprendedor: {
     hasPaymentGateway: false,
     maxProducts: 150,
-    maxCategories: 20,
+    maxCategories: -1, // ilimitado
     canImportProducts: true,
     canCustomizeStorefront: false,
     chatEnabled: true,
@@ -99,7 +99,7 @@ export const PLAN_ENTITLEMENTS: Record<
   business_pro: {
     hasPaymentGateway: true,
     maxProducts: 300,
-    maxCategories: 50,
+    maxCategories: -1, // ilimitado
     canImportProducts: true,
     canCustomizeStorefront: true,
     chatEnabled: true,
@@ -111,7 +111,7 @@ export const PLAN_ENTITLEMENTS: Record<
 
   enterprise_ai: {
     hasPaymentGateway: true,
-    maxProducts: -1, // ilimitado
+    maxProducts: 600,
     maxCategories: -1, // ilimitado
     canImportProducts: true,
     canCustomizeStorefront: true,

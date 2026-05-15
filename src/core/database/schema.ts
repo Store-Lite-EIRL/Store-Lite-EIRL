@@ -393,6 +393,7 @@ export const products = pgTable(
       .notNull()
       .default('NORMAL'),
     brand: text('brand'),
+    externalCode: text('external_code'),
     slug: text('slug'),
     seoTitle: text('seo_title'),
     seoDescription: text('seo_description'),
@@ -1084,6 +1085,94 @@ export const verificationOtps = pgTable(
 );
 
 // =====================================================
+// IMPORT JOBS — Asynchronous Excel Import
+// =====================================================
+
+export const importJobStatusEnum = pgEnum('import_job_status', [
+  'pending',
+  'processing',
+  'completed',
+  'failed',
+  'cancelled',
+]);
+
+export const importRowStatusEnum = pgEnum('import_row_status', [
+  'pending',
+  'processing',
+  'completed',
+  'error',
+]);
+
+// TABLE: import_jobs
+export const importJobs = pgTable(
+  'import_jobs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    businessId: uuid('business_id')
+      .notNull()
+      .references(() => businesses.id, { onDelete: 'cascade' }),
+    status: importJobStatusEnum('status').notNull().default('pending'),
+    totalRows: integer('total_rows').notNull().default(0),
+    processedRows: integer('processed_rows').notNull().default(0),
+    errorRows: integer('error_rows').notNull().default(0),
+    fileName: text('file_name'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+  },
+  (table) => ({
+    businessIdIdx: index('idx_import_jobs_business_id').on(table.businessId),
+    statusIdx: index('idx_import_jobs_status').on(table.status),
+  }),
+);
+
+// TABLE: import_rows
+export const importRows = pgTable(
+  'import_rows',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    jobId: uuid('job_id')
+      .notNull()
+      .references(() => importJobs.id, { onDelete: 'cascade' }),
+    rowNumber: integer('row_number').notNull(),
+    status: importRowStatusEnum('status').notNull().default('pending'),
+    rawData: jsonb('raw_data').default({}),
+    productId: uuid('product_id').references(() => products.id, {
+      onDelete: 'set null',
+    }),
+    errorMessage: text('error_message'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    processedAt: timestamp('processed_at', { withTimezone: true }),
+  },
+  (table) => ({
+    jobIdIdx: index('idx_import_rows_job_id').on(table.jobId),
+    statusIdx: index('idx_import_rows_status').on(table.status),
+    jobStatusIdx: index('idx_import_rows_job_status').on(table.jobId, table.status),
+  }),
+);
+
+// ─── Relations ──────────────────────────────────────
+
+export const importJobsRelations = relations(importJobs, ({ one, many }) => ({
+  business: one(businesses, {
+    fields: [importJobs.businessId],
+    references: [businesses.id],
+  }),
+  rows: many(importRows),
+}));
+
+export const importRowsRelations = relations(importRows, ({ one }) => ({
+  job: one(importJobs, {
+    fields: [importRows.jobId],
+    references: [importJobs.id],
+  }),
+  product: one(products, {
+    fields: [importRows.productId],
+    references: [products.id],
+  }),
+}));
+
+// =====================================================
 // TYPE EXPORTS
 // =====================================================
 
@@ -1158,3 +1247,9 @@ export function formatTicketNumber(series: string, correlative: number): string 
 // Verification OTP types
 export type VerificationOtp = typeof verificationOtps.$inferSelect;
 export type NewVerificationOtp = typeof verificationOtps.$inferInsert;
+
+// Import types
+export type ImportJob = typeof importJobs.$inferSelect;
+export type NewImportJob = typeof importJobs.$inferInsert;
+export type ImportRow = typeof importRows.$inferSelect;
+export type NewImportRow = typeof importRows.$inferInsert;

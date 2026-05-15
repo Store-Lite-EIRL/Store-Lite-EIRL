@@ -1,12 +1,10 @@
-import { Badge, Button, Icon, IconButton } from '@/shared/components/ui';
-import { CircularProgress } from '@/shared/components/ui/feedback/Progress';
-import { Dialog } from '@/shared/components/ui/surfaces/Dialog';
+import { AlertSnackbar, Badge, Button, Icon, IconButton } from '@/shared/components/ui';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { usePermissions } from '../../context/PermissionsContext';
-import { importProductsBatch } from '../actions';
 import { useStorage } from '../context/StorageContext';
 import type { Product } from '../data';
+import { ImportProgressDialog } from './import/ImportProgressDialog';
 import { ImportPreviewDialog } from './ImportPreviewDialog';
 import { ImportSourceModal } from './ImportSourceModal';
 import { StatsHeader } from './StatsHeader';
@@ -17,23 +15,41 @@ interface StorageHeaderProps {
   onAddProduct: () => void;
 }
 
+interface ImportRowInput {
+  name: string;
+  description?: string;
+  category: string;
+  stock: number;
+  price: number;
+  status: string;
+  imageUrl?: string;
+  brand?: string;
+  externalCode?: string;
+  metadata?: Record<string, unknown>;
+}
+
 export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: StorageHeaderProps) => {
-  const { entitlements } = useStorage();
   const { can, isOwner } = usePermissions();
+  const { entitlements } = useStorage();
   const [sourceModalOpen, setSourceModalOpen] = useState(false);
-  // ... rest of state
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showImportWarning, setShowImportWarning] = useState(false);
 
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  // Progress dialog state
+  const [progressOpen, setProgressOpen] = useState(false);
+  const [importRows, setImportRows] = useState<ImportRowInput[]>([]);
 
   const params = useParams();
+  const slug = params?.slug as string;
   const router = useRouter();
-  const businessSlug = params.slug as string;
 
   const handleImportClick = () => {
-    setSourceModalOpen(true);
+    if (window.innerWidth <= 425) {
+      setShowImportWarning(true);
+    } else {
+      setSourceModalOpen(true);
+    }
   };
 
   const handleFileSelected = (file: File) => {
@@ -42,50 +58,30 @@ export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: Stor
     setImportDialogOpen(true);
   };
 
-  const handleImport = async (products: Product[]) => {
-    setIsUploading(true);
-    setUploadProgress(0);
-
-    // Mapear al formato que espera el backend
-    const payload = products.map((p) => ({
-      name: p.name,
-      description: p.description || '',
-      category: p.category,
-      stock: p.stock,
-      price: Number(p.price) || 0,
-      status: p.status,
-      imageUrl: p.image || undefined,
-    }));
-
-    // Simular un progreso suave ya que Drizzle no emite progreso real
-    const progressInterval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 90) return prev;
-        return prev + 10;
-      });
-    }, 500);
-
-    const result = await importProductsBatch(businessSlug, payload);
-
-    clearInterval(progressInterval);
-
-    if (result.success) {
-      setUploadProgress(100);
-      setTimeout(() => {
-        setIsUploading(false);
-        setImportDialogOpen(false);
-        setSelectedFile(null);
-        router.refresh();
-      }, 500);
-    } else {
-      setIsUploading(false);
-      alert(result.error || 'Error al importar los productos');
-    }
-  };
-
   const handlePreviewClose = () => {
     setImportDialogOpen(false);
     setSelectedFile(null);
+  };
+
+  // Called when user clicks "Importar N productos" in the preview dialog
+  const handleImportStart = (rows: ImportRowInput[], _businessSlug: string) => {
+    setImportDialogOpen(false);
+    setSelectedFile(null);
+    setImportRows(rows);
+    setProgressOpen(true);
+  };
+
+  // Called when progress dialog is done ("Aceptar")
+  const handleProgressComplete = () => {
+    setProgressOpen(false);
+    setImportRows([]);
+    router.refresh();
+  };
+
+  // Called when progress dialog is closed while importing (user cancels)
+  const handleProgressClose = () => {
+    setProgressOpen(false);
+    setImportRows([]);
   };
 
   return (
@@ -107,18 +103,6 @@ export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: Stor
       <StatsHeader products={allProducts} />
 
       <div className="header-actions">
-        <IconButton
-          style={{
-            position: 'relative',
-            backgroundColor: 'var(--md-sys-color-surface-container-high)',
-            borderRadius: '50%',
-          }}
-          className="notifications-btn"
-        >
-          <Icon>notifications</Icon>
-          <Badge count="3" />
-        </IconButton>
-
         {(isOwner || can('products.edit')) && (
           <Button variant="outlined" onClick={handleImportClick} className="btn-import">
             <Icon slot="icon" size={23}>
@@ -136,7 +120,30 @@ export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: Stor
             <span>Añadir Producto</span>
           </Button>
         )}
+
+        <IconButton
+          style={{
+            position: 'relative',
+            backgroundColor: 'var(--md-sys-color-surface-container-high)',
+            borderRadius: '50%',
+          }}
+          className="notifications-btn"
+        >
+          <Icon>notifications</Icon>
+          <Badge count="3" />
+        </IconButton>
       </div>
+
+      {/* Import warning on small screens */}
+      <AlertSnackbar
+        icon="info"
+        description="La importación está disponible solo en pantallas mayores a 425px para una mejor visualización."
+        color="warning"
+        position="bottom-center"
+        open={showImportWarning}
+        onClose={() => setShowImportWarning(false)}
+        autoCloseDuration={4000}
+      />
 
       {/* Step 1: choose source */}
       <ImportSourceModal
@@ -150,48 +157,17 @@ export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: Stor
         open={importDialogOpen}
         file={selectedFile}
         onClose={handlePreviewClose}
-        onImport={handleImport}
+        onImportStart={handleImportStart}
       />
 
-      {/* Step 3: Upload progress modal */}
-      <Dialog
-        open={isUploading}
-        style={{ '--md-dialog-container-max-inline-size': '400px' } as React.CSSProperties}
-      >
-        <div slot="headline" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Icon>cloud_upload</Icon>
-          Importando Productos
-        </div>
-        <div
-          slot="content"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '1.5rem',
-            padding: '1rem 0',
-          }}
-        >
-          <div
-            style={{
-              position: 'relative',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <CircularProgress indeterminate style={{ width: 64, height: 64 }} />
-            <span style={{ position: 'absolute', fontWeight: 600, fontSize: '0.875rem' }}>
-              {uploadProgress}%
-            </span>
-          </div>
-
-          <p style={{ textAlign: 'center', margin: 0, fontWeight: 500 }}>
-            No cierre ni recargue la página. <br />
-            Esta operación puede tomar varios segundos.
-          </p>
-        </div>
-      </Dialog>
+      {/* Step 3: progress & results */}
+      <ImportProgressDialog
+        open={progressOpen}
+        businessSlug={slug}
+        rows={importRows}
+        onComplete={handleProgressComplete}
+        onClose={handleProgressClose}
+      />
     </header>
   );
 };

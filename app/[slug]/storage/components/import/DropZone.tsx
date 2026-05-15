@@ -7,9 +7,17 @@ interface DropZoneProps {
   onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragLeave: () => void;
   onClick: () => void;
+  children?: React.ReactNode;
 }
 
-export function DropZone({ dragOver, onDrop, onDragOver, onDragLeave, onClick }: DropZoneProps) {
+export function DropZone({
+  dragOver,
+  onDrop,
+  onDragOver,
+  onDragLeave,
+  onClick,
+  children,
+}: DropZoneProps) {
   return (
     <div
       onDrop={onDrop}
@@ -19,7 +27,7 @@ export function DropZone({ dragOver, onDrop, onDragOver, onDragLeave, onClick }:
       style={{
         border: `2px dashed ${dragOver ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline-variant)'}`,
         borderRadius: 16,
-        padding: '2rem 1.5rem',
+        padding: '2rem 1.5rem 1.25rem',
         display: 'flex',
         marginInline: 10,
         flexDirection: 'column',
@@ -69,9 +77,10 @@ export function DropZone({ dragOver, onDrop, onDragOver, onDragLeave, onClick }:
             opacity: 0.8,
           }}
         >
-          Máximo 5 categorías (hojas) y 20 productos por categoría
+          Máximo 600 productos.
         </p>
       </div>
+      {children}
     </div>
   );
 }

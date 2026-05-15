@@ -16,6 +16,7 @@ export interface Product {
   secondPrice?: string | null;
   seoTitle?: string | null;
   seoDescription?: string | null;
+  metadata?: Record<string, unknown>;
 }
 
 export const PRODUCTS: Product[] = [

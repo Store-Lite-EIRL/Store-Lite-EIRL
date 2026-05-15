@@ -1,5 +1,6 @@
 'use client';
 
+import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import './storage.css';
 
@@ -7,6 +8,7 @@ import './storage.css';
 import { CreateProductSheet } from './components/CreateProductSheet';
 import { DeleteProductDialog } from './components/DeleteProductDialog';
 import { ProductTable } from './components/ProductTable';
+import { StorageColumnManager } from './components/StorageColumnManager';
 import { StorageHeader } from './components/StorageHeader';
 import { TableControls } from './components/TableControls';
 import { TablePagination } from './components/TablePagination';
@@ -14,11 +16,14 @@ import { TablePagination } from './components/TablePagination';
 // Hooks & Logic
 import { StorageProvider, useStorage } from './context/StorageContext';
 import type { Product } from './data';
+import { useExtraColumns } from './hooks/useExtraColumns';
 import type { SaveProductMediaItem, SaveProductPayload } from './types';
 
 import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
 
 function StorageContent() {
+  const params = useParams();
+  const slug = params?.slug as string;
   // Delete dialog state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
@@ -58,6 +63,8 @@ function StorageContent() {
     saveProductBackground,
     isLoading,
   } = useStorage();
+
+  const extraColumns = useExtraColumns(slug, allFilteredProducts);
 
   if (isLoading && products.length === 0) {
     return (
@@ -133,12 +140,20 @@ function StorageContent() {
       <main className="storage-content" style={{ position: 'relative' }}>
         <TableControls />
 
+        <div
+          className="table-controls-row"
+          style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.25rem 0' }}
+        >
+          <StorageColumnManager columns={extraColumns} />
+        </div>
+
         <ProductTable
           products={products}
           sortConfig={sortConfig}
           onSort={handleSort}
           onEdit={handleEditClick}
           onDelete={handleDeleteClick}
+          visibleExtraColumns={extraColumns.visibleColumns}
         />
 
         <TablePagination

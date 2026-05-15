@@ -303,6 +303,44 @@
   overflow-x: auto;
 }
 
+/* ── Sticky table header ── */
+.storage-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.storage-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: var(--md-sys-color-surface);
+}
+
+/* ── Extra columns from metadata ── */
+.storage-table th.extra-col,
+.storage-table td.extra-col-value {
+  min-width: 110px;
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.storage-table th .extra-col-chip {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
 .storage-table {
   width: 100%;
   border-collapse: collapse;
@@ -496,6 +534,143 @@
 }
 
 /* ============================================================
+   Import Preview Dialog
+   ============================================================ */
+
+.import-preview-dialog {
+  /*
+   * Material Web Dialog v2.4 sizes the host with regular CSS properties
+   * (max-width/max-height). The old token names do not override the default
+   * 560px cap, so the import preview looked cramped.
+   */
+  width: min(1760px, calc(100vw - 32px));
+  min-width: min(1280px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 32px);
+  height: fit-content;
+  --md-dialog-container-shape: 24px;
+}
+
+/* Laptop HD / desktop medio (≥ 1366px) */
+@media (min-width: 1366px) {
+  .import-preview-dialog {
+    width: min(1500px, calc(100vw - 40px));
+    min-width: min(1360px, calc(100vw - 40px));
+    max-width: calc(100vw - 40px);
+    max-height: calc(100dvh - 40px);
+  }
+}
+
+/* Desktop grande (≥ 1600px) */
+@media (min-width: 1600px) {
+  .import-preview-dialog {
+    width: min(1680px, calc(100vw - 48px));
+    min-width: min(1500px, calc(100vw - 48px));
+    max-width: calc(100vw - 48px);
+    max-height: calc(100dvh - 48px);
+  }
+}
+
+/* Full HD desktop (≥ 1920px) */
+@media (min-width: 1920px) {
+  .import-preview-dialog {
+    width: min(1840px, calc(100vw - 64px));
+    min-width: min(1680px, calc(100vw - 64px));
+    max-width: calc(100vw - 64px);
+    max-height: calc(100dvh - 56px);
+  }
+}
+
+/* Ultra-wide / 2K+ (≥ 2560px) */
+@media (min-width: 2560px) {
+  .import-preview-dialog {
+    width: min(2300px, calc(100vw - 96px));
+    min-width: min(2000px, calc(100vw - 96px));
+    max-width: calc(100vw - 96px);
+    max-height: calc(100dvh - 72px);
+  }
+}
+
+/* 4K UHD (≥ 3840px) */
+@media (min-width: 3840px) {
+  .import-preview-dialog {
+    width: min(3200px, calc(100vw - 160px));
+    min-width: min(2800px, calc(100vw - 160px));
+    max-width: calc(100vw - 160px);
+    max-height: calc(100dvh - 96px);
+  }
+}
+
+/* Tablet horizontal (≤ 1024px) */
+@media (max-width: 1024px) {
+  .import-preview-dialog {
+    width: calc(100vw - 24px);
+    min-width: auto;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 24px);
+  }
+}
+
+/* Mobile (≤ 768px) — full-screen */
+@media (max-width: 768px) {
+  .import-preview-dialog {
+    width: 100vw;
+    min-width: auto;
+    max-width: 100vw;
+    max-height: 100dvh;
+    min-height: 100dvh;
+    --md-dialog-container-shape: 0px;
+  }
+}
+
+/* ── Reset global .storage-table first-child override inside import preview ── */
+.import-preview-dialog .storage-table th:first-child,
+.import-preview-dialog .storage-table td:first-child {
+  width: auto;
+  min-width: auto;
+}
+
+/* ── Sticky header for preview table ── */
+.import-preview-dialog .storage-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+.import-preview-dialog .storage-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background-color: var(--md-sys-color-surface-container, var(--md-sys-color-surface));
+}
+
+/* ── Compact padding + column separators for preview table ── */
+.import-preview-dialog .storage-table th,
+.import-preview-dialog .storage-table td {
+  border-right: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.import-preview-dialog .storage-table th:last-child,
+.import-preview-dialog .storage-table td:last-child {
+  border-right: none;
+}
+
+.import-preview-dialog .storage-table th {
+  padding: 0.6rem 0.75rem;
+  font-size: 0.68rem;
+}
+
+.import-preview-dialog .storage-table td {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.78rem;
+}
+
+/* ── Column-specific overrides for preview table ── */
+.import-preview-dialog .storage-table td:nth-child(4) {
+  overflow: hidden;
+}
+
+/* ============================================================
    Responsive Breakpoints
    ============================================================ */
 
@@ -599,7 +774,6 @@
     padding-inline: 0.75rem;
     padding-top: 1rem;
     margin-bottom: 1rem;
-    position: relative; /* For notification absolute positioning if needed */
   }
 
   .storage-title-wrap {
@@ -610,8 +784,6 @@
     width: 100%;
   }
 
-  /* We move the notifications button conceptually to the title row via absolute positioning
-     since it's inside header-actions in the HTML */
   .header-actions {
     display: flex;
     flex-direction: row;
@@ -623,18 +795,13 @@
   }
 
   .notifications-btn {
-    position: absolute !important;
-    top: 1rem;
-    right: 0.5rem; /* Closer to the extreme edge */
-    background-color: var(--md-sys-color-surface-container-high) !important;
-    margin: 0 !important;
-    z-index: 10;
+    flex-shrink: 0;
   }
 
   .btn-import,
   .btn-add-product {
-    flex: 1; /* Both buttons 50% width */
-    width: 50% !important;
+    flex: 1;
+    min-width: 0;
     --md-filled-button-container-height: 48px;
     --md-outlined-button-container-height: 48px;
     padding: 0 0.25rem;

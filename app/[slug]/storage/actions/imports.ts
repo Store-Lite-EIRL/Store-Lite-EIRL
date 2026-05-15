@@ -17,6 +17,8 @@ interface ImportProductInput {
   price: number;
   status: string;
   imageUrl?: string;
+  brand?: string;
+  metadata?: Record<string, unknown>;
 }
 
 const LOW_STOCK_THRESHOLD = 5;
@@ -84,6 +86,8 @@ export async function importProductsBatch(
       price: String(p.price),
       stock: p.stock,
       isAvailable: p.status === 'ACTIVO',
+      brand: p.brand || null,
+      metadata: p.metadata || {},
     }));
 
     if (newProductsData.length > 0) {
