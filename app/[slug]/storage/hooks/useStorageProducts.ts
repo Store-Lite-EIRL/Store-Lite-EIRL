@@ -515,6 +515,30 @@ export const useStorageProducts = ({
     updateProduct,
     saveProductBackground,
     saveCategories,
+    refreshProducts: async () => {
+      Reflect.deleteProperty(globalStorageCache, businessSlug);
+      setIsLoading(true);
+      try {
+        const productsRes = await getProductsByBusinessSlug(businessSlug);
+        if (!productsRes.error && productsRes.products) {
+          setCurrentProducts(productsRes.products);
+          setCurrentPage(1);
+          if (productsRes.businessId) setBusinessId(productsRes.businessId);
+          if (productsRes.entitlements) setEntitlements(productsRes.entitlements);
+          globalStorageCache[businessSlug] = {
+            products: productsRes.products,
+            categories,
+            businessId: productsRes.businessId || businessId,
+            entitlements: productsRes.entitlements || null,
+            timestamp: Date.now(),
+          };
+        }
+      } catch (error) {
+        console.error('Error refreshing products:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
     refreshCategories: async () => {
       const { categories: updatedCategories } = await getProductCategories(businessSlug);
       if (updatedCategories) {

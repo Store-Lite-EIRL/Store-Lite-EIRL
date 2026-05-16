@@ -1,5 +1,6 @@
 'use client';
 
+import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import './storage.css';
 
@@ -14,11 +15,14 @@ import { TablePagination } from './components/TablePagination';
 // Hooks & Logic
 import { StorageProvider, useStorage } from './context/StorageContext';
 import type { Product } from './data';
+import { useExtraColumns } from './hooks/useExtraColumns';
 import type { SaveProductMediaItem, SaveProductPayload } from './types';
 
 import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
 
 function StorageContent() {
+  const params = useParams();
+  const slug = params?.slug as string;
   // Delete dialog state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
@@ -58,6 +62,8 @@ function StorageContent() {
     saveProductBackground,
     isLoading,
   } = useStorage();
+
+  const extraColumns = useExtraColumns(slug, allFilteredProducts);
 
   if (isLoading && products.length === 0) {
     return (
@@ -131,7 +137,7 @@ function StorageContent() {
       />
 
       <main className="storage-content" style={{ position: 'relative' }}>
-        <TableControls />
+        <TableControls extraColumns={extraColumns} />
 
         <ProductTable
           products={products}
@@ -139,6 +145,7 @@ function StorageContent() {
           onSort={handleSort}
           onEdit={handleEditClick}
           onDelete={handleDeleteClick}
+          visibleExtraColumns={extraColumns.visibleColumns}
         />
 
         <TablePagination

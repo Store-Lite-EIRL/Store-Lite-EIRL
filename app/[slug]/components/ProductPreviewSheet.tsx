@@ -3,11 +3,13 @@
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
 import { Button, Sheet } from '@/shared/components/ui';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
+import { Checkbox } from '@/shared/components/ui/inputs/Checkbox';
 import { getBusinessPath } from '@/shared/utils/url';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toCartProduct } from '../product/utils/cartHelpers';
+import { updateProductPublicMetadata } from '../storage/actions/products';
 import { useCart } from '../storage/context/CartContext';
 import { formatPrice } from '../storage/utils/currency';
 import Checkout from './Checkout';
@@ -28,6 +30,10 @@ interface ProductPreviewSheetProps {
   onEdit?: () => void;
   onDelete?: () => void;
   initialImageIndex?: number;
+  /** Columnas extra marcadas como visibles en el Column Manager (storage) */
+  visibleExtraColumns?: string[];
+  /** Notifies the parent so the client-side product copy does not keep stale metadata. */
+  onPublicMetadataChange?: (productId: string, publicKeys: string[]) => void;
 }
 
 type SheetElement = HTMLDivElement & { show?: () => void; close?: () => void };
@@ -49,10 +55,69 @@ export default function ProductPreviewSheet({
   onEdit,
   onDelete,
   initialImageIndex = 0,
+  visibleExtraColumns,
+  onPublicMetadataChange,
 }: ProductPreviewSheetProps) {
   const { isInCart, toggleCartItem } = useCart();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+  // ── Public visibility toggles for extra metadata fields ──
+  // undefined = _public not set => all fields are public (backward compat)
+  const [publicKeys, setPublicKeys] = useState<string[] | undefined>(undefined);
+  const togglingRef = useRef(false);
+
+  // Sync publicKeys state when product changes
+  useEffect(() => {
+    if (togglingRef.current) return; // don't override while toggling
+    const meta = (product?.metadata as Record<string, unknown>) ?? {};
+    const _public = meta._public;
+    setPublicKeys(Array.isArray(_public) ? (_public as string[]) : undefined);
+  }, [product]);
+
+  const isFieldPublic = useCallback(
+    (key: string): boolean => {
+      if (publicKeys === undefined) return true; // _public not set = all public
+      return publicKeys.includes(key);
+    },
+    [publicKeys],
+  );
+
+  const handlePublicToggle = useCallback(
+    async (key: string) => {
+      if (!product) return;
+
+      const meta = (product.metadata as Record<string, unknown>) ?? {};
+      const allMetaKeys = Object.keys(meta).filter((k) => k !== '_public');
+
+      // If _public does not exist yet, all metadata fields are considered public.
+      // IMPORTANT: use all metadata keys here, not only visibleExtraColumns, otherwise toggling
+      // one visible column would accidentally make hidden metadata columns private.
+      const currentPublic = publicKeys ?? allMetaKeys;
+
+      const newKeys = currentPublic.includes(key)
+        ? currentPublic.filter((k) => k !== key)
+        : [...currentPublic, key];
+      const previousPublicKeys = publicKeys ? [...publicKeys] : undefined;
+
+      togglingRef.current = true;
+      setPublicKeys(newKeys);
+
+      try {
+        const result = await updateProductPublicMetadata(slug, product.id, newKeys);
+        if (!result.success) {
+          setPublicKeys(previousPublicKeys); // revert on error
+          return;
+        }
+        onPublicMetadataChange?.(product.id, newKeys);
+      } catch {
+        setPublicKeys(previousPublicKeys); // revert on error
+      } finally {
+        togglingRef.current = false;
+      }
+    },
+    [product, publicKeys, slug, onPublicMetadataChange],
+  );
 
   const handleAction = (action?: () => void) => {
     if (!action) return;
@@ -164,10 +229,19 @@ export default function ProductPreviewSheet({
           </div>
 
           <div className={styles.details}>
-            <p className={styles.category}>
-              {product.brand ? `${product.brand.toUpperCase()} | ` : ''}
-              {category}
-            </p>
+            {/* Top row: category + brand + stock indicator */}
+            <div className={styles.topRow}>
+              <p className={styles.category}>
+                {product.brand ? `${product.brand.toUpperCase()} | ` : ''}
+                {category}
+              </p>
+              <span
+                className={`${styles.stockBadge} ${product.stock > 0 ? styles.inStock : styles.outOfStock}`}
+              >
+                <span className={styles.stockDot} />
+                {product.stock > 0 ? `${product.stock} uds.` : 'Agotado'}
+              </span>
+            </div>
             <h3 className={styles.title}>{product.title}</h3>
 
             <div className={styles.priceContainer}>
@@ -200,6 +274,7 @@ export default function ProductPreviewSheet({
               )}
             </div>
 
+            {/* ── Tags ── */}
             {product.tags && product.tags.length > 0 && (
               <div className={styles.tags}>
                 {product.tags.map((tag, i) => (
@@ -210,25 +285,72 @@ export default function ProductPreviewSheet({
               </div>
             )}
 
-            <div className={styles.metaRow}>
-              <span className={styles.priceTag}>
-                {formatPrice(Number(product.secondPrice || product.price), currency)}
-              </span>
-              <div className={styles.statusBundle}>
-                <span
-                  className={`${styles.statusChip} ${
-                    product.stock > 0 ? styles.available : styles.unavailable
-                  }`}
-                >
-                  {product.stock > 0 ? 'Disponible' : 'Sin Stock'}
-                </span>
-                {product.stock === 0 ? (
-                  <span className={styles.stockLabel}> (AGOTADO) </span>
-                ) : (
-                  <span className={styles.stockLabel}> ({product.stock} disp.) </span>
-                )}
-              </div>
-            </div>
+            {/* ── Extra metadata fields ── */}
+            {(() => {
+              const meta = (product?.metadata as Record<string, unknown>) ?? {};
+              const productMetaKeys = Object.keys(meta).filter((k) => k !== '_public');
+
+              // En storage (con visibleExtraColumns): muestra las columnas checkeadas
+              // con opción de toggle público/privado.
+              // En storefront (sin visibleExtraColumns):
+              //   - Owner: ve TODOS los campos, pueda reactivar los privados
+              //   - Público: solo ve los campos en _public (o todos si no existe _public)
+              const isStorageView = visibleExtraColumns !== undefined;
+              const fieldsToShow = isStorageView
+                ? visibleExtraColumns.length > 0
+                  ? visibleExtraColumns.filter((col) => col in meta && col !== '_public')
+                  : productMetaKeys
+                : isOwner
+                  ? productMetaKeys
+                  : Array.isArray(meta._public)
+                    ? (meta._public as string[]).filter((k) => k in meta && k !== '_public')
+                    : productMetaKeys;
+
+              if (fieldsToShow.length === 0) return null;
+
+              return (
+                <div className={styles.extraFieldsSection}>
+                  <div className={styles.extraFieldsHeader}>
+                    <Icon size={16}>{isOwner ? 'view_column' : 'info'}</Icon>
+                    <span className={styles.extraFieldsTitle}>
+                      {isOwner ? 'Campos adicionales' : 'Información adicional'}
+                    </span>
+                  </div>
+                  {fieldsToShow.map((col) => {
+                    const value = meta[col];
+                    if (value === undefined || value === null) return null;
+
+                    return (
+                      <div key={col} className={styles.extraFieldRow}>
+                        {isOwner && (
+                          <span className={styles.extraFieldCheckbox}>
+                            <Checkbox
+                              checked={isFieldPublic(col)}
+                              onChange={() => handlePublicToggle(col)}
+                              touchTarget="none"
+                            />
+                          </span>
+                        )}
+                        <span className={styles.extraFieldName}>{col}</span>
+                        <span className={styles.extraFieldValue}>{String(value)}</span>
+                        {isOwner && (
+                          <span
+                            className={`${styles.extraFieldPublicIcon} ${
+                              isFieldPublic(col) ? styles.isPublic : styles.isPrivate
+                            }`}
+                          >
+                            <Icon size={12}>
+                              {isFieldPublic(col) ? 'public' : 'visibility_off'}
+                            </Icon>
+                            {isFieldPublic(col) ? 'Público' : 'Privado'}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
 
             {product.shippingInfo && (
               <div className={styles.shippingCard}>

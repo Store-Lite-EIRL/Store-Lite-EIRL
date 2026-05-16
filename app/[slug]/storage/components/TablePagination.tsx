@@ -8,6 +8,33 @@ interface TablePaginationProps {
   onPageChange: (page: number) => void;
 }
 
+/**
+ * Genera un array de páginas con elipsis para paginación inteligente.
+ * Ejemplo: total=50, current=23 → [1, '…', 22, 23, 24, '…', 50]
+ */
+function getPageNumbers(current: number, total: number): (number | 'ellipsis')[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  const pages: (number | 'ellipsis')[] = [1];
+
+  const windowStart = Math.max(2, current - 1);
+  const windowEnd = Math.min(total - 1, current + 1);
+
+  if (windowStart > 2) pages.push('ellipsis');
+
+  for (let i = windowStart; i <= windowEnd; i++) {
+    pages.push(i);
+  }
+
+  if (windowEnd < total - 1) pages.push('ellipsis');
+
+  pages.push(total);
+
+  return pages;
+}
+
 export const TablePagination = ({
   currentPage,
   totalPages,
@@ -15,6 +42,8 @@ export const TablePagination = ({
   currentItemsCount,
   onPageChange,
 }: TablePaginationProps) => {
+  const pageNumbers = getPageNumbers(currentPage, totalPages);
+
   return (
     <div className="table-footer">
       <div>
@@ -28,16 +57,22 @@ export const TablePagination = ({
           <Icon>chevron_left</Icon>
         </IconButton>
 
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-          <Button
-            key={page}
-            variant="text"
-            className={`page-num ${currentPage === page ? 'active' : ''}`}
-            onClick={() => onPageChange(page)}
-          >
-            {page}
-          </Button>
-        ))}
+        {pageNumbers.map((page, idx) =>
+          page === 'ellipsis' ? (
+            <span key={`e-${idx}`} className="pagination-ellipsis">
+              ...
+            </span>
+          ) : (
+            <Button
+              key={page}
+              variant="text"
+              className={`page-num ${currentPage === page ? 'active' : ''}`}
+              onClick={() => onPageChange(page)}
+            >
+              {page}
+            </Button>
+          ),
+        )}
 
         <IconButton
           disabled={currentPage === totalPages || totalPages === 0}

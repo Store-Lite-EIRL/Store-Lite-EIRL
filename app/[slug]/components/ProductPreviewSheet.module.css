@@ -238,51 +238,46 @@
   text-decoration: underline;
 }
 
-.metaRow {
+/* ── Top row: category + stock badge ── */
+.topRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--md-sys-color-surface-container-high);
-  padding: 0.75rem 1rem;
-  border-radius: 1rem;
-  margin: 0.5rem 0;
+  gap: 0.75rem;
 }
 
-.priceTag {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--md-sys-color-primary);
-}
-
-.statusBundle {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.2rem;
-}
-
-.statusChip {
+.stockBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  padding: 0.2rem 0.5rem;
-  border-radius: 999px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.statusChip.available {
-  background: var(--md-sys-color-tertiary-container);
-  color: var(--md-sys-color-on-tertiary-container);
+.stockDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
-.statusChip.unavailable {
-  background: var(--md-sys-color-error-container);
-  color: var(--md-sys-color-on-error-container);
+.stockBadge.inStock {
+  color: var(--md-sys-color-tertiary, #7d5260);
 }
 
-.stockLabel {
-  font-size: 0.75rem;
-  color: var(--md-sys-color-on-surface-variant);
-  font-weight: 500;
+.stockBadge.inStock .stockDot {
+  background: var(--md-sys-color-tertiary, #7d5260);
+}
+
+.stockBadge.outOfStock {
+  color: var(--md-sys-color-error, #b3261e);
+}
+
+.stockBadge.outOfStock .stockDot {
+  background: var(--md-sys-color-error, #b3261e);
 }
 
 /* ── Shipping info card ── */
@@ -361,6 +356,82 @@
   margin: 0;
   font-size: 0.82rem;
   color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ── Extra fields (metadata) section ── */
+.extraFieldsSection {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.extraFieldsHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--md-sys-color-primary, #65558f);
+  margin-bottom: 2px;
+}
+
+.extraFieldsTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--md-sys-color-primary, #65558f);
+}
+
+.extraFieldRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.extraFieldRow:last-child {
+  border-bottom: none;
+}
+
+.extraFieldCheckbox {
+  flex-shrink: 0;
+}
+
+.extraFieldName {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  text-transform: capitalize;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.extraFieldValue {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  word-break: break-word;
+}
+
+.extraFieldPublicIcon {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--md-sys-color-outline, #79747e);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.extraFieldPublicIcon.isPublic {
+  color: var(--md-sys-color-tertiary, #7d5260);
+}
+
+.extraFieldPublicIcon.isPrivate {
+  color: var(--md-sys-color-outline, #79747e);
 }
 
 @media (max-width: 900px) {

@@ -41,6 +41,8 @@ interface StorageContextType {
   }) => Promise<{ success: boolean; error?: string }>;
   saveCategories: (categories: string[]) => Promise<{ success: boolean; error?: string }>;
   refreshCategories: () => Promise<void>;
+  /** Invalida el caché y vuelve a cargar productos desde el servidor */
+  refreshProducts: () => Promise<void>;
 }
 
 export const StorageContext = createContext<StorageContextType | undefined>(undefined);

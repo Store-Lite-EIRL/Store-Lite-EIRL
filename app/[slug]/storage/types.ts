@@ -10,6 +10,7 @@ export interface SaveProductPayload {
   shippingInfo?: string;
   secondPrice?: number;
   saleStatus?: string;
+  metadata?: Record<string, unknown> | null;
 }
 
 export type SaveProductMediaItem =

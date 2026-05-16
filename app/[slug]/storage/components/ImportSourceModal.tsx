@@ -60,6 +60,7 @@ export const ImportSourceModal = ({ open, onClose, onFileSelected }: ImportSourc
     <Dialog
       open={open}
       onClose={handleClose}
+      type="alert"
       style={
         {
           '--md-dialog-container-max-inline-size': '520px',
@@ -86,29 +87,23 @@ export const ImportSourceModal = ({ open, onClose, onFileSelected }: ImportSourc
             flexWrap: 'wrap',
           }}
         >
-          {[
-            { icon: 'table_chart', label: 'Excel (.xlsx / .xls)', color: '#1d6f42' },
-            { icon: 'data_object', label: 'SQL (.sql)', color: '#2e6da4' },
-          ].map(({ icon, label, color }) => (
-            <div
-              key={label}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.35rem 0.75rem',
-                borderRadius: 100,
-                border: `1px solid ${color}30`,
-                background: `${color}10`,
-                color,
-                fontSize: '0.8rem',
-                fontWeight: 600,
-              }}
-            >
-              <Icon style={{ fontSize: 20 }}>{icon}</Icon>
-              {label}
-            </div>
-          ))}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.35rem 0.75rem',
+              borderRadius: 100,
+              border: '1px solid #1d6f4230',
+              background: '#1d6f4210',
+              color: '#1d6f42',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+            }}
+          >
+            <Icon style={{ fontSize: 20 }}>table_chart</Icon>
+            Excel (.xlsx / .xls)
+          </div>
         </div>
 
         <DropZone
@@ -120,12 +115,50 @@ export const ImportSourceModal = ({ open, onClose, onFileSelected }: ImportSourc
           }}
           onDragLeave={() => setDragOver(false)}
           onClick={() => fileInputRef.current?.click()}
-        />
+        >
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.35rem',
+              padding: '0.6rem 0 0',
+              borderTop: '1px solid var(--md-sys-color-outline-variant)',
+              fontSize: '0.75rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 600 }}>
+              <Icon style={{ fontSize: 16, color: 'var(--md-sys-color-primary)' }}>info</Icon>
+              Requisitos del archivo
+            </div>
+            <div
+              style={{
+                color: 'var(--md-sys-color-on-surface-variant)',
+                lineHeight: 1.6,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.2rem',
+              }}
+            >
+              <span>
+                <strong style={{ color: 'var(--md-sys-color-on-surface)' }}>
+                  Columnas necesarias:
+                </strong>{' '}
+                Imagen, Producto, Descripción, Categoría, Marca, Stock, Precio
+              </span>
+              <span>
+                Solo se importará la{' '}
+                <strong style={{ color: 'var(--md-sys-color-on-surface)' }}>primera hoja</strong>{' '}
+                del Excel
+              </span>
+            </div>
+          </div>
+        </DropZone>
         <input
           title="Seleccionar archivo"
           ref={fileInputRef}
           type="file"
-          accept=".xlsx,.xls,.sql"
+          accept=".xlsx,.xls"
           style={{ display: 'none' }}
           onChange={handleInputChange}
         />

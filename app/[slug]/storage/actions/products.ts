@@ -30,6 +30,7 @@ interface ProductActionInput {
   saleStatus?: SaleStatus;
   seoTitle?: string | null;
   seoDescription?: string | null;
+  metadata?: Record<string, unknown> | null;
 }
 
 function normalizeProductInput(input: ProductActionInput): ProductActionInput {
@@ -51,6 +52,7 @@ function normalizeProductInput(input: ProductActionInput): ProductActionInput {
     saleStatus: input.saleStatus,
     seoTitle: input.seoTitle?.trim() || null,
     seoDescription: input.seoDescription?.trim() || null,
+    metadata: input.metadata || null,
   };
 }
 
@@ -93,6 +95,7 @@ export async function getProductsByBusinessSlug(slug: string) {
       shippingInfo: product.shippingInfo,
       saleStatus: product.saleStatus,
       secondPrice: product.secondPrice ? String(product.secondPrice) : null,
+      metadata: (product.metadata as Record<string, unknown>) || null,
     }));
 
     const entitlements = await getBusinessEntitlements(id);
@@ -280,6 +283,7 @@ export async function createProduct(businessSlug: string, productData: ProductAc
             : null,
         seoTitle: normalizedProduct.seoTitle,
         seoDescription: normalizedProduct.seoDescription,
+        metadata: normalizedProduct.metadata || {},
       })
       .returning({ id: products.id });
 
@@ -398,6 +402,7 @@ export async function updateProduct(
             : null,
         seoTitle: normalizedProduct.seoTitle,
         seoDescription: normalizedProduct.seoDescription,
+        metadata: normalizedProduct.metadata || {},
       })
       .where(and(eq(products.id, productId), eq(products.businessId, businessId)));
 
@@ -505,6 +510,52 @@ export async function toggleLikeProduct(productId: string, businessSlug?: string
   }
 }
 
+/**
+ * Updates the public visibility of extra metadata fields for a product.
+ * Stores the list of public keys inside metadata._public.
+ */
+export async function updateProductPublicMetadata(
+  businessSlug: string,
+  productId: string,
+  publicKeys: string[],
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { businessId } = await requireAccess(businessSlug, 'products.edit');
+
+    const product = await db.query.products.findFirst({
+      where: and(eq(products.id, productId), eq(products.businessId, businessId)),
+      columns: { id: true, metadata: true },
+    });
+
+    if (!product) {
+      throw new Error('Producto no encontrado o no autorizado');
+    }
+
+    const currentMetadata = (product.metadata as Record<string, unknown>) ?? {};
+    const updatedMetadata = {
+      ...currentMetadata,
+      _public: publicKeys,
+    };
+
+    await db
+      .update(products)
+      .set({ metadata: updatedMetadata })
+      .where(and(eq(products.id, productId), eq(products.businessId, businessId)));
+
+    revalidatePath(`/${businessSlug}`);
+    revalidatePath(`/${businessSlug}/storage`);
+
+    return { success: true };
+  } catch (error) {
+    logError('updateProductPublicMetadata', error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Error al actualizar visibilidad de metadatos',
+    };
+  }
+}
+
 export async function deleteProduct(businessSlug: string, productId: string) {
   try {
     // Usar requireAccess para soportar miembros del equipo con permisos
@@ -520,7 +571,9 @@ export async function deleteProduct(businessSlug: string, productId: string) {
     }
 
     await db.delete(productMedia).where(eq(productMedia.productId, productId));
-    await db.delete(products).where(eq(products.id, productId));
+    await db
+      .delete(products)
+      .where(and(eq(products.id, productId), eq(products.businessId, businessId)));
 
     revalidatePath(`/${businessSlug}`);
     revalidatePath(`/${businessSlug}/storage`);

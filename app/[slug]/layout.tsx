@@ -98,6 +98,7 @@ export default async function BusinessLayout({ children, modal, params }: Busine
       shippingInfo: p.shippingInfo,
       saleStatus: p.saleStatus || 'NORMAL',
       secondPrice: p.secondPrice ? String(p.secondPrice) : null,
+      metadata: (p.metadata as Record<string, unknown>) || null,
     }));
   }
 

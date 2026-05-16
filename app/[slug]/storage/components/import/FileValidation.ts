@@ -1,4 +1,5 @@
-const ALLOWED_EXTENSIONS = ['.xlsx', '.xls', '.sql'];
+const ALLOWED_EXTENSIONS = ['.xlsx', '.xls'];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB — Supabase free tier
 
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -14,8 +15,8 @@ export function validateFile(file: File): { valid: boolean; error?: string } {
       error: `Tipo no permitido. Solo se aceptan: ${ALLOWED_EXTENSIONS.join(', ')}`,
     };
   }
-  if (file.size > 20 * 1024 * 1024) {
-    return { valid: false, error: 'El archivo supera el tamaño máximo de 20 MB.' };
+  if (file.size > MAX_FILE_SIZE) {
+    return { valid: false, error: 'El archivo supera el tamaño máximo de 5 MB.' };
   }
   return { valid: true };
 }
@@ -32,12 +33,10 @@ export interface FileInfo {
 
 export function buildFileInfo(file: File): FileInfo {
   const validation = validateFile(file);
-  const ext = '.' + file.name.split('.').pop()?.toLowerCase();
-  const typeLabel = ext === '.sql' ? 'SQL' : 'Excel (XLSX)';
   return {
     name: file.name,
     size: formatBytes(file.size),
-    type: typeLabel,
+    type: 'Excel',
     status: validation.valid ? 'valid' : 'invalid',
     error: validation.error,
   };

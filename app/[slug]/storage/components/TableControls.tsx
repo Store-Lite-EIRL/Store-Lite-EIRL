@@ -2,8 +2,14 @@
 import { getMaterialSelectValue, type MaterialSelectEvent } from '@/shared/utils';
 import React from 'react';
 import { useStorage } from '../context/StorageContext';
+import type { ExtraColumnsState } from '../hooks/useExtraColumns';
+import { StorageColumnManager } from './StorageColumnManager';
 
-export const TableControls = () => {
+interface TableControlsProps {
+  extraColumns?: ExtraColumnsState;
+}
+
+export const TableControls = ({ extraColumns }: TableControlsProps) => {
   const {
     searchTerm,
     setSearchTerm,
@@ -69,6 +75,8 @@ export const TableControls = () => {
             ]}
           />
         </div>
+
+        {extraColumns && <StorageColumnManager columns={extraColumns} />}
       </div>
     </div>
   );

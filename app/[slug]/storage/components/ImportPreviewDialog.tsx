@@ -4,59 +4,149 @@ import { Button, Icon } from '@/shared/components/ui';
 import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
 import { CircularProgress } from '@/shared/components/ui/feedback/Progress';
 import { Dialog } from '@/shared/components/ui/surfaces/Dialog';
-import React, { useEffect, useRef, useState } from 'react';
-import type { Product } from '../data';
-import type { ExcelRow } from './import/ExcelParser';
+import { useParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { useEntitlements } from '../../context/BusinessEntitlementsContext';
+import { useStorage } from '../context/StorageContext';
+import { analyzeDataQuality, type DataQualityReport } from './import/DataQualityAnalyzer';
+import { DataQualityPanel } from './import/DataQualityPanel';
+import type { ExcelRow, ParseResult } from './import/ExcelParser';
 import { parseWorkbook } from './import/ExcelParser';
 import { ImportPreviewTable } from './import/ImportPreviewTable';
 import { PreviewPagination } from './import/PreviewPagination';
-import { SheetTabs } from './import/SheetTabs';
+
+/* ──────── Props ──────── */
+
+interface ImportRowInput {
+  name: string;
+  description?: string;
+  category: string;
+  stock: number;
+  price: number;
+  status: string;
+  imageUrl?: string;
+  brand?: string;
+  externalCode?: string;
+  tags?: string[];
+  secondPrice?: number;
+  saleStatus?: string;
+  shippingInfo?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  metadata?: Record<string, unknown>;
+}
 
 interface ImportPreviewDialogProps {
   open: boolean;
   file: File | null;
   onClose: () => void;
-  onImport: (products: Product[]) => void;
+  onImportStart: (rows: ImportRowInput[], businessSlug: string) => void;
 }
+
+/* ──────── Component ──────── */
 
 export const ImportPreviewDialog = ({
   open,
   file,
   onClose,
-  onImport,
+  onImportStart,
 }: ImportPreviewDialogProps) => {
+  const params = useParams();
+  const slug = params?.slug as string;
+  const entitlements = useEntitlements();
+  const { totalProducts: currentProductCount } = useStorage();
+  const realLimit = entitlements.maxProducts;
+  const planLimit = realLimit === -1 ? 2000 : realLimit;
+  const currentCount = currentProductCount ?? 0;
+  const availableSlots = Math.max(0, planLimit - currentCount);
+  const isUnlimited = realLimit === -1;
+
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<Record<string, ExcelRow[]>>({});
-  const [sheets, setSheets] = useState<string[]>([]);
-  const [activeSheet, setActiveSheet] = useState('');
+  const [sheetInfo, setSheetInfo] = useState<ParseResult['sheetInfo']>([]);
+  const [report, setReport] = useState<DataQualityReport | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(true);
   const [page, setPage] = useState(1);
   const [toastOpen, setToastOpen] = useState(false);
+  const [sheetsTruncated, setSheetsTruncated] = useState(false);
+  const [unmatchedHeaders, setUnmatchedHeaders] = useState<string[]>([]);
+  const [selectedExtraFields, setSelectedExtraFields] = useState<Set<string>>(new Set());
+
   const parsedFileRef = useRef<File | null>(null);
 
   const PER_PAGE = 14;
 
+  /* ─── Derived ─── */
+  const allRows: ExcelRow[] = Object.values(data).flat();
+  const totalPages = Math.max(1, Math.ceil(allRows.length / PER_PAGE));
+  const visibleRows = allRows.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  const totalProducts = allRows.length;
+  const totalFileRows = sheetInfo[0]?.totalRows ?? 0;
+  const totalColumns = sheetInfo[0]?.rawHeaders.length ?? 0;
+
+  /* ─── Fill missing product codes ─── */
+  const fillMissingCodes = (rows: ExcelRow[], prefix: string): void => {
+    const slugPrefix = prefix.substring(0, 3).toLowerCase();
+    let counter = 1;
+    for (const row of rows) {
+      if (!row.codigo) {
+        row.codigo = `${slugPrefix}-${String(counter).padStart(4, '0')}`;
+        counter++;
+      }
+    }
+  };
+
+  /* ─── Parse file ─── */
   useEffect(() => {
     if (!open || !file || parsedFileRef.current === file) return;
     parsedFileRef.current = file;
     let cancelled = false;
+
     const frameId = window.requestAnimationFrame(() => {
       if (cancelled) return;
       setLoading(true);
 
       void (async () => {
         try {
-          const result = await parseWorkbook(file);
+          const result = await parseWorkbook(file, availableSlots > 0 ? availableSlots : 1);
           if (cancelled) return;
-          const names = Object.keys(result.data);
+
           setData(result.data);
-          setSheets(names);
-          setActiveSheet(names[0] ?? '');
+          setSheetInfo(result.sheetInfo);
           setPage(1);
+          setToastOpen(result.truncated);
+          setSheetsTruncated(result.sheetsTruncated);
+
+          // Fill missing codes with slug prefix
+          const prefix = (slug || 'sto').substring(0, 3).toLowerCase();
+          const allParsed = Object.values(result.data).flat();
+          fillMissingCodes(allParsed, prefix);
+
+          // Collect unmatched headers (extraFields keys) across all rows
+          const extraSet = new Set<string>();
+          for (const row of allParsed) {
+            for (const key of Object.keys(row.extraFields)) {
+              extraSet.add(key);
+            }
+          }
+          const headers = Array.from(extraSet).sort();
+          setUnmatchedHeaders(headers);
+          setSelectedExtraFields(new Set(headers)); // all checked by default
+
+          // Run data quality analysis
+          setAnalyzing(true);
+          const qualityReport = analyzeDataQuality(result.data, result.sheetInfo);
+          if (!cancelled) {
+            setReport(qualityReport);
+            setAnalyzing(false);
+          }
+
           setLoading(false);
-          if (result.truncated) setToastOpen(true);
         } catch {
           if (cancelled) return;
           setLoading(false);
+          setAnalyzing(false);
         }
       })();
     });
@@ -65,62 +155,140 @@ export const ImportPreviewDialog = ({
       cancelled = true;
       window.cancelAnimationFrame(frameId);
     };
-  }, [open, file]);
+  }, [open, file, slug]);
 
+  /* ─── Reset on close ─── */
   useEffect(() => {
     if (open) return;
     parsedFileRef.current = null;
+
     const frameId = window.requestAnimationFrame(() => {
       setData({});
-      setSheets([]);
-      setActiveSheet('');
+      setSheetInfo([]);
+      setReport(null);
       setPage(1);
       setToastOpen(false);
+      setSheetsTruncated(false);
+      setUnmatchedHeaders([]);
+      setSelectedExtraFields(new Set());
+      setPanelOpen(true);
     });
+
     return () => window.cancelAnimationFrame(frameId);
   }, [open]);
 
-  const handleTabSelect = (s: string) => {
-    setActiveSheet(s);
-    setPage(1);
+  /* ─── Toggle extra field checkbox ─── */
+  const handleToggleExtraField = (header: string) => {
+    setSelectedExtraFields((prev) => {
+      const next = new Set(prev);
+      if (next.has(header)) {
+        next.delete(header);
+      } else {
+        next.add(header);
+      }
+      return next;
+    });
   };
 
-  const currentRows = data[activeSheet] ?? [];
-  const totalPages = Math.max(1, Math.ceil(currentRows.length / PER_PAGE));
-  const visibleRows = currentRows.slice((page - 1) * PER_PAGE, page * PER_PAGE);
-  const totalProducts = Object.values(data).reduce((sum, arr) => sum + arr.length, 0);
-
+  /* ─── Execute import ─── */
   const handleImport = () => {
-    const all = Object.values(data)
-      .flat()
-      .map((r) => ({
-        id: r.id,
-        name: r.title,
-        description: r.description,
+    if (totalProducts === 0) return;
+
+    const rows = allRows.map((r) => {
+      // 1. Build tags array: parse JSON array from tags column + merge tag1..tagN extras
+      const tagsArray: string[] = [];
+
+      // Parse tags column (JSON array string like '["ropa","verano"]')
+      if (r.tags) {
+        try {
+          const parsed = JSON.parse(r.tags);
+          if (Array.isArray(parsed)) {
+            for (const t of parsed) {
+              const trimmed = String(t).trim();
+              if (trimmed) tagsArray.push(trimmed);
+            }
+          }
+        } catch {
+          // If it's not JSON, treat as comma-separated
+          for (const t of r.tags.split(',')) {
+            const trimmed = t.trim();
+            if (trimmed) tagsArray.push(trimmed);
+          }
+        }
+      }
+
+      // Merge tag1, tag2, tag3… from extraFields into tags
+      const tagPattern = /^tag\d+$/i;
+      const extraKeys = new Set(selectedExtraFields);
+      const skipExtraKeys = new Set<string>();
+      for (const header of selectedExtraFields) {
+        if (tagPattern.test(header) && r.extraFields[header]) {
+          const val = r.extraFields[header].trim();
+          if (val) tagsArray.push(val);
+          skipExtraKeys.add(header);
+        }
+      }
+
+      // 2. Build metadata: selected extra fields MINUS tag-pattern keys
+      const metadata: Record<string, unknown> = {};
+      for (const header of selectedExtraFields) {
+        if (!skipExtraKeys.has(header) && r.extraFields[header]) {
+          metadata[header] = r.extraFields[header];
+        }
+      }
+
+      // 3. Map status: normalize common variations
+      const statusRaw = r.status?.toLowerCase().trim() || '';
+      const isActive = [
+        'activo',
+        'activa',
+        'activado',
+        'si',
+        'sí',
+        'disponible',
+        '1',
+        'true',
+        'yes',
+      ].includes(statusRaw);
+      const status = isActive ? 'ACTIVO' : statusRaw === '' ? 'ACTIVO' : 'INACTIVO';
+
+      return {
+        name: r.title || 'Producto',
+        description: r.description || undefined,
         category: r.category,
-        stock: r.stock,
-        price: r.price,
-        status: 'ACTIVO',
-        image: r.image,
-      })) as Product[];
-    onImport(all);
+        stock: Math.max(0, r.stock),
+        price: Number(r.price) || 0,
+        status,
+        imageUrl: r.image || undefined,
+        brand: r.brand || undefined,
+        externalCode: r.codigo || undefined,
+        tags: tagsArray.length > 0 ? tagsArray : undefined,
+        secondPrice: r.secondPrice ? Number(r.secondPrice) || undefined : undefined,
+        saleStatus: r.saleStatus || undefined,
+        shippingInfo: r.shippingInfo || undefined,
+        seoTitle: r.seoTitle || undefined,
+        seoDescription: r.seoDescription || undefined,
+        metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+      };
+    });
+
+    onImportStart(rows, slug);
+  };
+
+  /* ─── Dialog close guard ─── */
+  const handleDialogClose = () => {
+    if (loading) return;
     onClose();
   };
 
+  /* ─── Dynamic table height: grows with viewport, capped sensibly ─── */
+  const tableHeightCss =
+    panelOpen && report
+      ? 'min(max(calc(100vh - 460px), 360px), 680px)'
+      : 'min(max(calc(100vh - 260px), 450px), 900px)';
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      style={
-        {
-          '--md-dialog-container-max-block-size': '95vh',
-          '--md-dialog-container-max-inline-size': '98vw',
-          '--md-dialog-container-min-inline-size': '1250px',
-          maxWidth: '1200px',
-          maxHeight: '70vh',
-        } as React.CSSProperties
-      }
-    >
+    <Dialog open={open} onClose={handleDialogClose} className="import-preview-dialog">
       <div slot="headline" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <Icon>inventory_2</Icon>
         Previsualización de Importación
@@ -132,7 +300,7 @@ export const ImportPreviewDialog = ({
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
-          gap: '1rem',
+          gap: '0.5rem',
           padding: '0.25rem 0 0',
         }}
       >
@@ -148,25 +316,92 @@ export const ImportPreviewDialog = ({
             }}
           >
             <CircularProgress indeterminate />
-            <p style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Procesando archivo…</p>
+            <p style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
+              {analyzing ? 'Analizando calidad de datos…' : 'Procesando archivo…'}
+            </p>
           </div>
         ) : (
           <>
-            {sheets.length > 0 && (
-              <SheetTabs sheets={sheets} active={activeSheet} onSelect={handleTabSelect} />
+            {/* ── Data Quality Panel ── */}
+            <DataQualityPanel
+              report={report}
+              open={panelOpen}
+              onToggle={() => setPanelOpen((p) => !p)}
+              loading={analyzing}
+            />
+
+            {/* ── File info banner ── */}
+            {(totalFileRows > 0 || totalColumns > 0) && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: 12,
+                  background: 'var(--md-sys-color-surface-variant)',
+                  fontSize: '0.78rem',
+                  color: 'var(--md-sys-color-on-surface-variant)',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Icon style={{ fontSize: 17 }}>table_rows</Icon>
+                  <span>
+                    <strong>{totalFileRows}</strong> filas
+                  </span>
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Icon style={{ fontSize: 17 }}>view_column</Icon>
+                  <span>
+                    <strong>{totalColumns}</strong> columnas
+                  </span>
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Icon style={{ fontSize: 17 }}>inventory_2</Icon>
+                  <span>
+                    <strong>{currentCount}</strong>/{isUnlimited ? '∞' : realLimit} usados
+                    {!isUnlimited && availableSlots > 0 && availableSlots < 20 && (
+                      <span style={{ color: '#b3261e', fontWeight: 600, marginLeft: 4 }}>
+                        · {availableSlots} disponible{availableSlots !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </span>
+                </span>
+                {totalProducts < totalFileRows && (
+                  <span style={{ color: '#b3261e', fontWeight: 600 }}>
+                    · Mostrando {totalProducts} de {totalFileRows} filas
+                    <span style={{ fontWeight: 400, opacity: 0.8 }}> (límite del plan)</span>
+                  </span>
+                )}
+                {availableSlots === 0 && (
+                  <span style={{ color: '#b3261e', fontWeight: 600 }}>
+                    · Límite alcanzado. No puedes importar más productos.
+                  </span>
+                )}
+              </div>
             )}
+
+            {/* ── Preview table ── */}
             <div
               style={{
-                height: 640,
+                height: tableHeightCss,
                 display: 'flex',
                 flexDirection: 'column',
                 border: '1px solid var(--md-sys-color-outline-variant)',
                 borderRadius: 16,
                 overflow: 'hidden',
                 background: 'var(--md-sys-color-surface)',
+                transition: 'height 0.2s',
               }}
             >
-              <ImportPreviewTable rows={visibleRows} />
+              <ImportPreviewTable
+                rows={visibleRows}
+                startIndex={(page - 1) * PER_PAGE + 1}
+                unmatchedHeaders={unmatchedHeaders}
+                selectedExtraFields={selectedExtraFields}
+                onToggleExtraField={handleToggleExtraField}
+              />
               <PreviewPagination page={page} total={totalPages} onChange={setPage} />
             </div>
           </>
@@ -174,17 +409,27 @@ export const ImportPreviewDialog = ({
       </div>
 
       <div slot="actions">
-        <Button variant="text" onClick={onClose}>
+        <Button variant="text" onClick={handleDialogClose} disabled={loading}>
           Cancelar
         </Button>
-        <Button variant="filled" onClick={handleImport} disabled={loading || totalProducts === 0}>
-          <Icon slot="icon" size={21}>
-            upload
-          </Icon>
-          Importar {totalProducts} productos
-        </Button>
+        {availableSlots === 0 ? (
+          <Button variant="filled" disabled>
+            <Icon slot="icon" size={21}>
+              block
+            </Icon>
+            Límite alcanzado
+          </Button>
+        ) : (
+          <Button variant="filled" onClick={handleImport} disabled={loading || totalProducts === 0}>
+            <Icon slot="icon" size={21}>
+              upload
+            </Icon>
+            Importar {totalProducts} productos
+          </Button>
+        )}
       </div>
 
+      {/* ── Row truncation warning ── */}
       <AlertSnackbar
         open={toastOpen}
         description="Agregamos los primeros datos porque fueron más de lo permitido."
@@ -193,6 +438,17 @@ export const ImportPreviewDialog = ({
         position="bottom-center"
         onClose={() => setToastOpen(false)}
         autoCloseDuration={8000}
+      />
+
+      {/* ── Multi-sheet notification ── */}
+      <AlertSnackbar
+        open={sheetsTruncated}
+        description="El archivo tiene más de una hoja. Solo se importará la primera hoja."
+        color="info"
+        icon="info"
+        position="bottom-center"
+        onClose={() => setSheetsTruncated(false)}
+        autoCloseDuration={6000}
       />
     </Dialog>
   );

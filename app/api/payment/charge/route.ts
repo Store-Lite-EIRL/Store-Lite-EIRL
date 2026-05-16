@@ -9,6 +9,7 @@ import { db } from '@/core/database/client';
 import { businesses, businessSettings, payments, products } from '@/core/database/schema';
 import { generateTrackingToken } from '@/core/utils/trackingToken';
 import { notifyLowStock, notifyNewOrder, notifyOutOfStock } from '@/lib/notifications';
+import { createClient } from '@/lib/supabase/server';
 import { decrypt } from '@/utils/crypto';
 import { eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
@@ -110,6 +111,15 @@ export async function POST(request: Request) {
         { error: 'No se pudo obtener el propietario del negocio' },
         { status: 400 },
       );
+    }
+
+    // 🛡️ SECURITY: El dueño del negocio NO puede comprar su propio producto
+    const supabase = await createClient();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+    if (authUser?.id && authUser.id === business.ownerId) {
+      return NextResponse.json({ error: 'No puedes comprar tu propio producto' }, { status: 403 });
     }
 
     // 3. Crear el cargo en Culqi
