@@ -13,6 +13,13 @@ export interface ExcelRow {
   price: string;
   image: string;
   brand: string;
+  tags: string;
+  status: string;
+  secondPrice: string;
+  saleStatus: string;
+  shippingInfo: string;
+  seoTitle: string;
+  seoDescription: string;
   extraFields: Record<string, string>;
 }
 
@@ -281,6 +288,103 @@ const SYNONYMS = {
     'texto',
     'text',
   ],
+  tags: [
+    'tags',
+    'etiquetas',
+    'keywords',
+    'palabras_clave',
+    'palabras clave',
+    'palabrasclave',
+    'tag',
+    'etiqueta',
+    'key_words',
+  ],
+  status: [
+    'estado',
+    'status',
+    'activo',
+    'condicion',
+    'condición',
+    'disponible',
+    'available',
+    'is_available',
+    'isavailable',
+  ],
+  secondPrice: [
+    'precio2',
+    'segundo_precio',
+    'second_price',
+    'secondprice',
+    'precio_oferta',
+    'precio_promocion',
+    'discount_price',
+    'descuento',
+    'precio_descuento',
+    'precio_anterior',
+    'old_price',
+    'comparative_price',
+    'precio_comparativo',
+    'precio_2',
+    'price_2',
+    'price2',
+  ],
+  saleStatus: [
+    'sale_status',
+    'salestatus',
+    'condicion_venta',
+    'condicionventa',
+    'tipo_venta',
+    'tipoventa',
+    'promocion',
+    'promoción',
+    'etiqueta_venta',
+    'tag_venta',
+    'badge',
+    'etiqueta_promocion',
+  ],
+  shippingInfo: [
+    'shipping_info',
+    'shippinginfo',
+    'shipping',
+    'envio',
+    'envío',
+    'costo_envio',
+    'costoenvio',
+    'delivery',
+    'entrega',
+    'tiempo_entrega',
+    'delivery_time',
+    'costo_entrega',
+    'delivery_cost',
+    'gastos_envio',
+    'gastosenvio',
+    'info_envio',
+  ],
+  seoTitle: [
+    'seo_title',
+    'seotitle',
+    'titulo_seo',
+    'tituloseo',
+    'título_seo',
+    'meta_title',
+    'metatitle',
+    'meta_titulo',
+    'title_seo',
+    'seo_titulo',
+  ],
+  seoDescription: [
+    'seo_description',
+    'seodescription',
+    'meta_description',
+    'metadescription',
+    'descripcion_seo',
+    'descripcionseo',
+    'descripción_seo',
+    'meta_desc',
+    'metadesc',
+    'seo_desc',
+    'seodesc',
+  ],
 } as const;
 
 /* ──────── Main parser ──────── */
@@ -358,6 +462,34 @@ export function parseWorkbook(file: File, maxRows = 200): Promise<ParseResult> {
             const rawDesc = getMatchedCol(row, SYNONYMS.description, usedKeys) ?? '';
             const description = String(rawDesc).trim().substring(0, 350);
 
+            // ── Tags ──
+            const rawTags = getMatchedCol(row, SYNONYMS.tags, usedKeys) ?? '';
+            const tags = String(rawTags).trim();
+
+            // ── Status ──
+            const rawStatus = getMatchedCol(row, SYNONYMS.status, usedKeys) ?? '';
+            const status = String(rawStatus).trim();
+
+            // ── Second price ──
+            const rawSecondPrice = getMatchedCol(row, SYNONYMS.secondPrice, usedKeys) ?? '';
+            const secondPrice = String(rawSecondPrice).trim();
+
+            // ── Sale status ──
+            const rawSaleStatus = getMatchedCol(row, SYNONYMS.saleStatus, usedKeys) ?? '';
+            const saleStatus = String(rawSaleStatus).trim();
+
+            // ── Shipping info ──
+            const rawShippingInfo = getMatchedCol(row, SYNONYMS.shippingInfo, usedKeys) ?? '';
+            const shippingInfo = String(rawShippingInfo).trim();
+
+            // ── SEO title ──
+            const rawSeoTitle = getMatchedCol(row, SYNONYMS.seoTitle, usedKeys) ?? '';
+            const seoTitle = String(rawSeoTitle).trim();
+
+            // ── SEO description ──
+            const rawSeoDesc = getMatchedCol(row, SYNONYMS.seoDescription, usedKeys) ?? '';
+            const seoDescription = String(rawSeoDesc).trim();
+
             // ── Extra fields (columns not consumed above) ──
             const extraFields: Record<string, string> = {};
             for (const [key, value] of Object.entries(row)) {
@@ -378,6 +510,13 @@ export function parseWorkbook(file: File, maxRows = 200): Promise<ParseResult> {
               price,
               image,
               brand,
+              tags,
+              status,
+              secondPrice,
+              saleStatus,
+              shippingInfo,
+              seoTitle,
+              seoDescription,
               extraFields,
             };
           });

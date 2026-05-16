@@ -332,6 +332,38 @@
   white-space: pre-line;
 }
 
+.extraMetadataGrid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.extraMetadataItem {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e5e7eb);
+}
+
+.extraMetadataItem:last-child {
+  border-bottom: none;
+}
+
+.extraMetadataKey {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant, #4b5563);
+  text-transform: capitalize;
+}
+
+.extraMetadataValue {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #111827);
+  text-align: right;
+  word-break: break-word;
+}
+
 /* Color Selector */
 .colorSelectorTitle {
   font-size: 0.75rem; /* text-xs */

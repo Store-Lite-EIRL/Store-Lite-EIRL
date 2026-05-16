@@ -27,6 +27,12 @@ interface ImportRowInput {
   imageUrl?: string;
   brand?: string;
   externalCode?: string;
+  tags?: string[];
+  secondPrice?: number;
+  saleStatus?: string;
+  shippingInfo?: string;
+  seoTitle?: string;
+  seoDescription?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -189,12 +195,62 @@ export const ImportPreviewDialog = ({
     if (totalProducts === 0) return;
 
     const rows = allRows.map((r) => {
+      // 1. Build tags array: parse JSON array from tags column + merge tag1..tagN extras
+      const tagsArray: string[] = [];
+
+      // Parse tags column (JSON array string like '["ropa","verano"]')
+      if (r.tags) {
+        try {
+          const parsed = JSON.parse(r.tags);
+          if (Array.isArray(parsed)) {
+            for (const t of parsed) {
+              const trimmed = String(t).trim();
+              if (trimmed) tagsArray.push(trimmed);
+            }
+          }
+        } catch {
+          // If it's not JSON, treat as comma-separated
+          for (const t of r.tags.split(',')) {
+            const trimmed = t.trim();
+            if (trimmed) tagsArray.push(trimmed);
+          }
+        }
+      }
+
+      // Merge tag1, tag2, tag3… from extraFields into tags
+      const tagPattern = /^tag\d+$/i;
+      const extraKeys = new Set(selectedExtraFields);
+      const skipExtraKeys = new Set<string>();
+      for (const header of selectedExtraFields) {
+        if (tagPattern.test(header) && r.extraFields[header]) {
+          const val = r.extraFields[header].trim();
+          if (val) tagsArray.push(val);
+          skipExtraKeys.add(header);
+        }
+      }
+
+      // 2. Build metadata: selected extra fields MINUS tag-pattern keys
       const metadata: Record<string, unknown> = {};
       for (const header of selectedExtraFields) {
-        if (r.extraFields[header]) {
+        if (!skipExtraKeys.has(header) && r.extraFields[header]) {
           metadata[header] = r.extraFields[header];
         }
       }
+
+      // 3. Map status: normalize common variations
+      const statusRaw = r.status?.toLowerCase().trim() || '';
+      const isActive = [
+        'activo',
+        'activa',
+        'activado',
+        'si',
+        'sí',
+        'disponible',
+        '1',
+        'true',
+        'yes',
+      ].includes(statusRaw);
+      const status = isActive ? 'ACTIVO' : statusRaw === '' ? 'ACTIVO' : 'INACTIVO';
 
       return {
         name: r.title || 'Producto',
@@ -202,10 +258,16 @@ export const ImportPreviewDialog = ({
         category: r.category,
         stock: Math.max(0, r.stock),
         price: Number(r.price) || 0,
-        status: 'ACTIVO' as const,
+        status,
         imageUrl: r.image || undefined,
         brand: r.brand || undefined,
         externalCode: r.codigo || undefined,
+        tags: tagsArray.length > 0 ? tagsArray : undefined,
+        secondPrice: r.secondPrice ? Number(r.secondPrice) || undefined : undefined,
+        saleStatus: r.saleStatus || undefined,
+        shippingInfo: r.shippingInfo || undefined,
+        seoTitle: r.seoTitle || undefined,
+        seoDescription: r.seoDescription || undefined,
         metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
       };
     });

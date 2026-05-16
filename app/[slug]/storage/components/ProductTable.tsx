@@ -135,6 +135,20 @@ export const ProductTable = ({
     if (rawPreviewProduct) onDelete(rawPreviewProduct);
   };
 
+  const handlePublicMetadataChange = (productId: string, publicKeys: string[]) => {
+    setRawPreviewProduct((current) => {
+      if (!current || current.id !== productId) return current;
+      return {
+        ...current,
+        metadata: {
+          ...(current.metadata ?? {}),
+          _public: publicKeys,
+        },
+      };
+    });
+    router.refresh();
+  };
+
   return (
     <>
       <div className="table-wrapper">
@@ -291,6 +305,8 @@ export const ProductTable = ({
         isOwner={isOwner}
         hasPaymentGateway={true}
         culqiPublicKey={undefined}
+        visibleExtraColumns={visibleExtraColumns}
+        onPublicMetadataChange={handlePublicMetadataChange}
         onEdit={handlePreviewEdit}
         onDelete={handlePreviewDelete}
       />

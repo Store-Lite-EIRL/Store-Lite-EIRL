@@ -37,6 +37,7 @@ function scanMetadataKeys(products: Product[]): string[] {
   for (const p of products) {
     if (p.metadata && typeof p.metadata === 'object') {
       for (const key of Object.keys(p.metadata)) {
+        if (key === '_public') continue;
         keys.add(key);
       }
     }
@@ -60,8 +61,11 @@ export function useExtraColumns(slug: string, products: Product[]): ExtraColumns
 
   const availableColumns = useMemo(() => scanMetadataKeys(products), [products]);
 
-  // Prune stale columns that no longer exist in metadata
+  // Prune stale columns that no longer exist in metadata.
+  // If availableColumns is empty it means products haven't loaded yet —
+  // don't wipe the user's saved preferences.
   useEffect(() => {
+    if (availableColumns.length === 0) return;
     setVisibleColumnsState((prev) => {
       const pruned = prev.filter((col) => availableColumns.includes(col));
       const needsUpdate = pruned.length !== prev.length || pruned.some((c, i) => c !== prev[i]);

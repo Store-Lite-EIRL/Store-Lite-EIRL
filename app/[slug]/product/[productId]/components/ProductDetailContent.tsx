@@ -114,7 +114,17 @@ export default async function ProductDetailContent({
     shippingInfo: rawProduct.shippingInfo,
     saleStatus: rawProduct.saleStatus,
     secondPrice: rawProduct.secondPrice ? String(rawProduct.secondPrice) : null,
+    metadata: (rawProduct.metadata as Record<string, unknown>) || {},
   };
+
+  const metadataEntries = Object.entries(product.metadata).filter(([key, value]) => {
+    if (key === '_public') return false;
+    return value !== undefined && value !== null && value !== '';
+  });
+  const publicMetadataKeys = Array.isArray(product.metadata._public)
+    ? (product.metadata._public as string[])
+    : metadataEntries.map(([key]) => key);
+  const publicMetadataEntries = metadataEntries.filter(([key]) => publicMetadataKeys.includes(key));
 
   // Deny access to inactive products for non-owners
   if (product.status === 'NO ACTIVO' && !isOwner) {
@@ -371,6 +381,22 @@ export default async function ProductDetailContent({
               <p className={styles.accordionContentTextEmpty}>Sin descripción disponible.</p>
             )}
           </div>
+
+          {publicMetadataEntries.length > 0 && (
+            <div className={styles.accordion}>
+              <div className={styles.accordionHeader}>
+                <span className={styles.accordionHeaderTitle}>Información adicional</span>
+              </div>
+              <div className={styles.extraMetadataGrid}>
+                {publicMetadataEntries.map(([key, value]) => (
+                  <div key={key} className={styles.extraMetadataItem}>
+                    <span className={styles.extraMetadataKey}>{key}</span>
+                    <span className={styles.extraMetadataValue}>{String(value)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {product.stock > 0 ? (
             <PurchaseActions

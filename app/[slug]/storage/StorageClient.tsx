@@ -8,7 +8,6 @@ import './storage.css';
 import { CreateProductSheet } from './components/CreateProductSheet';
 import { DeleteProductDialog } from './components/DeleteProductDialog';
 import { ProductTable } from './components/ProductTable';
-import { StorageColumnManager } from './components/StorageColumnManager';
 import { StorageHeader } from './components/StorageHeader';
 import { TableControls } from './components/TableControls';
 import { TablePagination } from './components/TablePagination';
@@ -138,14 +137,7 @@ function StorageContent() {
       />
 
       <main className="storage-content" style={{ position: 'relative' }}>
-        <TableControls />
-
-        <div
-          className="table-controls-row"
-          style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.25rem 0' }}
-        >
-          <StorageColumnManager columns={extraColumns} />
-        </div>
+        <TableControls extraColumns={extraColumns} />
 
         <ProductTable
           products={products}

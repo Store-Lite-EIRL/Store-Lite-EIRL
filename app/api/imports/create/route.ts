@@ -18,6 +18,12 @@ interface ImportRowInput {
   imageUrl?: string;
   brand?: string;
   externalCode?: string;
+  tags?: string[];
+  secondPrice?: number;
+  saleStatus?: string;
+  shippingInfo?: string;
+  seoTitle?: string;
+  seoDescription?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -128,6 +134,12 @@ export async function POST(request: Request) {
         imageUrl: row.imageUrl?.trim() || null,
         brand: row.brand?.trim() || null,
         externalCode: row.externalCode?.trim() || null,
+        tags: row.tags || null,
+        secondPrice: row.secondPrice !== null ? Number(row.secondPrice) : null,
+        saleStatus: row.saleStatus || null,
+        shippingInfo: row.shippingInfo?.trim() || null,
+        seoTitle: row.seoTitle?.trim() || null,
+        seoDescription: row.seoDescription?.trim() || null,
         metadata: row.metadata || {},
       },
     }));

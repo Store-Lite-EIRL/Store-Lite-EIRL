@@ -25,12 +25,18 @@ interface ImportRowInput {
   imageUrl?: string;
   brand?: string;
   externalCode?: string;
+  tags?: string[];
+  secondPrice?: number;
+  saleStatus?: string;
+  shippingInfo?: string;
+  seoTitle?: string;
+  seoDescription?: string;
   metadata?: Record<string, unknown>;
 }
 
 export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: StorageHeaderProps) => {
   const { can, isOwner } = usePermissions();
-  const { entitlements } = useStorage();
+  const { entitlements, refreshProducts } = useStorage();
   const [sourceModalOpen, setSourceModalOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -75,7 +81,7 @@ export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: Stor
   const handleProgressComplete = () => {
     setProgressOpen(false);
     setImportRows([]);
-    router.refresh();
+    refreshProducts().then(() => router.refresh());
   };
 
   // Called when progress dialog is closed while importing (user cancels)
@@ -87,7 +93,7 @@ export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: Stor
   return (
     <header className="storage-header">
       <div className="storage-title-wrap">
-        <h1 className="storage-title">Productos</h1>
+        <h1 className="storage-title">Almacén</h1>
         <div className="product-count-wrapper">
           <p className="product-count">({productsCount} productos)</p>
           {entitlements && entitlements.maxProducts !== Infinity && (

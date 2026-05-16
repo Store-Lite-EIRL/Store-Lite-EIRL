@@ -19,7 +19,7 @@ export const StorageColumnManager = ({ columns }: StorageColumnManagerProps) => 
     <>
       <Button variant="outlined" onClick={() => setOpen(true)} style={{ gap: 4 }}>
         <Icon slot="icon" size={20}>
-          view_column
+          playlist_add_check
         </Icon>
         <span>Columnas</span>
       </Button>

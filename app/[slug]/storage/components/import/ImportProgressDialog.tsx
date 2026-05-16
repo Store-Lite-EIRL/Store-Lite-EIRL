@@ -16,6 +16,12 @@ interface ImportRowInput {
   imageUrl?: string;
   brand?: string;
   externalCode?: string;
+  tags?: string[];
+  secondPrice?: number;
+  saleStatus?: string;
+  shippingInfo?: string;
+  seoTitle?: string;
+  seoDescription?: string;
   metadata?: Record<string, unknown>;
 }
 

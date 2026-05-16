@@ -2,11 +2,12 @@
 
 .storage-container {
   padding-inline: 1rem;
-  padding-top: 1.5rem;
-  height: calc(100vh - 26px);
+  padding-top: 0.75rem;
+  height: calc(100vh - 3rem);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  overflow: hidden;
   font-family: var(--mio-theme-text-font-family), sans-serif;
   color: var(--md-sys-color-on-surface);
 }
@@ -15,8 +16,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  gap: 2rem;
+  margin-bottom: 1rem;
+  gap: 1.5rem;
 }
 
 .storage-title {
@@ -228,13 +229,13 @@
   border: 1px solid var(--md-sys-color-outline-variant);
   overflow: hidden;
   box-shadow: var(--md-sys-elevation-level1);
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .table-controls {
-  padding: 1.5rem;
+  padding: 1rem;
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
   align-items: center;
   justify-content: space-between;
 }
@@ -354,7 +355,7 @@
 }
 
 .storage-table th {
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 1rem;
   background-color: var(--md-sys-color-surface);
   color: var(--md-sys-color-on-surface-variant);
   font-size: 0.7rem;
@@ -448,7 +449,7 @@
 }
 
 .table-footer {
-  padding: 1.5rem;
+  padding: 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;

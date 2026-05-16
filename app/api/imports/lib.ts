@@ -87,6 +87,14 @@ export async function processRows(rows: (typeof importRows.$inferSelect)[], busi
       const externalCode = (raw.externalCode as string) ?? null;
       const metadata = (raw.metadata as Record<string, unknown>) ?? {};
 
+      // ── New fields ──
+      const rawTags = raw.tags as string[] | null | undefined;
+      const rawSecondPrice = raw.secondPrice as number | null | undefined;
+      const rawSaleStatus = (raw.saleStatus as string) ?? 'NORMAL';
+      const rawShippingInfo = (raw.shippingInfo as string) ?? null;
+      const rawSeoTitle = (raw.seoTitle as string) ?? null;
+      const rawSeoDescription = (raw.seoDescription as string) ?? null;
+
       const [product] = await db
         .insert(products)
         .values({
@@ -95,10 +103,18 @@ export async function processRows(rows: (typeof importRows.$inferSelect)[], busi
           title: name,
           description,
           price: String(price),
+          secondPrice: rawSecondPrice !== null ? String(rawSecondPrice) : null,
           stock,
           isAvailable: productStatus === 'ACTIVO',
+          tags: rawTags && rawTags.length > 0 ? rawTags : null,
+          saleStatus: ['MAS_VENDIDO', 'NUEVO_PRODUCTO', 'NORMAL'].includes(rawSaleStatus)
+            ? (rawSaleStatus as 'MAS_VENDIDO' | 'NUEVO_PRODUCTO' | 'NORMAL')
+            : 'NORMAL',
           brand,
           externalCode,
+          seoTitle: rawSeoTitle || null,
+          seoDescription: rawSeoDescription || null,
+          shippingInfo: rawShippingInfo || null,
           metadata,
         })
         .returning({ id: products.id });
