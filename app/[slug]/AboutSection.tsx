@@ -1,7 +1,7 @@
 'use client';
 
 import type { Business } from '@/core/database/schema';
-import type { StorefrontTheme } from '@/core/storefront';
+import type { StorefrontColorScheme, StorefrontTheme } from '@/core/storefront';
 import { createDefaultStorefrontTheme } from '@/core/storefront';
 import { BusinessPreviewCard } from '@/shared/components/business/BusinessPreviewCard';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
@@ -12,6 +12,7 @@ interface AboutSectionProps {
   business: Business;
   previewCardTheme?: StorefrontTheme;
   storefrontTheme?: StorefrontTheme;
+  storefrontColorScheme?: StorefrontColorScheme;
 }
 
 /** Formatea una fecha ISO a "Mes YYYY" en español */
@@ -221,6 +222,7 @@ export default function AboutSection({
   business,
   previewCardTheme,
   storefrontTheme,
+  storefrontColorScheme,
 }: AboutSectionProps) {
   const verification = getVerificationConfig(business.verificationStatus);
 
@@ -248,6 +250,7 @@ export default function AboutSection({
             legalRepRole={business.legalRepRole || ''}
             logoPreview={business.logoUrl}
             storefrontTheme={previewCardTheme || storefrontTheme || createDefaultStorefrontTheme()}
+            colorScheme={storefrontColorScheme}
             showDownloadButton={false}
           />
 

@@ -204,9 +204,7 @@ export async function createBusinessAction(formData: FormData) {
 
     await db.insert(businessSettings).values({
       businessId,
-      themeMode: storefrontTheme.surfaceMode,
       contrastLevel: 'standard',
-      customColors: storefrontTheme.palette,
       preferences: initialPreferences,
     });
 

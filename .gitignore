@@ -69,6 +69,14 @@ tasks.txt
 # Sentry Config File
 .env.sentry-build-plugin
 
+# AI debug/dump files (transcript recovery, pattern dumps, etc.)
+dump.*
+found.*
+raw_*
+recover.*
+recovered_*
+search_history.*
+
 # IDE & MCP Meta
 .mcp.json
 opencode.json

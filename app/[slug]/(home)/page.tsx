@@ -126,7 +126,7 @@ export default async function BusinessPage({ params }: Props) {
   const isStaff = isOwner || permissions.length > 0;
 
   const entitlements = await getBusinessEntitlements(business.id);
-  const { hasPaymentGateway, chatEnabled, seoEnabled, canCustomizeStorefront } = entitlements;
+  const { hasPaymentGateway, chatEnabled, seoEnabled, plan } = entitlements;
 
   const jsonLd = seoEnabled
     ? {
@@ -187,18 +187,19 @@ export default async function BusinessPage({ params }: Props) {
         isOwner={isOwner}
         isStaff={isStaff}
         isLoggedIn={isLoggedIn}
-        categories={categories}
+        categories={categories.slice(0, 7)}
         products={allProducts}
         hasPaymentGateway={hasPaymentGateway}
         isPaymentConfigured={entitlements.isPaymentConfigured}
         culqiPublicKey={entitlements.culqiPublicKey}
         chatEnabled={chatEnabled}
         storefrontLayout={getStorefrontLayoutFromPreferences(settings?.preferences)}
-        storefrontTheme={canCustomizeStorefront ? savedStorefrontTheme : undefined}
+        storefrontTheme={savedStorefrontTheme}
         previewCardTheme={savedStorefrontTheme}
         businessName={business.name}
         businessRuc={business.taxId ?? undefined}
         businessAddress={business.address ?? undefined}
+        plan={plan}
       />
     </>
   );

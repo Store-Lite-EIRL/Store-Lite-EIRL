@@ -61,10 +61,6 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'www.yape.com.pe',
       },
-      {
-        protocol: 'https',
-        hostname: 'api.placeholder.com',
-      },
     ],
   },
 };

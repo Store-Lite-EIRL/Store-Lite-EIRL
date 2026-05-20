@@ -62,13 +62,13 @@
 }
 
 .up {
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
+  background: color-mix(in srgb, var(--md-sys-color-tertiary, #10b981) 10%, transparent);
+  color: var(--md-sys-color-tertiary, #059669);
 }
 
 .down {
-  background: rgba(139, 92, 246, 0.1);
-  color: #7c3aed;
+  background: color-mix(in srgb, var(--md-sys-color-secondary, #8b5cf6) 10%, transparent);
+  color: var(--md-sys-color-secondary, #7c3aed);
 }
 
 /* ─── Decoration ─ */
@@ -87,10 +87,10 @@
   background: var(--md-sys-color-primary);
 }
 .green .decoration {
-  background: #10b981;
+  background: var(--md-sys-color-tertiary, #10b981);
 }
 .purple .decoration {
-  background: #8b5cf6;
+  background: var(--md-sys-color-secondary, #8b5cf6);
 }
 
 .blue {

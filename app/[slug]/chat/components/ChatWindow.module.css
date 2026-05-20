@@ -189,7 +189,7 @@
   right: 0;
   width: 10px;
   height: 10px;
-  background-color: #4caf50;
+  background-color: var(--md-sys-color-tertiary);
   border: 2px solid var(--md-sys-color-surface, #ffffff);
   border-radius: 50%;
 }
@@ -631,7 +631,7 @@
 }
 
 .bubbleMe .messageLink {
-  color: #cce5ff;
+  color: var(--md-sys-color-primary-container, #cce5ff);
 }
 
 .messageTime {
@@ -758,6 +758,6 @@
   }
 
   .bubbleMe .messageLink {
-    color: #cce5ff;
+    color: var(--md-sys-color-primary-container, #cce5ff);
   }
 }

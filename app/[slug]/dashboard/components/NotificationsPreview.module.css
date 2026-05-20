@@ -332,24 +332,24 @@
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35);
 }
 .chat {
-  background: #e0f2fe;
-  color: #0369a1;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
 }
 .almacen {
-  background: #ffedd5;
-  color: #c2410c;
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
 }
 .plan {
-  background: #f3e8ff;
-  color: #7e22ce;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
 }
 .pedidos {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
 }
 .sistema {
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface-variant);
 }
 .typeLabel {
   font-size: 0.7rem;
@@ -360,24 +360,24 @@
   border-radius: 6px;
 }
 .type_chat {
-  background: rgb(3 105 161 / 0.12);
-  color: #0369a1;
+  background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 12%, transparent);
+  color: var(--md-sys-color-on-primary-container);
 }
 .type_almacen {
-  background: rgb(194 65 12 / 0.12);
-  color: #c2410c;
+  background: color-mix(in srgb, var(--md-sys-color-on-tertiary-container) 12%, transparent);
+  color: var(--md-sys-color-on-tertiary-container);
 }
 .type_plan {
-  background: rgb(126 34 206 / 0.12);
-  color: #7e22ce;
+  background: color-mix(in srgb, var(--md-sys-color-on-secondary-container) 12%, transparent);
+  color: var(--md-sys-color-on-secondary-container);
 }
 .type_pedidos {
-  background: rgb(21 128 61 / 0.12);
-  color: #15803d;
+  background: color-mix(in srgb, var(--md-sys-color-on-tertiary-container) 12%, transparent);
+  color: var(--md-sys-color-on-tertiary-container);
 }
 .type_sistema {
-  background: rgb(71 85 105 / 0.12);
-  color: #475569;
+  background: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 12%, transparent);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 /* Columna 2: Contenido */

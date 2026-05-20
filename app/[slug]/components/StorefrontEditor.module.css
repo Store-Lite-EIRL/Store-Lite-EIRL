@@ -1,0 +1,830 @@
+/* ============================================================
+   FAB
+   ============================================================ */
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 900;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  border: none;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.fab:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.fab md-icon {
+  font-size: 24px;
+}
+
+/* ============================================================
+   Backdrop
+   ============================================================ */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 910;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================================
+   Panel
+   ============================================================ */
+.panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 920;
+  width: 380px;
+  max-width: 100vw;
+  background: var(--md-sys-color-surface-container-high);
+  border-left: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+}
+
+.panelOpen {
+  transform: translateX(0);
+}
+
+/* ============================================================
+   Header
+   ============================================================ */
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  flex-shrink: 0;
+}
+
+.panelTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.closeBtn:hover {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+/* ============================================================
+   Body (scrollable)
+   ============================================================ */
+.panelBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px 24px;
+}
+
+/* ============================================================
+   Scheme tabs (light / dark)
+   ============================================================ */
+.schemeTabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.schemeTab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    color 0.2s,
+    background 0.2s;
+}
+
+.schemeTab:hover {
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-primary);
+}
+
+.schemeTabActive {
+  border-color: var(--md-sys-color-primary);
+  background: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+  color: var(--md-sys-color-primary);
+}
+
+/* ============================================================
+   Sections
+   ============================================================ */
+.section {
+  margin-bottom: 1.5rem;
+}
+
+.section:last-child {
+  margin-bottom: 0;
+}
+
+.sectionTitle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0 0 0.75rem;
+}
+
+/* ============================================================
+   Font options
+   ============================================================ */
+.fontGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.fontOption {
+  padding: 0.6rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+
+.fontOption:hover {
+  border-color: var(--md-sys-color-primary);
+}
+
+.fontOptionActive {
+  border-color: var(--md-sys-color-primary);
+  background: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+  color: var(--md-sys-color-primary);
+}
+
+/* ============================================================
+   Background category toggle: Fondo | Patrón
+   ============================================================ */
+.bgCategoryToggle {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.bgCategoryBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.5rem;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    box-shadow 0.2s;
+}
+
+.bgCategoryBtn:hover {
+  color: var(--md-sys-color-on-surface);
+}
+
+.bgCategoryBtnActive {
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.bgCategoryBtnActive:hover {
+  color: var(--md-sys-color-primary);
+}
+
+/* ============================================================
+   Pattern dropdown
+   ============================================================ */
+.patternDropdown {
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+.patternDropdownTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.patternDropdownTrigger:hover {
+  border-color: var(--md-sys-color-primary);
+}
+
+.patternBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 930;
+}
+
+.patternMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 940;
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 10px;
+  padding: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.patternOption {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.patternOption:hover {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.patternOptionActive {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+  color: var(--md-sys-color-primary);
+  font-weight: 600;
+}
+
+/* ============================================================
+   Toggle switch (patrón decorativo)
+   ============================================================ */
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.5rem 0.5rem 0;
+}
+
+.toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggleSlider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: var(--md-sys-color-outline-variant);
+  border-radius: 11px;
+  transition: background 0.2s;
+}
+
+.toggleSlider::before {
+  content: '';
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background: var(--md-sys-color-surface);
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggle input:checked + .toggleSlider {
+  background: var(--md-sys-color-primary);
+}
+
+.toggle input:checked + .toggleSlider::before {
+  transform: translateX(18px);
+}
+
+/* ============================================================
+   PatternCraft button (third toggle option)
+   ============================================================ */
+.patternCraftBtn {
+  padding: 0.45rem 0.5rem;
+  border-radius: 8px;
+  border: 1px dashed var(--md-sys-color-primary);
+  background: color-mix(in srgb, var(--md-sys-color-primary) 6%, transparent);
+  color: var(--md-sys-color-primary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
+  flex-shrink: 0;
+}
+
+.patternCraftBtn:hover {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 14%, transparent);
+  box-shadow: 0 0 0 1px var(--md-sys-color-primary);
+}
+
+/* Active pattern info bar */
+.patternCraftActive {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  margin-bottom: 0.75rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.patternCraftActiveIcon {
+  font-size: 0.8rem;
+  color: var(--md-sys-color-primary);
+}
+
+.patternCraftRemoveBtn {
+  margin-left: auto;
+  padding: 2px 8px;
+  border: 1px solid var(--md-sys-color-error, #b3261e);
+  background: transparent;
+  color: var(--md-sys-color-error, #b3261e);
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.patternCraftRemoveBtn:hover {
+  background: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
+}
+
+/* ============================================================
+   Overlay mode toggle: Patrón integrado | CSS personalizado
+   ============================================================ */
+.overlayModeToggle {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.overlayModeBtn {
+  flex: 1;
+  padding: 0.45rem 0.5rem;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    box-shadow 0.2s;
+}
+
+.overlayModeBtn:hover {
+  color: var(--md-sys-color-on-surface);
+}
+
+.overlayModeBtnActive {
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================================
+   CSS custom overlay
+   ============================================================ */
+.cssOverlaySection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.cssTextarea {
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 60px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.cssTextarea:focus {
+  border-color: var(--md-sys-color-primary);
+}
+
+.cssOptionalRow {
+  display: flex;
+  gap: 0.65rem;
+}
+
+.cssField {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.cssInput {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.75rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.cssInput:focus {
+  border-color: var(--md-sys-color-primary);
+}
+
+.cssHint {
+  font-size: 0.7rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.cssHint a {
+  color: var(--md-sys-color-primary);
+  text-decoration: underline;
+}
+
+/* ============================================================
+   Color count (gradient)
+   ============================================================ */
+.colorCountRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.label {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.colorCountGrid {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.colorCountBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+
+.colorCountBtn:hover {
+  border-color: var(--md-sys-color-primary);
+}
+
+.colorCountBtnActive {
+  border-color: var(--md-sys-color-primary);
+  background: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+  color: var(--md-sys-color-primary);
+}
+
+/* ============================================================
+   Color list
+   ============================================================ */
+.colorList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.colorRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.colorPreviewWrap {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.colorInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.colorPreview {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+}
+
+.colorMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 50px;
+  flex-shrink: 0;
+}
+
+.colorLabel {
+  font-size: 0.65rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 500;
+}
+
+.colorHex {
+  font-size: 0.7rem;
+  color: var(--md-sys-color-on-surface);
+  font-family: monospace;
+}
+
+.colorChips {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.colorChip {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+
+.colorChip:hover {
+  transform: scale(1.2);
+}
+
+.colorChipActive {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 1px;
+}
+
+/* ============================================================
+   Slider
+   ============================================================ */
+.sliderRow {
+  margin-bottom: 1rem;
+}
+
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--md-sys-color-outline-variant);
+  outline: none;
+  margin-top: 0.4rem;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary);
+  cursor: pointer;
+  border: 2px solid var(--md-sys-color-surface);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================================
+   Color actions
+   ============================================================ */
+.colorActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.randomBtn,
+.resetBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+
+.randomBtn {
+  border: 1px solid var(--md-sys-color-primary);
+  background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+  color: var(--md-sys-color-primary);
+}
+
+.randomBtn:hover {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+}
+
+.resetBtn {
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.resetBtn:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+/* ============================================================
+   Panel Footer
+   ============================================================ */
+.panelFooter {
+  flex-shrink: 0;
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.feedback {
+  font-size: 0.8rem;
+  color: var(--md-sys-color-primary);
+  font-weight: 500;
+  text-align: center;
+}
+
+.feedbackError {
+  color: var(--md-sys-color-error, #b3261e);
+}
+
+.saveBtn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: none;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.saveBtn:hover {
+  opacity: 0.9;
+}
+
+.saveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 420px) {
+  .panel {
+    width: 100vw;
+  }
+
+  .bgTypeGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .fab {
+    bottom: 16px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+  }
+}

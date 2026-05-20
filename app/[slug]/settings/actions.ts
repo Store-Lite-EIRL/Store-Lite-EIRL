@@ -310,8 +310,6 @@ export async function updateStorefrontTheme(
       await db
         .update(businessSettings)
         .set({
-          themeMode: normalizedTheme.surfaceMode,
-          customColors: normalizedTheme.palette,
           preferences: nextPreferences,
           updatedAt: new Date(),
         })
@@ -319,9 +317,7 @@ export async function updateStorefrontTheme(
     } else {
       await db.insert(businessSettings).values({
         businessId,
-        themeMode: normalizedTheme.surfaceMode,
         contrastLevel: 'standard',
-        customColors: normalizedTheme.palette,
         preferences: mergeStorefrontThemeIntoPreferences({}, normalizedTheme),
       });
     }
@@ -378,11 +374,9 @@ export async function clearStorefrontTheme(
 
     const nextPreferences = clearStorefrontThemeFromPreferences(existingSettings.preferences ?? {});
 
-    // Quitamos los customColors de las settings para limpiar la metadata
     await db
       .update(businessSettings)
       .set({
-        customColors: null,
         preferences: nextPreferences,
         updatedAt: new Date(),
       })

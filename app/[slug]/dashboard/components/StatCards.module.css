@@ -54,7 +54,7 @@
 }
 
 .cardLimitWarn {
-  color: #f59e0b;
+  color: var(--md-sys-color-tertiary);
   font-weight: 500;
 }
 
@@ -97,7 +97,7 @@
 }
 
 .progressFillWarn {
-  background: #f59e0b;
+  background: var(--md-sys-color-tertiary);
 }
 
 .progressPct {

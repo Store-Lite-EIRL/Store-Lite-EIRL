@@ -2,6 +2,7 @@ import type { Product } from '../data';
 import { parsePriceValue } from './currency';
 
 export const calculateInventoryStats = (products: Product[]) => {
+  const totalProducts = products.length;
   const totalStock = products.reduce((sum, p) => sum + p.stock, 0);
 
   const totalValue = products.reduce((sum, p) => {
@@ -9,12 +10,22 @@ export const calculateInventoryStats = (products: Product[]) => {
     return sum + p.stock * priceNum;
   }, 0);
 
-  const lowStockCount = products.filter((p) => p.stock <= 20).length;
+  const lowStockThreshold = 10;
+  const lowStockCount = products.filter((p) => p.stock > 0 && p.stock <= lowStockThreshold).length;
+  const outOfStockCount = products.filter((p) => p.stock === 0).length;
+  const alertsCount = lowStockCount + outOfStockCount;
+
+  const averageStock = totalProducts > 0 ? Math.round(totalStock / totalProducts) : 0;
 
   return {
+    totalProducts,
     totalStock,
     totalValue,
     lowStockCount,
+    outOfStockCount,
+    alertsCount,
+    averageStock,
+    lowStockThreshold,
   };
 };
 

@@ -8,6 +8,7 @@ export type ColorScheme = 'default' | 'medium' | 'high';
 interface ThemeContextProps {
   theme: Theme;
   colorScheme: ColorScheme;
+  effectiveTheme: 'light' | 'dark';
   setTheme: (theme: Theme) => void;
   setColorScheme: (scheme: ColorScheme) => void;
 }
@@ -50,6 +51,7 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>('system');
   const [colorScheme, setColorSchemeState] = useState<ColorScheme>('default');
+  const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>('light');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -79,6 +81,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     localStorage.setItem('app-color-scheme', colorScheme);
 
     const applyTheme = (currentTheme: 'light' | 'dark') => {
+      setEffectiveTheme(currentTheme);
       document.body.classList.remove(...THEME_CLASSES);
 
       const className = getThemeClass(currentTheme, colorScheme);
@@ -105,6 +108,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       value={{
         theme,
         colorScheme,
+        effectiveTheme,
         setTheme: setThemeState,
         setColorScheme: setColorSchemeState,
       }}
