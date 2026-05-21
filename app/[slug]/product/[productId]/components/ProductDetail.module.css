@@ -636,7 +636,7 @@
 .cardPrice {
   font-weight: 700;
   font-size: 1rem;
-  color: var(--storefront-primary-text, var(--md-sys-color-primary));
+  color: var(--storefront-on-surface, var(--md-sys-color-on-surface, #1d1b20));
 }
 
 @media (min-width: 768px) {

@@ -44,6 +44,8 @@ export interface StorefrontCssOverlay {
 export interface StorefrontBackground {
   type: StorefrontBackgroundType;
   colors: string[];
+  /** Direction of the gradient fill in degrees (0-360). Default: 135 */
+  gradientDirection?: number;
   patternSize?: number; // legacy, kept for backward compat during migration
   overlay?: StorefrontOverlay;
   /** Custom CSS overlay from PatternCraft or any external source.
@@ -309,6 +311,12 @@ function splitTopLevel(cssValue: string): string[] {
 
 // ─── Public builder ──────────────────────────────────────────────
 
+/** Returns the CSS angle string for a background's gradient direction. */
+function gradientAngle(bg: StorefrontBackground): string {
+  const deg = bg.gradientDirection ?? 135;
+  return `${deg}deg`;
+}
+
 export function buildBackgroundCSS(bg?: StorefrontBackground): Record<string, string> {
   if (!bg || !bg.colors.length) return {};
 
@@ -342,7 +350,7 @@ export function buildBackgroundCSS(bg?: StorefrontBackground): Record<string, st
         // El patrón se dibuja ENCIMA del gradient fill del usuario.
         // Expandimos sizes/positions para que cada capa tenga su valor correcto
         // y no se ciclen incorrectamente por CSS.
-        const gradientImg = `linear-gradient(135deg, ${bg.colors.slice(0, 4).join(', ')})`;
+        const gradientImg = `linear-gradient(${gradientAngle(bg)}, ${bg.colors.slice(0, 4).join(', ')})`;
         vars['--storefront-bg-image'] = `${bg.cssOverlay!.backgroundImage}, ${gradientImg}`;
 
         const patternLayerCount = countCssLayers(bg.cssOverlay!.backgroundImage);
@@ -395,7 +403,7 @@ export function buildBackgroundCSS(bg?: StorefrontBackground): Record<string, st
       const positions = isPosMulti ? pPos : Array(pCount).fill(pPos).join(', ');
 
       if (bg.type === 'gradient' && bg.colors.length >= 2) {
-        const gradientImg = `linear-gradient(135deg, ${bg.colors.slice(0, 4).join(', ')})`;
+        const gradientImg = `linear-gradient(${gradientAngle(bg)}, ${bg.colors.slice(0, 4).join(', ')})`;
         vars['--storefront-bg-image'] = `${patternImg}, ${gradientImg}`;
         vars['--storefront-bg-size'] = `${sizes}, cover`;
         vars['--storefront-bg-position'] = `${positions}, 0 0`;
@@ -406,7 +414,7 @@ export function buildBackgroundCSS(bg?: StorefrontBackground): Record<string, st
       }
     } else if (bg.type === 'gradient' && bg.colors.length >= 2) {
       const colors = bg.colors.slice(0, 4);
-      vars['--storefront-bg-image'] = `linear-gradient(135deg, ${colors.join(', ')})`;
+      vars['--storefront-bg-image'] = `linear-gradient(${gradientAngle(bg)}, ${colors.join(', ')})`;
     }
     // Solid without overlay → just the background color, no image needed
   }
@@ -530,15 +538,26 @@ function normalizeStorefrontBackground(input: unknown): StorefrontBackground | u
         typeof cssInput.backgroundPosition === 'string'
           ? cssInput.backgroundPosition.trim()
           : undefined,
+      backgroundRepeat:
+        typeof cssInput.backgroundRepeat === 'string'
+          ? cssInput.backgroundRepeat.trim()
+          : undefined,
       maskImage: typeof cssInput.maskImage === 'string' ? cssInput.maskImage.trim() : undefined,
       maskComposite:
         typeof cssInput.maskComposite === 'string' ? cssInput.maskComposite.trim() : undefined,
     };
   }
 
+  // Normalize gradient direction (0-360, default 135)
+  let gradientDirection: number | undefined;
+  if (type === 'gradient' && typeof input.gradientDirection === 'number') {
+    gradientDirection = ((input.gradientDirection % 360) + 360) % 360;
+  }
+
   return {
     type,
     colors: colors.slice(0, 4),
+    ...(gradientDirection !== undefined ? { gradientDirection } : {}),
     ...(overlay ? { overlay } : {}),
     ...(cssOverlay ? { cssOverlay } : {}),
   };

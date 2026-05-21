@@ -113,7 +113,7 @@
 .schemeFloatingToggle {
   position: fixed;
   right: 24px;
-  bottom: 100px; /* above the StorefrontEditor FAB */
+  bottom: 24px;
   z-index: 800;
   display: flex;
   gap: 4px;
@@ -123,6 +123,11 @@
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(8px);
+}
+
+/* When the StorefrontEditor FAB is visible, lift toggle above it */
+.hasEditor {
+  bottom: 100px;
 }
 
 .schemeToggleBtn {
@@ -159,6 +164,10 @@
 @media (max-width: 768px) {
   .schemeFloatingToggle {
     right: 16px;
+    bottom: 16px;
+  }
+
+  .hasEditor {
     bottom: 90px;
   }
 

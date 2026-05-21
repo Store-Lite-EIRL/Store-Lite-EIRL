@@ -235,12 +235,29 @@ export default function ProductPreviewSheet({
                 {product.brand ? `${product.brand.toUpperCase()} | ` : ''}
                 {category}
               </p>
-              <span
-                className={`${styles.stockBadge} ${product.stock > 0 ? styles.inStock : styles.outOfStock}`}
-              >
-                <span className={styles.stockDot} />
-                {product.stock > 0 ? `${product.stock} uds.` : 'Agotado'}
-              </span>
+              {(() => {
+                const stockLevel =
+                  product.stock <= 0 ? 'outOfStock' : product.stock <= 5 ? 'lowStock' : 'inStock';
+                const stockLabel =
+                  product.stock <= 0
+                    ? 'Agotado'
+                    : product.stock <= 5
+                      ? `Solo ${product.stock} uds.`
+                      : `${product.stock} uds.`;
+                return (
+                  <span
+                    className={`${styles.stockBadge} ${styles[stockLevel]}`}
+                    title={
+                      product.stock > 0
+                        ? `${product.stock} unidades disponibles`
+                        : 'Producto sin stock'
+                    }
+                  >
+                    <span className={styles.stockDot} />
+                    {stockLabel}
+                  </span>
+                );
+              })()}
             </div>
             <h3 className={styles.title}>{product.title}</h3>
 

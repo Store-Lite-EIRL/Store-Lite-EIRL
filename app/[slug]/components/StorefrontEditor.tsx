@@ -69,6 +69,7 @@ export function StorefrontEditor({
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<{ message: string; error?: boolean } | null>(null);
   const [isPatternBrowserOpen, setIsPatternBrowserOpen] = useState(false);
+  const [, setOverlayPending] = useState(false);
   // The scheme state (light/dark) persists across open/close cycles because
   // this component stays mounted. The user's last tab selection remains active,
   // and onPreviewSchemeChange keeps the page preview showing that scheme even
@@ -85,6 +86,10 @@ export function StorefrontEditor({
   const hasPattern = !!cssOverlay?.patternId;
   // Show toggle as ON when there's any active overlay (PatternCraft or legacy built-in)
   const hasActiveOverlay = hasPattern || !!bg?.overlay;
+
+  // ── Pattern color vs fill: if the pattern has its own background color,
+  //     show a color editor for it; otherwise fill shows through ──
+  const hasPatternColor = !!cssOverlay?.background;
 
   // Lock body scroll when open
   useEffect(() => {
@@ -139,6 +144,59 @@ export function StorefrontEditor({
     [storefrontTheme, onThemeChange],
   );
 
+  // ── Draft color state for smooth drag UX ──
+  // Avoids calling normalizeStorefrontTheme on every pixel of color drag.
+  //
+  // We use refs to accumulate pending changes so that if the user drags
+  // multiple colors in quick succession (e.g. primary, then secondary),
+  // ALL pending changes get committed together when the debounce fires.
+  const paletteRef = useRef(currentConfig.palette);
+  paletteRef.current = currentConfig.palette;
+  const fillColorsRef = useRef(fillColors);
+  fillColorsRef.current = fillColors;
+
+  const [draftPalette, setDraftPalette] = useState<Record<string, string> | null>(null);
+  const [draftFillColors, setDraftFillColors] = useState<string[] | null>(null);
+  const paletteDraftRef = useRef<Record<string, string>>({});
+  const fillDraftRef = useRef<Record<number, string>>({});
+  const paletteFlushRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const fillFlushRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const getPaletteColor = useCallback(
+    (key: keyof typeof currentConfig.palette): string =>
+      draftPalette?.[key] ?? currentConfig.palette[key],
+    [draftPalette, currentConfig.palette],
+  );
+
+  const getFillColor = useCallback(
+    (index: number): string => draftFillColors?.[index] ?? fillColors[index],
+    [draftFillColors, fillColors],
+  );
+
+  // Debounced commit: writes to draft immediately, commits accumulated
+  // changes to theme after a 150ms pause in dragging.
+  const schedulePaletteFlush = useCallback(() => {
+    clearTimeout(paletteFlushRef.current);
+    paletteFlushRef.current = setTimeout(() => {
+      const pending = { ...paletteDraftRef.current };
+      paletteDraftRef.current = {};
+      setDraftPalette(null);
+      if (Object.keys(pending).length > 0) {
+        const next = { ...paletteRef.current, ...pending };
+        updateConfig({ palette: next });
+      }
+    }, 150);
+  }, [updateConfig]);
+
+  const handlePaletteChange = useCallback(
+    (key: string, value: string) => {
+      paletteDraftRef.current[key] = value;
+      setDraftPalette((prev) => ({ ...prev, [key]: value }));
+      schedulePaletteFlush();
+    },
+    [schedulePaletteFlush],
+  );
+
   // ── Fill helpers ──────────────────────────────────────────────
 
   const setBg = useCallback(
@@ -156,65 +214,57 @@ export function StorefrontEditor({
     [fillType, fillColors, cssOverlay, updateConfig],
   );
 
-  const handleColorChange = (index: number, color: string) => {
-    const next = [...fillColors];
-    next[index] = color;
-    setBg({ colors: next });
-  };
-
-  const setColorCount = (count: number) => {
-    if (count === fillColorCount) return;
-    let colors: string[];
-    if (count > fillColorCount) {
-      colors = [...fillColors];
-      while (colors.length < count) colors.push(randomHexColor());
-    } else {
-      colors = fillColors.slice(0, count);
-    }
-    // Auto-switch type: 1 = solid, 2+ = gradient
-    const newType: StorefrontBackgroundType = count === 1 ? 'solid' : 'gradient';
-    setBg({ type: newType, colors });
-  };
-
-  // ── Pattern toggle ────────────────────────────────────────────
-
-  const toggleOverlay = (enable: boolean) => {
-    if (enable) {
-      // Toggle ON → open the browser to pick a pattern
-      // If there was already a cssOverlay, it stays in the config
-      if (!cssOverlay) {
-        setIsPatternBrowserOpen(true);
+  const scheduleFillFlush = useCallback(() => {
+    clearTimeout(fillFlushRef.current);
+    fillFlushRef.current = setTimeout(() => {
+      const pending = { ...fillDraftRef.current };
+      fillDraftRef.current = {};
+      setDraftFillColors(null);
+      if (Object.keys(pending).length > 0) {
+        const next = [...fillColorsRef.current];
+        for (const [idx, color] of Object.entries(pending)) {
+          next[Number(idx)] = color;
+        }
+        setBg({ colors: next });
       }
-    } else {
-      // Toggle OFF → remove pattern overlay, keep fill
-      updateConfig({
-        background: { type: fillType, colors: fillColors },
-      });
-    }
+    }, 150);
+  }, [setBg]);
+
+  const handleFillColorChange = (index: number, color: string) => {
+    fillDraftRef.current[index] = color;
+    setDraftFillColors((prev) => {
+      const next = prev ? [...prev] : [...fillColors];
+      next[index] = color;
+      return next;
+    });
+    scheduleFillFlush();
   };
 
-  // ── PatternCraft browser ──────────────────────────────────────
+  // ── Color removal / add (replaces [1][2][3][4] grid) ──
 
-  const handlePatternCraftSelect = useCallback(
-    (pattern: PatternCraftPattern) => {
-      const overlay = patternToCssOverlay(pattern);
-      updateConfig({
-        background: {
-          type: fillType,
-          colors: fillColors,
-          cssOverlay: overlay,
-        },
-      });
-    },
-    [fillType, fillColors, updateConfig],
-  );
+  const removeColorAt = (index: number) => {
+    const next = fillColors.filter((_, i) => i !== index);
+    const newType: StorefrontBackgroundType = next.length === 1 ? 'solid' : 'gradient';
+    setBg({ type: newType, colors: next });
+  };
 
-  const handleRemovePatternCraft = useCallback(() => {
-    // Clear cssOverlay but keep fill
-    updateConfig({
-      background: { type: fillType, colors: fillColors },
-    });
-  }, [fillType, fillColors, updateConfig]);
+  const addColor = () => {
+    if (fillColorCount >= 4) return;
+    const next = [...fillColors, randomHexColor()];
+    // When creating a gradient, randomize the direction so it's immediately
+    // obvious a gradient was created (vs the hardcoded 135deg default).
+    const dir = Math.floor(Math.random() * 360);
+    setBg({ type: 'gradient', colors: next, gradientDirection: dir });
+  };
+
+  // ── Gradient direction ────────────────────────────────────────
+
+  const currentDirection = bg?.gradientDirection ?? 135;
+
+  const handleRandomizeDirection = () => {
+    const dir = Math.floor(Math.random() * 360);
+    setBg({ gradientDirection: dir });
+  };
 
   // ── Global actions ───────────────────────────────────────────
 
@@ -226,7 +276,6 @@ export function StorefrontEditor({
         business.id,
         business.slug,
         storefrontTheme,
-        scheme,
         plan || 'business_pro',
       );
       if (result.success) {
@@ -247,16 +296,61 @@ export function StorefrontEditor({
   };
 
   const handleRandom = () => {
-    // Randomiza solo colores de relleno. El patrón PatternCraft se mantiene igual.
+    // Randomiza colores de relleno y dirección del gradiente.
+    // El patrón PatternCraft se mantiene igual.
     const next: StorefrontBackground = {
       type: fillType,
       colors: fillColors.map(() => randomHexColor()),
     };
+    if (fillType === 'gradient') {
+      next.gradientDirection = Math.floor(Math.random() * 360);
+    }
     if (cssOverlay) {
       next.cssOverlay = { ...cssOverlay };
     }
     updateConfig({ background: next });
   };
+
+  // ── Pattern toggle ────────────────────────────────────────────
+
+  const toggleOverlay = (enable: boolean) => {
+    if (enable) {
+      if (!cssOverlay) {
+        setOverlayPending(true);
+        setIsPatternBrowserOpen(true);
+      }
+    } else {
+      setOverlayPending(false);
+      updateConfig({
+        background: { type: fillType, colors: fillColors },
+      });
+    }
+  };
+
+  // ── PatternCraft browser ──────────────────────────────────────
+
+  const handlePatternCraftSelect = useCallback(
+    (pattern: PatternCraftPattern) => {
+      const overlay = patternToCssOverlay({
+        id: pattern.id,
+        style: pattern.style as Record<string, unknown>,
+      });
+      updateConfig({
+        background: {
+          type: fillType,
+          colors: fillColors,
+          cssOverlay: overlay,
+        },
+      });
+    },
+    [fillType, fillColors, updateConfig],
+  );
+
+  const handleRemovePatternCraft = useCallback(() => {
+    updateConfig({
+      background: { type: fillType, colors: fillColors },
+    });
+  }, [fillType, fillColors, updateConfig]);
 
   return (
     <>
@@ -279,8 +373,11 @@ export function StorefrontEditor({
 
         <div className={styles.panelBody}>
           {/* ── Toggle modo claro/oscuro ── */}
-          <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>Personaliza para:</h3>
+          <div className={styles.sectionCard}>
+            <h3 className={styles.sectionTitle}>
+              <Icon>contrast</Icon>
+              Personaliza para:
+            </h3>
             <div className={styles.schemeTabs}>
               {SCHEME_TABS.map((tab) => (
                 <button
@@ -296,41 +393,67 @@ export function StorefrontEditor({
                 </button>
               ))}
             </div>
-          </section>
+          </div>
 
           {/* ── Paleta de colores ── */}
-          <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>Colores</h3>
+          <div className={styles.sectionCard}>
+            <h3 className={styles.sectionTitle}>
+              <Icon>palette</Icon>
+              Colores
+            </h3>
             <div className={styles.colorList}>
-              {(['primary', 'secondary', 'accent'] as const).map((key) => {
-                const color = currentConfig.palette[key];
+              {[
+                {
+                  key: 'primary' as const,
+                  label: 'Principal',
+                  hint: 'Botones, enlaces, encabezados',
+                },
+                {
+                  key: 'secondary' as const,
+                  label: 'Secundario',
+                  hint: 'Etiquetas, badges, bordes',
+                },
+                { key: 'accent' as const, label: 'Acento', hint: 'Destacados, íconos especiales' },
+              ].map(({ key, label, hint }) => {
+                const color = getPaletteColor(key);
                 return (
                   <div key={key} className={styles.colorRow}>
                     <div className={styles.colorPreviewWrap}>
                       <input
                         type="color"
                         value={color}
-                        onChange={(e) => {
-                          const next = { ...currentConfig.palette, [key]: e.target.value };
-                          updateConfig({ palette: next });
-                        }}
+                        onChange={(e) => handlePaletteChange(key, e.target.value)}
                         className={styles.colorInput}
                       />
                       <span className={styles.colorPreview} style={{ backgroundColor: color }} />
                     </div>
                     <div className={styles.colorMeta}>
-                      <span className={styles.colorLabel}>{key}</span>
+                      <span className={styles.colorLabel}>{label}</span>
+                      <span className={styles.colorHint}>{hint}</span>
                       <span className={styles.colorHex}>{color}</span>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </section>
+            {/* Palette preview dots */}
+            <div className={styles.palettePreview}>
+              {(['primary', 'secondary', 'accent'] as const).map((key) => (
+                <span
+                  key={key}
+                  className={styles.paletteDot}
+                  style={{ backgroundColor: currentConfig.palette[key] }}
+                />
+              ))}
+            </div>
+          </div>
 
           {/* ── Tipografía ── */}
-          <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>Tipografía</h3>
+          <div className={styles.sectionCard}>
+            <h3 className={styles.sectionTitle}>
+              <Icon>text_fields</Icon>
+              Tipografía
+            </h3>
             <div className={styles.fontGrid}>
               {FONT_OPTIONS.map((opt) => (
                 <button
@@ -338,72 +461,134 @@ export function StorefrontEditor({
                   className={`${styles.fontOption} ${storefrontTheme.fontFamily === opt.value ? styles.fontOptionActive : ''}`}
                   onClick={() => updateTheme({ fontFamily: opt.value })}
                 >
-                  {opt.label}
+                  <span
+                    className={styles.fontPreview}
+                    style={{
+                      fontFamily:
+                        opt.value === 'google-sans'
+                          ? undefined
+                          : opt.value === 'inter'
+                            ? "'Inter', sans-serif"
+                            : "'Roboto', sans-serif",
+                    }}
+                  >
+                    Aa
+                  </span>
+                  <span className={styles.fontLabel}>{opt.label}</span>
                 </button>
               ))}
             </div>
-          </section>
+          </div>
 
           {/* ── Fondo ── */}
-          <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>Fondo</h3>
+          <div className={styles.sectionCard}>
+            <h3 className={styles.sectionTitle}>
+              <Icon>wallpaper</Icon>
+              Fondo
+            </h3>
 
-            {/* ── RELLENO (sólido / degradado) ── */}
-            <div className={styles.colorCountRow}>
-              <span className={styles.label}>
-                {fillColorCount === 1 ? 'Sólido' : `Degradado (${fillColorCount} colores)`}
-              </span>
-              <div className={styles.colorCountGrid}>
-                {[1, 2, 3, 4].map((n) => (
-                  <button
-                    key={n}
-                    className={`${styles.colorCountBtn} ${fillColorCount === n ? styles.colorCountBtnActive : ''}`}
-                    onClick={() => setColorCount(n)}
-                  >
-                    {n}
+            <div className={hasPatternColor ? styles.fillDisabled : ''}>
+              {hasPatternColor && (
+                <div className={styles.fillDisabledHint}>
+                  <Icon>info</Icon>
+                  El patrón define su propio color de fondo
+                </div>
+              )}
+
+              <h4 className={styles.sectionSubtitle}>Relleno</h4>
+
+              {/* ── RELLENO (sólido / degradado) ── */}
+              <div className={styles.colorCountRow}>
+                <span className={styles.label}>
+                  {fillColorCount === 1 ? 'Sólido' : `Degradado (${fillColorCount} colores)`}
+                </span>
+              </div>
+
+              {/* ── Dirección del degradado ── */}
+              {fillColorCount > 1 && (
+                <div className={styles.gradientDirRow}>
+                  <span className={styles.label}>Dirección</span>
+                  <div className={styles.dirControl}>
+                    <span className={styles.dirAngle}>{currentDirection}°</span>
+                    <button
+                      className={styles.dirRandomBtn}
+                      onClick={handleRandomizeDirection}
+                      title="Randomizar dirección del degradado"
+                    >
+                      <Icon>shuffle</Icon>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Color pickers del relleno */}
+              <div className={styles.colorList}>
+                {fillColors.slice(0, fillColorCount).map((_color, i) => {
+                  const color = getFillColor(i);
+                  return (
+                    <div key={i} className={styles.colorRow}>
+                      <div className={styles.colorPreviewWrap}>
+                        <input
+                          type="color"
+                          value={color}
+                          onChange={(e) => handleFillColorChange(i, e.target.value)}
+                          className={styles.colorInput}
+                        />
+                        <span className={styles.colorPreview} style={{ backgroundColor: color }} />
+                      </div>
+                      <div className={styles.colorMeta}>
+                        <span className={styles.colorLabel}>
+                          {fillColorCount === 1 ? 'Fondo' : `Capa ${i + 1}`}
+                        </span>
+                        <span className={styles.colorHint}>
+                          {i === 0
+                            ? 'Color base del fondo'
+                            : i === fillColorCount - 1
+                              ? 'Tono final del degradado'
+                              : 'Transición del degradado'}
+                        </span>
+                        <span className={styles.colorHex}>{color}</span>
+                      </div>
+                      {/* Suggested palette chips */}
+                      <div className={styles.colorChips}>
+                        {THEME_BG_COLORS.slice(0, 4).map((c) => (
+                          <button
+                            key={c}
+                            className={`${styles.colorChip} ${c === color ? styles.colorChipActive : ''}`}
+                            style={{ backgroundColor: c }}
+                            onClick={() => handleFillColorChange(i, c)}
+                            title={c}
+                          />
+                        ))}
+                      </div>
+                      {fillColorCount > 1 && (
+                        <button
+                          className={styles.removeColorBtn}
+                          onClick={() => removeColorAt(i)}
+                          title="Quitar color"
+                        >
+                          <Icon>close</Icon>
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+                {fillColorCount < 4 && (
+                  <button className={styles.addColorBtn} onClick={addColor}>
+                    <Icon>add</Icon>
+                    Agregar color
                   </button>
-                ))}
+                )}
               </div>
             </div>
 
-            {/* Color pickers del relleno */}
-            <div className={styles.colorList}>
-              {fillColors.slice(0, fillColorCount).map((color, i) => (
-                <div key={i} className={styles.colorRow}>
-                  <div className={styles.colorPreviewWrap}>
-                    <input
-                      type="color"
-                      value={color}
-                      onChange={(e) => handleColorChange(i, e.target.value)}
-                      className={styles.colorInput}
-                    />
-                    <span className={styles.colorPreview} style={{ backgroundColor: color }} />
-                  </div>
-                  <div className={styles.colorMeta}>
-                    <span className={styles.colorLabel}>
-                      {fillColorCount === 1 ? 'Fondo' : `Color ${i + 1}`}
-                    </span>
-                    <span className={styles.colorHex}>{color}</span>
-                  </div>
-                  {/* Suggested palette chips */}
-                  <div className={styles.colorChips}>
-                    {THEME_BG_COLORS.slice(0, 6).map((c) => (
-                      <button
-                        key={c}
-                        className={`${styles.colorChip} ${c === color ? styles.colorChipActive : ''}`}
-                        style={{ backgroundColor: c }}
-                        onClick={() => handleColorChange(i, c)}
-                        title={c}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <hr className={styles.sectionDivider} />
+
+            <h4 className={styles.sectionSubtitle}>Patrón decorativo</h4>
 
             {/* ── TOGGLE PATRÓN DECORATIVO ── */}
             <div className={styles.toggleRow}>
-              <span className={styles.label}>Patrón decorativo</span>
+              <span className={styles.label}>{hasActiveOverlay ? 'Activado' : 'Desactivado'}</span>
               <label className={styles.toggle}>
                 <input
                   type="checkbox"
@@ -420,24 +605,32 @@ export function StorefrontEditor({
                 {/* Active pattern info */}
                 {cssOverlay?.patternId ? (
                   <div className={styles.patternCraftActive}>
-                    <span className={styles.patternCraftActiveIcon}>✦</span>
-                    <span>
-                      Patrón:{' '}
-                      <strong>
-                        {getPatternCraftById(cssOverlay.patternId)?.name ?? cssOverlay.patternId}
-                      </strong>
+                    <div className={styles.patternCraftActiveRow}>
+                      <span className={styles.patternCraftActiveIcon}>✦</span>
+                      <span>
+                        <strong>
+                          {getPatternCraftById(cssOverlay.patternId)?.name ?? cssOverlay.patternId}
+                        </strong>
+                      </span>
+                      <button
+                        className={styles.patternCraftRemoveBtn}
+                        onClick={handleRemovePatternCraft}
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                    <span className={styles.patternCraftHint}>
+                      {hasPatternColor
+                        ? 'Patrón con color de fondo propio'
+                        : 'Patrón transparente — compatible con relleno de fondo'}
                     </span>
-                    <button
-                      className={styles.patternCraftRemoveBtn}
-                      onClick={handleRemovePatternCraft}
-                    >
-                      Quitar
-                    </button>
                   </div>
                 ) : (
                   <div className={styles.patternCraftActive}>
-                    <span className={styles.patternCraftActiveIcon}>✦</span>
-                    <span>Patrón decorativo activo</span>
+                    <div className={styles.patternCraftActiveRow}>
+                      <span className={styles.patternCraftActiveIcon}>✦</span>
+                      <span>Patrón decorativo activo</span>
+                    </div>
                   </div>
                 )}
 
@@ -455,9 +648,16 @@ export function StorefrontEditor({
               </>
             )}
 
-            {/* Acciones de color */}
+            <hr className={styles.sectionDivider} />
+
+            <h4 className={styles.sectionSubtitle}>Acciones</h4>
+
             <div className={styles.colorActions}>
-              <button className={styles.randomBtn} onClick={handleRandom}>
+              <button
+                className={styles.randomBtn}
+                onClick={handleRandom}
+                disabled={hasPatternColor}
+              >
                 <Icon>shuffle</Icon>
                 Random
               </button>
@@ -466,7 +666,7 @@ export function StorefrontEditor({
                 Restablecer
               </button>
             </div>
-          </section>
+          </div>
         </div>
 
         {/* Footer del panel */}

@@ -135,7 +135,7 @@
 
 .storeBadge i {
   font-size: 1.125rem;
-  color: var(--storefront-primary-text, var(--md-sys-color-primary, #65558f));
+  color: var(--storefront-primary, var(--md-sys-color-primary, #65558f));
 }
 
 .storeLogo {
@@ -185,7 +185,7 @@
   margin: 0;
   font-size: 2rem;
   font-weight: 800;
-  color: var(--storefront-primary-text, var(--md-sys-color-primary));
+  color: var(--storefront-on-surface, var(--md-sys-color-on-surface));
   letter-spacing: -0.01em;
 }
 
@@ -227,7 +227,7 @@
 }
 
 .inlineLink {
-  color: var(--storefront-primary-text, var(--md-sys-color-primary));
+  color: var(--storefront-primary, var(--md-sys-color-primary));
   font-size: 0.875rem;
   font-weight: 700;
   text-decoration: none;
@@ -265,19 +265,38 @@
 }
 
 .stockBadge.inStock {
-  color: var(--md-sys-color-tertiary, #7d5260);
+  color: var(--storefront-on-surface-variant, var(--md-sys-color-on-surface-variant, #49454f));
 }
 
 .stockBadge.inStock .stockDot {
-  background: var(--md-sys-color-tertiary, #7d5260);
+  background: var(--md-sys-color-tertiary, #4a7c59);
+}
+
+.stockBadge.lowStock {
+  color: var(--storefront-on-surface-variant, var(--md-sys-color-on-surface-variant, #49454f));
+}
+
+.stockBadge.lowStock .stockDot {
+  background: var(--md-sys-color-error, #b3261e);
+  animation: pulseStock 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseStock {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 .stockBadge.outOfStock {
-  color: var(--md-sys-color-error, #b3261e);
+  color: var(--storefront-on-surface-variant, var(--md-sys-color-on-surface-variant, #49454f));
 }
 
 .stockBadge.outOfStock .stockDot {
-  background: var(--md-sys-color-error, #b3261e);
+  background: var(--md-sys-color-outline, #79747e);
 }
 
 /* ── Shipping info card ── */
@@ -294,7 +313,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--storefront-primary-text, var(--md-sys-color-primary, #65558f));
+  color: var(--storefront-on-surface-variant, var(--md-sys-color-on-surface-variant, #49454f));
 }
 
 .shippingLabel {
@@ -302,7 +321,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--storefront-primary-text, var(--md-sys-color-primary, #65558f));
+  color: var(--storefront-on-surface-variant, var(--md-sys-color-on-surface-variant, #49454f));
 }
 
 .shippingText {
@@ -372,7 +391,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--storefront-primary-text, var(--md-sys-color-primary, #65558f));
+  color: var(--storefront-on-surface-variant, var(--md-sys-color-on-surface-variant, #49454f));
   margin-bottom: 2px;
 }
 
@@ -381,7 +400,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--storefront-primary-text, var(--md-sys-color-primary, #65558f));
+  color: var(--storefront-on-surface-variant, var(--md-sys-color-on-surface-variant, #49454f));
 }
 
 .extraFieldRow {

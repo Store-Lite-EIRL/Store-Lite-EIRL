@@ -199,7 +199,6 @@ export default async function BusinessPage({ params }: Props) {
         businessName={business.name}
         businessRuc={business.taxId ?? undefined}
         businessAddress={business.address ?? undefined}
-        plan={plan}
       />
     </>
   );
