@@ -143,7 +143,7 @@
 }
 
 .category {
-  color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-surface-variant);
   font-size: 0.7rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -166,7 +166,7 @@
 }
 
 .rating i {
-  color: #ffb400;
+  color: var(--md-sys-color-tertiary, #ffb400);
   font-size: 0.875rem;
 }
 
@@ -207,7 +207,7 @@
   gap: 0.5rem;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #10b981; /* Success Green */
+  color: var(--md-sys-color-tertiary, #10b981); /* Success Green */
 }
 
 .stockDot {
@@ -218,10 +218,10 @@
 }
 
 .unavailable {
-  color: #e82828; /* Success Green */
+  color: var(--md-sys-color-error, #e82828);
 }
 .available {
-  color: #10b981; /* Success Green */
+  color: var(--md-sys-color-tertiary, #10b981);
 }
 .shippingInfo {
   display: flex;
@@ -276,8 +276,8 @@
 }
 
 .discountBadge {
-  background-color: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  background-color: color-mix(in srgb, var(--md-sys-color-tertiary, #10b981) 10%, transparent);
+  color: var(--md-sys-color-tertiary, #10b981);
   font-size: 0.625rem;
   font-weight: 700;
   padding: 0.25rem 0.5rem;

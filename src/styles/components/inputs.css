@@ -1,31 +1,37 @@
 /* Inputs */
-/* Inputs */
+md-filled-text-field,
+md-outlined-text-field,
+md-filled-select,
+md-outlined-select,
+md-select {
+  width: 100%;
+}
+
 md-filled-text-field,
 md-outlined-text-field {
-  width: 100%;
   --md-outlined-text-field-hover-outline-color: var(--md-sys-color-primary);
   --md-outlined-text-field-focus-outline-color: var(--md-sys-color-primary);
   --md-outlined-text-field-hover-label-text-color: var(--md-sys-color-primary);
   --md-outlined-text-field-focus-label-text-color: var(--md-sys-color-primary);
 
   /* Error state refinements - Unifying all parts to #ED3312 */
-  --md-outlined-text-field-error-outline-color: #ed3312;
-  --md-outlined-text-field-error-hover-outline-color: #ed3312;
-  --md-outlined-text-field-error-focus-outline-color: #ed3312;
-  --md-outlined-text-field-error-label-text-color: #ed3312;
-  --md-outlined-text-field-error-hover-label-text-color: #ed3312;
-  --md-outlined-text-field-error-focus-label-text-color: #ed3312;
-  --md-outlined-text-field-error-supporting-text-color: #ed3312;
-  --md-outlined-text-field-error-hover-supporting-text-color: #ed3312;
-  --md-outlined-text-field-error-focus-supporting-text-color: #ed3312;
+  --md-outlined-text-field-error-outline-color: var(--md-sys-color-error, #ed3312);
+  --md-outlined-text-field-error-hover-outline-color: var(--md-sys-color-error, #ed3312);
+  --md-outlined-text-field-error-focus-outline-color: var(--md-sys-color-error, #ed3312);
+  --md-outlined-text-field-error-label-text-color: var(--md-sys-color-error, #ed3312);
+  --md-outlined-text-field-error-hover-label-text-color: var(--md-sys-color-error, #ed3312);
+  --md-outlined-text-field-error-focus-label-text-color: var(--md-sys-color-error, #ed3312);
+  --md-outlined-text-field-error-supporting-text-color: var(--md-sys-color-error, #ed3312);
+  --md-outlined-text-field-error-hover-supporting-text-color: var(--md-sys-color-error, #ed3312);
+  --md-outlined-text-field-error-focus-supporting-text-color: var(--md-sys-color-error, #ed3312);
 
-  --md-filled-text-field-error-active-indicator-color: #ed3312;
-  --md-filled-text-field-error-hover-active-indicator-color: #ed3312;
-  --md-filled-text-field-error-focus-active-indicator-color: #ed3312;
-  --md-filled-text-field-error-label-text-color: #ed3312;
-  --md-filled-text-field-error-hover-label-text-color: #ed3312;
-  --md-filled-text-field-error-focus-label-text-color: #ed3312;
-  --md-filled-text-field-error-supporting-text-color: #ed3312;
+  --md-filled-text-field-error-active-indicator-color: var(--md-sys-color-error, #ed3312);
+  --md-filled-text-field-error-hover-active-indicator-color: var(--md-sys-color-error, #ed3312);
+  --md-filled-text-field-error-focus-active-indicator-color: var(--md-sys-color-error, #ed3312);
+  --md-filled-text-field-error-label-text-color: var(--md-sys-color-error, #ed3312);
+  --md-filled-text-field-error-hover-label-text-color: var(--md-sys-color-error, #ed3312);
+  --md-filled-text-field-error-focus-label-text-color: var(--md-sys-color-error, #ed3312);
+  --md-filled-text-field-error-supporting-text-color: var(--md-sys-color-error, #ed3312);
 }
 
 /* Checkbox, Radio, Switch */

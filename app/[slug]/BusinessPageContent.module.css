@@ -1,8 +1,31 @@
 .storefrontThemeRoot {
+  position: relative;
   font-family: var(--storefront-font-family);
   color: var(--md-sys-color-on-surface);
-  --mio-theme-text-font-family: var(--storefront-font-family);
   padding-inline: 0 !important;
+  background-color: var(--storefront-bg, var(--md-sys-color-surface));
+  min-height: 100dvh;
+}
+
+.storefrontThemeRoot::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--storefront-bg-image, none);
+  background-size: var(--storefront-bg-size, auto);
+  background-position: var(--storefront-bg-position, 0 0);
+  background-repeat: var(--storefront-bg-repeat, repeat);
+  -webkit-mask-image: var(--storefront-mask-image, none);
+  mask-image: var(--storefront-mask-image, none);
+  -webkit-mask-composite: var(--storefront-mask-composite, source-over);
+  mask-composite: var(--storefront-mask-composite, add);
+}
+
+.contentWrapper {
+  position: relative;
+  z-index: 1;
 }
 
 .ownerActionRow {
@@ -36,7 +59,7 @@
 }
 
 .paymentBanner:hover {
-  background: #d0c7e8;
+  background: color-mix(in srgb, var(--md-sys-color-secondary-container, #d0c7e8) 100%, black 7%);
 }
 
 .paymentBannerIcon {
@@ -83,5 +106,73 @@
 
   .addProductButton {
     width: 100%;
+  }
+}
+
+/* ── Floating light/dark toggle ── */
+.schemeFloatingToggle {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 800;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 28px;
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+/* When the StorefrontEditor FAB is visible, lift toggle above it */
+.hasEditor {
+  bottom: 100px;
+}
+
+.schemeToggleBtn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  transition:
+    background 0.2s,
+    color 0.2s,
+    transform 0.15s;
+  font-family: inherit;
+}
+
+.schemeToggleBtn:hover {
+  background: var(--md-sys-color-surface-container-highest, #e6e0e9);
+}
+
+.schemeToggleActive {
+  background: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+}
+
+.schemeToggleActive:hover {
+  background: var(--md-sys-color-primary-container, #eaddff);
+}
+
+@media (max-width: 768px) {
+  .schemeFloatingToggle {
+    right: 16px;
+    bottom: 16px;
+  }
+
+  .hasEditor {
+    bottom: 90px;
+  }
+
+  .schemeToggleBtn {
+    width: 36px;
+    height: 36px;
   }
 }

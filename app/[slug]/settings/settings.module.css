@@ -544,8 +544,7 @@
 }
 
 .themePreviewCard {
-  --storefront-font-family:
-    var(--font-storefront-inter), var(--mio-theme-text-font-family), sans-serif;
+  --storefront-font-family: var(--font-storefront-inter), Inter, sans-serif;
   border-radius: 24px;
   padding: 20px;
   display: flex;
@@ -581,7 +580,7 @@
   border-radius: 18px;
   padding: 20px;
   background: rgba(255, 255, 255, 0.92);
-  color: #111827;
+  color: var(--md-sys-color-on-surface, #111827);
 }
 
 .themePreviewEyebrow {
@@ -590,7 +589,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #6b7280;
+  color: var(--md-sys-color-on-surface-variant, #6b7280);
 }
 
 .themePreviewTitle {
@@ -601,7 +600,7 @@
 
 .themePreviewText {
   margin: 0;
-  color: #4b5563;
+  color: var(--md-sys-color-on-surface-variant, #4b5563);
   line-height: 1.5;
 }
 
@@ -1175,14 +1174,14 @@
 }
 
 .statusDotActive {
-  background-color: #2e7d32; /* Green 800 */
-  box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7);
+  background-color: var(--md-sys-color-tertiary, #2e7d32); /* Green 800 */
+  box-shadow: 0 0 0 0 rgba(var(--md-sys-color-tertiary-rgb, 46, 125, 50), 0.7);
   animation: pulse-green 2.5s infinite ease-in-out;
 }
 
 .statusDotInactive {
-  background-color: #d32f2f; /* Red 800 */
-  box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.7);
+  background-color: var(--md-sys-color-error, #d32f2f); /* Red 800 */
+  box-shadow: 0 0 0 0 rgba(var(--md-sys-color-error-rgb, 211, 47, 47), 0.7);
   animation: pulse-red 2.5s infinite ease-in-out;
 }
 

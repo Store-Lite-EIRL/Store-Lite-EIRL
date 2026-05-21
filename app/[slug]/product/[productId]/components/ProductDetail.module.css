@@ -99,7 +99,7 @@
 .thumbnailContainer {
   border-radius: 1rem; /* rounded-xl */
   overflow: hidden;
-  background-color: #f3f4f6;
+  background-color: var(--md-sys-color-surface-variant, #f3f4f6);
   aspect-ratio: 1 / 1;
 }
 
@@ -172,15 +172,15 @@
 .discountBadge {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #fff;
-  background-color: #dc2626;
+  color: var(--md-sys-color-on-error, #fff);
+  background-color: var(--md-sys-color-error, #dc2626);
   padding: 0.125rem 0.5rem;
   border-radius: 9999px;
   line-height: 1.4;
 }
 
 .stockStatusOutOfStock {
-  color: #dc2626; /* Red color for out of stock */
+  color: var(--md-sys-color-error, #dc2626); /* Red color for out of stock */
   font-weight: 600;
   font-size: 0.875rem;
   margin-top: 0.25rem;
@@ -188,7 +188,7 @@
 }
 
 .stockStatusLowStock {
-  color: #d97706; /* Amber color for low stock */
+  color: var(--md-sys-color-tertiary, #d97706); /* Amber color for low stock */
   font-weight: 500;
   font-size: 0.875rem;
   margin-top: 0.25rem;
@@ -206,7 +206,7 @@
 .badgeBrand {
   font-size: 0.6875rem;
   font-weight: 700;
-  color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-on-primary-container, #21005d);
   background-color: var(--md-sys-color-primary-container, #eaddff);
   padding: 0.25rem 0.625rem;
   border-radius: 9999px;
@@ -217,8 +217,8 @@
 .badgeHot {
   font-size: 0.6875rem;
   font-weight: 700;
-  color: #fff;
-  background-color: #dc2626;
+  color: var(--md-sys-color-on-error, #fff);
+  background-color: var(--md-sys-color-error, #dc2626);
   padding: 0.25rem 0.625rem;
   border-radius: 9999px;
 }
@@ -226,8 +226,8 @@
 .badgeNew {
   font-size: 0.6875rem;
   font-weight: 700;
-  color: #fff;
-  background-color: #059669;
+  color: var(--md-sys-color-on-tertiary, #fff);
+  background-color: var(--md-sys-color-tertiary, #059669);
   padding: 0.25rem 0.625rem;
   border-radius: 9999px;
 }
@@ -284,7 +284,7 @@
 }
 
 .likeHeartActive {
-  color: #e11d48;
+  color: var(--md-sys-color-error, #e11d48);
 }
 
 .likeHeartInactive {
@@ -386,7 +386,7 @@
 }
 
 .colorButton.selected {
-  border: 2px solid #d1d5db; /* border-gray-300 */
+  border: 2px solid var(--md-sys-color-outline, #d1d5db); /* border-gray-300 */
 }
 
 /* Purchase Actions */
@@ -619,7 +619,7 @@
 .cardImagePlaceholder {
   width: 100%;
   aspect-ratio: 1;
-  background-color: #f3f4f6;
+  background-color: var(--md-sys-color-surface-variant, #f3f4f6);
   border-radius: 0.75rem;
   margin-bottom: 0.75rem;
   background-size: contain; /* Changed from cover */
@@ -636,7 +636,7 @@
 .cardPrice {
   font-weight: 700;
   font-size: 1rem;
-  color: var(--md-sys-color-primary);
+  color: var(--storefront-on-surface, var(--md-sys-color-on-surface, #1d1b20));
 }
 
 @media (min-width: 768px) {
@@ -1204,8 +1204,8 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  background-color: #10893e;
-  color: #fff;
+  background-color: var(--md-sys-color-tertiary, #10893e);
+  color: var(--md-sys-color-on-tertiary, #fff);
   border-radius: 50%;
   font-size: 0.875rem;
   font-weight: 600;
@@ -1220,15 +1220,15 @@
   gap: 10px;
   margin-top: 20px;
   padding: 14px 16px;
-  background-color: rgba(16, 137, 62, 0.06);
-  border: 1px solid rgba(16, 137, 62, 0.15);
+  background-color: color-mix(in srgb, var(--md-sys-color-tertiary, #10893e) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-tertiary, #10893e) 15%, transparent);
   border-radius: 14px;
 }
 
 .processFooterIcon {
   flex-shrink: 0;
   margin-top: 1px;
-  color: #10893e;
+  color: var(--md-sys-color-tertiary, #10893e);
   line-height: 1;
 }
 

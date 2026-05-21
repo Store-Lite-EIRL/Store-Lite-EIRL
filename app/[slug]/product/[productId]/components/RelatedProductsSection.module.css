@@ -97,7 +97,7 @@
 .cardPrice {
   font-weight: 700;
   font-size: 1rem;
-  color: var(--md-sys-color-primary);
+  color: var(--storefront-on-surface, var(--md-sys-color-on-surface, #1d1b20));
 }
 
 .cardOriginalPrice {
@@ -158,7 +158,7 @@
 }
 
 .likeActive {
-  color: #e11d48;
+  color: var(--md-sys-color-error, #e11d48);
 }
 
 .likeInactive {

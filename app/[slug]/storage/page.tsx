@@ -64,6 +64,7 @@ export default async function StoragePage({ params }: StoragePageProps) {
   return (
     <StorageClient
       businessSlug={resolvedBusiness.canonicalSlug}
+      businessId={business.id}
       isOwner={isOwner}
       permissions={permissions}
     />

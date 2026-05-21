@@ -20,7 +20,7 @@ import type { SaveProductMediaItem, SaveProductPayload } from './types';
 
 import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
 
-function StorageContent() {
+function StorageContent({ businessId }: { businessId: string }) {
   const params = useParams();
   const slug = params?.slug as string;
   // Delete dialog state
@@ -134,6 +134,7 @@ function StorageContent() {
           setProductToEdit(null);
           setIsCreateSheetOpen(true);
         }}
+        businessId={businessId}
       />
 
       <main className="storage-content" style={{ position: 'relative' }}>
@@ -188,10 +189,12 @@ function StorageContent() {
 
 export function StorageClient({
   businessSlug,
+  businessId,
   isOwner,
   permissions,
 }: {
   businessSlug: string;
+  businessId: string;
   isOwner: boolean;
   permissions: string[];
 }) {
@@ -207,8 +210,13 @@ export function StorageClient({
 
   return (
     <div className="storage-container">
-      <StorageProvider businessSlug={businessSlug} isOwner={isOwner} permissions={permissions}>
-        <StorageContent />
+      <StorageProvider
+        businessSlug={businessSlug}
+        businessId={businessId}
+        isOwner={isOwner}
+        permissions={permissions}
+      >
+        <StorageContent businessId={businessId} />
       </StorageProvider>
     </div>
   );

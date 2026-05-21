@@ -72,14 +72,14 @@
 }
 
 .avatarMale {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: var(--md-sys-color-primary-container, #e3f2fd);
+  color: var(--md-sys-color-on-primary-container, #1976d2);
   border-radius: 50%;
 }
 
 .avatarFemale {
-  background: #fce4ec;
-  color: #c2185b;
+  background: var(--md-sys-color-tertiary-container, #fce4ec);
+  color: var(--md-sys-color-on-tertiary-container, #c2185b);
   border-radius: 50%;
 }
 

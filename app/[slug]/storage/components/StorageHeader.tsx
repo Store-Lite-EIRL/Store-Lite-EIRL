@@ -1,18 +1,21 @@
-import { AlertSnackbar, Badge, Button, Icon, IconButton } from '@/shared/components/ui';
+import { useNotifications } from '@/hooks/useNotifications';
+import { AlertSnackbar, Button, Icon } from '@/shared/components/ui';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { usePermissions } from '../../context/PermissionsContext';
 import { useStorage } from '../context/StorageContext';
 import type { Product } from '../data';
 import { ImportProgressDialog } from './import/ImportProgressDialog';
 import { ImportPreviewDialog } from './ImportPreviewDialog';
 import { ImportSourceModal } from './ImportSourceModal';
+import { NotificationsPanel } from './NotificationsPanel';
 import { StatsHeader } from './StatsHeader';
 
 interface StorageHeaderProps {
   productsCount: number;
   allProducts: Product[];
   onAddProduct: () => void;
+  businessId: string;
 }
 
 interface ImportRowInput {
@@ -34,7 +37,12 @@ interface ImportRowInput {
   metadata?: Record<string, unknown>;
 }
 
-export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: StorageHeaderProps) => {
+export const StorageHeader = ({
+  productsCount,
+  allProducts,
+  onAddProduct,
+  businessId,
+}: StorageHeaderProps) => {
   const { can, isOwner } = usePermissions();
   const { entitlements, refreshProducts } = useStorage();
   const [sourceModalOpen, setSourceModalOpen] = useState(false);
@@ -45,6 +53,34 @@ export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: Stor
   // Progress dialog state
   const [progressOpen, setProgressOpen] = useState(false);
   const [importRows, setImportRows] = useState<ImportRowInput[]>([]);
+
+  // Notifications state
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [realtimeToast, setRealtimeToast] = useState<{
+    id: string;
+    title: string;
+    message: string;
+  } | null>(null);
+
+  const onNewNotification = useCallback((notif: { id: string; title: string; message: string }) => {
+    setRealtimeToast({
+      id: notif.id,
+      title: notif.title,
+      message: notif.message,
+    });
+    setTimeout(() => {
+      setRealtimeToast((prev) => (prev?.id === notif.id ? null : prev));
+    }, 5000);
+  }, []);
+
+  const {
+    unreadCount,
+    notifications,
+    isLoading: notifLoading,
+  } = useNotifications({
+    businessId,
+    onNewNotification,
+  });
 
   const params = useParams();
   const slug = params?.slug as string;
@@ -127,17 +163,16 @@ export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: Stor
           </Button>
         )}
 
-        <IconButton
-          style={{
-            position: 'relative',
-            backgroundColor: 'var(--md-sys-color-surface-container-high)',
-            borderRadius: '50%',
-          }}
+        <button
+          onClick={() => setNotificationsOpen(true)}
           className="notifications-btn"
+          title={`${unreadCount} notificaciones sin leer`}
         >
           <Icon>notifications</Icon>
-          <Badge count="3" />
-        </IconButton>
+          {unreadCount > 0 && (
+            <span className="notifications-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+          )}
+        </button>
       </div>
 
       {/* Import warning on small screens */}
@@ -150,6 +185,31 @@ export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: Stor
         onClose={() => setShowImportWarning(false)}
         autoCloseDuration={4000}
       />
+
+      {/* Notifications panel */}
+      <NotificationsPanel
+        open={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+        notifications={notifications}
+        isLoading={notifLoading}
+        unreadCount={unreadCount}
+      />
+
+      {/* Real-time toast for new notifications */}
+      {realtimeToast && (
+        <div className="realtime-toast">
+          <div className="realtime-toast-icon">
+            <Icon>notifications</Icon>
+          </div>
+          <div className="realtime-toast-content">
+            <span className="realtime-toast-title">{realtimeToast.title}</span>
+            <span className="realtime-toast-message">{realtimeToast.message}</span>
+          </div>
+          <button className="realtime-toast-close" onClick={() => setRealtimeToast(null)}>
+            <Icon>close</Icon>
+          </button>
+        </div>
+      )}
 
       {/* Step 1: choose source */}
       <ImportSourceModal

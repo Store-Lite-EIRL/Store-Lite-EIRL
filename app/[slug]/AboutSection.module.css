@@ -57,14 +57,18 @@
 
 .sectionIcon {
   font-size: 1.5rem;
-  color: var(--md-sys-color-primary);
+  color: var(--storefront-primary, var(--md-sys-color-primary));
   width: 2rem;
   height: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 0.75rem;
-  background: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--storefront-primary, var(--md-sys-color-primary)) 12%,
+    transparent
+  );
 }
 
 .sectionTitle {
@@ -165,13 +169,13 @@
 }
 
 .verified {
-  background: color-mix(in srgb, #22c55e 12%, transparent);
-  color: #15803d;
+  background: color-mix(in srgb, var(--md-sys-color-tertiary, #22c55e) 12%, transparent);
+  color: var(--md-sys-color-tertiary, #15803d);
 }
 
 .pending {
-  background: color-mix(in srgb, #eab308 12%, transparent);
-  color: #a16207;
+  background: color-mix(in srgb, var(--md-sys-color-secondary, #eab308) 12%, transparent);
+  color: var(--md-sys-color-secondary, #a16207);
 }
 
 .unverified {
@@ -180,8 +184,8 @@
 }
 
 .rejected {
-  background: color-mix(in srgb, #ef4444 12%, transparent);
-  color: #b91c1c;
+  background: color-mix(in srgb, var(--md-sys-color-error, #ef4444) 12%, transparent);
+  color: var(--md-sys-color-error, #b91c1c);
 }
 
 .verificationIcon {
@@ -207,7 +211,7 @@
 
 /* ─── Link de contacto ─── */
 .contactLink {
-  color: var(--md-sys-color-primary);
+  color: var(--storefront-primary, var(--md-sys-color-primary));
   text-decoration: none;
   font-weight: 500;
   transition: opacity 0.2s;

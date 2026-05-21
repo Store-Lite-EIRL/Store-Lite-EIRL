@@ -73,18 +73,18 @@
 }
 
 .badgeLike {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--md-sys-color-tertiary-container, #fef3c7);
+  color: var(--md-sys-color-on-tertiary-container, #92400e);
 }
 
 .badgeError {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--md-sys-color-error-container, #fee2e2);
+  color: var(--md-sys-color-on-error-container, #991b1b);
 }
 
 .badgeWarn {
-  background: #ffedd5;
-  color: #9a3412;
+  background: var(--md-sys-color-secondary-container, #ffedd5);
+  color: var(--md-sys-color-on-secondary-container, #9a3412);
 }
 
 .empty {

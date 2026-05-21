@@ -7,13 +7,19 @@ import type {
   StorefrontSection,
   StorefrontTheme,
 } from '@/core/storefront';
-import { getReadableTextColor } from '@/core/storefront';
+import {
+  createDefaultStorefrontTheme,
+  getReadableTextColor,
+  getStorefrontColorConfig,
+} from '@/core/storefront';
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
+import { BusinessPreviewCard } from '@/shared/components/business/BusinessPreviewCard';
 import { AlertSnackbar } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
+import { useTheme } from '@/shared/context/ThemeContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, type CSSProperties, type Dispatch, type SetStateAction } from 'react';
+import { useState, type CSSProperties, type Dispatch, type SetStateAction } from 'react';
 import FeaturedItems from '../(main)/home/FeaturedItems';
 import Feed from '../(main)/home/Feed';
 import FilterBar from '../(main)/home/FilterBar';
@@ -23,7 +29,6 @@ import Pagination from '../(main)/home/Pagination';
 import ProductFiltersTopBar from '../(main)/home/components/ProductFiltersTopBar';
 import type { BrandFilterOption } from '../(main)/home/hooks/useProductFilters';
 import { useProductFilters } from '../(main)/home/hooks/useProductFilters';
-import AboutSection from './AboutSection';
 import styles from './BusinessPageContent.module.css';
 import { BasicContactDialog } from './components/BasicContactDialog';
 import { CartDrawer } from './components/CartDrawer';
@@ -138,7 +143,6 @@ export default function BusinessPageContent({
         storefrontLayout={storefrontLayout}
         storefrontTheme={storefrontTheme}
         previewCardTheme={previewCardTheme}
-        // onShowLookupModal removed: prop not defined in interface
       />
     </StorageProvider>
   );
@@ -146,7 +150,7 @@ export default function BusinessPageContent({
 
 function BusinessPageContentUI({
   business,
-  isOwner = false,
+  isOwner: _isOwner = false,
   isStaff = false,
   isLoggedIn = false,
   categories = [],
@@ -158,7 +162,7 @@ function BusinessPageContentUI({
   storefrontLayout,
   storefrontTheme,
   previewCardTheme,
-}: Omit<BusinessPageContentProps, 'onShowLookupModal'>) {
+}: BusinessPageContentProps) {
   // Pagos habilitados para compra automática solo si plan+credenciales están listos.
   const paymentsEnabled = hasPaymentGateway && isPaymentConfigured;
 
@@ -172,18 +176,7 @@ function BusinessPageContentUI({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [showLookupModal, setShowLookupModal] = useState(false);
-  const [autoOpenChat, setAutoOpenChat] = useState(false);
-
-  // Detect ?chat_ready=true from Google OAuth redirect
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('chat_ready') === 'true') {
-      setAutoOpenChat(true);
-      const url = new URL(window.location.href);
-      url.searchParams.delete('chat_ready');
-      window.history.replaceState({}, '', url.toString());
-    }
-  }, []);
+  const { effectiveTheme } = useTheme();
   const [alert, setAlert] = useState<{
     open: boolean;
     description: string;
@@ -371,33 +364,28 @@ function BusinessPageContentUI({
 
   const themeStyles = storefrontTheme
     ? ((): CSSProperties & Record<string, string> => {
+        const palette = getStorefrontColorConfig(storefrontTheme, effectiveTheme).palette;
         const ff =
           storefrontTheme.fontFamily === 'roboto'
             ? 'var(--font-storefront-roboto), var(--mio-theme-text-font-family), sans-serif'
             : storefrontTheme.fontFamily === 'poppins'
               ? 'var(--font-storefront-poppins), var(--mio-theme-text-font-family), sans-serif'
               : 'var(--font-storefront-inter), var(--mio-theme-text-font-family), sans-serif';
-        const isDark = storefrontTheme.surfaceMode === 'dark';
+        const isDark = effectiveTheme === 'dark';
         return {
           '--storefront-font-family': ff,
-          '--md-sys-color-primary': storefrontTheme.palette.primary,
-          '--md-sys-color-on-primary': getReadableTextColor(storefrontTheme.palette.primary),
-          '--md-sys-color-primary-container': storefrontTheme.palette.primary,
-          '--md-sys-color-on-primary-container': getReadableTextColor(
-            storefrontTheme.palette.primary,
-          ),
-          '--md-sys-color-secondary': storefrontTheme.palette.secondary,
-          '--md-sys-color-on-secondary': getReadableTextColor(storefrontTheme.palette.secondary),
-          '--md-sys-color-secondary-container': storefrontTheme.palette.secondary,
-          '--md-sys-color-on-secondary-container': getReadableTextColor(
-            storefrontTheme.palette.secondary,
-          ),
-          '--md-sys-color-tertiary': storefrontTheme.palette.accent,
-          '--md-sys-color-on-tertiary': getReadableTextColor(storefrontTheme.palette.accent),
-          '--md-sys-color-tertiary-container': storefrontTheme.palette.accent,
-          '--md-sys-color-on-tertiary-container': getReadableTextColor(
-            storefrontTheme.palette.accent,
-          ),
+          '--md-sys-color-primary': palette.primary,
+          '--md-sys-color-on-primary': getReadableTextColor(palette.primary),
+          '--md-sys-color-primary-container': palette.primary,
+          '--md-sys-color-on-primary-container': getReadableTextColor(palette.primary),
+          '--md-sys-color-secondary': palette.secondary,
+          '--md-sys-color-on-secondary': getReadableTextColor(palette.secondary),
+          '--md-sys-color-secondary-container': palette.secondary,
+          '--md-sys-color-on-secondary-container': getReadableTextColor(palette.secondary),
+          '--md-sys-color-tertiary': palette.accent,
+          '--md-sys-color-on-tertiary': getReadableTextColor(palette.accent),
+          '--md-sys-color-tertiary-container': palette.accent,
+          '--md-sys-color-on-tertiary-container': getReadableTextColor(palette.accent),
           '--md-sys-color-surface': isDark ? '#0f1117' : '#ffffff',
           '--md-sys-color-on-surface': isDark ? '#f3f4f6' : '#111827',
           '--md-sys-color-surface-variant': isDark ? '#161b24' : '#f5f7fb',
@@ -445,13 +433,11 @@ function BusinessPageContentUI({
             businessLogoUrl={business.logoUrl ?? undefined}
             onContactClick={() => setIsContactDialogOpen(true)}
           />
-          {chatEnabled && !isStaff && (
+          {chatEnabled && !isLoggedIn && (
             <FloatingChatFab
               businessName={business.name}
               businessId={business.id}
               slug={business.slug}
-              businessLogo={business.logoUrl ?? undefined}
-              initialOpen={autoOpenChat}
             />
           )}
         </>
@@ -596,17 +582,6 @@ function StorefrontProductGridSection({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {isGridVisible ? (
             <>
-              {!isOwner && !paymentsEnabled && (
-                <div className={styles.paymentBanner} tabIndex={0}>
-                  <Icon className={styles.paymentBannerIcon}>info</Icon>
-                  <span>Pagos automáticos no disponibles</span>
-                  <div className={styles.paymentTooltip} role="tooltip">
-                    {hasPaymentGateway
-                      ? 'Nuestro negocio aún no ha terminado de configurar sus credenciales de pago. Mientras tanto, puedes contactarnos para comprar.'
-                      : 'Nuestro negocio aún no cuenta con la función de pasarela de pagos. Mientras tanto, puedes contactarnos para comprar.'}
-                  </div>
-                </div>
-              )}
               <ProductFiltersTopBar
                 categories={categories}
                 selectedCategories={selectedCategories}
@@ -673,13 +648,6 @@ function StorefrontProductGridSection({
                   </Button>
                 </div>
               )}
-              {filteredProducts.length > 0 && (
-                <div className={styles.productCount}>
-                  {totalPages > 1
-                    ? `Mostrando ${start + 1}-${start + paginatedProducts.length} de ${filteredProducts.length} productos`
-                    : `${filteredProducts.length} producto${filteredProducts.length !== 1 ? 's' : ''}`}
-                </div>
-              )}
               <Feed
                 products={paginatedProducts}
                 isOwner={isOwner}
@@ -695,6 +663,16 @@ function StorefrontProductGridSection({
                 businessId={business.id}
                 businessLogoUrl={business.logoUrl ?? undefined}
               />
+              {!isOwner && !paymentsEnabled && (
+                <div className={filterStyles.infoCard}>
+                  <h3 className={filterStyles.infoTitle}>Pagos automáticos no disponibles</h3>
+                  <p className={filterStyles.description}>
+                    {hasPaymentGateway
+                      ? 'Este negocio aún no terminó de configurar sus credenciales de pago. Mientras tanto, puedes contactar al negocio para comprar.'
+                      : 'Este negocio necesita un plan premium para habilitar pagos automáticos. Mientras tanto, puedes contactar al negocio para comprar.'}
+                  </p>
+                </div>
+              )}
               <Pagination
                 totalPages={totalPages}
                 currentPage={currentPage}
@@ -730,11 +708,62 @@ function StorefrontProductGridSection({
       )}
 
       {activeTab === 'about' && (
-        <AboutSection
-          business={business}
-          previewCardTheme={previewCardTheme}
-          storefrontTheme={storefrontTheme}
-        />
+        <div
+          className={filterStyles.aboutContent}
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: '2.5rem',
+            justifyContent: 'center',
+            alignItems: 'flex-start',
+            paddingTop: '2rem',
+            maxWidth: '1200px',
+            margin: '0 auto',
+          }}
+        >
+          <div className={filterStyles.infoCard} style={{ flex: '1 1 500px', margin: 0 }}>
+            <h2 className={filterStyles.infoTitle}>Sobre nosotros</h2>
+            <p className={filterStyles.description}>
+              {business.description || 'No hay descripción disponible.'}
+            </p>
+
+            <div className={filterStyles.detailsGrid}>
+              {business.address && (
+                <div className={filterStyles.detailItem}>
+                  <strong>Dirección:</strong>
+                  <span>{business.address}</span>
+                </div>
+              )}
+              {business.whatsappNumber && (
+                <div className={filterStyles.detailItem}>
+                  <strong>WhatsApp:</strong>
+                  <span>{business.whatsappNumber}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div style={{ flex: '0 1 440px' }}>
+            <BusinessPreviewCard
+              commercialName={business.name}
+              sector={business.storeType || ''}
+              country={business.country || ''}
+              city={business.city || ''}
+              address={business.address || ''}
+              email={business.email || ''}
+              description={business.description || ''}
+              taxId={business.taxId || ''}
+              legalRepName={business.legalRepName || ''}
+              legalRepRole={business.legalRepRole || ''}
+              logoPreview={business.logoUrl}
+              storefrontTheme={
+                previewCardTheme || storefrontTheme || createDefaultStorefrontTheme()
+              }
+              showDownloadButton={false}
+            />
+          </div>
+        </div>
       )}
     </>
   );

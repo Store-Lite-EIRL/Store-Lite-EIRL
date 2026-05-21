@@ -3,7 +3,7 @@
 .layout {
   display: flex;
   min-height: 100dvh;
-  background-color: var(--md-sys-color-surface);
+  background-color: var(--storefront-bg, var(--md-sys-color-surface));
 }
 
 .layout--chat {
@@ -23,12 +23,10 @@
 
 .content-wrapper--expanded {
   margin-left: var(--navbar-expanded-width);
-  padding-left: 1rem; /* Gap between navbar and content */
 }
 
 .content-wrapper--collapsed {
   margin-left: var(--navbar-width);
-  padding-left: 1rem; /* Gap between navbar and content */
 }
 
 .content-wrapper--hidden {
@@ -67,6 +65,7 @@
   flex: 1;
   padding: 1.5rem;
   min-width: 0;
+  background-color: var(--storefront-bg, var(--md-sys-color-surface));
 }
 
 .main-area--chat {

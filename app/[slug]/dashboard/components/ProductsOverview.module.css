@@ -127,20 +127,20 @@
 }
 
 .badgeBestSeller {
-  background: rgba(245, 158, 11, 0.12);
-  color: #b45309;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: color-mix(in srgb, var(--md-sys-color-tertiary) 12%, transparent);
+  color: var(--md-sys-color-tertiary);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-tertiary) 30%, transparent);
 }
 
 .badgeNew {
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  background: color-mix(in srgb, var(--md-sys-color-tertiary) 10%, transparent);
+  color: var(--md-sys-color-tertiary);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-tertiary) 25%, transparent);
 }
 
 .badgeAvailable {
-  background: rgba(16, 185, 129, 0.08);
-  color: #10b981;
+  background: color-mix(in srgb, var(--md-sys-color-tertiary) 8%, transparent);
+  color: var(--md-sys-color-tertiary);
 }
 
 .badgeOutOfStock {

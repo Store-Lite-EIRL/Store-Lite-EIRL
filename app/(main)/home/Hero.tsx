@@ -1,18 +1,29 @@
 'use client';
 
+import type { StorefrontColorScheme } from '@/core/storefront';
 import { Button, IconButton } from '@/shared/components/ui/buttons';
 import { Icon } from '@/shared/components/ui/data-display';
 import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
 import { Dialog } from '@/shared/components/ui/surfaces/Dialog';
+import Image from 'next/image';
 import styles from './Hero.module.css';
 import { useHeroController, type HeroBusiness } from './useHeroController';
 
 interface HeroProps {
   business?: HeroBusiness | null;
   isOwner?: boolean;
+  /** Current color scheme for the public toggle */
+  effectiveScheme?: StorefrontColorScheme;
+  /** Called when the public user clicks light or dark */
+  onSchemeChange?: (scheme: StorefrontColorScheme) => void;
 }
 
-export default function Hero({ business, isOwner = false }: HeroProps) {
+export default function Hero({
+  business,
+  isOwner = false,
+  effectiveScheme,
+  onSchemeChange,
+}: HeroProps) {
   const {
     backgroundImage,
     backgroundPositionStyle,
@@ -88,8 +99,40 @@ export default function Hero({ business, isOwner = false }: HeroProps) {
           </div>
         )}
 
+        {/* Public light/dark toggle — only for visitors, owner has it in the bottom-right */}
+        {!isOwner && effectiveScheme && onSchemeChange && (
+          <div className={styles.publicSchemeToggle}>
+            <button
+              className={`${styles.schemeBtn} ${effectiveScheme === 'light' ? styles.schemeBtnActive : ''}`}
+              onClick={() => onSchemeChange('light')}
+              aria-label="Tema claro"
+              title="Tema claro"
+            >
+              <Icon>light_mode</Icon>
+            </button>
+            <button
+              className={`${styles.schemeBtn} ${effectiveScheme === 'dark' ? styles.schemeBtnActive : ''}`}
+              onClick={() => onSchemeChange('dark')}
+              aria-label="Tema oscuro"
+              title="Tema oscuro"
+            >
+              <Icon>dark_mode</Icon>
+            </button>
+          </div>
+        )}
+
         <div className={styles.heroContent}>
           <div className={styles.textContainer}>
+            {business?.logoUrl && (
+              <Image
+                src={business.logoUrl}
+                alt={business.name}
+                width={88}
+                height={88}
+                className={styles.logo}
+                priority
+              />
+            )}
             <h1 className={styles.title}>{business?.name || 'Mi Negocio'}</h1>
           </div>
         </div>

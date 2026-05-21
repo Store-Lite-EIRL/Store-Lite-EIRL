@@ -1,7 +1,12 @@
 'use client';
 
-import type { StorefrontTheme } from '@/core/storefront';
-import { createRandomStorefrontTheme, getReadableTextColor } from '@/core/storefront';
+import type { StorefrontColorScheme, StorefrontTheme } from '@/core/storefront';
+import {
+  createRandomStorefrontTheme,
+  getReadableTextColor,
+  getStorefrontColorConfig,
+  normalizeStorefrontColorScheme,
+} from '@/core/storefront';
 import { Button, Icon } from '@/shared/components/ui';
 import { toPng } from 'html-to-image';
 import { useRef, useState } from 'react';
@@ -127,6 +132,7 @@ export interface BusinessPreviewCardProps {
   legalRepRole: string;
   logoPreview?: string | null;
   storefrontTheme: StorefrontTheme;
+  colorScheme?: StorefrontColorScheme;
   onStorefrontThemeChange?: (theme: StorefrontTheme) => void;
   showDownloadButton?: boolean;
 }
@@ -322,20 +328,19 @@ export const BusinessPreviewCard = ({
   legalRepRole,
   logoPreview,
   storefrontTheme,
+  colorScheme,
   onStorefrontThemeChange,
   showDownloadButton = true,
 }: BusinessPreviewCardProps) => {
   const captureRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const gradientColors = [
-    storefrontTheme.palette.primary,
-    storefrontTheme.palette.secondary,
-    storefrontTheme.palette.accent,
-  ];
-  const isDark = storefrontTheme.surfaceMode === 'dark';
-  const textColor = isDark ? '#FFF' : '#111827';
-  const subTextColor = isDark ? 'rgba(255,255,255,0.7)' : 'rgba(17,24,39,0.7)';
+  const resolvedScheme = normalizeStorefrontColorScheme(colorScheme);
+  const config = getStorefrontColorConfig(storefrontTheme, resolvedScheme);
+  const gradientColors = [config.palette.primary, config.palette.secondary, config.palette.accent];
+  const isDark = resolvedScheme === 'dark';
+  const textColor = isDark ? '#f9fafb' : '#111827';
+  const subTextColor = isDark ? 'rgba(249,250,251,0.78)' : 'rgba(17,24,39,0.7)';
 
   const hexToRGBA = (hex: string, alpha: number) => {
     const r = parseInt(hex.slice(1, 3), 16);

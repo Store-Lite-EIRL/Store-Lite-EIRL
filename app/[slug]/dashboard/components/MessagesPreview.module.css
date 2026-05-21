@@ -139,7 +139,7 @@
 
 .activeBadge {
   font-size: 0.55rem;
-  color: #22c55e;
+  color: var(--md-sys-color-tertiary);
   animation: pulse 2s ease-in-out infinite;
 }
 
@@ -160,7 +160,7 @@
 }
 
 .timeActive {
-  color: #22c55e;
+  color: var(--md-sys-color-tertiary);
   font-weight: 600;
 }
 

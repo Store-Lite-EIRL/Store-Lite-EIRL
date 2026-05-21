@@ -9,7 +9,9 @@ import {
   normalizeStorefrontTheme,
   type GridGap,
   type ProductGridSection,
+  type StorefrontColorScheme,
   type StorefrontLayout,
+  type StorefrontPalette,
   type StorefrontSection,
   type StorefrontTheme,
 } from '@/core/storefront';
@@ -219,7 +221,7 @@ const THEME_COLOR_FIELDS = [
   },
   { key: 'accent', label: 'Color de destaque', helper: 'Acentos visuales y puntos de atención.' },
 ] as const satisfies readonly {
-  key: keyof StorefrontTheme['palette'];
+  key: keyof StorefrontPalette;
   label: string;
   helper: string;
 }[];
@@ -565,6 +567,8 @@ function AppearanceSection({
   const [storefrontTheme, setStorefrontTheme] = useState<StorefrontTheme>(
     normalizeStorefrontTheme(initialStorefrontTheme),
   );
+  const [scheme, setScheme] = useState<StorefrontColorScheme>('light');
+  const currentConfig = storefrontTheme[scheme];
   const [feedback, setFeedback] = useState<{
     open: boolean;
     description: string;
@@ -617,11 +621,15 @@ function AppearanceSection({
 
   // Dirty state: detectar si hay cambios respecto al estado inicial guardado
   const initialPlatformColors = !initialHasCustomTheme;
+  const bgChanged =
+    JSON.stringify(currentConfig.background) !==
+    JSON.stringify(initialStorefrontTheme[scheme].background);
   const themeChanged =
     storefrontTheme.fontFamily !== initialStorefrontTheme.fontFamily ||
-    storefrontTheme.palette.primary !== initialStorefrontTheme.palette.primary ||
-    storefrontTheme.palette.secondary !== initialStorefrontTheme.palette.secondary ||
-    storefrontTheme.palette.accent !== initialStorefrontTheme.palette.accent;
+    currentConfig.palette.primary !== initialStorefrontTheme[scheme].palette.primary ||
+    currentConfig.palette.secondary !== initialStorefrontTheme[scheme].palette.secondary ||
+    currentConfig.palette.accent !== initialStorefrontTheme[scheme].palette.accent ||
+    bgChanged;
   const hasChanges =
     usePlatformColors !== initialPlatformColors || (!usePlatformColors && themeChanged);
 
@@ -734,9 +742,54 @@ function AppearanceSection({
                 storefrontTheme={
                   usePlatformColors ? createDefaultStorefrontTheme() : storefrontTheme
                 }
+                colorScheme={scheme}
                 onStorefrontThemeChange={(theme) => setStorefrontTheme(theme)}
                 showDownloadButton={false}
               />
+            </div>
+
+            {/* ── Selector modo claro/oscuro ── */}
+            <div
+              className={usePlatformColors ? styles.disabledCard : ''}
+              style={{ padding: '16px 24px 0' }}
+            >
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {[
+                  { value: 'light' as const, label: 'Modo claro', icon: 'light_mode' },
+                  { value: 'dark' as const, label: 'Modo oscuro', icon: 'dark_mode' },
+                ].map((tab) => (
+                  <button
+                    key={tab.value}
+                    onClick={() => setScheme(tab.value)}
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: `1px solid ${scheme === tab.value ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline-variant)'}`,
+                      background:
+                        scheme === tab.value
+                          ? 'color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent)'
+                          : 'var(--md-sys-color-surface)',
+                      color:
+                        scheme === tab.value
+                          ? 'var(--md-sys-color-primary)'
+                          : 'var(--md-sys-color-on-surface-variant)',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      fontFamily: 'inherit',
+                      transition: 'border-color 0.2s',
+                    }}
+                  >
+                    <Icon size={18}>{tab.icon}</Icon>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Divisor */}
@@ -813,21 +866,24 @@ function AppearanceSection({
                         className={styles.themeColorPicker}
                         type="color"
                         disabled={usePlatformColors}
-                        value={storefrontTheme.palette[field.key]}
+                        value={currentConfig.palette[field.key]}
                         onChange={(event) =>
                           setStorefrontTheme((prev) =>
                             normalizeStorefrontTheme({
                               ...prev,
-                              palette: {
-                                ...prev.palette,
-                                [field.key]: event.target.value,
+                              [scheme]: {
+                                ...prev[scheme],
+                                palette: {
+                                  ...prev[scheme].palette,
+                                  [field.key]: event.target.value,
+                                },
                               },
                             }),
                           )
                         }
                       />
                       <span className={styles.themeColorCode}>
-                        {storefrontTheme.palette[field.key]}
+                        {currentConfig.palette[field.key]}
                       </span>
                     </div>
                   </div>
@@ -860,6 +916,335 @@ function AppearanceSection({
                   Volver al inicio
                 </Button>
               </div>
+            </div>
+          </Card>
+
+          {/* ── Fondo de página ── */}
+          <Card
+            variant="outlined"
+            className={styles.infoCard}
+            style={{ padding: 0, overflow: 'hidden' }}
+          >
+            <div
+              className={usePlatformColors ? styles.disabledCard : ''}
+              style={{ padding: '20px 24px 16px' }}
+            >
+              <p className={styles.cardLabel} style={{ padding: 0 }}>
+                Fondo de página
+              </p>
+              <p className={styles.previewSupporting} style={{ marginTop: '4px', padding: 0 }}>
+                Personalizá el fondo que verán tus clientes.
+              </p>
+
+              {/* Tipo de fondo */}
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '16px' }}>
+                {(['solid', 'gradient', 'dots', 'lines', 'squares'] as const).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => {
+                      const current = currentConfig.background;
+                      let colors: string[];
+                      switch (type) {
+                        case 'solid':
+                          colors = ['#ffffff'];
+                          break;
+                        case 'gradient':
+                          colors = ['#6366f1', '#a855f7'];
+                          break;
+                        default:
+                          colors = ['#ffffff', '#cbd5e1'];
+                      }
+                      setStorefrontTheme(
+                        normalizeStorefrontTheme({
+                          ...storefrontTheme,
+                          [scheme]: {
+                            ...storefrontTheme[scheme],
+                            background: { type, colors, patternSize: 16 },
+                          },
+                        }),
+                      );
+                    }}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '8px',
+                      border: `1px solid ${currentConfig.background?.type === type ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline-variant)'}`,
+                      background:
+                        currentConfig.background?.type === type
+                          ? 'color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent)'
+                          : 'var(--md-sys-color-surface)',
+                      color:
+                        currentConfig.background?.type === type
+                          ? 'var(--md-sys-color-primary)'
+                          : 'var(--md-sys-color-on-surface)',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      fontWeight: 500,
+                      fontFamily: 'inherit',
+                      transition: 'border-color 0.2s',
+                    }}
+                  >
+                    {type === 'solid'
+                      ? 'Sólido'
+                      : type === 'gradient'
+                        ? 'Degradado'
+                        : type === 'dots'
+                          ? 'Puntos'
+                          : type === 'lines'
+                            ? 'Líneas'
+                            : 'Cuadrados'}
+                  </button>
+                ))}
+              </div>
+
+              {/* Color pickers */}
+              {currentConfig.background && (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    marginTop: '16px',
+                  }}
+                >
+                  {(() => {
+                    const bg = currentConfig.background;
+                    const count =
+                      bg.type === 'solid' ? 1 : bg.type === 'gradient' ? bg.colors.length : 2;
+                    return bg.colors.slice(0, count).map((color, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div
+                          style={{
+                            position: 'relative',
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '6px',
+                            overflow: 'hidden',
+                            border: '1px solid var(--md-sys-color-outline-variant)',
+                          }}
+                        >
+                          <input
+                            type="color"
+                            value={color}
+                            onChange={(e) => {
+                              const next = [...bg.colors];
+                              next[i] = e.target.value;
+                              setStorefrontTheme(
+                                normalizeStorefrontTheme({
+                                  ...storefrontTheme,
+                                  [scheme]: {
+                                    ...storefrontTheme[scheme],
+                                    background: { ...bg, colors: next },
+                                  },
+                                }),
+                              );
+                            }}
+                            style={{
+                              position: 'absolute',
+                              inset: 0,
+                              width: '100%',
+                              height: '100%',
+                              opacity: 0,
+                              cursor: 'pointer',
+                            }}
+                          />
+                          <div
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              backgroundColor: color,
+                              borderRadius: '5px',
+                            }}
+                          />
+                        </div>
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            color: 'var(--md-sys-color-on-surface-variant)',
+                            fontWeight: 500,
+                            minWidth: '40px',
+                          }}
+                        >
+                          {i === 0 && bg.type !== 'solid'
+                            ? 'Fondo'
+                            : i === 1
+                              ? 'Patrón'
+                              : `Color ${i + 1}`}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.7rem',
+                            color: 'var(--md-sys-color-on-surface)',
+                            fontFamily: 'monospace',
+                          }}
+                        >
+                          {color}
+                        </span>
+                      </div>
+                    ));
+                  })()}
+
+                  {/* Color count for gradient */}
+                  {currentConfig.background.type === 'gradient' && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span
+                        style={{
+                          fontSize: '0.75rem',
+                          color: 'var(--md-sys-color-on-surface-variant)',
+                          fontWeight: 500,
+                        }}
+                      >
+                        Colores:
+                      </span>
+                      {[2, 3, 4].map((n) => {
+                        const bg = currentConfig.background!;
+                        const isSelected = bg.colors.length === n;
+
+                        return (
+                          <button
+                            key={n}
+                            onClick={() => {
+                              const next = [...bg.colors];
+                              while (next.length < n) next.push('#6366f1');
+                              setStorefrontTheme(
+                                normalizeStorefrontTheme({
+                                  ...storefrontTheme,
+                                  [scheme]: {
+                                    ...storefrontTheme[scheme],
+                                    background: { ...bg, colors: next.slice(0, n) },
+                                  },
+                                }),
+                              );
+                            }}
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '6px',
+                              border: `1px solid ${isSelected ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline-variant)'}`,
+                              background: isSelected
+                                ? 'color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent)'
+                                : 'var(--md-sys-color-surface)',
+                              color: 'var(--md-sys-color-on-surface)',
+                              fontWeight: 600,
+                              fontSize: '0.8rem',
+                              cursor: 'pointer',
+                              fontFamily: 'inherit',
+                            }}
+                          >
+                            {n}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Pattern size for dots/lines/squares */}
+                  {(currentConfig.background.type === 'dots' ||
+                    currentConfig.background.type === 'lines' ||
+                    currentConfig.background.type === 'squares') && (
+                    <div>
+                      <span
+                        style={{
+                          fontSize: '0.75rem',
+                          color: 'var(--md-sys-color-on-surface-variant)',
+                          fontWeight: 500,
+                        }}
+                      >
+                        Tamaño: {currentConfig.background.patternSize}px
+                      </span>
+                      <input
+                        type="range"
+                        min={4}
+                        max={60}
+                        value={currentConfig.background.patternSize}
+                        onChange={(e) => {
+                          const bg = currentConfig.background!;
+                          setStorefrontTheme(
+                            normalizeStorefrontTheme({
+                              ...storefrontTheme,
+                              [scheme]: {
+                                ...storefrontTheme[scheme],
+                                background: { ...bg, patternSize: Number(e.target.value) },
+                              },
+                            }),
+                          );
+                        }}
+                        style={{
+                          width: '100%',
+                          marginTop: '6px',
+                          accentColor: 'var(--md-sys-color-primary)',
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                    <button
+                      onClick={() => {
+                        const bg = currentConfig.background!;
+                        const randomColor = () =>
+                          '#' +
+                          Math.floor(Math.random() * 16777215)
+                            .toString(16)
+                            .padStart(6, '0');
+                        const newColors = bg.colors.map(() => randomColor());
+                        setStorefrontTheme(
+                          normalizeStorefrontTheme({
+                            ...storefrontTheme,
+                            [scheme]: {
+                              ...storefrontTheme[scheme],
+                              background: { ...bg, colors: newColors },
+                            },
+                          }),
+                        );
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--md-sys-color-primary)',
+                        background:
+                          'color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent)',
+                        color: 'var(--md-sys-color-primary)',
+                        fontWeight: 600,
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        justifyContent: 'center',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      Random
+                    </button>
+                    <button
+                      onClick={() => {
+                        setStorefrontTheme(
+                          normalizeStorefrontTheme({
+                            ...storefrontTheme,
+                            [scheme]: { ...storefrontTheme[scheme], background: undefined },
+                          }),
+                        );
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--md-sys-color-outline-variant)',
+                        background: 'var(--md-sys-color-surface)',
+                        color: 'var(--md-sys-color-on-surface-variant)',
+                        fontWeight: 600,
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      Restablecer
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
 
