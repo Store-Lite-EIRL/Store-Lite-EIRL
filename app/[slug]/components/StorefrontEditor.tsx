@@ -488,6 +488,7 @@ export function StorefrontEditor({
         onClose={() => setIsPatternBrowserOpen(false)}
         onSelect={handlePatternCraftSelect}
         currentPatternId={cssOverlay?.patternId}
+        colorScheme={scheme}
       />
     </>
   );

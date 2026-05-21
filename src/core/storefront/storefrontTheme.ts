@@ -233,6 +233,80 @@ function patternImageCount(type: StorefrontOverlayType): number {
   }
 }
 
+// ─── CSS layer counting ──────────────────────────────────────────
+
+/**
+ * Cuenta cuántas capas CSS hay en un valor de background-image
+ * separando por comas de nivel superior (ignorando comas dentro de paréntesis).
+ *
+ * Ejemplo:
+ *   "linear-gradient(to right, #000 1px, transparent 1px), radial-gradient(circle, #fff 1px, transparent 1px)"
+ *   → 2 capas
+ *
+ * También maneja casos de una sola capa o vacío.
+ */
+function countCssLayers(cssValue: string): number {
+  const trimmed = cssValue.trim();
+  if (!trimmed) return 0;
+
+  let depth = 0;
+  let count = 1;
+
+  for (const ch of trimmed) {
+    if (ch === '(') depth++;
+    else if (ch === ')') depth--;
+    else if (ch === ',' && depth === 0) count++;
+  }
+
+  return count;
+}
+
+/**
+ * Expande un valor CSS a N posiciones repitiéndolo.
+ * Si el valor ya tiene M valores separados por coma, cada uno
+ * se repite para cubrir N posiciones totales.
+ *
+ * Ejemplo:
+ *   expandCssValue("40px 40px", 3) → "40px 40px, 40px 40px, 40px 40px"
+ *   expandCssValue("40px 40px, cover", 3) → "40px 40px, 40px 40px, cover"
+ *     (patrón: se itera sobre los valores existentes)
+ */
+function expandCssValue(value: string | undefined, targetCount: number): string {
+  if (!value || !value.trim()) return Array(targetCount).fill('auto').join(', ');
+
+  const parts = splitTopLevel(value);
+  // Si ya tiene suficientes partes, devolver tal cual
+  if (parts.length >= targetCount) return value;
+
+  // Repetir el/los valor(es) cíclicamente hasta cubrir targetCount
+  const result: string[] = [];
+  for (let i = 0; i < targetCount; i++) {
+    result.push(parts[i % parts.length].trim());
+  }
+  return result.join(', ');
+}
+
+/** Separa un valor CSS por comas de nivel superior */
+function splitTopLevel(cssValue: string): string[] {
+  const result: string[] = [];
+  let depth = 0;
+  let current = '';
+
+  for (const ch of cssValue) {
+    if (ch === '(') depth++;
+    else if (ch === ')') depth--;
+    else if (ch === ',' && depth === 0) {
+      result.push(current);
+      current = '';
+      continue;
+    }
+    current += ch;
+  }
+
+  if (current.trim()) result.push(current);
+  return result;
+}
+
 // ─── Public builder ──────────────────────────────────────────────
 
 export function buildBackgroundCSS(bg?: StorefrontBackground): Record<string, string> {
@@ -261,16 +335,26 @@ export function buildBackgroundCSS(bg?: StorefrontBackground): Record<string, st
 
     if (hasBgImage) {
       const isGradientFill = bg.type === 'gradient' && bg.colors.length >= 2;
+      const hasOwnBackground = !!bg.cssOverlay!.background;
 
-      if (isGradientFill) {
-        // Layer pattern on top of user's gradient fill
+      if (isGradientFill && !hasOwnBackground) {
+        // ── Patrón overlay-only (grids, dots sin bg propio) + gradient fill ──
+        // El patrón se dibuja ENCIMA del gradient fill del usuario.
+        // Expandimos sizes/positions para que cada capa tenga su valor correcto
+        // y no se ciclen incorrectamente por CSS.
         const gradientImg = `linear-gradient(135deg, ${bg.colors.slice(0, 4).join(', ')})`;
         vars['--storefront-bg-image'] = `${bg.cssOverlay!.backgroundImage}, ${gradientImg}`;
-        const sizeSuffix = bg.cssOverlay!.backgroundSize ?? 'auto';
-        vars['--storefront-bg-size'] = `${sizeSuffix}, cover`;
-        const posSuffix = bg.cssOverlay!.backgroundPosition ?? '0 0';
-        vars['--storefront-bg-position'] = `${posSuffix}, 0 0`;
+
+        const patternLayerCount = countCssLayers(bg.cssOverlay!.backgroundImage);
+        const expandedSize = expandCssValue(bg.cssOverlay!.backgroundSize, patternLayerCount);
+        const expandedPos = expandCssValue(bg.cssOverlay!.backgroundPosition, patternLayerCount);
+        vars['--storefront-bg-size'] = `${expandedSize}, cover`;
+        vars['--storefront-bg-position'] = `${expandedPos}, 0 0`;
       } else {
+        // ── Patrón con fondo propio (gradient patterns, o fill sólido) ──
+        // El patrón ES el fondo completo — NO se combina con custom fill.
+        // Si el usuario eligió un gradiente de PatternCraft, eso reemplaza
+        // los colores personalizados de la tienda.
         vars['--storefront-bg-image'] = bg.cssOverlay!.backgroundImage;
         if (bg.cssOverlay!.backgroundSize) {
           vars['--storefront-bg-size'] = bg.cssOverlay!.backgroundSize;
@@ -325,6 +409,12 @@ export function buildBackgroundCSS(bg?: StorefrontBackground): Record<string, st
       vars['--storefront-bg-image'] = `linear-gradient(135deg, ${colors.join(', ')})`;
     }
     // Solid without overlay → just the background color, no image needed
+  }
+
+  // Asegurar que --storefront-bg tenga un valor para que el layout
+  // herede el color base del storefront en vez de md-sys-color-surface.
+  if (!vars['--storefront-bg']) {
+    vars['--storefront-bg'] = baseColor;
   }
 
   return vars;

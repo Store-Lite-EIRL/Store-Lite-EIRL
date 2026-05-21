@@ -1,6 +1,10 @@
 'use client';
 
-import type { PatternCraftCategory, PatternCraftPattern } from '@/data/patterncraft';
+import type {
+  PatternCraftCategory,
+  PatternCraftPattern,
+  PatternCraftStyle,
+} from '@/data/patterncraft';
 import { getPatternCraftById, patternCraftByCategory } from '@/data/patterncraft';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styles from './PatternBrowser.module.css';
@@ -10,6 +14,7 @@ interface PatternBrowserProps {
   onClose: () => void;
   onSelect: (pattern: PatternCraftPattern) => void;
   currentPatternId?: string;
+  colorScheme: 'light' | 'dark';
 }
 
 const CATEGORIES: {
@@ -23,7 +28,7 @@ const CATEGORIES: {
   { key: 'effects', label: 'Efectos', icon: 'blur_on' },
 ];
 
-function previewStyle(style: Record<string, unknown>): React.CSSProperties {
+function previewStyle(style: PatternCraftStyle): React.CSSProperties {
   const css: React.CSSProperties = {};
   for (const [key, value] of Object.entries(style)) {
     if (value !== undefined && value !== null) {
@@ -35,36 +40,86 @@ function previewStyle(style: Record<string, unknown>): React.CSSProperties {
 }
 
 /**
- * Detects if a pattern has a dark base color so we can adapt the label.
- * Checks `background` and `backgroundColor` for hex/named dark values.
+ * Classifica un patrón según su compatibilidad con schemes.
+ * - 'dark': fondo oscuro → mostrar SOLO en dark mode
+ * - 'light': fondo claro → mostrar SOLO en light mode
+ * - 'both': sin fondo propio (overlay) → mostrar en ambos modos
  */
-function isDarkPattern(style: Record<string, unknown>): boolean {
+function classifyPattern(style: PatternCraftStyle): 'dark' | 'light' | 'both' {
   const bg = (typeof style.background === 'string' ? style.background : '').trim();
   const bgColor = (typeof style.backgroundColor === 'string' ? style.backgroundColor : '').trim();
-  const color = bgColor || bg;
+  let color = bgColor || bg;
+
+  // Si el background es un gradient shorthand con color de fallback al final
+  // (ej: "radial-gradient(...), #000000"), extraer el color trailing.
+  if (!bgColor && bg) {
+    const lastComma = bg.lastIndexOf(',');
+    if (lastComma !== -1) {
+      const possibleColor = bg.slice(lastComma + 1).trim();
+      if (/^#[0-9a-fA-F]{6,8}$/.test(possibleColor)) {
+        color = possibleColor;
+      }
+    }
+  }
+
+  // Sin fondo propio → overlay, funciona en cualquier scheme
+  if (!color) return 'both';
 
   // Quick check for common dark bases
-  if (!color) return false;
-  if (/^#0[0-9a-f]{5}$/i.test(color)) return true; // #0xxxxx
-  if (/^#1[0-9a-f]{5}$/i.test(color)) return true; // #1xxxxx
-  if (/^#2[0-9a-b][0-9a-f]{4}$/i.test(color)) return true; // #2[0-b]xxxx
-  if (color === '#000' || color === '#000000' || color === 'black') return true;
+  if (/^#0[0-9a-f]{5}$/i.test(color)) return 'dark'; // #0xxxxx
+  if (/^#1[0-9a-f]{5}$/i.test(color)) return 'dark'; // #1xxxxx
+  if (/^#2[0-9a-b][0-9a-f]{4}$/i.test(color)) return 'dark'; // #2[0-b]xxxx
+  if (color === '#000' || color === '#000000' || color === 'black') return 'dark';
 
-  // Parse hex luminance
+  // Parse hex luminance for single color
   const hexMatch = color.match(/^#([0-9a-f]{6})$/i);
   if (hexMatch) {
     const r = parseInt(hexMatch[1].slice(0, 2), 16);
     const g = parseInt(hexMatch[1].slice(2, 4), 16);
     const b = parseInt(hexMatch[1].slice(4, 6), 16);
-    // Perceived brightness (ITU-R BT.601)
     const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return lum < 0.35;
+    return lum < 0.4 ? 'dark' : 'light';
   }
 
-  return false;
+  // Si tiene color pero no pudimos determinar, asumir light
+  return 'light';
 }
 
-export function PatternBrowser({ open, onClose, onSelect, currentPatternId }: PatternBrowserProps) {
+// Patrones eliminados del browser (no se renderizan en ningún scheme)
+const REMOVED = new Set([
+  'left-masked-basic-grid',
+  'left-masked-circuit-board',
+  'left-masked-circuit-board-light',
+  'left-masked-dashed-grid-light',
+  'right-masked-basic-grid',
+  'right-masked-circuit-board',
+  'right-masked-circuit-board-light',
+  'right-masked-dashed-grid-light',
+  'diagonal-lines',
+]);
+
+// Patrones que solo se muestran en dark mode
+const DARK_ONLY = new Set([
+  'striped-dark',
+  'azure-depths-top',
+  'crimson-depth-top',
+  'dark-horizon-glow-top',
+  'emerald-void-top',
+  'orchid-depths-top',
+  'violet-abyss-top',
+  'cosmic-noise',
+  'cosmic-sparkle',
+  'deep-ocean-glow',
+  'midnight-ember',
+]);
+
+export function PatternBrowser({
+  open,
+  onClose,
+  onSelect,
+  currentPatternId,
+  colorScheme,
+}: PatternBrowserProps) {
   const [activeCategory, setActiveCategory] = useState<PatternCraftCategory>('gradients');
   const [selectedId, setSelectedId] = useState<string | null>(currentPatternId ?? null);
 
@@ -72,6 +127,19 @@ export function PatternBrowser({ open, onClose, onSelect, currentPatternId }: Pa
   useEffect(() => {
     setSelectedId(currentPatternId ?? null);
   }, [currentPatternId]);
+
+  // En light mode ocultamos Gradients (todos los gradientes son dark)
+  const visibleCategories = useMemo(
+    () => (colorScheme === 'light' ? CATEGORIES.filter((c) => c.key !== 'gradients') : CATEGORIES),
+    [colorScheme],
+  );
+
+  // Si la categoría activa ya no es visible, switch a la primera disponible
+  useEffect(() => {
+    if (!visibleCategories.some((c) => c.key === activeCategory)) {
+      setActiveCategory(visibleCategories[0]?.key ?? 'gradients');
+    }
+  }, [visibleCategories, activeCategory]);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -93,7 +161,16 @@ export function PatternBrowser({ open, onClose, onSelect, currentPatternId }: Pa
     return () => document.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  const patterns = useMemo(() => patternCraftByCategory[activeCategory] ?? [], [activeCategory]);
+  const patterns = useMemo(
+    () =>
+      (patternCraftByCategory[activeCategory] ?? []).filter((p) => {
+        if (REMOVED.has(p.id)) return false;
+        if (colorScheme === 'light' && DARK_ONLY.has(p.id)) return false;
+        const match = classifyPattern(p.style);
+        return match === 'both' || match === colorScheme;
+      }),
+    [activeCategory, colorScheme],
+  );
 
   const handleConfirm = useCallback(() => {
     if (!selectedId) return;
@@ -140,8 +217,14 @@ export function PatternBrowser({ open, onClose, onSelect, currentPatternId }: Pa
 
         {/* ── Category tabs ── */}
         <div className={styles.tabs}>
-          {CATEGORIES.map((cat) => {
-            const count = patternCraftByCategory[cat.key]?.length ?? 0;
+          {visibleCategories.map((cat) => {
+            const filteredCount =
+              (patternCraftByCategory[cat.key] ?? []).filter((p) => {
+                if (REMOVED.has(p.id)) return false;
+                if (colorScheme === 'light' && DARK_ONLY.has(p.id)) return false;
+                const match = classifyPattern(p.style);
+                return match === 'both' || match === colorScheme;
+              }).length ?? 0;
             return (
               <button
                 key={cat.key}
@@ -152,7 +235,7 @@ export function PatternBrowser({ open, onClose, onSelect, currentPatternId }: Pa
                   <PatternCategoryIcon icon={cat.icon} />
                 </span>
                 <span className={styles.tabLabel}>{cat.label}</span>
-                <span className={styles.tabCount}>{count}</span>
+                <span className={styles.tabCount}>{filteredCount}</span>
               </button>
             );
           })}
@@ -160,29 +243,24 @@ export function PatternBrowser({ open, onClose, onSelect, currentPatternId }: Pa
 
         {/* ── Pattern grid ── */}
         <div className={styles.grid}>
-          {patterns.map((pattern) => {
-            const dark = isDarkPattern(pattern.style);
-            return (
-              <button
-                key={pattern.id}
-                className={`${styles.card} ${selectedId === pattern.id ? styles.cardSelected : ''}`}
-                onClick={() => setSelectedId(pattern.id)}
-                onDoubleClick={() => {
-                  setSelectedId(pattern.id);
-                  handleConfirm();
-                }}
-                title={pattern.name}
-              >
-                <div className={styles.preview} style={previewStyle(pattern.style)} />
+          {patterns.map((pattern) => (
+            <button
+              key={pattern.id}
+              className={`${styles.card} ${selectedId === pattern.id ? styles.cardSelected : ''}`}
+              onClick={() => setSelectedId(pattern.id)}
+              onDoubleClick={() => {
+                setSelectedId(pattern.id);
+                handleConfirm();
+              }}
+              title={pattern.name}
+            >
+              <div className={styles.preview} style={previewStyle(pattern.style)} />
 
-                {pattern.hasMask && <span className={styles.maskBadge}>Fade</span>}
+              {pattern.hasMask && <span className={styles.maskBadge}>Fade</span>}
 
-                <div className={`${styles.cardName} ${dark ? styles.cardNameDark : ''}`}>
-                  {pattern.name}
-                </div>
-              </button>
-            );
-          })}
+              <div className={styles.cardName}>{pattern.name}</div>
+            </button>
+          ))}
         </div>
 
         {/* ── Footer ── */}
