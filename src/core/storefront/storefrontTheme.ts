@@ -37,8 +37,28 @@ export interface StorefrontCssOverlay {
   backgroundRepeat?: string;
   /** CSS mask-image / -webkit-mask-image (for fade/dashed effects) */
   maskImage?: string;
+  /** CSS mask-size / -webkit-mask-size */
+  maskSize?: string;
+  /** CSS mask-position / -webkit-mask-position */
+  maskPosition?: string;
+  /** CSS mask-repeat / -webkit-mask-repeat */
+  maskRepeat?: string;
   /** CSS mask-composite / -webkit-mask-composite */
   maskComposite?: string;
+  /** CSS background-blend-mode (PatternCraft effects/gradients) */
+  backgroundBlendMode?: string;
+  /** CSS filter (PatternCraft glow/blur effects) */
+  filter?: string;
+  /** CSS opacity for the overlay layer */
+  opacity?: string;
+  /** CSS mix-blend-mode for the overlay layer */
+  mixBlendMode?: string;
+  /** CSS animation for patterns that define one */
+  animation?: string;
+  /** CSS box-shadow for inset PatternCraft effects */
+  boxShadow?: string;
+  /** CSS image-rendering for pixelated geometric patterns */
+  imageRendering?: string;
 }
 
 export interface StorefrontBackground {
@@ -235,80 +255,6 @@ function patternImageCount(type: StorefrontOverlayType): number {
   }
 }
 
-// ─── CSS layer counting ──────────────────────────────────────────
-
-/**
- * Cuenta cuántas capas CSS hay en un valor de background-image
- * separando por comas de nivel superior (ignorando comas dentro de paréntesis).
- *
- * Ejemplo:
- *   "linear-gradient(to right, #000 1px, transparent 1px), radial-gradient(circle, #fff 1px, transparent 1px)"
- *   → 2 capas
- *
- * También maneja casos de una sola capa o vacío.
- */
-function countCssLayers(cssValue: string): number {
-  const trimmed = cssValue.trim();
-  if (!trimmed) return 0;
-
-  let depth = 0;
-  let count = 1;
-
-  for (const ch of trimmed) {
-    if (ch === '(') depth++;
-    else if (ch === ')') depth--;
-    else if (ch === ',' && depth === 0) count++;
-  }
-
-  return count;
-}
-
-/**
- * Expande un valor CSS a N posiciones repitiéndolo.
- * Si el valor ya tiene M valores separados por coma, cada uno
- * se repite para cubrir N posiciones totales.
- *
- * Ejemplo:
- *   expandCssValue("40px 40px", 3) → "40px 40px, 40px 40px, 40px 40px"
- *   expandCssValue("40px 40px, cover", 3) → "40px 40px, 40px 40px, cover"
- *     (patrón: se itera sobre los valores existentes)
- */
-function expandCssValue(value: string | undefined, targetCount: number): string {
-  if (!value || !value.trim()) return Array(targetCount).fill('auto').join(', ');
-
-  const parts = splitTopLevel(value);
-  // Si ya tiene suficientes partes, devolver tal cual
-  if (parts.length >= targetCount) return value;
-
-  // Repetir el/los valor(es) cíclicamente hasta cubrir targetCount
-  const result: string[] = [];
-  for (let i = 0; i < targetCount; i++) {
-    result.push(parts[i % parts.length].trim());
-  }
-  return result.join(', ');
-}
-
-/** Separa un valor CSS por comas de nivel superior */
-function splitTopLevel(cssValue: string): string[] {
-  const result: string[] = [];
-  let depth = 0;
-  let current = '';
-
-  for (const ch of cssValue) {
-    if (ch === '(') depth++;
-    else if (ch === ')') depth--;
-    else if (ch === ',' && depth === 0) {
-      result.push(current);
-      current = '';
-      continue;
-    }
-    current += ch;
-  }
-
-  if (current.trim()) result.push(current);
-  return result;
-}
-
 // ─── Public builder ──────────────────────────────────────────────
 
 /** Returns the CSS angle string for a background's gradient direction. */
@@ -323,53 +269,31 @@ export function buildBackgroundCSS(bg?: StorefrontBackground): Record<string, st
   const vars: Record<string, string> = {};
   const baseColor = bg.colors[0];
 
-  // ── Custom CSS overlay (from PatternCraft etc.) takes top priority ──
-  // An overlay "exists" if it has backgroundImage OR a background color override.
+  // ── Custom CSS overlay (from PatternCraft etc.) is the ENTIRE background ──
+  // When present, fill colors and gradient direction are IGNORED.
+  // The overlay "exists" if it has a non-empty backgroundImage or background color.
   const hasCssOverlay =
     bg.cssOverlay &&
-    (bg.cssOverlay.backgroundImage.length > 0 ||
-      (bg.cssOverlay.background && bg.cssOverlay.background.length > 0));
+    ((typeof bg.cssOverlay.backgroundImage === 'string' &&
+      bg.cssOverlay.backgroundImage.length > 0) ||
+      (typeof bg.cssOverlay.background === 'string' && bg.cssOverlay.background.length > 0));
 
   if (hasCssOverlay) {
     // ── Background color ──
-    // cssOverlay.background is always a plain color now (gradients are extracted
-    // to backgroundImage by patternToCssOverlay). Use it or fallback to baseColor.
+    // When a PatternCraft overlay is active, fill colors are IGNORED completely.
+    // The background comes from the pattern's own color (if it has one),
+    // or falls back to the base fill color so transparent overlay patterns
+    // (grids, dots) render on a visible background instead of transparent.
     vars['--storefront-bg'] = bg.cssOverlay!.background ?? baseColor;
 
     // ── Background image ──
-    // cssOverlay.backgroundImage now includes any gradient that was originally
-    // in the pattern's `background` shorthand (extracted by patternToCssOverlay).
-    const hasBgImage = bg.cssOverlay!.backgroundImage.length > 0;
-
-    if (hasBgImage) {
-      const isGradientFill = bg.type === 'gradient' && bg.colors.length >= 2;
-      const hasOwnBackground = !!bg.cssOverlay!.background;
-
-      if (isGradientFill && !hasOwnBackground) {
-        // ── Patrón overlay-only (grids, dots sin bg propio) + gradient fill ──
-        // El patrón se dibuja ENCIMA del gradient fill del usuario.
-        // Expandimos sizes/positions para que cada capa tenga su valor correcto
-        // y no se ciclen incorrectamente por CSS.
-        const gradientImg = `linear-gradient(${gradientAngle(bg)}, ${bg.colors.slice(0, 4).join(', ')})`;
-        vars['--storefront-bg-image'] = `${bg.cssOverlay!.backgroundImage}, ${gradientImg}`;
-
-        const patternLayerCount = countCssLayers(bg.cssOverlay!.backgroundImage);
-        const expandedSize = expandCssValue(bg.cssOverlay!.backgroundSize, patternLayerCount);
-        const expandedPos = expandCssValue(bg.cssOverlay!.backgroundPosition, patternLayerCount);
-        vars['--storefront-bg-size'] = `${expandedSize}, cover`;
-        vars['--storefront-bg-position'] = `${expandedPos}, 0 0`;
-      } else {
-        // ── Patrón con fondo propio (gradient patterns, o fill sólido) ──
-        // El patrón ES el fondo completo — NO se combina con custom fill.
-        // Si el usuario eligió un gradiente de PatternCraft, eso reemplaza
-        // los colores personalizados de la tienda.
-        vars['--storefront-bg-image'] = bg.cssOverlay!.backgroundImage;
-        if (bg.cssOverlay!.backgroundSize) {
-          vars['--storefront-bg-size'] = bg.cssOverlay!.backgroundSize;
-        }
-        if (bg.cssOverlay!.backgroundPosition) {
-          vars['--storefront-bg-position'] = bg.cssOverlay!.backgroundPosition;
-        }
+    if (bg.cssOverlay!.backgroundImage.length > 0) {
+      vars['--storefront-bg-image'] = bg.cssOverlay!.backgroundImage;
+      if (bg.cssOverlay!.backgroundSize) {
+        vars['--storefront-bg-size'] = bg.cssOverlay!.backgroundSize;
+      }
+      if (bg.cssOverlay!.backgroundPosition) {
+        vars['--storefront-bg-position'] = bg.cssOverlay!.backgroundPosition;
       }
     }
 
@@ -382,8 +306,38 @@ export function buildBackgroundCSS(bg?: StorefrontBackground): Record<string, st
     if (bg.cssOverlay!.maskImage) {
       vars['--storefront-mask-image'] = bg.cssOverlay!.maskImage;
     }
+    if (bg.cssOverlay!.maskSize) {
+      vars['--storefront-mask-size'] = bg.cssOverlay!.maskSize;
+    }
+    if (bg.cssOverlay!.maskPosition) {
+      vars['--storefront-mask-position'] = bg.cssOverlay!.maskPosition;
+    }
+    if (bg.cssOverlay!.maskRepeat) {
+      vars['--storefront-mask-repeat'] = bg.cssOverlay!.maskRepeat;
+    }
     if (bg.cssOverlay!.maskComposite) {
       vars['--storefront-mask-composite'] = bg.cssOverlay!.maskComposite;
+    }
+    if (bg.cssOverlay!.backgroundBlendMode) {
+      vars['--storefront-bg-blend-mode'] = bg.cssOverlay!.backgroundBlendMode;
+    }
+    if (bg.cssOverlay!.filter) {
+      vars['--storefront-filter'] = bg.cssOverlay!.filter;
+    }
+    if (bg.cssOverlay!.opacity) {
+      vars['--storefront-opacity'] = bg.cssOverlay!.opacity;
+    }
+    if (bg.cssOverlay!.mixBlendMode) {
+      vars['--storefront-mix-blend-mode'] = bg.cssOverlay!.mixBlendMode;
+    }
+    if (bg.cssOverlay!.animation) {
+      vars['--storefront-animation'] = bg.cssOverlay!.animation;
+    }
+    if (bg.cssOverlay!.boxShadow) {
+      vars['--storefront-box-shadow'] = bg.cssOverlay!.boxShadow;
+    }
+    if (bg.cssOverlay!.imageRendering) {
+      vars['--storefront-image-rendering'] = bg.cssOverlay!.imageRendering;
     }
   } else {
     // ── Built-in overlay ──
@@ -543,8 +497,29 @@ function normalizeStorefrontBackground(input: unknown): StorefrontBackground | u
           ? cssInput.backgroundRepeat.trim()
           : undefined,
       maskImage: typeof cssInput.maskImage === 'string' ? cssInput.maskImage.trim() : undefined,
+      maskSize: typeof cssInput.maskSize === 'string' ? cssInput.maskSize.trim() : undefined,
+      maskPosition:
+        typeof cssInput.maskPosition === 'string' ? cssInput.maskPosition.trim() : undefined,
+      maskRepeat: typeof cssInput.maskRepeat === 'string' ? cssInput.maskRepeat.trim() : undefined,
       maskComposite:
         typeof cssInput.maskComposite === 'string' ? cssInput.maskComposite.trim() : undefined,
+      backgroundBlendMode:
+        typeof cssInput.backgroundBlendMode === 'string'
+          ? cssInput.backgroundBlendMode.trim()
+          : undefined,
+      filter: typeof cssInput.filter === 'string' ? cssInput.filter.trim() : undefined,
+      opacity:
+        typeof cssInput.opacity === 'string'
+          ? cssInput.opacity.trim()
+          : typeof cssInput.opacity === 'number'
+            ? String(cssInput.opacity)
+            : undefined,
+      mixBlendMode:
+        typeof cssInput.mixBlendMode === 'string' ? cssInput.mixBlendMode.trim() : undefined,
+      animation: typeof cssInput.animation === 'string' ? cssInput.animation.trim() : undefined,
+      boxShadow: typeof cssInput.boxShadow === 'string' ? cssInput.boxShadow.trim() : undefined,
+      imageRendering:
+        typeof cssInput.imageRendering === 'string' ? cssInput.imageRendering.trim() : undefined,
     };
   }
 
@@ -863,6 +838,36 @@ export function patternToCssOverlay(pattern: {
     overlay.maskImage = maskImg;
   }
 
+  const maskSize =
+    typeof pattern.style.maskSize === 'string'
+      ? pattern.style.maskSize.trim()
+      : typeof pattern.style.WebkitMaskSize === 'string'
+        ? pattern.style.WebkitMaskSize.trim()
+        : '';
+  if (maskSize.length > 0) {
+    overlay.maskSize = maskSize;
+  }
+
+  const maskPosition =
+    typeof pattern.style.maskPosition === 'string'
+      ? pattern.style.maskPosition.trim()
+      : typeof pattern.style.WebkitMaskPosition === 'string'
+        ? pattern.style.WebkitMaskPosition.trim()
+        : '';
+  if (maskPosition.length > 0) {
+    overlay.maskPosition = maskPosition;
+  }
+
+  const maskRepeat =
+    typeof pattern.style.maskRepeat === 'string'
+      ? pattern.style.maskRepeat.trim()
+      : typeof pattern.style.WebkitMaskRepeat === 'string'
+        ? pattern.style.WebkitMaskRepeat.trim()
+        : '';
+  if (maskRepeat.length > 0) {
+    overlay.maskRepeat = maskRepeat;
+  }
+
   // Prefer maskComposite, fall back to WebkitMaskComposite
   const maskComp =
     typeof pattern.style.maskComposite === 'string'
@@ -872,6 +877,29 @@ export function patternToCssOverlay(pattern: {
         : '';
   if (maskComp.length > 0) {
     overlay.maskComposite = maskComp;
+  }
+
+  const passthroughStringProps = [
+    'backgroundBlendMode',
+    'filter',
+    'mixBlendMode',
+    'animation',
+    'boxShadow',
+    'imageRendering',
+  ] as const;
+
+  for (const prop of passthroughStringProps) {
+    const value = pattern.style[prop];
+    if (typeof value === 'string' && value.trim().length > 0) {
+      overlay[prop] = value.trim();
+    }
+  }
+
+  const opacity = pattern.style.opacity;
+  if (typeof opacity === 'number') {
+    overlay.opacity = String(opacity);
+  } else if (typeof opacity === 'string' && opacity.trim().length > 0) {
+    overlay.opacity = opacity.trim();
   }
 
   return overlay;

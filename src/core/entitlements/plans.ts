@@ -76,7 +76,7 @@ export const PLAN_ENTITLEMENTS: Record<
     maxCategories: -1, // ilimitado
     canImportProducts: false,
     canCustomizeStorefront: false,
-    chatEnabled: false,
+    chatEnabled: true,
     dashboardEnabled: false,
     seoEnabled: false,
     canUseAIAssistant: false,

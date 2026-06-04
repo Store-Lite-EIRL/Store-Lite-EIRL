@@ -20,6 +20,13 @@ export interface PatternCraftStyle {
   WebkitMaskPosition?: string;
   maskRepeat?: string;
   WebkitMaskRepeat?: string;
+  backgroundBlendMode?: string;
+  filter?: string;
+  opacity?: number | string;
+  mixBlendMode?: string;
+  animation?: string;
+  boxShadow?: string;
+  imageRendering?: string;
 }
 
 export type PatternCraftCategory = 'gradients' | 'geometric' | 'decorative' | 'effects';

@@ -1,3 +1,10 @@
+allowBuilds:
+  '@sentry/cli': true
+  core-js: true
+  esbuild: true
+  protobufjs: true
+  sharp: true
+  unrs-resolver: true
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver

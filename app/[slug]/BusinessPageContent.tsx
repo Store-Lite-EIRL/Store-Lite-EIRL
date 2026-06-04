@@ -3,11 +3,13 @@
 import type { Business, ProductCategory } from '@/core/database/schema';
 import type {
   ProductGridSection,
+  StorefrontColorScheme,
   StorefrontLayout,
   StorefrontSection,
   StorefrontTheme,
 } from '@/core/storefront';
 import {
+  buildBackgroundCSS,
   createDefaultStorefrontTheme,
   getReadableTextColor,
   getStorefrontColorConfig,
@@ -19,7 +21,14 @@ import { Button } from '@/shared/components/ui/buttons/Button';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
 import { useTheme } from '@/shared/context/ThemeContext';
 import { useRouter } from 'next/navigation';
-import { useState, type CSSProperties, type Dispatch, type SetStateAction } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type CSSProperties,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import FeaturedItems from '../(main)/home/FeaturedItems';
 import Feed from '../(main)/home/Feed';
 import FilterBar from '../(main)/home/FilterBar';
@@ -30,12 +39,16 @@ import ProductFiltersTopBar from '../(main)/home/components/ProductFiltersTopBar
 import type { BrandFilterOption } from '../(main)/home/hooks/useProductFilters';
 import { useProductFilters } from '../(main)/home/hooks/useProductFilters';
 import styles from './BusinessPageContent.module.css';
+import { Footer } from './Footer';
 import { BasicContactDialog } from './components/BasicContactDialog';
 import { CartDrawer } from './components/CartDrawer';
 import { FloatingCartButton } from './components/FloatingCartButton';
 import { FloatingChatFab } from './components/FloatingChatFab';
 import { LookupOrderModal } from './components/LookupOrderModal';
 import ProductPreviewSheet from './components/ProductPreviewSheet';
+import { StorefrontEditor } from './components/StorefrontEditor';
+import { ThemeToggle } from './components/ThemeToggle';
+import { resolveActiveScheme } from './components/schemeResolution';
 import { DeleteProductDialog } from './storage/components/DeleteProductDialog';
 import { CreateProductSheet } from './storage/components/createProduct/CreateProductSheet';
 import { StorageProvider, useStorage } from './storage/context/StorageContext';
@@ -176,7 +189,12 @@ function BusinessPageContentUI({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [showLookupModal, setShowLookupModal] = useState(false);
-  const { effectiveTheme } = useTheme();
+  const { effectiveTheme, setTheme } = useTheme();
+  const [editableTheme, setEditableTheme] = useState<StorefrontTheme>(
+    () => storefrontTheme ?? createDefaultStorefrontTheme(),
+  );
+  const [previewScheme, setPreviewScheme] = useState<StorefrontColorScheme | undefined>(undefined);
+  const [viewerTheme, setViewerTheme] = useState<'light' | 'dark' | null>(null);
   const [alert, setAlert] = useState<{
     open: boolean;
     description: string;
@@ -362,42 +380,197 @@ function BusinessPageContentUI({
     }
   };
 
-  const themeStyles = storefrontTheme
-    ? ((): CSSProperties & Record<string, string> => {
-        const palette = getStorefrontColorConfig(storefrontTheme, effectiveTheme).palette;
-        const ff =
-          storefrontTheme.fontFamily === 'roboto'
+  const activeScheme = resolveActiveScheme(
+    viewerTheme,
+    previewScheme,
+    effectiveTheme as StorefrontColorScheme,
+  );
+  // Compute background styles before themeStyles so we can detect patterns
+  // and strip them from ::before — only <html> should render them.
+  const _storefrontBg = buildBackgroundCSS(editableTheme[activeScheme].background);
+  const _hasStorefrontBgImage = !!_storefrontBg['--storefront-bg-image'];
+
+  if (_hasStorefrontBgImage) {
+    // The pattern comes exclusively from <html> (set in useEffect).  Strip ALL
+    // background-* and mask vars from ::before so it never paints a second
+    // layer — otherwise the content area shows a doubled/brighter pattern.
+    _storefrontBg['--storefront-bg-image'] = 'none';
+    _storefrontBg['--storefront-bg'] = 'transparent';
+    delete _storefrontBg['--storefront-bg-size'];
+    delete _storefrontBg['--storefront-bg-position'];
+    delete _storefrontBg['--storefront-bg-repeat'];
+    delete _storefrontBg['--storefront-bg-blend-mode'];
+    delete _storefrontBg['--storefront-mask-image'];
+    delete _storefrontBg['--storefront-mask-size'];
+    delete _storefrontBg['--storefront-mask-position'];
+    delete _storefrontBg['--storefront-mask-repeat'];
+    delete _storefrontBg['--storefront-mask-composite'];
+    delete _storefrontBg['--storefront-filter'];
+    delete _storefrontBg['--storefront-opacity'];
+    delete _storefrontBg['--storefront-mix-blend-mode'];
+    delete _storefrontBg['--storefront-animation'];
+    delete _storefrontBg['--storefront-box-shadow'];
+    delete _storefrontBg['--storefront-image-rendering'];
+  }
+
+  const themeStyles = ((): CSSProperties & Record<string, string> => {
+    const palette = getStorefrontColorConfig(editableTheme, activeScheme).palette;
+    const ff =
+      editableTheme.fontFamily === 'google-sans'
+        ? "'Google Sans', var(--mio-theme-text-font-family), sans-serif"
+        : editableTheme.fontFamily === 'inter'
+          ? 'var(--font-storefront-inter), var(--mio-theme-text-font-family), sans-serif'
+          : editableTheme.fontFamily === 'roboto'
             ? 'var(--font-storefront-roboto), var(--mio-theme-text-font-family), sans-serif'
-            : storefrontTheme.fontFamily === 'poppins'
+            : editableTheme.fontFamily === 'poppins'
               ? 'var(--font-storefront-poppins), var(--mio-theme-text-font-family), sans-serif'
-              : 'var(--font-storefront-inter), var(--mio-theme-text-font-family), sans-serif';
-        const isDark = effectiveTheme === 'dark';
-        return {
-          '--storefront-font-family': ff,
-          '--md-sys-color-primary': palette.primary,
-          '--md-sys-color-on-primary': getReadableTextColor(palette.primary),
-          '--md-sys-color-primary-container': palette.primary,
-          '--md-sys-color-on-primary-container': getReadableTextColor(palette.primary),
-          '--md-sys-color-secondary': palette.secondary,
-          '--md-sys-color-on-secondary': getReadableTextColor(palette.secondary),
-          '--md-sys-color-secondary-container': palette.secondary,
-          '--md-sys-color-on-secondary-container': getReadableTextColor(palette.secondary),
-          '--md-sys-color-tertiary': palette.accent,
-          '--md-sys-color-on-tertiary': getReadableTextColor(palette.accent),
-          '--md-sys-color-tertiary-container': palette.accent,
-          '--md-sys-color-on-tertiary-container': getReadableTextColor(palette.accent),
-          '--md-sys-color-surface': isDark ? '#0f1117' : '#ffffff',
-          '--md-sys-color-on-surface': isDark ? '#f3f4f6' : '#111827',
-          '--md-sys-color-surface-variant': isDark ? '#161b24' : '#f5f7fb',
-          '--md-sys-color-on-surface-variant': isDark ? '#cbd5e1' : '#4b5563',
-          '--md-sys-color-surface-container-low': isDark ? '#181d29' : '#f8fafc',
-          '--md-sys-color-surface-container': isDark ? '#1d2432' : '#f1f5f9',
-          '--md-sys-color-surface-container-high': isDark ? '#242d3d' : '#e9eef6',
-          '--md-sys-color-surface-container-highest': isDark ? '#2d3748' : '#dfe6f1',
-          '--md-sys-color-outline-variant': isDark ? '#475569' : '#cbd5e1',
-        };
-      })()
-    : undefined;
+              : "'Google Sans', var(--mio-theme-text-font-family), sans-serif";
+    const isDark = activeScheme === 'dark';
+    return {
+      '--storefront-font-family': ff,
+      '--md-sys-color-primary': palette.primary,
+      '--md-sys-color-on-primary': getReadableTextColor(palette.primary),
+      '--md-sys-color-primary-container': palette.primary,
+      '--md-sys-color-on-primary-container': getReadableTextColor(palette.primary),
+      '--md-sys-color-secondary': palette.secondary,
+      '--md-sys-color-on-secondary': getReadableTextColor(palette.secondary),
+      '--md-sys-color-secondary-container': palette.secondary,
+      '--md-sys-color-on-secondary-container': getReadableTextColor(palette.secondary),
+      '--md-sys-color-tertiary': palette.accent,
+      '--md-sys-color-on-tertiary': getReadableTextColor(palette.accent),
+      '--md-sys-color-tertiary-container': palette.accent,
+      '--md-sys-color-on-tertiary-container': getReadableTextColor(palette.accent),
+      // Opacidades reducidas para que el patrón/degradado del <html>
+      // se vea a través de los componentes (Hero, cards, grid, etc.)
+      '--md-sys-color-surface': isDark ? 'rgba(15, 17, 23, 0.82)' : 'rgba(255, 255, 255, 0.78)',
+      '--md-sys-color-surface-container-lowest': isDark
+        ? 'rgba(18, 20, 32, 0.62)'
+        : 'rgba(252, 252, 253, 0.62)',
+      '--md-sys-color-on-surface': isDark ? '#f3f4f6' : '#111827',
+      '--md-sys-color-surface-variant': isDark
+        ? 'rgba(22, 27, 36, 0.72)'
+        : 'rgba(245, 247, 251, 0.68)',
+      '--md-sys-color-on-surface-variant': isDark ? '#cbd5e1' : '#4b5563',
+      '--md-sys-color-surface-container-low': isDark
+        ? 'rgba(24, 29, 41, 0.68)'
+        : 'rgba(248, 250, 252, 0.66)',
+      '--md-sys-color-surface-container': isDark
+        ? 'rgba(29, 36, 50, 0.72)'
+        : 'rgba(241, 245, 249, 0.70)',
+      '--md-sys-color-surface-container-high': isDark
+        ? 'rgba(36, 45, 61, 0.76)'
+        : 'rgba(233, 238, 246, 0.75)',
+      '--md-sys-color-surface-container-highest': isDark
+        ? 'rgba(45, 55, 72, 0.80)'
+        : 'rgba(223, 230, 241, 0.80)',
+      '--md-sys-color-outline-variant': isDark ? '#475569' : '#cbd5e1',
+      ..._storefrontBg,
+    };
+  })();
+
+  // Sync theme CSS vars to document root so parent elements (layout, main-area)
+  // can see --storefront-bg, --storefront-bg-image, and all MD colors
+  useEffect(() => {
+    const root = document.documentElement;
+    const entries = Object.entries(themeStyles) as [string, string][];
+
+    // 1. Set all CSS vars on root (affects layout/main-area/storefront)
+    entries.forEach(([key, value]) => root.style.setProperty(key, value));
+
+    // Enable smooth theme transitions on background properties
+    root.style.transition = 'background-color 300ms ease, background-image 300ms ease';
+    document.body.style.transition = 'background-color 300ms ease';
+
+    // 2. Recompute the ORIGINAL background (themeStyles has it stripped so
+    //    ::before doesn't double-paint). HTML handles the pattern exclusively.
+    const bgOriginal = buildBackgroundCSS(editableTheme[activeScheme].background);
+    const bgImage = bgOriginal['--storefront-bg-image' as keyof typeof bgOriginal] as
+      | string
+      | undefined;
+    const hasImage = bgImage && bgImage !== 'none' && bgImage.length > 0;
+
+    if (hasImage) {
+      // Override --storefront-bg to transparent so .layout / .main-area
+      // don't paint a solid color that blocks the pattern on <html>.
+      root.style.setProperty('--storefront-bg', 'transparent');
+
+      // Set the background directly on <html> so it covers the entire page.
+      root.style.backgroundColor = 'transparent';
+      root.style.backgroundImage = bgImage;
+      root.style.backgroundSize =
+        (bgOriginal['--storefront-bg-size' as keyof typeof bgOriginal] as string) || 'auto';
+      root.style.backgroundPosition =
+        (bgOriginal['--storefront-bg-position' as keyof typeof bgOriginal] as string) || '0 0';
+      root.style.backgroundRepeat =
+        (bgOriginal['--storefront-bg-repeat' as keyof typeof bgOriginal] as string) || 'repeat';
+      root.style.backgroundAttachment = 'fixed';
+
+      // Make <body> transparent so the <html> pattern/gradient shows through
+      // the entire viewport — including margins, the sidebar column, and areas
+      // outside .storefrontThemeRoot.
+      document.body.style.backgroundColor = 'transparent';
+    } else {
+      // Sin imagen de fondo: <html> hereda el color sólido normal.
+      root.style.backgroundColor = '';
+      root.style.backgroundImage = '';
+      root.style.backgroundSize = '';
+      root.style.backgroundPosition = '';
+      root.style.backgroundRepeat = '';
+      root.style.backgroundAttachment = '';
+
+      // Restore body background when no pattern is active.
+      document.body.style.backgroundColor = '';
+    }
+
+    return () => {
+      entries.forEach(([key]) => root.style.removeProperty(key));
+      root.style.backgroundColor = '';
+      root.style.backgroundImage = '';
+      root.style.backgroundSize = '';
+      root.style.backgroundPosition = '';
+      root.style.backgroundRepeat = '';
+      root.style.backgroundAttachment = '';
+      root.style.transition = '';
+      document.body.style.backgroundColor = '';
+      document.body.style.transition = '';
+    };
+  }, [themeStyles, editableTheme, activeScheme]);
+
+  // Read stored theme preference from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('storefront-theme');
+      if (stored === 'light' || stored === 'dark') {
+        setViewerTheme(stored);
+      }
+    } catch {
+      // Safari private mode — no-op
+    }
+  }, []);
+
+  // Persist viewer theme choice to localStorage whenever it changes
+  useEffect(() => {
+    if (viewerTheme === null) return;
+    try {
+      localStorage.setItem('storefront-theme', viewerTheme);
+    } catch {
+      // Safari private mode — no-op
+    }
+  }, [viewerTheme]);
+
+  const handleViewerThemeToggle = useCallback(() => {
+    setViewerTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  }, []);
+
+  const handlePreviewSchemeChange = useCallback(
+    (scheme: StorefrontColorScheme | undefined) => {
+      setPreviewScheme(scheme);
+      if (scheme) {
+        setTheme(scheme); // 'light' | 'dark' — same values
+      }
+    },
+    [setPreviewScheme, setTheme],
+  );
 
   return (
     <>
@@ -433,13 +606,16 @@ function BusinessPageContentUI({
             businessLogoUrl={business.logoUrl ?? undefined}
             onContactClick={() => setIsContactDialogOpen(true)}
           />
-          {chatEnabled && !isLoggedIn && (
+          {chatEnabled && (
             <FloatingChatFab
               businessName={business.name}
               businessId={business.id}
               slug={business.slug}
+              businessLogo={business.logoUrl}
             />
           )}
+          <ThemeToggle currentScheme={activeScheme} onToggle={handleViewerThemeToggle} />
+          <Footer business={business} />
         </>
       )}
       <BasicContactDialog
@@ -465,6 +641,14 @@ function BusinessPageContentUI({
             initialProduct={
               isEditOpen && previewProduct ? mapToStorageProduct(previewProduct) : null
             }
+          />
+          <StorefrontEditor
+            business={{ id: business.id, slug: business.slug }}
+            storefrontTheme={editableTheme}
+            onThemeChange={setEditableTheme}
+            onPreviewSchemeChange={handlePreviewSchemeChange}
+            detectedColorScheme={effectiveTheme as StorefrontColorScheme}
+            currentScheme={previewScheme}
           />
         </>
       )}
@@ -579,7 +763,51 @@ function StorefrontProductGridSection({
       />
 
       {activeTab === 'products' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {/* ── Badge de confianza para el customer ── */}
+          {!isOwner && business.verificationStatus === 'verified' && (
+            <div className={styles.verifiedBadge}>
+              <Icon size={14}>verified</Icon>
+              Verificado
+            </div>
+          )}
+
+          {/* ── Mensajes para el owner ── */}
+          {isOwner && hasPaymentGateway && !isPaymentConfigured && (
+            <div className={`${styles.ownerPrompt} ${styles.ownerPromptWarning}`}>
+              <span className={styles.ownerPromptIcon}>⚠️</span>
+              <span>
+                Configura tus credenciales de pago para empezar a recibir pagos automáticos.
+              </span>
+            </div>
+          )}
+          {isOwner && !hasPaymentGateway && (
+            <div className={`${styles.ownerPrompt} ${styles.ownerPromptInfo}`}>
+              <span className={styles.ownerPromptIcon}>💡</span>
+              <span>
+                Estás en el plan básico. Actualiza tu plan para aceptar pagos automáticos y acceder
+                a más beneficios.
+              </span>
+            </div>
+          )}
+
+          {/* ── Info de pagos para el customer ── */}
+          {!isOwner && !paymentsEnabled && (
+            <div
+              className={styles.paymentBanner}
+              tabIndex={0}
+              role="button"
+              aria-label="Información de pagos"
+            >
+              <span className={styles.paymentBannerIcon}>?</span>
+              <span>Pagos automáticos no disponibles</span>
+              <div className={styles.paymentTooltip}>
+                {hasPaymentGateway
+                  ? 'Este negocio aún no terminó de configurar sus credenciales de pago. Mientras tanto, puedes contactar al negocio para comprar.'
+                  : 'Este negocio necesita un plan premium para habilitar pagos automáticos. Mientras tanto, puedes contactar al negocio para comprar.'}
+              </div>
+            </div>
+          )}
           {isGridVisible ? (
             <>
               <ProductFiltersTopBar
@@ -663,16 +891,6 @@ function StorefrontProductGridSection({
                 businessId={business.id}
                 businessLogoUrl={business.logoUrl ?? undefined}
               />
-              {!isOwner && !paymentsEnabled && (
-                <div className={filterStyles.infoCard}>
-                  <h3 className={filterStyles.infoTitle}>Pagos automáticos no disponibles</h3>
-                  <p className={filterStyles.description}>
-                    {hasPaymentGateway
-                      ? 'Este negocio aún no terminó de configurar sus credenciales de pago. Mientras tanto, puedes contactar al negocio para comprar.'
-                      : 'Este negocio necesita un plan premium para habilitar pagos automáticos. Mientras tanto, puedes contactar al negocio para comprar.'}
-                  </p>
-                </div>
-              )}
               <Pagination
                 totalPages={totalPages}
                 currentPage={currentPage}

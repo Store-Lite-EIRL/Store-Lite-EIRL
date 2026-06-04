@@ -80,7 +80,8 @@ export function StorefrontEditor({
   const currentConfig: StorefrontColorConfig = storefrontTheme[scheme];
   const bg = currentConfig.background;
   const fillType: StorefrontBackgroundType = bg?.type ?? 'solid';
-  const fillColors = bg?.colors ?? ['#ffffff'];
+  const defaultFillColors = scheme === 'dark' ? ['#0f172a'] : ['#ffffff'];
+  const fillColors = bg?.colors ?? defaultFillColors;
   const fillColorCount = fillColors.length;
   const cssOverlay = bg?.cssOverlay;
   const hasPattern = !!cssOverlay?.patternId;
@@ -487,11 +488,11 @@ export function StorefrontEditor({
               Fondo
             </h3>
 
-            <div className={hasPatternColor ? styles.fillDisabled : ''}>
-              {hasPatternColor && (
+            <div className={hasActiveOverlay ? styles.fillDisabled : ''}>
+              {hasActiveOverlay && (
                 <div className={styles.fillDisabledHint}>
                   <Icon>info</Icon>
-                  El patrón define su propio color de fondo
+                  El patrón decorativo tiene prioridad — los colores de relleno no se aplican
                 </div>
               )}
 

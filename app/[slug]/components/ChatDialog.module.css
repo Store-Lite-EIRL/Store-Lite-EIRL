@@ -7,11 +7,11 @@
   pointer-events: all;
 }
 
-/* Dialog container — anchored near bottom-left */
+/* Dialog container — anchored near bottom-right */
 .dialog {
   position: fixed;
   bottom: calc(1.75rem + 72px);
-  left: 1.75rem;
+  right: 1.75rem;
   z-index: 920;
   width: 360px;
   max-width: calc(100vw - 2rem);
@@ -30,7 +30,7 @@
   from {
     opacity: 0;
     transform: translateY(12px) scale(0.96);
-    transform-origin: bottom left;
+    transform-origin: bottom right;
   }
   to {
     opacity: 1;

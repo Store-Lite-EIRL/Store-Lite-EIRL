@@ -39,19 +39,39 @@ function previewStyle(style: PatternCraftStyle): React.CSSProperties {
   return css;
 }
 
+function luminanceFromHex(hex: string): number | undefined {
+  const normalized =
+    hex.length === 4 ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}` : hex.slice(0, 7);
+  const match = normalized.match(/^#([0-9a-f]{6})$/i);
+  if (!match) return undefined;
+  const r = parseInt(match[1].slice(0, 2), 16);
+  const g = parseInt(match[1].slice(2, 4), 16);
+  const b = parseInt(match[1].slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+
+function extractColorLuminances(value: string): number[] {
+  const luminances: number[] = [];
+  const hexMatches = value.match(/#[0-9a-f]{3,8}\b/gi) ?? [];
+  for (const hex of hexMatches) {
+    const lum = luminanceFromHex(hex);
+    if (lum !== undefined) luminances.push(lum);
+  }
+  return luminances;
+}
+
 /**
- * Classifica un patrón según su compatibilidad con schemes.
- * - 'dark': fondo oscuro → mostrar SOLO en dark mode
- * - 'light': fondo claro → mostrar SOLO en light mode
- * - 'both': sin fondo propio (overlay) → mostrar en ambos modos
+ * Classifies a pattern by scheme compatibility.
+ * - 'dark': dark own background -> show only in dark mode
+ * - 'light': light own background -> show only in light mode
+ * - 'both': transparent overlay -> show in both modes
  */
 function classifyPattern(style: PatternCraftStyle): 'dark' | 'light' | 'both' {
   const bg = (typeof style.background === 'string' ? style.background : '').trim();
   const bgColor = (typeof style.backgroundColor === 'string' ? style.backgroundColor : '').trim();
-  let color = bgColor || bg;
+  const bgImage = (typeof style.backgroundImage === 'string' ? style.backgroundImage : '').trim();
+  let color = bgColor;
 
-  // Si el background es un gradient shorthand con color de fallback al final
-  // (ej: "radial-gradient(...), #000000"), extraer el color trailing.
   if (!bgColor && bg) {
     const lastComma = bg.lastIndexOf(',');
     if (lastComma !== -1) {
@@ -60,9 +80,19 @@ function classifyPattern(style: PatternCraftStyle): 'dark' | 'light' | 'both' {
         color = possibleColor;
       }
     }
+    if (!color && !/gradient\(|url\(|image\(/i.test(bg)) {
+      color = bg;
+    }
   }
 
-  // Sin fondo propio → overlay, funciona en cualquier scheme
+  const source = [bgColor, bg, bgImage].filter(Boolean).join(' ');
+  const luminances = extractColorLuminances(source);
+  if (!color && luminances.length > 0 && /gradient\(|url\(|image\(/i.test(source)) {
+    const average = luminances.reduce((sum, lum) => sum + lum, 0) / luminances.length;
+    return average < 0.45 ? 'dark' : 'light';
+  }
+
+  // No own background -> transparent overlay, works in both schemes.
   if (!color) return 'both';
 
   // Quick check for common dark bases
@@ -71,17 +101,12 @@ function classifyPattern(style: PatternCraftStyle): 'dark' | 'light' | 'both' {
   if (/^#2[0-9a-b][0-9a-f]{4}$/i.test(color)) return 'dark'; // #2[0-b]xxxx
   if (color === '#000' || color === '#000000' || color === 'black') return 'dark';
 
-  // Parse hex luminance for single color
-  const hexMatch = color.match(/^#([0-9a-f]{6})$/i);
-  if (hexMatch) {
-    const r = parseInt(hexMatch[1].slice(0, 2), 16);
-    const g = parseInt(hexMatch[1].slice(2, 4), 16);
-    const b = parseInt(hexMatch[1].slice(4, 6), 16);
-    const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  const lum = luminanceFromHex(color);
+  if (lum !== undefined) {
     return lum < 0.4 ? 'dark' : 'light';
   }
 
-  // Si tiene color pero no pudimos determinar, asumir light
+  // If it has a color but we could not determine it, assume light.
   return 'light';
 }
 
@@ -128,11 +153,7 @@ export function PatternBrowser({
     setSelectedId(currentPatternId ?? null);
   }, [currentPatternId]);
 
-  // En light mode ocultamos Gradients (todos los gradientes son dark)
-  const visibleCategories = useMemo(
-    () => (colorScheme === 'light' ? CATEGORIES.filter((c) => c.key !== 'gradients') : CATEGORIES),
-    [colorScheme],
-  );
+  const visibleCategories = CATEGORIES;
 
   // Si la categoría activa ya no es visible, switch a la primera disponible
   useEffect(() => {
