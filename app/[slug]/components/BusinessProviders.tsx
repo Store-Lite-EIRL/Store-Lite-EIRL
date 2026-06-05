@@ -11,6 +11,7 @@ import { CartProvider } from '../storage/context/CartContext';
 import { CurrencyProvider } from '../storage/context/CurrencyContext';
 import { StorageProvider } from '../storage/context/StorageContext';
 import type { Product } from '../storage/data';
+import type { CategoryItem } from '../storage/hooks/useStorageProducts';
 import { getCurrencyByCountry } from '../storage/utils/currency';
 
 interface BusinessProvidersProps {
@@ -20,7 +21,7 @@ interface BusinessProvidersProps {
   country: string | null;
   entitlements: BusinessEntitlements;
   initialProducts?: Product[];
-  initialCategories?: string[];
+  initialCategories?: CategoryItem[];
   isOwner: boolean;
   role: Role | null;
   permissions: Permission[];

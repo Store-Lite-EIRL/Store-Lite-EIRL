@@ -3,6 +3,7 @@ import { isBusinessError } from '@/lib/errorHandling';
 import { useEffect, useMemo, useState } from 'react';
 import {
   createProduct,
+  deleteCategory as deleteCategoryAction,
   deleteProduct as deleteProductAction,
   getProductCategories,
   getProductsByBusinessSlug,
@@ -23,9 +24,14 @@ export interface SortConfig {
 
 export const ITEMS_PER_PAGE = 20;
 
+export interface CategoryItem {
+  id: string;
+  name: string;
+}
+
 interface StorageCache {
   products: Product[];
-  categories: string[];
+  categories: CategoryItem[];
   businessId: string | null;
   entitlements: BusinessEntitlements | null;
   timestamp: number;
@@ -36,7 +42,7 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 interface UseStorageProductsProps {
   businessSlug: string;
   initialProducts?: Product[];
-  initialCategories?: string[];
+  initialCategories?: CategoryItem[];
   initialBusinessId?: string | null;
   isOwner?: boolean;
 }
@@ -56,7 +62,7 @@ export const useStorageProducts = ({
   const [sortBy, setSortBy] = useState('newest');
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [categories, setCategories] = useState<string[]>(initialCategories);
+  const [categories, setCategories] = useState<CategoryItem[]>(initialCategories);
   const [businessId, setBusinessId] = useState<string | null>(initialBusinessId);
   const [entitlements, setEntitlements] = useState<BusinessEntitlements | null>(null);
 
@@ -394,14 +400,14 @@ export const useStorageProducts = ({
     }
   };
 
-  const saveCategories = async (newCategories: string[]) => {
+  const saveCategories = async (newCategoryNames: string[]) => {
     setIsLoading(true);
     try {
       const {
         success,
         error,
         categories: updatedCategories,
-      } = await syncProductCategories(businessSlug, newCategories);
+      } = await syncProductCategories(businessSlug, newCategoryNames);
       if (success && updatedCategories) {
         setCategories(updatedCategories);
         if (globalStorageCache[businessSlug]) {
@@ -420,6 +426,31 @@ export const useStorageProducts = ({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const deleteCategory = async (categoryId: string) => {
+    let result: { success: boolean; error?: string };
+
+    try {
+      const { success, error } = await deleteCategoryAction(businessSlug, categoryId);
+      result = { success, error: error ?? undefined };
+
+      if (success) {
+        setCategories((prev) => prev.filter((c) => c.id !== categoryId));
+        if (globalStorageCache[businessSlug]) {
+          globalStorageCache[businessSlug].categories = globalStorageCache[
+            businessSlug
+          ].categories.filter((c) => c.id !== categoryId);
+        }
+      }
+    } catch (error) {
+      result = {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error al eliminar la categoría',
+      };
+    }
+
+    return result;
   };
 
   const { paginatedProducts, totalFiltered, filteredAll } = useMemo(() => {
@@ -515,6 +546,7 @@ export const useStorageProducts = ({
     updateProduct,
     saveProductBackground,
     saveCategories,
+    deleteCategory,
     refreshProducts: async () => {
       Reflect.deleteProperty(globalStorageCache, businessSlug);
       setIsLoading(true);
