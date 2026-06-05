@@ -959,6 +959,7 @@ export const businessesRelations = relations(businesses, ({ one, many }) => ({
   products: many(products),
   chatSessions: many(chatSessions),
   subscriptions: many(businessSubscriptions),
+  paymentOrders: many(paymentOrders),
   invitations: many(businessInvitations),
   teamMembers: many(businessTeamMembers),
   teamRoles: many(businessTeamRoles),
