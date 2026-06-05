@@ -61,7 +61,7 @@ interface OrderItem {
   amount: string;
   shippingCost: string;
   currency: string;
-  paymentMethod: 'card' | 'yape' | 'plin';
+  paymentMethod: 'card' | 'yape' | 'plin' | 'pago_efectivo' | 'billetera_movil' | 'cuotealo';
   status:
     | 'pending'
     | 'paid'
