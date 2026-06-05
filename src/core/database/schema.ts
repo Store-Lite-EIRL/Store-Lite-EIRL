@@ -855,6 +855,7 @@ export const planPayments = pgTable(
 // =====================================================
 
 export const orderStatusEnum = pgEnum('order_status', ['pending', 'paid', 'expired', 'cancelled']);
+export type OrderStatus = (typeof orderStatusEnum.enumValues)[number];
 
 // =====================================================
 // TABLE: payment_orders
