@@ -47,3 +47,14 @@ export const chargeRequestSchema = z.object({
 });
 
 export type ChargeRequestInput = z.infer<typeof chargeRequestSchema>;
+
+export const createOrderRequestSchema = z.object({
+  amount: z.number().int().min(100, 'Monto mínimo S/ 1.00 (100 céntimos)'),
+  currency: z.string().default('PEN'),
+  email: z.string().email('Email no válido'),
+  phone: z.string().optional().nullable(),
+  businessId: z.string().uuid('ID de negocio inválido'),
+  productId: z.string().uuid('ID de producto inválido').optional(),
+  description: z.string().optional(),
+});
+export type CreateOrderRequestInput = z.infer<typeof createOrderRequestSchema>;
