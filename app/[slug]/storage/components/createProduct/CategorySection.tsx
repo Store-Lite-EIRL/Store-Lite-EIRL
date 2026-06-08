@@ -108,6 +108,7 @@ export const CategorySection = ({
   };
 
   const hasCategories = categories.length > 0;
+  const atCategoryLimit = categories.length >= 7;
 
   return (
     <div className="form-section">
@@ -137,9 +138,10 @@ export const CategorySection = ({
             <button
               type="button"
               className="add-category-btn"
-              onClick={() => setIsAddingCategory(true)}
-              aria-label="Agregar categoría"
-              title="Agregar categoría"
+              onClick={() => !atCategoryLimit && setIsAddingCategory(true)}
+              aria-label={atCategoryLimit ? 'Límite de categorías alcanzado' : 'Agregar categoría'}
+              title={atCategoryLimit ? 'Máximo 7 categorías' : 'Agregar categoría'}
+              style={atCategoryLimit ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
             >
               <Icon>add</Icon>
             </button>
