@@ -46,7 +46,7 @@ export const TableControls = ({ extraColumns }: TableControlsProps) => {
             onInput={(e: MaterialSelectEvent) => setFilterCategory(getMaterialSelectValue(e))}
             options={[
               { label: 'Todas las categorias', value: 'all' },
-              ...categories.map((cat) => ({ label: cat, value: cat })),
+              ...categories.map((cat) => ({ label: cat.name, value: cat.name })),
             ]}
           />
         </div>

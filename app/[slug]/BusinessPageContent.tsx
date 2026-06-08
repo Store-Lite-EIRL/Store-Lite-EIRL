@@ -131,7 +131,7 @@ export default function BusinessPageContent({
     secondPrice: p.secondPrice ? String(p.secondPrice) : null,
   }));
 
-  const mappedCategories = categories.map((c) => c.name);
+  const mappedCategories = categories.map((c) => ({ id: c.id, name: c.name }));
 
   // El staff (dueño + miembros con acceso) hereda las capacidades de gestión en el context
   return (

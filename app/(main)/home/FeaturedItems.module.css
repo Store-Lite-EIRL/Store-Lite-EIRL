@@ -153,6 +153,40 @@
   opacity: 1;
 }
 
+.deleteBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition:
+    opacity 0.2s ease,
+    background 0.2s ease;
+  z-index: 10;
+  padding: 0;
+}
+
+.itemCard:hover .deleteBtn {
+  opacity: 1;
+}
+
+.deleteBtn:hover {
+  background: #dc2626;
+}
+
+.deleteBtn md-icon {
+  font-size: 18px;
+}
+
 .editOverlayIcon,
 .addOverlayIcon {
   color: white;

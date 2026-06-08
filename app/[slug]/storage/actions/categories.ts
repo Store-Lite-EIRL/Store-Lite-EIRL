@@ -16,14 +16,14 @@ export async function getProductCategories(slug: string) {
 
     const categoriesList = await db.query.productCategories.findMany({
       where: eq(productCategories.businessId, id),
-      columns: { name: true },
+      columns: { id: true, name: true },
       orderBy: (table, { asc }) => [asc(table.name)],
     });
 
     const entitlements = await getBusinessEntitlements(id);
 
     return {
-      categories: categoriesList.map((c) => c.name),
+      categories: categoriesList,
       entitlements,
       error: null,
     };
@@ -72,7 +72,7 @@ export async function syncProductCategories(slug: string, categoryNames: string[
         if (currentCategoryCount + toAdd.length > entitlements.maxCategories) {
           return {
             success: false,
-            categories: existingNames,
+            categories: existingCategories.map((c) => ({ id: c.id, name: c.name })),
             error: `No se pueden sincronizar las categorías. El plan actual solo permite hasta ${entitlements.maxCategories} categorías y estás intentando tener ${currentCategoryCount + toAdd.length}.`,
           };
         }
@@ -89,13 +89,13 @@ export async function syncProductCategories(slug: string, categoryNames: string[
 
     const finalCategories = await db.query.productCategories.findMany({
       where: eq(productCategories.businessId, businessId),
-      columns: { name: true },
+      columns: { id: true, name: true },
       orderBy: (table, { asc }) => [asc(table.name)],
     });
 
     return {
       success: true,
-      categories: finalCategories.map((c) => c.name),
+      categories: finalCategories,
     };
   } catch (error) {
     logError('syncProductCategories', error);
@@ -103,6 +103,35 @@ export async function syncProductCategories(slug: string, categoryNames: string[
       success: false,
       categories: [],
       error: error instanceof Error ? error.message : 'Error al sincronizar categorias',
+    };
+  }
+}
+
+export async function deleteCategory(businessSlug: string, categoryId: string) {
+  try {
+    const { businessId } = await requireAccess(businessSlug, 'categories.delete');
+
+    const category = await db.query.productCategories.findFirst({
+      where: (categories, { and, eq }) =>
+        and(eq(categories.id, categoryId), eq(categories.businessId, businessId)),
+      columns: { id: true, name: true },
+    });
+
+    if (!category) {
+      return { success: false, error: 'Categoría no encontrada o acceso denegado' };
+    }
+
+    await db.delete(productCategories).where(eq(productCategories.id, categoryId));
+
+    revalidatePath(`/${businessSlug}`);
+    revalidatePath(`/${businessSlug}/storage`);
+
+    return { success: true, error: null };
+  } catch (error) {
+    logError('deleteCategory', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error al eliminar la categoría',
     };
   }
 }

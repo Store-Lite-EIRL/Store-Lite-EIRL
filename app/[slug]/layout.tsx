@@ -57,7 +57,7 @@ export default async function BusinessLayout({ children, modal, params }: Busine
   const entitlements = await getBusinessEntitlements(business.id);
   const navbarPlanName = entitlements.plan;
 
-  let categoryNames: string[] | undefined;
+  let categoryNames: { id: string; name: string }[] | undefined;
   let storageProducts: Product[] | undefined;
 
   // Solo cargar datos administrativos si tiene permiso de ver productos
@@ -81,7 +81,7 @@ export default async function BusinessLayout({ children, modal, params }: Busine
       }),
     ]);
 
-    categoryNames = categories.map((c) => c.name);
+    categoryNames = categories.map((c) => ({ id: c.id, name: c.name }));
     storageProducts = productsList.map((p) => ({
       id: p.id,
       name: p.title,
