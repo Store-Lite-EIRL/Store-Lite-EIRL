@@ -24,7 +24,7 @@ export const createBusinessSchema = z.object({
     .min(10, 'La descripción debe tener al menos 10 caracteres')
     .max(500, 'La descripción es demasiado larga'),
   country: z.string().min(2, 'El país es obligatorio'),
-  city: z.string().optional(),
+  city: z.string().min(2, 'La ciudad es obligatoria'),
   departamento: z.string().min(2, 'El departamento es obligatorio'),
   provincia: z.string().min(2, 'La provincia es obligatoria'),
   distrito: z.string().min(2, 'El distrito es obligatorio'),
