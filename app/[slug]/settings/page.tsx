@@ -75,6 +75,12 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
   const entitlements = await getBusinessEntitlements(business.id);
   const settings = await db.query.businessSettings.findFirst({
     where: eq(businessSettings.businessId, business.id),
+    columns: {
+      themeMode: true,
+      culqiPublicKey: true,
+      culqiSecretKey: true,
+      preferences: true,
+    },
   });
 
   return (
@@ -90,6 +96,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
       initialStorefrontLayout={getStorefrontLayoutFromPreferences(settings?.preferences)}
       initialStorefrontTheme={getStorefrontThemeFromPreferences(settings?.preferences)}
       initialHasCustomTheme={hasCustomStorefrontTheme(settings?.preferences)}
+      initialScheme={settings?.themeMode ?? 'light'}
       role={role}
       permissions={permissions}
       isOwner={isOwner}

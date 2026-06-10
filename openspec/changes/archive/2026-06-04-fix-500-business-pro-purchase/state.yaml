@@ -1,0 +1,13 @@
+schema: spec-driven
+change: fix-500-business-pro-purchase
+status: exploring
+phases:
+  explore: completed
+  proposal: pending
+  spec: pending
+  design: pending
+  tasks: completed
+  apply: completed
+  verify: completed
+  archive: pending
+created: 2026-06-04

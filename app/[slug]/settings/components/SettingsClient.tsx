@@ -37,6 +37,7 @@ import {
 } from '@/shared/components/ui';
 import { Dialog } from '@/shared/components/ui/surfaces/Dialog';
 import { ThemeSettings } from '@/shared/components/ui/ThemeSettings';
+import { useTheme } from '@/shared/context/ThemeContext';
 import { getBusinessPath } from '@/shared/utils/url';
 import { useParams, useRouter } from 'next/navigation';
 import React, {
@@ -124,6 +125,7 @@ interface SettingsClientProps {
   initialStorefrontLayout: StorefrontLayout;
   initialStorefrontTheme: StorefrontTheme;
   initialHasCustomTheme?: boolean;
+  initialScheme?: 'light' | 'dark';
   role: string;
   permissions: Permission[];
   isOwner: boolean;
@@ -271,6 +273,10 @@ function BusinessSection({
   const canEditSlug = entitlements.plan !== 'basico';
 
   // State for slug editing
+  const [origin, setOrigin] = useState('');
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
   const [isEditingSlug, setIsEditingSlug] = useState(false);
   const [newSlug, setNewSlug] = useState(business.slug);
   const [slugError, setSlugError] = useState<string | null>(null);
@@ -420,7 +426,7 @@ function BusinessSection({
         <div className={styles.slugEditContent}>
           {!isEditingSlug ? (
             <div className={styles.slugDisplayContainer}>
-              <CopyableValue value={`${window.location.origin}/${business.slug}`} />
+              <CopyableValue value={origin ? `${origin}/${business.slug}` : `/${business.slug}`} />
             </div>
           ) : (
             <div className={styles.slugEditor}>
@@ -551,6 +557,7 @@ function AppearanceSection({
   entitlements,
   initialStorefrontTheme,
   initialHasCustomTheme = false,
+  initialScheme,
   isOwner,
   permissions,
 }: {
@@ -558,16 +565,18 @@ function AppearanceSection({
   entitlements: Entitlements;
   initialStorefrontTheme: StorefrontTheme;
   initialHasCustomTheme?: boolean;
+  initialScheme?: 'light' | 'dark';
   isOwner: boolean;
   permissions: Permission[];
 }) {
+  const { setTheme: setGlobalTheme } = useTheme();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [usePlatformColors, setUsePlatformColors] = useState(!initialHasCustomTheme);
   const [storefrontTheme, setStorefrontTheme] = useState<StorefrontTheme>(
     normalizeStorefrontTheme(initialStorefrontTheme),
   );
-  const [scheme, setScheme] = useState<StorefrontColorScheme>('light');
+  const [scheme, setScheme] = useState<StorefrontColorScheme>(initialScheme ?? 'light');
   const currentConfig = storefrontTheme[scheme];
   const [feedback, setFeedback] = useState<{
     open: boolean;
@@ -592,6 +601,7 @@ function AppearanceSection({
           business.slug,
           storefrontTheme,
           entitlements.plan,
+          scheme,
         );
       }
 
@@ -760,7 +770,10 @@ function AppearanceSection({
                 ].map((tab) => (
                   <button
                     key={tab.value}
-                    onClick={() => setScheme(tab.value)}
+                    onClick={() => {
+                      setScheme(tab.value);
+                      setGlobalTheme(tab.value);
+                    }}
                     style={{
                       flex: 1,
                       display: 'flex',
@@ -2828,6 +2841,7 @@ function PaymentsSection({
           icon: 'check_circle',
         });
         setShowConfigDialog(false);
+        router.refresh();
       } else {
         setError(result.error || 'Error al guardar credenciales.');
       }
@@ -3069,15 +3083,16 @@ function PaymentsSection({
               }}
             >
               <li>
-                <strong>Tarjetas:</strong> Crédito y débito (Visa, Mastercard, American Express)
+                <strong>Yape:</strong> Monto entre S/ 6.00 y S/ 1,000.00 — Por límite de Yape para
+                compras por internet (el tope de Culqi es S/ 2,000).
               </li>
               <li>
-                <strong>Yape:</strong> Monto mínimo S/ 6.00 — Si el pago es menor, solo aparecerá
-                tarjeta
+                <strong>Tarjeta:</strong> Crédito y débito (Visa, Mastercard, American Express) —
+                sin límite fijo, depende del emisor.
               </li>
               <li>
                 <strong>Nota:</strong> Los métodos de pago se muestran automáticamente según el
-                monto de la compra. Yape requiere un monto mínimo de S/ 6.00.
+                monto de la compra.
               </li>
             </ul>
           </div>
@@ -3145,6 +3160,7 @@ export function SettingsClient({
   initialStorefrontLayout,
   initialStorefrontTheme,
   initialHasCustomTheme = false,
+  initialScheme,
   role,
   permissions,
   isOwner,
@@ -3276,6 +3292,7 @@ export function SettingsClient({
                   entitlements={entitlements}
                   initialStorefrontTheme={initialStorefrontTheme}
                   initialHasCustomTheme={initialHasCustomTheme}
+                  initialScheme={initialScheme}
                   isOwner={isOwner}
                   permissions={permissions}
                 />

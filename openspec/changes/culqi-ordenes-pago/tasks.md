@@ -53,8 +53,8 @@ Chain strategy: pending
 
 ## Phase 4: Checkout Integration
 
-- [ ] 4.1 In `app/[slug]/components/Checkout.tsx`: before `Culqi.open()`, if amount > 2000 or selected method is async, call `POST /api/payment/create-order` and set `Culqi.settings({ order: culqiOrderId })`
-- [ ] 4.2 In `window.culqi` callback: add `Culqi.order` branch — show payment instructions overlay (CIP code / QR / expiration countdown) instead of charge receipt; keep existing `Culqi.token` and `Culqi.error` paths unchanged
-- [ ] 4.3 Implement payment instructions overlay component: shows CIP code for PagoEfectivo, QR image for Billetera Móvil, expiration countdown timer, closeable with ability to leave and return
-- [ ] 4.4 Write component-level tests: overlay renders correct content per payment method, countdown displays and ticks, close dismisses overlay
-- [ ] 4.5 Verify all existing charge tests still pass (`pnpm test:unit`)
+- [x] 4.1 In `app/[slug]/components/Checkout.tsx`: before `Culqi.open()`, if `finalTotal > YAPE_LIMITS.max` (S/1,000 — límite Yape), call `POST /api/payment/create-order` and set `Culqi.settings({ order: culqiOrderId })`. Fallback silencioso a charge-only si falla.
+- [x] 4.2 In `window.culqi` callback: add `Culqi.order` branch before `Culqi.token` — show payment instructions overlay (CIP code / QR / expiration countdown) instead of charge receipt; keep existing `Culqi.token` and `Culqi.error` paths unchanged
+- [x] 4.3 Implement payment instructions overlay component: shows CIP code + copiar para PagoEfectivo, QR image para Billetera Móvil, redirect link para Cuotéalo, expiration countdown timer, closeable
+- [x] 4.4 Write component-level tests: overlay renders correct content per payment method, order creation triggers correctly per amount threshold, fallback on API failure
+- [x] 4.5 Verify all existing charge tests still pass (`pnpm test:unit`) — 140 tests pass

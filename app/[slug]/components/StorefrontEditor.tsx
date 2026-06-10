@@ -24,6 +24,8 @@ interface StorefrontEditorProps {
   detectedColorScheme: StorefrontColorScheme;
   /** The scheme currently active on the page (from toggle or OS default). */
   currentScheme?: StorefrontColorScheme;
+  /** Business default scheme from DB (themeMode). Used as initial scheme tab. */
+  defaultScheme?: 'light' | 'dark';
   plan?: string;
 }
 
@@ -63,6 +65,7 @@ export function StorefrontEditor({
   onPreviewSchemeChange,
   detectedColorScheme,
   currentScheme,
+  defaultScheme,
   plan,
 }: StorefrontEditorProps) {
   const [open, setOpen] = useState(false);
@@ -74,7 +77,7 @@ export function StorefrontEditor({
   // this component stays mounted. The user's last tab selection remains active,
   // and onPreviewSchemeChange keeps the page preview showing that scheme even
   // after the editor closes. No reset logic needed here.
-  const [scheme, setScheme] = useState<StorefrontColorScheme>('light');
+  const [scheme, setScheme] = useState<StorefrontColorScheme>(defaultScheme ?? 'light');
   const panelRef = useRef<HTMLDivElement>(null);
 
   const currentConfig: StorefrontColorConfig = storefrontTheme[scheme];
@@ -278,6 +281,7 @@ export function StorefrontEditor({
         business.slug,
         storefrontTheme,
         plan || 'business_pro',
+        scheme,
       );
       if (result.success) {
         setFeedback({ message: 'Guardado correctamente' });

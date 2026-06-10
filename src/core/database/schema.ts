@@ -895,6 +895,31 @@ export type PaymentOrder = typeof paymentOrders.$inferSelect;
 export type NewPaymentOrder = typeof paymentOrders.$inferInsert;
 
 // =====================================================
+// TABLE: payment_idempotency_keys
+// =====================================================
+
+export const paymentIdempotencyKeys = pgTable(
+  'payment_idempotency_keys',
+  {
+    key: text('key').primaryKey(),
+    status: text('status', { enum: ['processing', 'succeeded', 'failed'] })
+      .notNull()
+      .default('processing'),
+    responseStatus: integer('response_status'),
+    responseBody: jsonb('response_body'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    statusIdx: index('idx_payment_idempotency_keys_status').on(table.status),
+    createdAtIdx: index('idx_payment_idempotency_keys_created_at').on(table.createdAt.desc()),
+  }),
+);
+
+export type PaymentIdempotencyKey = typeof paymentIdempotencyKeys.$inferSelect;
+export type NewPaymentIdempotencyKey = typeof paymentIdempotencyKeys.$inferInsert;
+
+// =====================================================
 // TABLE: notifications
 // =====================================================
 

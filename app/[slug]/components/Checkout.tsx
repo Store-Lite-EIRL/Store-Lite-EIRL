@@ -6,8 +6,10 @@ import { createClient } from '@/lib/supabase/client';
 import { AlertSnackbar, Confetti, Icon, Receipt } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { Select } from '@/shared/components/ui/inputs/Select';
+import { getBusinessPath } from '@/shared/utils/url';
+import type { AuthTokenResponse } from '@supabase/supabase-js';
 import { toBlob } from 'html-to-image';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { CartItem } from '../storage/context/CartContext';
@@ -77,6 +79,7 @@ export default function Checkout({
   const [completedOrder, setCompletedOrder] = useState<{
     orderNumber: string;
     paymentMethod: string;
+    trackingToken?: string;
   } | null>(null);
   const [paymentInstructions, setPaymentInstructions] = useState<{
     culqiOrderId: string;
@@ -86,6 +89,8 @@ export default function Checkout({
     expirationDate: string | null;
   } | null>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
+  const paymentGuardRef = useRef(false);
+  const culqiCallbackGuardRef = useRef(false);
 
   const handleDownloadTicket = async () => {
     if (!receiptRef.current) return;
@@ -200,6 +205,7 @@ export default function Checkout({
   // ─── Google Customer Auth ───
   const params = useParams();
   const slug = params?.slug as string;
+  const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
 
   interface CustomerAuth {
@@ -258,7 +264,8 @@ export default function Checkout({
             access_token: event.data.access_token,
             refresh_token: event.data.refresh_token,
           })
-          .then(({ data }) => {
+          .then((result: AuthTokenResponse) => {
+            const { data } = result;
             if (data.session?.user?.app_metadata?.provider === 'google') {
               const user = data.session.user;
               setCustomerAuth({
@@ -271,7 +278,7 @@ export default function Checkout({
               setEmail(user.email || '');
             }
           })
-          .catch((err) => {
+          .catch((err: unknown) => {
             console.error('[Checkout] Error setting session:', err);
           });
       }
@@ -361,24 +368,131 @@ export default function Checkout({
     if (!culqiReady) return;
 
     window.culqi = async function () {
+      if (culqiCallbackGuardRef.current) return;
+
       if (window.Culqi?.order) {
-        // Async payment method (PagoEfectivo, Billetera Móvil, Cuotéalo)
+        culqiCallbackGuardRef.current = true;
         const order = window.Culqi.order;
         setIsCulqiProcessing(false);
-        setPaymentInstructions({
-          culqiOrderId: order.id,
-          paymentMethod: order.payment_method || 'pago_efectivo',
-          paymentCode: order.cip_code || null,
-          qrUrl: order.action?.qr?.image_url || null,
-          expirationDate: order.expiration_date
-            ? new Date(order.expiration_date * 1000).toISOString()
-            : null,
-        });
-        if (window.Culqi?.close) window.Culqi.close();
+
+        if (order.status === 'paid') {
+          // 💳 Card payment completed through the order — record the payment
+          const paymentMethod = 'Tarjeta';
+          const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
+          setIsPaymentProcessing(true);
+          if (window.Culqi?.close) window.Culqi.close();
+
+          try {
+            const idempotencyKey = `charge-${order.id}`;
+            const response = await fetch('/api/payment/charge', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Idempotency-Key': idempotencyKey,
+              },
+              body: JSON.stringify({
+                culqiOrderId: order.id,
+                amount: order.amount || Math.round(finalTotal * 100),
+                currency: 'PEN',
+                email,
+                phone: shippingInfo.phone,
+                businessId,
+                productId: primaryProduct.id,
+                ...(customerAuth
+                  ? {
+                      customerAuth: {
+                        provider: customerAuth.provider,
+                        authId: customerAuth.authId,
+                        name: customerAuth.name,
+                        email: customerAuth.email,
+                        avatarUrl: customerAuth.avatarUrl,
+                      },
+                    }
+                  : {}),
+                metadata: {
+                  orderNumber,
+                  dni: shippingInfo.dni,
+                  cartItems: cartItems.map((item) => ({
+                    id: item.id,
+                    name: item.name,
+                    quantity: item.quantity,
+                    price: item.secondPrice || item.price,
+                  })),
+                  shippingInfo: {
+                    ...shippingInfo,
+                    address:
+                      shippingInfo.courier === 'recojo' ? businessAddress : shippingInfo.address,
+                    district:
+                      shippingInfo.courier === 'recojo' ? businessCity : shippingInfo.district,
+                    dni: shippingInfo.dni,
+                  },
+                },
+              }),
+            });
+
+            const paymentResult = await response.json();
+
+            if (!response.ok || !paymentResult?.success) {
+              throw new Error(
+                paymentResult?.details ||
+                  paymentResult?.error ||
+                  'No se pudo procesar el pago con tarjeta.',
+              );
+            }
+
+            setCompletedOrder({
+              orderNumber,
+              paymentMethod,
+              trackingToken: paymentResult?.payment?.trackingToken,
+            });
+            setShowReceipt(true);
+            setShowConfetti(true);
+          } catch (error) {
+            console.error('Order card payment failed:', error);
+            const message =
+              error instanceof Error ? error.message : 'Hubo un problema al procesar tu pago.';
+
+            setAlert({
+              open: true,
+              description: message,
+              color: 'error',
+              icon: 'error',
+            });
+            paymentGuardRef.current = false;
+            culqiCallbackGuardRef.current = false;
+            setLoading(false);
+            setIsPaymentProcessing(false);
+            if (window.Culqi?.close) window.Culqi.close();
+            return;
+          }
+
+          setIsPaymentProcessing(false);
+          if (window.Culqi?.close) window.Culqi.close();
+
+          setAlert({
+            open: true,
+            description: '¡Pago procesado exitosamente!',
+            color: 'success',
+            icon: 'check_circle',
+          });
+        } else {
+          // Async payment method (PagoEfectivo, Billetera Móvil, Cuotéalo)
+          setPaymentInstructions({
+            culqiOrderId: order.id,
+            paymentMethod: order.payment_method || 'pago_efectivo',
+            paymentCode: order.cip_code || null,
+            qrUrl: order.action?.qr?.image_url || null,
+            expirationDate: order.expiration_date
+              ? new Date(order.expiration_date * 1000).toISOString()
+              : null,
+          });
+          if (window.Culqi?.close) window.Culqi.close();
+        }
         return;
       }
 
       if (window.Culqi?.token) {
+        culqiCallbackGuardRef.current = true;
         const token = window.Culqi.token.id;
         const tokenType = window.Culqi.token.type || 'card';
 
@@ -387,11 +501,16 @@ export default function Checkout({
 
         // Mostrar indicador de procesamiento mientras se verifica el pago
         setIsPaymentProcessing(true);
+        if (window.Culqi?.close) window.Culqi.close();
 
         try {
+          const idempotencyKey = `charge-${token}`;
           const response = await fetch('/api/payment/charge', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Idempotency-Key': idempotencyKey,
+            },
             body: JSON.stringify({
               token,
               amount: Math.round(finalTotal * 100),
@@ -453,6 +572,16 @@ export default function Checkout({
           if (!paymentResult?.charge?.id) {
             throw new Error('No se recibió confirmación del pago');
           }
+
+          setCompletedOrder({
+            orderNumber,
+            paymentMethod,
+            trackingToken: paymentResult?.payment?.trackingToken,
+          });
+          setShowReceipt(true);
+          setShowConfetti(true);
+
+          if (window.Culqi && window.Culqi.close) window.Culqi.close();
         } catch (error) {
           console.error('API call failed:', error);
           const message =
@@ -464,15 +593,12 @@ export default function Checkout({
             color: 'error',
             icon: 'error',
           });
+          paymentGuardRef.current = false;
+          culqiCallbackGuardRef.current = false;
           setLoading(false);
           setIsPaymentProcessing(false);
           return;
         }
-        setCompletedOrder({ orderNumber, paymentMethod });
-        setShowReceipt(true);
-        setShowConfetti(true);
-
-        if (window.Culqi && window.Culqi.close) window.Culqi.close();
 
         setAlert({
           open: true,
@@ -493,7 +619,9 @@ export default function Checkout({
           color: 'error',
           icon: 'error',
         });
+        culqiCallbackGuardRef.current = false;
       }
+      paymentGuardRef.current = false;
       setLoading(false);
       setIsCulqiProcessing(false);
       setIsPaymentProcessing(false);
@@ -621,6 +749,9 @@ export default function Checkout({
   };
 
   const handlePayment = async () => {
+    // ── GUARD: evita doble click incluso antes de React render ──
+    if (paymentGuardRef.current) return;
+
     if (shippingInfo.dni.length !== 8) {
       setAlert({
         open: true,
@@ -651,7 +782,10 @@ export default function Checkout({
       return;
     }
 
+    paymentGuardRef.current = true;
+    culqiCallbackGuardRef.current = false;
     setIsCulqiProcessing(true);
+    const checkoutAttemptId = crypto.randomUUID();
 
     try {
       const Culqi = window.Culqi;
@@ -665,7 +799,10 @@ export default function Checkout({
         try {
           const orderResponse = await fetch('/api/payment/create-order', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Idempotency-Key': `order-${checkoutAttemptId}`,
+            },
             body: JSON.stringify({
               amount: Math.round(finalTotal * 100),
               email: email || 'cliente@store-lite.com',
@@ -683,14 +820,17 @@ export default function Checkout({
         }
       }
 
+      // amount y order son MUTUAMENTE EXCLUYENTES en Culqi Checkout v4
+      // Si pasamos order (órdenes de pago async), NO podemos pasar amount
       const settings: Record<string, unknown> = {
         title: businessName,
         currency: 'PEN',
         description: `Compra en linea - ${cartItems.length} productos`,
-        amount: Math.round(finalTotal * 100),
       };
       if (orderId) {
         settings.order = orderId;
+      } else {
+        settings.amount = Math.round(finalTotal * 100);
       }
       Culqi.settings(settings);
 
@@ -719,6 +859,7 @@ export default function Checkout({
         color: 'error',
         icon: 'sync_problem',
       });
+      paymentGuardRef.current = false;
       setIsCulqiProcessing(false);
     }
   };
@@ -928,8 +1069,22 @@ export default function Checkout({
                   )}
                 </Button>
 
+                {completedOrder?.trackingToken && (
+                  <Button
+                    variant="outlined"
+                    onClick={() => {
+                      setShowReceipt(false);
+                      onSuccess();
+                      router.push(getBusinessPath(slug, `/order/${completedOrder.trackingToken}`));
+                    }}
+                    style={{ width: '100%', borderRadius: '12px' }}
+                  >
+                    <Icon size={20}>search</Icon>
+                    Ver mi Pedido
+                  </Button>
+                )}
                 <Button
-                  variant="outlined"
+                  variant="text"
                   onClick={() => {
                     setShowReceipt(false);
                     onSuccess();
@@ -1333,7 +1488,10 @@ export default function Checkout({
   // STANDARD CHECKOUT FLOW
   const isLoading = isCulqiProcessing || isPaymentProcessing;
   const loadingMessage = isPaymentProcessing
-    ? { title: 'Procesando pago', subtitle: 'Verificando con el banco...' }
+    ? {
+        title: 'Procesando pago',
+        subtitle: 'No cierres esta ventana ni vuelvas a pagar. Estamos confirmando la transaccion.',
+      }
     : { title: 'Abriendo pasarela de pagos', subtitle: 'Serás redirigido a Culqi de forma segura' };
 
   return createPortal(
@@ -1388,7 +1546,7 @@ export default function Checkout({
         <div className={styles.header}>
           <div className={styles.headerTitleGroup}>
             {step === 2 && (
-              <button className={styles.backBtn} onClick={() => setStep(1)}>
+              <button className={styles.backBtn} onClick={() => setStep(1)} disabled={isLoading}>
                 <Icon>arrow_back</Icon>
               </button>
             )}
@@ -1396,7 +1554,7 @@ export default function Checkout({
               {step === 1 ? 'Paso 1: ¿Cómo lo recibes?' : 'Paso 2: Confirmar Compra'}
             </h2>
           </div>
-          <button className={styles.closeBtn} onClick={onCancel}>
+          <button className={styles.closeBtn} onClick={onCancel} disabled={isLoading}>
             <Icon>close</Icon>
           </button>
         </div>

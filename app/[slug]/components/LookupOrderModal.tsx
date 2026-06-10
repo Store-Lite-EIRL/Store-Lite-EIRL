@@ -195,15 +195,24 @@ export function LookupOrderModal({
       const data = await res.json();
 
       if (data.success && data.token) {
+        console.log('[LookupOrderModal] API response:', { token: data.token, slug: businessSlug });
+        console.log(
+          '[LookupOrderModal] redirect URL:',
+          getBusinessPath(businessSlug, `/order/${data.token}`),
+        );
         const authTokenData = {
           token: data.token,
           dni: dni,
           expiresAt: Date.now() + SESSION_TTL,
         };
         localStorage.setItem(`order_session_${data.token}`, JSON.stringify(authTokenData));
+        console.log('[LookupOrderModal] localStorage set: order_session_' + data.token);
 
-        router.push(getBusinessPath(businessSlug, `/order/${data.token}`));
+        const targetUrl = getBusinessPath(businessSlug, `/order/${data.token}`);
+        console.log('[LookupOrderModal] navigating to:', targetUrl);
         onClose();
+        // Force full navigation to bypass client-side routing issues
+        window.location.href = targetUrl;
       } else {
         setError(data.error || 'Orden no encontrada. Verifica tus datos.');
       }

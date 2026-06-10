@@ -1,12 +1,10 @@
-import { env } from '@/config/env';
 import { resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { productCategories, products } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { getMemberPermissions } from '@/lib/permissions/checkPermission';
-import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@/lib/supabase/server';
 import { eq } from 'drizzle-orm';
-import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import AppLayout from '../../src/shared/components/layout/AppLayout';
 import { BusinessProviders } from './components/BusinessProviders';
@@ -27,15 +25,7 @@ export default async function BusinessLayout({ children, modal, params }: Busine
     return notFound();
   }
 
-  const cookieStore = await cookies();
-  const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
-    cookies: {
-      get(name: string) {
-        return cookieStore.get(name)?.value;
-      },
-    },
-  });
-
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

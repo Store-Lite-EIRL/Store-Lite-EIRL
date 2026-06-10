@@ -7,6 +7,7 @@
 
 import { db } from '@/core/database/client';
 import { businessSettings, paymentOrders } from '@/core/database/schema';
+import { completeIdempotencyKey, reserveIdempotencyKey } from '@/core/payments/idempotency';
 import { decrypt } from '@/utils/crypto';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
@@ -33,6 +34,9 @@ interface CulqiOrderResponse {
 
 export async function POST(request: Request) {
   try {
+    const idempotencyKey = request.headers.get('Idempotency-Key');
+    let reservedIdempotencyKey: string | null = null;
+
     const rawBody = await request.json();
 
     // 0. Validate Data using Zod
@@ -48,6 +52,15 @@ export async function POST(request: Request) {
 
     const { amount, currency, email, phone, businessId, productId, description } =
       validationResult.data;
+
+    const idempotencyReservation = await reserveIdempotencyKey(idempotencyKey);
+    if (
+      idempotencyReservation?.type === 'replay' ||
+      idempotencyReservation?.type === 'processing'
+    ) {
+      return idempotencyReservation.response;
+    }
+    reservedIdempotencyKey = idempotencyReservation?.key ?? null;
 
     // 1. Obtener y descifrar la Secret Key
     const settings = await db.query.businessSettings.findFirst({
@@ -124,20 +137,21 @@ export async function POST(request: Request) {
     } catch (err) {
       clearTimeout(timeout);
       const isAbort = err instanceof Error && err.name === 'AbortError';
-      return NextResponse.json(
-        { error: isAbort ? 'Timeout al procesar la orden' : 'Error de conexión con la pasarela' },
-        { status: isAbort ? 504 : 502 },
-      );
+      const responseStatus = isAbort ? 504 : 502;
+      const responseBody = {
+        error: isAbort ? 'Timeout al procesar la orden' : 'Error de conexión con la pasarela',
+      };
+      await completeIdempotencyKey(reservedIdempotencyKey, responseBody, responseStatus);
+      return NextResponse.json(responseBody, { status: responseStatus });
     }
 
     if (!culqiResponse.ok) {
-      return NextResponse.json(
-        {
-          error: 'Error en Culqi',
-          details: culqiData?.user_message || culqiData?.merchant_message || 'Error desconocido',
-        },
-        { status: culqiResponse.status },
-      );
+      const responseBody = {
+        error: 'Error en Culqi',
+        details: culqiData?.user_message || culqiData?.merchant_message || 'Error desconocido',
+      };
+      await completeIdempotencyKey(reservedIdempotencyKey, responseBody, culqiResponse.status);
+      return NextResponse.json(responseBody, { status: culqiResponse.status });
     }
 
     // 4. Parse payment method from Culqi response
@@ -173,13 +187,15 @@ export async function POST(request: Request) {
       .returning();
 
     // 7. Return payment instructions
-    return NextResponse.json({
+    const responseBody = {
       success: true,
       culqiOrderId: order.culqiOrderId,
       paymentCode: order.paymentCode,
       qrUrl: order.qrUrl,
       expirationDate: order.expirationDate.toISOString(),
-    });
+    };
+    await completeIdempotencyKey(reservedIdempotencyKey, responseBody, 200);
+    return NextResponse.json(responseBody);
   } catch (error) {
     console.error('[payment/create-order] Critical Error:', error);
     return NextResponse.json({ error: 'Error interno procesando la orden' }, { status: 500 });

@@ -71,6 +71,12 @@ export function getBusinessPath(slug: string, path = ''): string {
  * (ej: en mi-tienda.localhost:3000, el hostname contiene 'mi-tienda' como subdominio).
  */
 function isSubdomainModeForSlug(slug: string): boolean {
+  // ⚠️ Solo activar modo subdominio si FEATURE_SUBDOMAIN_REWRITE está habilitado.
+  // Sin un proxy/rewrite que agregue el slug al path, las URLs sin slug
+  // (ej: /order/{token}) no matchean ninguna ruta de Next.js.
+  // Ver: https://nextjs.org/docs/app/api-reference/next-config-js/rewrites
+  if (!env.featureSubdomainRewrite) return false;
+
   // Client-side: el hostname revela si ya estamos en un subdominio que coincide
   if (typeof window !== 'undefined') {
     const hostSlug = extractTenantSlugFromHost(window.location.hostname);
