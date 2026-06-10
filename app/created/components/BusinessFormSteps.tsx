@@ -441,6 +441,7 @@ export const Step1General = ({
         variant="outlined"
         style={{ width: '100%' }}
         value={formData.commercialName}
+        maxLength={100}
         disabled={isRucVerified && formData.personType === 'juridica'}
         onInput={(e: React.FormEvent<HTMLElement>) => {
           onChange('commercialName', getFieldValue(e));
