@@ -213,7 +213,6 @@ export async function POST(request: Request) {
         buyerDocumentNumber: buyerDocumentNumber || null,
         buyerAddress: buyerAddress || null,
         ticketSeries: 'B001',
-        ticketCorrelative: undefined as any,
         ticketIssuedAt: new Date(),
         planStartDate,
         planEndDate,

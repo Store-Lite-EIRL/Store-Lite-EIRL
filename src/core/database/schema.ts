@@ -42,7 +42,14 @@ export const paymentStatusEnum = pgEnum('payment_status', [
   'refund_requested',
   'refunded',
 ]);
-export const paymentMethodEnum = pgEnum('payment_method', ['card', 'yape', 'plin']);
+export const paymentMethodEnum = pgEnum('payment_method', [
+  'card',
+  'yape',
+  'plin',
+  'pago_efectivo',
+  'billetera_movil',
+  'cuotealo',
+]);
 export const subscriptionPlanEnum = pgEnum('subscription_plan', [
   'basico',
   'emprendedor',
@@ -549,7 +556,9 @@ export const payments = pgTable(
       .references(() => profiles.id, { onDelete: 'restrict' }),
     amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
     currency: text('currency').notNull().default('PEN'),
-    paymentMethod: text('payment_method', { enum: ['card', 'yape', 'plin'] }).notNull(),
+    paymentMethod: text('payment_method', {
+      enum: ['card', 'yape', 'plin', 'pago_efectivo', 'billetera_movil', 'cuotealo'],
+    }).notNull(),
     culqiChargeId: text('culqi_charge_id').unique(),
     culqiReferenceCode: text('culqi_reference_code'),
     culqiTrackingId: text('culqi_tracking_id'),
@@ -812,10 +821,9 @@ export const planPayments = pgTable(
 
     // Comprobante SUNAT — serie B001 + correlativo secuencial
     ticketSeries: text('ticket_series').notNull().default('B001'),
-    // ticketCorrelative: integer('ticket_correlative')
-    //   .notNull()
-    //   .default(sql`nextval('seq_plan_payment_b001')`),
-    ticketCorrelative: integer('ticket_correlative').notNull(),
+    ticketCorrelative: integer('ticket_correlative')
+      .notNull()
+      .default(sql`nextval('seq_plan_payment_b001')`),
 
     // ticket_number se computa en query: ticketSeries || '-' || LPAD(ticketCorrelative, 8, '0')
     ticketUrl: text('ticket_url'),
@@ -841,6 +849,75 @@ export const planPayments = pgTable(
     ),
   }),
 );
+
+// =====================================================
+// PAYMENT ORDERS ENUM
+// =====================================================
+
+export const orderStatusEnum = pgEnum('order_status', ['pending', 'paid', 'expired', 'cancelled']);
+export type OrderStatus = (typeof orderStatusEnum.enumValues)[number];
+
+// =====================================================
+// TABLE: payment_orders
+// =====================================================
+
+export const paymentOrders = pgTable(
+  'payment_orders',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    businessId: uuid('business_id')
+      .notNull()
+      .references(() => businesses.id, { onDelete: 'restrict' }),
+    culqiOrderId: text('culqi_order_id').notNull().unique(),
+    amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+    currency: text('currency').notNull().default('PEN'),
+    status: orderStatusEnum('status').notNull().default('pending'),
+    paymentMethod: text('payment_method', {
+      enum: ['pago_efectivo', 'billetera_movil', 'cuotealo'],
+    }).notNull(),
+    paymentCode: text('payment_code'),
+    qrUrl: text('qr_url'),
+    buyerEmail: text('buyer_email').notNull(),
+    buyerPhone: text('buyer_phone'),
+    expirationDate: timestamp('expiration_date', { withTimezone: true }).notNull(),
+    metadata: jsonb('metadata').default({}),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    culqiOrderIdIdx: index('idx_payment_orders_culqi_order_id').on(table.culqiOrderId),
+    businessIdIdx: index('idx_payment_orders_business_id').on(table.businessId),
+    statusIdx: index('idx_payment_orders_status').on(table.status),
+  }),
+);
+
+export type PaymentOrder = typeof paymentOrders.$inferSelect;
+export type NewPaymentOrder = typeof paymentOrders.$inferInsert;
+
+// =====================================================
+// TABLE: payment_idempotency_keys
+// =====================================================
+
+export const paymentIdempotencyKeys = pgTable(
+  'payment_idempotency_keys',
+  {
+    key: text('key').primaryKey(),
+    status: text('status', { enum: ['processing', 'succeeded', 'failed'] })
+      .notNull()
+      .default('processing'),
+    responseStatus: integer('response_status'),
+    responseBody: jsonb('response_body'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    statusIdx: index('idx_payment_idempotency_keys_status').on(table.status),
+    createdAtIdx: index('idx_payment_idempotency_keys_created_at').on(table.createdAt.desc()),
+  }),
+);
+
+export type PaymentIdempotencyKey = typeof paymentIdempotencyKeys.$inferSelect;
+export type NewPaymentIdempotencyKey = typeof paymentIdempotencyKeys.$inferInsert;
 
 // =====================================================
 // TABLE: notifications
@@ -908,6 +985,7 @@ export const businessesRelations = relations(businesses, ({ one, many }) => ({
   products: many(products),
   chatSessions: many(chatSessions),
   subscriptions: many(businessSubscriptions),
+  paymentOrders: many(paymentOrders),
   invitations: many(businessInvitations),
   teamMembers: many(businessTeamMembers),
   teamRoles: many(businessTeamRoles),
@@ -1052,6 +1130,13 @@ export const businessTeamRolesRelations = relations(businessTeamRoles, ({ one })
 export const planPaymentsRelations = relations(planPayments, ({ one }) => ({
   business: one(businesses, {
     fields: [planPayments.businessId],
+    references: [businesses.id],
+  }),
+}));
+
+export const paymentOrdersRelations = relations(paymentOrders, ({ one }) => ({
+  business: one(businesses, {
+    fields: [paymentOrders.businessId],
     references: [businesses.id],
   }),
 }));

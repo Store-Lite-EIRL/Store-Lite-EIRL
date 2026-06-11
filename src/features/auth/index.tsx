@@ -74,73 +74,101 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const fetchProfile = async (session: AuthSession) => {
       const requestId = ++profileRequestIdRef.current;
+      const MAX_RETRIES = 3;
       authDebug('fetchProfile:start', { requestId, userId: session.user.id });
 
-      try {
-        // CRITICAL: Sync session before RLS-sensitive queries
-        // Without this, the Supabase client may not have the access token updated yet,
-        // causing RLS to fail with an empty error object
-        await supabase.auth.getSession();
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          // CRITICAL: Sync session before RLS-sensitive queries
+          // Without this, the Supabase client may not have the access token updated yet,
+          // causing RLS to fail with an empty error object
+          await supabase.auth.getSession();
 
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .maybeSingle();
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
 
-        if (!isMounted || requestId !== profileRequestIdRef.current) {
-          authDebug('fetchProfile:stale', {
-            requestId,
-            currentRequestId: profileRequestIdRef.current,
-          });
-          return;
-        }
-
-        if (error) {
-          // PGRST116 is 'no rows returned', which is expected if a user hasn't created a profile yet
-          if (error.code === 'PGRST116') {
-            authDebug('fetchProfile:no-profile-found');
-            setStableAuthState(session, { ...session.user, profile: undefined } as AuthUser);
-            return;
-          }
-
-          // Ignore abort-like errors caused by navigation/unmount races
-          if (isAbortLikeError(error)) {
-            authDebug('fetchProfile:abort-like-error', {
+          if (!isMounted || requestId !== profileRequestIdRef.current) {
+            authDebug('fetchProfile:stale', {
               requestId,
-              code: (error as any).code,
-              message: (error as any).message,
+              currentRequestId: profileRequestIdRef.current,
             });
+            return;
+          }
+
+          if (error) {
+            // PGRST116 is 'no rows returned', which is expected if a user hasn't created a profile yet
+            if (error.code === 'PGRST116') {
+              authDebug('fetchProfile:no-profile-found');
+              setStableAuthState(session, { ...session.user, profile: undefined } as AuthUser);
+              return;
+            }
+
+            // Ignore abort-like errors caused by navigation/unmount races
+            if (isAbortLikeError(error)) {
+              authDebug('fetchProfile:abort-like-error', {
+                requestId,
+                code: (error as any).code,
+                message: (error as any).message,
+              });
+              setStableAuthState(session, { ...session.user, profile: undefined } as AuthUser);
+              return;
+            }
+
+            // Transient error (RLS race, session not ready) — retry with backoff
+            if (attempt < MAX_RETRIES) {
+              const delay = Math.min(1000 * Math.pow(2, attempt), 4000);
+              authDebug('fetchProfile:retry', { requestId, attempt, delay });
+              await new Promise((resolve) => setTimeout(resolve, delay));
+              continue;
+            }
+
+            // Exhausted retries — log warning and proceed with session-only user
+            const errorDetails =
+              typeof error === 'object' && error !== null
+                ? JSON.stringify(error, Object.getOwnPropertyNames(error))
+                : String(error);
+            console.warn(
+              'Profile fetch failed after retries (user will use session-only auth):',
+              errorDetails,
+            );
             setStableAuthState(session, { ...session.user, profile: undefined } as AuthUser);
             return;
           }
 
-          // More detailed error logging to identify RLS or connection issues
-          console.error('Error fetching profile from Supabase:', error);
+          authDebug('fetchProfile:success', { requestId, hasProfile: Boolean(profile) });
+          setStableAuthState(session, {
+            ...session.user,
+            profile: profile || undefined,
+          } as AuthUser);
+          return;
+        } catch (error) {
+          if (!isMounted || requestId !== profileRequestIdRef.current) {
+            authDebug('fetchProfile:catch-stale', {
+              requestId,
+              currentRequestId: profileRequestIdRef.current,
+            });
+            return;
+          }
+          if (isAbortLikeError(error)) {
+            authDebug('fetchProfile:catch-abort-like', { requestId });
+            setStableAuthState(session, { ...session.user, profile: undefined } as AuthUser);
+            return;
+          }
 
-          // Set user even if profile is missing (just basic session user)
+          // Unexpected error — retry with backoff
+          if (attempt < MAX_RETRIES) {
+            const delay = Math.min(1000 * Math.pow(2, attempt), 4000);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+          }
+
+          console.error('Unexpected error in profile fetch after retries:', error);
           setStableAuthState(session, { ...session.user, profile: undefined } as AuthUser);
           return;
         }
-
-        authDebug('fetchProfile:success', { requestId, hasProfile: Boolean(profile) });
-        setStableAuthState(session, { ...session.user, profile: profile || undefined } as AuthUser);
-      } catch (error) {
-        if (!isMounted || requestId !== profileRequestIdRef.current) {
-          authDebug('fetchProfile:catch-stale', {
-            requestId,
-            currentRequestId: profileRequestIdRef.current,
-          });
-          return;
-        }
-        if (isAbortLikeError(error)) {
-          authDebug('fetchProfile:catch-abort-like', { requestId });
-          setStableAuthState(session, { ...session.user, profile: undefined } as AuthUser);
-          return;
-        }
-
-        console.error('Unexpected error in profile fetch:', error);
-        setStableAuthState(session, { ...session.user, profile: undefined } as AuthUser);
       }
     };
 

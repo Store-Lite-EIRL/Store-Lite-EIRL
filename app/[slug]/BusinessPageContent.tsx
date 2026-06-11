@@ -24,6 +24,7 @@ import { useRouter } from 'next/navigation';
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useState,
   type CSSProperties,
   type Dispatch,
@@ -71,6 +72,8 @@ interface BusinessPageContentProps {
   storefrontLayout: StorefrontLayout;
   storefrontTheme?: StorefrontTheme;
   previewCardTheme?: StorefrontTheme;
+  /** Default color scheme for the storefront from business settings */
+  defaultScheme?: 'light' | 'dark';
   // Props del negocio para el checkout
   businessName?: string;
   businessRuc?: string;
@@ -112,6 +115,7 @@ export default function BusinessPageContent({
   storefrontLayout,
   storefrontTheme,
   previewCardTheme,
+  defaultScheme,
 }: BusinessPageContentProps) {
   const mappedProducts: StorageProduct[] = products.map((p) => ({
     id: p.id,
@@ -156,6 +160,7 @@ export default function BusinessPageContent({
         storefrontLayout={storefrontLayout}
         storefrontTheme={storefrontTheme}
         previewCardTheme={previewCardTheme}
+        defaultScheme={defaultScheme}
       />
     </StorageProvider>
   );
@@ -175,6 +180,7 @@ function BusinessPageContentUI({
   storefrontLayout,
   storefrontTheme,
   previewCardTheme,
+  defaultScheme,
 }: BusinessPageContentProps) {
   // Pagos habilitados para compra automática solo si plan+credenciales están listos.
   const paymentsEnabled = hasPaymentGateway && isPaymentConfigured;
@@ -383,7 +389,7 @@ function BusinessPageContentUI({
   const activeScheme = resolveActiveScheme(
     viewerTheme,
     previewScheme,
-    effectiveTheme as StorefrontColorScheme,
+    defaultScheme ?? (effectiveTheme as StorefrontColorScheme),
   );
   // Compute background styles before themeStyles so we can detect patterns
   // and strip them from ::before — only <html> should render them.
@@ -470,7 +476,9 @@ function BusinessPageContentUI({
 
   // Sync theme CSS vars to document root so parent elements (layout, main-area)
   // can see --storefront-bg, --storefront-bg-image, and all MD colors
-  useEffect(() => {
+  // useLayoutEffect ensures vars are applied synchronously BEFORE paint,
+  // preventing the flicker from cleanup → re-apply of CSS custom properties.
+  useLayoutEffect(() => {
     const root = document.documentElement;
     const entries = Object.entries(themeStyles) as [string, string][];
 
@@ -562,11 +570,38 @@ function BusinessPageContentUI({
     setViewerTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   }, []);
 
+  // Sync viewer theme to global app-theme so all pages reflect the change
+  useEffect(() => {
+    if (viewerTheme === null) return;
+    setTheme(viewerTheme);
+  }, [viewerTheme, setTheme]);
+
+  // Read stored preview scheme from localStorage on mount (staff only)
+  // Mirrors the same localStorage pattern as viewerTheme above.
+  useEffect(() => {
+    if (!isStaff) return;
+    try {
+      const stored = localStorage.getItem('storefront-preview-scheme');
+      if (stored === 'light' || stored === 'dark') {
+        setPreviewScheme(stored);
+      }
+    } catch {
+      // Safari private mode — no-op
+    }
+  }, []);
+
   const handlePreviewSchemeChange = useCallback(
     (scheme: StorefrontColorScheme | undefined) => {
       setPreviewScheme(scheme);
       if (scheme) {
+        setViewerTheme(scheme);
         setTheme(scheme); // 'light' | 'dark' — same values
+        try {
+          localStorage.setItem('storefront-preview-scheme', scheme);
+          localStorage.setItem('storefront-theme', scheme);
+        } catch {
+          // Safari private mode — no-op
+        }
       }
     },
     [setPreviewScheme, setTheme],
@@ -649,6 +684,7 @@ function BusinessPageContentUI({
             onPreviewSchemeChange={handlePreviewSchemeChange}
             detectedColorScheme={effectiveTheme as StorefrontColorScheme}
             currentScheme={previewScheme}
+            defaultScheme={defaultScheme}
           />
         </>
       )}

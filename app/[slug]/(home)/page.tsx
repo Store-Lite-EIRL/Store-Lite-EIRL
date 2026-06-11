@@ -1,6 +1,5 @@
 'use server';
 
-import { env } from '@/config/env';
 import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { businessSettings, productCategories } from '@/core/database/schema';
@@ -11,11 +10,10 @@ import {
   hasCustomStorefrontTheme,
 } from '@/core/storefront';
 import { getMemberPermissions } from '@/lib/permissions';
+import { createClient } from '@/lib/supabase/server';
 import { getCanonicalBusinessUrl } from '@/shared/utils/url';
-import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
-import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import BusinessPageContent from '../BusinessPageContent';
 
@@ -100,19 +98,11 @@ export default async function BusinessPage({ params }: Props) {
     where: eq(businessSettings.businessId, business.id),
     columns: {
       preferences: true,
+      themeMode: true,
     },
   });
 
-  const cookieStore = await cookies();
-
-  const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
-    cookies: {
-      get(name: string) {
-        return cookieStore.get(name)?.value;
-      },
-    },
-  });
-
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -199,6 +189,7 @@ export default async function BusinessPage({ params }: Props) {
         businessName={business.name}
         businessRuc={business.taxId ?? undefined}
         businessAddress={business.address ?? undefined}
+        defaultScheme={settings?.themeMode ?? 'light'}
       />
     </>
   );

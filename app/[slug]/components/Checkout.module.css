@@ -505,6 +505,16 @@
   margin-top: 0.4rem;
 }
 
+.summaryShippingLine {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+  padding: 6px 0 2px;
+  border-top: 1px dashed var(--md-sys-color-outline-variant);
+  margin-top: 4px;
+}
+
 .methodTitle {
   font-weight: 700;
   font-size: 0.9rem;

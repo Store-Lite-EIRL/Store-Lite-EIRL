@@ -1227,12 +1227,15 @@
 .keyRow {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .keyLabelGroup {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
 .keyValueGroup {
@@ -1245,4 +1248,6 @@
   font-family: 'Roboto Mono', monospace;
   font-size: 14px;
   color: var(--md-sys-color-on-surface);
+  word-break: break-all;
+  overflow-wrap: break-word;
 }

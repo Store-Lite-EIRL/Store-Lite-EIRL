@@ -61,7 +61,7 @@ interface OrderItem {
   amount: string;
   shippingCost: string;
   currency: string;
-  paymentMethod: 'card' | 'yape' | 'plin';
+  paymentMethod: 'card' | 'yape' | 'plin' | 'pago_efectivo' | 'billetera_movil' | 'cuotealo';
   status:
     | 'pending'
     | 'paid'
@@ -1392,55 +1392,6 @@ export function RecentOrders({
 
   return (
     <article className={styles.card}>
-      {confirmAction.open && (
-        <div
-          className={styles.confirmOverlay}
-          onClick={() =>
-            setConfirmAction({
-              open: false,
-              action: null,
-              title: undefined,
-              description: undefined,
-            })
-          }
-        >
-          <div className={styles.confirmContent} onClick={(e) => e.stopPropagation()}>
-            <h3 className={styles.confirmTitle}>{confirmAction.title || '¿Estás seguro?'}</h3>
-            <p className={styles.confirmDesc}>
-              {confirmAction.description || 'Esta acción no se puede deshacer.'}
-            </p>
-            <div className={styles.confirmActions}>
-              <button
-                className={styles.confirmBtnText}
-                onClick={() =>
-                  setConfirmAction({
-                    open: false,
-                    action: null,
-                    title: undefined,
-                    description: undefined,
-                  })
-                }
-              >
-                Cancelar
-              </button>
-              <button
-                className={styles.confirmBtnFilled}
-                onClick={() => {
-                  confirmAction.action?.();
-                  setConfirmAction({
-                    open: false,
-                    action: null,
-                    title: undefined,
-                    description: undefined,
-                  });
-                }}
-              >
-                Confirmar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       <div className={styles.filtersHeader}>
         <div className={`${styles.searchWrapper} ${styles.searchWithButton}`}>
           <div className={styles.searchContainer}>
@@ -1647,6 +1598,55 @@ export function RecentOrders({
                 Cerrar
               </Button>
             </footer>
+            {confirmAction.open && (
+              <div
+                className={styles.confirmOverlay}
+                onClick={() =>
+                  setConfirmAction({
+                    open: false,
+                    action: null,
+                    title: undefined,
+                    description: undefined,
+                  })
+                }
+              >
+                <div className={styles.confirmContent} onClick={(e) => e.stopPropagation()}>
+                  <h3 className={styles.confirmTitle}>{confirmAction.title || '¿Estás seguro?'}</h3>
+                  <p className={styles.confirmDesc}>
+                    {confirmAction.description || 'Esta acción no se puede deshacer.'}
+                  </p>
+                  <div className={styles.confirmActions}>
+                    <button
+                      className={styles.confirmBtnText}
+                      onClick={() =>
+                        setConfirmAction({
+                          open: false,
+                          action: null,
+                          title: undefined,
+                          description: undefined,
+                        })
+                      }
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      className={styles.confirmBtnFilled}
+                      onClick={() => {
+                        confirmAction.action?.();
+                        setConfirmAction({
+                          open: false,
+                          action: null,
+                          title: undefined,
+                          description: undefined,
+                        });
+                      }}
+                    >
+                      Confirmar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

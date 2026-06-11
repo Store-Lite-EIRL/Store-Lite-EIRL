@@ -66,13 +66,14 @@ export async function updateProxy(request: NextRequest) {
     const isListPage = pathname.startsWith('/list-business');
     const isPricingPage = pathname.startsWith('/pricing');
 
-    // Identify public storefront paths like /[slug] or /[slug]/product/[id]
+    // Identify public storefront paths like /[slug], /[slug]/product/[id] or /[slug]/order/[token]
     const pathSegments = pathname.split('/').filter(Boolean);
     const isStorefrontBase =
       pathSegments.length === 1 &&
       !['auth', 'created', 'list-business', 'pricing'].includes(pathSegments[0]);
     const isProductDetail = pathSegments.length === 3 && pathSegments[1] === 'product';
-    const isPublicStorefront = isStorefrontBase || isProductDetail;
+    const isOrderTracking = pathSegments.length === 3 && pathSegments[1] === 'order';
+    const isPublicStorefront = isStorefrontBase || isProductDetail || isOrderTracking;
 
     // Las API routes son server-side y manejan su propia autorización.
     // El proxy no debe interceptarlas — permite que requests del storefront

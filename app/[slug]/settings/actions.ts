@@ -276,6 +276,7 @@ export async function updateStorefrontTheme(
   slug: string,
   storefrontTheme: StorefrontTheme,
   plan: string,
+  themeMode?: 'light' | 'dark',
 ): Promise<StorefrontThemeActionState> {
   try {
     await requireAccessOnId(businessId, 'storefront.edit');
@@ -311,12 +312,14 @@ export async function updateStorefrontTheme(
         .update(businessSettings)
         .set({
           preferences: nextPreferences,
+          ...(themeMode && { themeMode }),
           updatedAt: new Date(),
         })
         .where(eq(businessSettings.businessId, businessId));
     } else {
       await db.insert(businessSettings).values({
         businessId,
+        themeMode: themeMode ?? 'light',
         contrastLevel: 'standard',
         preferences: mergeStorefrontThemeIntoPreferences({}, normalizedTheme),
       });

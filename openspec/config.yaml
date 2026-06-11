@@ -2,58 +2,67 @@
 schema: spec-driven
 
 context: |
-  Tech stack: Next.js 16.1.6, React 19.2.3, TypeScript 5 (strict), pnpm workspaces
-  Architecture: Feature-based (src/features/*), core (src/core/*), shared components
-  Database: Drizzle ORM (PostgreSQL), Supabase auth + SSR
-  UI: Material Design 3 (@material/web 2.4), custom MaterialClient wrapper
-  CI: GitHub Actions (quality, build, commitlint, test)
-  Quality: ESLint 9 (typescript-eslint strict, unicorn, sonarjs), Prettier 3.8,
-           commitlint conventional, Husky pre-commit lint-staged
-  Conventions: Strict TS, PascalCase interfaces/types, camelCase functions,
-               `@/` alias for src/, `@app/` alias for app/
+  Tech stack: Next.js 16 (App Router) + React 19, TypeScript 5 (strict), Supabase (auth/db),
+    Drizzle ORM (PostgreSQL), pnpm workspaces, Material Design 3 via Web Components
+  Architecture: App Router with server/client components, domain-driven layout in src/
+  Testing: Vitest 4 (unit) + @testing-library/react 16 (integration) + Playwright 1.59 (e2e)
+  Style: ESLint 9 (flat config) + Prettier 3 + conventional commits (commitlint)
 
 testing:
   strict_tdd: true
-  runner: vitest
-  runner_version: 4.1.8
+  runner:
+    framework: vitest
+    version: '4.1.4'
+    command: pnpm test:unit
+    watch_command: pnpm test:unit:watch
   layers:
     unit:
-      command: pnpm test:unit
-      framework: vitest + @testing-library/react + jsdom
+      available: true
+      tool: vitest + jsdom
+    integration:
+      available: true
+      tool: '@testing-library/react 16 + @testing-library/user-event 14'
     e2e:
-      command: pnpm test:e2e
-      framework: Playwright 1.59 (chromium only)
+      available: true
+      tool: '@playwright/test 1.59 (Chromium)'
   coverage:
-    available: true
-    command: vitest --coverage (via vitest built-in)
-  quality_tools:
-    linter: eslint (pnpm lint)
-    type_checker: tsc (pnpm type-check)
-    formatter: prettier (pnpm format)
+    available: false
+    command: null
+  quality:
+    linter:
+      available: true
+      command: pnpm lint
+    type_checker:
+      available: true
+      command: pnpm type-check
+    formatter:
+      available: true
+      command: pnpm format
 
 rules:
   proposal:
-    - Include rollback plan for database migrations
-    - State which feature/domain is affected
+    - Include rollback plan for risky changes
+    - Keep scope narrow — one change per proposal
   specs:
     - Use Given/When/Then for scenarios
     - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
-    - Reference Drizzle schema paths from src/core/database/
   design:
-    - Include sequence diagrams for multi-step flows
-    - Document Supabase auth patterns (server vs client)
-    - Reference Material Design 3 component decisions
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+    - Consider server/client component boundaries
   tasks:
     - Group by phase, use hierarchical numbering
     - Keep tasks completable in one session
+    - Include test tasks alongside implementation
   apply:
-    - Follow existing code patterns (feature folders, core separation)
-    tdd: true
+    rules:
+      - Follow existing code patterns
+      - Respect strict_tdd: true — RED-GREEN-REFACTOR
+      - Keep changes under 400 lines per review slice
     test_command: pnpm test:unit
   verify:
     test_command: pnpm test:unit
     build_command: pnpm build
-    e2e_command: pnpm test:e2e
     coverage_threshold: 0
   archive:
     - Warn before merging destructive deltas

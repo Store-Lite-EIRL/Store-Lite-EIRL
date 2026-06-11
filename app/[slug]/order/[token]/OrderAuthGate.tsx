@@ -85,18 +85,34 @@ export default function OrderAuthGate({
 
   useEffect(() => {
     const checkAuth = () => {
+      console.log(
+        '[OrderAuthGate] Checking auth. pathname:',
+        pathname,
+        'token:',
+        token,
+        'storageKey:',
+        storageKey,
+      );
+      console.log('[OrderAuthGate] searchParams:', Object.fromEntries(searchParams.entries()));
+
       // 1. Verificar si hay sesión válida en LocalStorage
       const stored = localStorage.getItem(storageKey);
+      console.log('[OrderAuthGate] localStorage.getItem result:', stored ? 'FOUND' : 'NOT_FOUND');
       if (stored) {
         try {
-          const { expiresAt } = JSON.parse(stored);
+          const parsed = JSON.parse(stored);
+          console.log('[OrderAuthGate] parsed session:', parsed);
+          const { expiresAt } = parsed;
           if (Date.now() < expiresAt) {
+            console.log('[OrderAuthGate] Session valid, authenticated!');
             setIsAuthenticated(true);
             return;
           } else {
+            console.log('[OrderAuthGate] Session expired, removing');
             localStorage.removeItem(storageKey);
           }
         } catch (e) {
+          console.error('[OrderAuthGate] Error parsing session:', e);
           localStorage.removeItem(storageKey);
         }
       }
@@ -131,6 +147,7 @@ export default function OrderAuthGate({
         return;
       }
 
+      console.log('[OrderAuthGate] No session found, showing verification form');
       setIsAuthenticated(false);
     };
 
