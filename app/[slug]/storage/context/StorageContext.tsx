@@ -4,7 +4,11 @@ import type { BusinessEntitlements } from '@/core/entitlements/plans';
 import { createContext, useContext, type ReactNode } from 'react';
 import { usePermissions } from '../../context/PermissionsContext';
 import type { Product } from '../data';
-import { useStorageProducts, type SortConfig } from '../hooks/useStorageProducts';
+import {
+  useStorageProducts,
+  type CategoryItem,
+  type SortConfig,
+} from '../hooks/useStorageProducts';
 import type { SaveProductMediaItem, SaveProductPayload } from '../types';
 
 interface StorageContextType {
@@ -25,7 +29,7 @@ interface StorageContextType {
   setSortBy: (sort: string) => void;
   sortConfig: SortConfig | null;
   handleSort: (key: keyof Product) => void;
-  categories: string[];
+  categories: CategoryItem[];
   statuses: string[];
   totalProducts: number;
   isLoading: boolean;
@@ -40,6 +44,7 @@ interface StorageContextType {
     optimisticProduct: Product;
   }) => Promise<{ success: boolean; error?: string }>;
   saveCategories: (categories: string[]) => Promise<{ success: boolean; error?: string }>;
+  deleteCategory: (categoryId: string) => Promise<{ success: boolean; error?: string }>;
   refreshCategories: () => Promise<void>;
   /** Invalida el caché y vuelve a cargar productos desde el servidor */
   refreshProducts: () => Promise<void>;
@@ -60,7 +65,7 @@ export const StorageProvider = ({
   businessSlug: string;
   businessId?: string;
   initialProducts?: Product[];
-  initialCategories?: string[];
+  initialCategories?: CategoryItem[];
   isOwner?: boolean;
   permissions?: string[];
 }) => {

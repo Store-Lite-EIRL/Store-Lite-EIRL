@@ -1,10 +1,12 @@
 'use client';
 
 import type { ProductCategory } from '@/core/database/schema';
+import { Button, Dialog, Icon } from '@/shared/components/ui';
+import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { createCategory, updateCategory } from '../../[slug]/storage/actions';
+import { createCategory, deleteCategory, updateCategory } from '../../[slug]/storage/actions';
 import styles from './FeaturedItems.module.css';
 import { AddCategoryModal } from './components/AddCategoryModal';
 import { EditCategoryModal } from './components/EditCategoryModal';
@@ -16,6 +18,7 @@ interface CategoryItemProps {
   isEmpty?: boolean;
   isOwner?: boolean;
   onEdit?: () => void;
+  onDelete?: () => void;
   onAdd?: () => void;
 }
 
@@ -24,11 +27,13 @@ function CategoryCardContent({
   imageUrl,
   isOwner,
   onEdit,
+  onDelete,
 }: {
   name?: string;
   imageUrl?: string | null;
   isOwner?: boolean;
   onEdit?: () => void;
+  onDelete?: () => void;
 }) {
   return (
     <>
@@ -54,6 +59,21 @@ function CategoryCardContent({
             <path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z" />
           </svg>
         </div>
+      )}
+
+      {isOwner && onDelete && (
+        <button
+          type="button"
+          className={styles.deleteBtn}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          aria-label={`Eliminar categoría ${name}`}
+          title={`Eliminar ${name}`}
+        >
+          <Icon>close</Icon>
+        </button>
       )}
 
       {isOwner && onEdit && (
@@ -89,6 +109,7 @@ function CategoryItem({
   isEmpty,
   isOwner,
   onEdit,
+  onDelete,
   onAdd,
 }: CategoryItemProps & { _id?: string }) {
   return (
@@ -97,7 +118,13 @@ function CategoryItem({
       style={{ cursor: isEmpty ? 'default' : 'pointer' }}
     >
       {!isEmpty ? (
-        <CategoryCardContent name={name} imageUrl={imageUrl} isOwner={isOwner} onEdit={onEdit} />
+        <CategoryCardContent
+          name={name}
+          imageUrl={imageUrl}
+          isOwner={isOwner}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       ) : (
         <>
           <div className={styles.itemPlaceholder}>Vacio</div>
@@ -139,8 +166,8 @@ export default function FeaturedItems({
 
   const getInitialItems = (cats: ProductCategory[]) => {
     const displayItems: (ProductCategory & { isEmpty?: boolean })[] = [...cats];
-    if (displayItems.length < 5) {
-      const remaining = 5 - displayItems.length;
+    if (displayItems.length < 7) {
+      const remaining = 7 - displayItems.length;
       for (let i = 0; i < remaining; i++) {
         displayItems.push({
           id: `empty-${i}`,
@@ -159,6 +186,13 @@ export default function FeaturedItems({
   );
   const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<ProductCategory | null>(null);
+  const [alert, setAlert] = useState<{
+    open: boolean;
+    description: string;
+    color: 'success' | 'error';
+    icon: string;
+  }>({ open: false, description: '', color: 'error', icon: 'error' });
 
   useEffect(() => {
     setItems(getInitialItems(categories));
@@ -199,7 +233,9 @@ export default function FeaturedItems({
     } catch (error) {
       console.error('Error saving category:', error);
       setItems(getInitialItems(categories));
-      alert('Error en el servidor: ' + (error instanceof Error ? error.message : String(error)));
+      window.alert(
+        'Error en el servidor: ' + (error instanceof Error ? error.message : String(error)),
+      );
 
       throw error;
     }
@@ -249,11 +285,40 @@ export default function FeaturedItems({
       setIsAddingCategory(false);
     } catch (error) {
       console.error('Error adding new category:', error);
-      alert(
+      window.alert(
         'Error al agregar categoría: ' + (error instanceof Error ? error.message : String(error)),
       );
       throw error;
     }
+  };
+
+  const handleDeleteCategory = (item: ProductCategory) => {
+    setCategoryToDelete(item);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!categoryToDelete) return;
+
+    const result = await deleteCategory(businessSlug, categoryToDelete.id);
+
+    if (result.success) {
+      setItems((prev) => prev.filter((i) => i.id !== categoryToDelete.id));
+      setAlert({
+        open: true,
+        description: `Categoría "${categoryToDelete.name}" eliminada`,
+        color: 'success',
+        icon: 'check_circle',
+      });
+    } else {
+      setAlert({
+        open: true,
+        description: result.error || 'Error al eliminar la categoría',
+        color: 'error',
+        icon: 'error',
+      });
+    }
+
+    setCategoryToDelete(null);
   };
 
   return (
@@ -268,6 +333,9 @@ export default function FeaturedItems({
             isEmpty={item.isEmpty}
             isOwner={isOwner}
             onEdit={!item.isEmpty ? () => setEditingCategory(item as ProductCategory) : undefined}
+            onDelete={
+              !item.isEmpty ? () => handleDeleteCategory(item as ProductCategory) : undefined
+            }
             onAdd={item.isEmpty ? () => setIsAddingCategory(true) : undefined}
           />
         ))}
@@ -284,6 +352,43 @@ export default function FeaturedItems({
         open={isAddingCategory}
         onClose={() => setIsAddingCategory(false)}
         onSave={handleSaveNewCategory}
+      />
+
+      {/* Diálogo de confirmación para eliminar categoría */}
+      {categoryToDelete && (
+        <Dialog open={!!categoryToDelete} onClose={() => setCategoryToDelete(null)} type="alert">
+          <div slot="headline">Eliminar categoría</div>
+          <div slot="content">
+            ¿Eliminar la categoría <strong>{categoryToDelete.name}</strong>?
+            <br />
+            <br />
+            Los productos asignados a esta categoría quedarán sin categoría.
+          </div>
+          <div slot="actions">
+            <Button variant="text" onClick={() => setCategoryToDelete(null)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="filled"
+              onClick={handleConfirmDelete}
+              style={
+                {
+                  '--md-sys-color-primary': 'var(--md-sys-color-error)',
+                } as React.CSSProperties
+              }
+            >
+              Eliminar
+            </Button>
+          </div>
+        </Dialog>
+      )}
+
+      <AlertSnackbar
+        open={alert.open}
+        description={alert.description}
+        color={alert.color}
+        icon={alert.icon}
+        onClose={() => setAlert((prev) => ({ ...prev, open: false }))}
       />
     </section>
   );
