@@ -156,11 +156,11 @@ export default function AuthPage() {
 
         {/* Secondary Navigation / Support */}
         <div className={styles.footer}>
-          <Link href="#" tabIndex={-1} className={styles.footerLink}>
+          <Link href="#" className={styles.footerLink}>
             <span className={`material-symbols-outlined ${styles.footerIcon}`}>help</span>
             Soporte
           </Link>
-          <Link href="#" tabIndex={-1} className={styles.footerLink}>
+          <Link href="#" className={styles.footerLink}>
             <span className={`material-symbols-outlined ${styles.footerIcon}`}>language</span>
             Spanish (ES)
           </Link>
