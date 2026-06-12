@@ -21,6 +21,7 @@ import {
   planPayments,
   type SubscriptionPlan,
 } from '@/core/database/schema';
+import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 // ─── Precios de planes (sin IGV) en céntimos para Culqi ─────────────────────
@@ -186,69 +187,102 @@ export async function POST(request: Request) {
     // ── Determinar método de pago ─────────────────────────────────────────────
     const paymentMethod = token.startsWith('ype_') ? 'yape' : 'card';
 
-    // ── Calcular fechas del plan ───────────────────────────────────────────────
-    const planStartDate = new Date();
-    const planEndDate = new Date(planStartDate);
-    planEndDate.setDate(planEndDate.getDate() + PERIOD_DAYS[period]);
+    // ── Transacción: leer suscripción actual, calcular prorrateo, insertar pago y upsert ──
+    const { planPayment, planEndDate } = await db.transaction(async (tx) => {
+      // Leer suscripción activa actual para prorrateo
+      const currentSubscription = await tx.query.businessSubscriptions.findFirst({
+        where: and(
+          eq(businessSubscriptions.businessId, businessId),
+          eq(businessSubscriptions.planStatus, 'active'),
+        ),
+        columns: { planType: true, planEndDate: true, planStartDate: true },
+      });
 
-    // ── Insertar plan_payment ─────────────────────────────────────────────────
-    // Dejamos que la DB maneje el default del ticketCorrelative via secuencia
-    const [planPayment] = await db
-      .insert(planPayments)
-      .values({
-        businessId,
-        planType,
-        period,
-        amountSubtotal: String(subtotalSoles),
-        amountIgv: String(igvSoles),
-        amountTotal: String(totalSoles),
-        currency: 'PEN',
-        paymentMethod: paymentMethod as 'card' | 'yape',
-        culqiChargeId: culqiData.id,
-        culqiReferenceCode: culqiData.reference_code || null,
-        status: 'paid',
-        buyerEmail,
-        buyerFullName: buyerFullName || null,
-        buyerDocumentType: buyerDocumentType || null,
-        buyerDocumentNumber: buyerDocumentNumber || null,
-        buyerAddress: buyerAddress || null,
-        ticketSeries: 'B001',
-        ticketIssuedAt: new Date(),
-        planStartDate,
-        planEndDate,
-        metadata: {
-          culqiRaw: {
-            chargeId: culqiData.id,
-            createdAt: culqiData.creation_date
-              ? new Date(culqiData.creation_date * 1000).toISOString()
-              : new Date().toISOString(),
+      // Calcular fechas con prorrateo
+      const now = new Date();
+      let planStartDate: Date;
+      let planEndDate: Date;
+
+      const isRenewal =
+        currentSubscription &&
+        currentSubscription.planType === planType &&
+        currentSubscription.planEndDate &&
+        currentSubscription.planEndDate > now;
+
+      if (isRenewal) {
+        // Mismo plan vigente → extender desde el fin actual
+        // isRenewal garantiza que currentSubscription.planEndDate no es null
+        planStartDate = currentSubscription.planStartDate ?? now;
+        planEndDate = new Date(currentSubscription.planEndDate!.getTime());
+        planEndDate.setDate(planEndDate.getDate() + PERIOD_DAYS[period]);
+      } else {
+        // Plan diferente o primera compra → comenzar desde hoy
+        planStartDate = now;
+        planEndDate = new Date(now);
+        planEndDate.setDate(planEndDate.getDate() + PERIOD_DAYS[period]);
+      }
+
+      // ── Insertar plan_payment ───────────────────────────────────────────────
+      // Dejamos que la DB maneje el default del ticketCorrelative via secuencia
+      const [planPayment] = await tx
+        .insert(planPayments)
+        .values({
+          businessId,
+          planType,
+          period,
+          amountSubtotal: String(subtotalSoles),
+          amountIgv: String(igvSoles),
+          amountTotal: String(totalSoles),
+          currency: 'PEN',
+          paymentMethod: paymentMethod as 'card' | 'yape',
+          culqiChargeId: culqiData.id,
+          culqiReferenceCode: culqiData.reference_code || null,
+          status: 'paid',
+          buyerEmail,
+          buyerFullName: buyerFullName || null,
+          buyerDocumentType: buyerDocumentType || null,
+          buyerDocumentNumber: buyerDocumentNumber || null,
+          buyerAddress: buyerAddress || null,
+          ticketSeries: 'B001',
+          ticketIssuedAt: new Date(),
+          planStartDate,
+          planEndDate,
+          metadata: {
+            culqiRaw: {
+              chargeId: culqiData.id,
+              createdAt: culqiData.creation_date
+                ? new Date(culqiData.creation_date * 1000).toISOString()
+                : new Date().toISOString(),
+            },
+            ip: request.headers.get('x-forwarded-for'),
+            userAgent: request.headers.get('user-agent'),
           },
-          ip: request.headers.get('x-forwarded-for'),
-          userAgent: request.headers.get('user-agent'),
-        },
-      })
-      .returning();
+        })
+        .returning();
 
-    // ── Activar / renovar suscripción ─────────────────────────────────────────
-    await db
-      .insert(businessSubscriptions)
-      .values({
-        businessId,
-        planType,
-        planStatus: 'active',
-        planStartDate,
-        planEndDate,
-      })
-      .onConflictDoUpdate({
-        target: businessSubscriptions.businessId,
-        set: {
+      // ── Activar / renovar suscripción ───────────────────────────────────────
+      await tx
+        .insert(businessSubscriptions)
+        .values({
+          businessId,
           planType,
           planStatus: 'active',
           planStartDate,
           planEndDate,
-          updatedAt: new Date(),
-        },
-      });
+        })
+        .onConflictDoUpdate({
+          target: businessSubscriptions.businessId,
+          set: {
+            planType,
+            planStatus: 'active',
+            planStartDate,
+            planEndDate,
+            updatedAt: new Date(),
+          },
+        });
+
+      return { planPayment, planEndDate };
+    });
 
     const ticketNumber = formatTicketNumber(
       planPayment.ticketSeries,

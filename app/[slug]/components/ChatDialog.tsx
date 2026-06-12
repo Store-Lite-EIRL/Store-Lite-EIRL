@@ -288,7 +288,7 @@ export function ChatDialog({
             });
           },
         )
-        .subscribe((status) => {
+        .subscribe((status: string) => {
           chatDialogDebug('channel:status', { sessionId, status });
         });
 
@@ -451,7 +451,7 @@ export function ChatDialog({
             access_token: event.data.access_token,
             refresh_token: event.data.refresh_token,
           })
-          .catch((err) => {
+          .catch((err: Error) => {
             console.error('[ChatDialog] Error setting session:', err);
           });
       }

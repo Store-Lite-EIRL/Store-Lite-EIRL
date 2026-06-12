@@ -29,7 +29,7 @@ export async function getBusinessEntitlements(businessId: string): Promise<Busin
         eq(businessSubscriptions.planStatus, 'active'),
       ),
       orderBy: [desc(businessSubscriptions.createdAt)],
-      columns: { planType: true },
+      columns: { planType: true, planEndDate: true },
     }),
     db.query.businessSettings.findFirst({
       where: eq(businessSettings.businessId, businessId),
@@ -37,8 +37,24 @@ export async function getBusinessEntitlements(businessId: string): Promise<Busin
     }),
   ]);
 
-  const plan: PlanType = (subscription?.planType as PlanType) ?? DEFAULT_PLAN;
+  // Verificar expiración: si planEndDate ya pasó, degradar a Free
+  const now = new Date();
+  const isExpired = subscription?.planEndDate instanceof Date && subscription.planEndDate < now;
+
+  let plan: PlanType;
+  if (!subscription || isExpired) {
+    if (isExpired) {
+      console.warn(
+        `[entitlements] Business ${businessId} plan expired (${subscription?.planEndDate?.toISOString()}), degrading to ${DEFAULT_PLAN}`,
+      );
+    }
+    plan = DEFAULT_PLAN;
+  } else {
+    plan = subscription.planType as PlanType;
+  }
+
   const isPaymentConfigured = Boolean(settings?.culqiPublicKey && settings?.culqiSecretKey);
+  const planEndDate = subscription?.planEndDate?.toISOString() ?? null;
 
   return {
     plan,
@@ -46,5 +62,6 @@ export async function getBusinessEntitlements(businessId: string): Promise<Busin
     ...PLAN_ENTITLEMENTS[plan],
     isPaymentConfigured,
     culqiPublicKey: settings?.culqiPublicKey ?? undefined,
+    planEndDate,
   };
 }

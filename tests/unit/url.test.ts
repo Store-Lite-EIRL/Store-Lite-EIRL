@@ -200,6 +200,8 @@ describe('getBusinessPath — subdomain mode (client-side)', () => {
   const originalLocation = window.location;
 
   beforeEach(() => {
+    process.env.FEATURE_SUBDOMAIN_REWRITE = 'true';
+    vi.resetModules();
     // Override window.location to simulate tenant subdomain
     Object.defineProperty(window, 'location', {
       value: { hostname: 'mi-tienda.localhost' } as Location,
@@ -209,6 +211,8 @@ describe('getBusinessPath — subdomain mode (client-side)', () => {
   });
 
   afterEach(() => {
+    delete process.env.FEATURE_SUBDOMAIN_REWRITE;
+    vi.resetModules();
     Object.defineProperty(window, 'location', {
       value: originalLocation,
       configurable: true,
@@ -216,25 +220,30 @@ describe('getBusinessPath — subdomain mode (client-side)', () => {
     });
   });
 
-  test('returns "" for root when hostname matches slug', () => {
-    expect(getBusinessPath('mi-tienda')).toBe('');
+  test('returns "" for root when hostname matches slug', async () => {
+    const { getBusinessPath: fn } = await import('@/shared/utils/url');
+    expect(fn('mi-tienda')).toBe('');
   });
 
-  test('returns /dashboard when hostname matches slug', () => {
-    expect(getBusinessPath('mi-tienda', '/dashboard')).toBe('/dashboard');
+  test('returns /dashboard when hostname matches slug', async () => {
+    const { getBusinessPath: fn } = await import('@/shared/utils/url');
+    expect(fn('mi-tienda', '/dashboard')).toBe('/dashboard');
   });
 
-  test('handles path without leading slash', () => {
-    expect(getBusinessPath('mi-tienda', 'dashboard')).toBe('/dashboard');
+  test('handles path without leading slash', async () => {
+    const { getBusinessPath: fn } = await import('@/shared/utils/url');
+    expect(fn('mi-tienda', 'dashboard')).toBe('/dashboard');
   });
 
-  test('returns /slug/path when hostname does NOT match slug', () => {
+  test('returns /slug/path when hostname does NOT match slug', async () => {
     // hostname = mi-tienda.localhost, slug = otro-store → no match → path-based
-    expect(getBusinessPath('otro-store', '/dashboard')).toBe('/otro-store/dashboard');
+    const { getBusinessPath: fn } = await import('@/shared/utils/url');
+    expect(fn('otro-store', '/dashboard')).toBe('/otro-store/dashboard');
   });
 
-  test('returns /slug when hostname does NOT match slug and no path', () => {
-    expect(getBusinessPath('otro-store')).toBe('/otro-store');
+  test('returns /slug when hostname does NOT match slug and no path', async () => {
+    const { getBusinessPath: fn } = await import('@/shared/utils/url');
+    expect(fn('otro-store')).toBe('/otro-store');
   });
 });
 

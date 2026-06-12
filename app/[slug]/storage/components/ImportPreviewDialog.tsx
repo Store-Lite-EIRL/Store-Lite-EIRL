@@ -444,7 +444,7 @@ export const ImportPreviewDialog = ({
       <AlertSnackbar
         open={sheetsTruncated}
         description="El archivo tiene más de una hoja. Solo se importará la primera hoja."
-        color="info"
+        color="secondary"
         icon="info"
         position="bottom-center"
         onClose={() => setSheetsTruncated(false)}

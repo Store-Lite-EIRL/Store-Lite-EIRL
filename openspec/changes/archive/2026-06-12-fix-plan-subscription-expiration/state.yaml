@@ -1,0 +1,32 @@
+change: fix-plan-subscription-expiration
+status: completed
+created: 2026-06-12
+closed: 2026-06-12
+artifacts:
+  - proposal.md
+  - spec.md
+  - design.md
+  - tasks.md
+  - verify-report.md
+commits:
+  - 5f5f890 # docs(sdd): add plan-subscription-expiration proposal and spec
+  - a162523 # feat(entitlements): add expireSubscriptions mass expiration function
+  - 7c5a19f # feat(entitlements): add planEndDate check and expireSubscriptions export
+  - 7c0546a # feat(billing): add prorated plan extension in purchase-plan endpoint
+  - 5f54bd1 # fix(ui): replace Math.round with exact month+day calculation in getRemainingTime
+files_modified:
+  - src/core/entitlements/expireSubscriptions.ts (created)
+  - src/core/entitlements/getBusinessEntitlements.ts (modified)
+  - src/core/entitlements/plans.ts (modified)
+  - src/core/entitlements/index.ts (modified)
+  - app/api/billing/purchase-plan/route.ts (modified)
+  - app/[slug]/settings/components/SettingsClient.tsx (modified)
+  - tests/unit/expireSubscriptions.test.ts (created)
+  - tests/unit/getBusinessEntitlements.test.ts (created)
+  - tests/unit/purchasePlanProration.test.ts (created)
+  - tests/unit/getRemainingTime.test.ts (created)
+summary: |
+  Implementación de expiración automática de planes (SCD-001/SCD-002),
+  prorrateo en renovaciones del mismo plan (SCD-003), y visualización
+  exacta del tiempo restante (SCD-004). 27 tests nuevos, 18/18 escenarios
+  GWT compliant. Sin migraciones ni nuevas dependencias.

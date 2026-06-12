@@ -3,226 +3,75 @@
 import { useTheme, type ColorScheme } from '@/shared/context/ThemeContext';
 import type { MaterialSelectEvent } from '@/shared/utils';
 import { Icon } from './data-display';
-import { Select, SelectOption, Switch } from './inputs';
+import { Select, SelectOption } from './inputs';
+import styles from './ThemeSettings.module.css';
+
+type ThemeMode = 'system' | 'light' | 'dark';
+
+const MODE_OPTIONS: {
+  value: ThemeMode;
+  label: string;
+  icon: string;
+}[] = [
+  { value: 'system', label: 'Sistema', icon: 'brightness_auto' },
+  { value: 'light', label: 'Claro', icon: 'light_mode' },
+  { value: 'dark', label: 'Oscuro', icon: 'dark_mode' },
+];
 
 export function ThemeSettings() {
   const { theme, colorScheme, setTheme, setColorScheme } = useTheme();
 
+  const currentMode: ThemeMode =
+    theme === 'system' ? 'system' : theme === 'dark' ? 'dark' : 'light';
+
+  const handleModeChange = (mode: ThemeMode) => {
+    if (mode === 'system') {
+      setTheme('system');
+    } else {
+      // Si venía de system, fuerza al modo elegido
+      setTheme(mode);
+    }
+  };
+
   return (
-    <div
-      className="theme-settings-panel"
-      style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}
-    >
-      {/* SECCIÓN DE TEMA */}
-      <section
-        className="section"
-        style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
-      >
-        <h3
-          className="theme-settings-header"
-          style={{
-            fontSize: '14px',
-            fontWeight: 600,
-            color: 'var(--md-sys-color-on-surface-variant)',
-            margin: 0,
-          }}
-        >
-          Modo y Apariencia
-        </h3>
+    <div className={styles.panel}>
+      {/* ── Modo del panel ── */}
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>Modo del panel</h3>
 
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          {/* Opción Auto */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '8px 0',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  background: 'var(--md-sys-color-primary-container)',
-                  color: 'var(--md-sys-color-on-primary-container)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Icon size={20}>brightness_auto</Icon>
-              </div>
-              <div style={{ paddingRight: '12px' }}>
-                <p
-                  style={{
-                    margin: 0,
-                    fontWeight: 600,
-                    fontSize: '14px',
-                    color: 'var(--md-sys-color-on-surface)',
-                  }}
-                >
-                  Tema automático
-                </p>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: '13px',
-                    color: 'var(--md-sys-color-on-surface-variant)',
-                  }}
-                >
-                  Sincronizar con el sistema.
-                </p>
-              </div>
-            </div>
-            <Switch
-              selected={theme === 'system'}
-              onInput={(e) => {
-                const target = e.target as HTMLElement & { selected: boolean };
-                if (target.selected) {
-                  setTheme('system');
-                } else {
-                  // Fallback a claro si el usuario desactiva el automático y no está forzado en oscuro
-                  const isSystemDark =
-                    typeof window !== 'undefined' &&
-                    window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  setTheme(isSystemDark ? 'dark' : 'light');
-                }
-              }}
-            />
-          </div>
-
-          {/* Opción Oscuro Forzado */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '8px 0',
-              opacity: theme === 'system' ? 0.6 : 1,
-              pointerEvents: theme === 'system' ? 'none' : 'auto',
-              transition: 'opacity 0.2s ease',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  background: 'color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent)',
-                  color: 'var(--md-sys-color-on-surface)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Icon size={20}>dark_mode</Icon>
-              </div>
-              <div style={{ paddingRight: '12px' }}>
-                <p
-                  style={{
-                    margin: 0,
-                    fontWeight: 600,
-                    fontSize: '14px',
-                    color: 'var(--md-sys-color-on-surface)',
-                  }}
-                >
-                  Forzar modo oscuro
-                </p>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: '13px',
-                    color: 'var(--md-sys-color-on-surface-variant)',
-                  }}
-                >
-                  Activar la apariencia oscura manualmente.
-                </p>
-              </div>
-            </div>
-            <Switch
-              selected={theme === 'dark'}
-              onInput={(e) => {
-                const target = e.target as HTMLElement & { selected: boolean };
-                setTheme(target.selected ? 'dark' : 'light');
-              }}
-            />
-          </div>
+        <div className={styles.modeGroup}>
+          {MODE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              className={`${styles.modeOption} ${currentMode === opt.value ? styles.modeOptionActive : ''}`}
+              onClick={() => handleModeChange(opt.value)}
+              aria-pressed={currentMode === opt.value}
+            >
+              <Icon size={18}>{opt.icon}</Icon>
+              {opt.label}
+            </button>
+          ))}
         </div>
       </section>
 
-      {/* SECCIÓN DE CONTRASTE */}
-      <section
-        className="section"
-        style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
-      >
-        <h3
-          className="theme-settings-header"
-          style={{
-            fontSize: '14px',
-            fontWeight: 600,
-            color: 'var(--md-sys-color-on-surface-variant)',
-            margin: 0,
-          }}
-        >
-          Accesibilidad Visual
-        </h3>
-        <div
-          style={{
-            padding: '8px 0',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                background: 'var(--md-sys-color-tertiary-container)',
-                color: 'var(--md-sys-color-on-tertiary-container)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <Icon size={20}>contrast</Icon>
-            </div>
-            <div>
-              <p
-                style={{
-                  margin: 0,
-                  fontWeight: 600,
-                  fontSize: '14px',
-                  color: 'var(--md-sys-color-on-surface)',
-                }}
-              >
-                Nivel de contraste
-              </p>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: '13px',
-                  color: 'var(--md-sys-color-on-surface-variant)',
-                }}
-              >
-                Ajusta la intensidad visual para mejorar la legibilidad de bordes y textos.
-              </p>
-            </div>
+      {/* ── Accesibilidad Visual ── */}
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>Accesibilidad visual</h3>
+
+        <div className={styles.contrastRow}>
+          <div className={styles.contrastIcon}>
+            <Icon size={18}>contrast</Icon>
           </div>
+          <div className={styles.contrastInfo}>
+            <p className={styles.contrastLabel}>Nivel de contraste</p>
+            <p className={styles.contrastDescription}>
+              Ajustá la intensidad visual para mejorar la legibilidad de bordes y textos.
+            </p>
+          </div>
+        </div>
+
+        <div className={styles.selectWrapper}>
           <Select
             value={colorScheme}
             onChange={(e: MaterialSelectEvent) => {
