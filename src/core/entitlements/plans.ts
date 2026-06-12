@@ -57,6 +57,10 @@ export interface BusinessEntitlements {
   /** Puede usar el asistente de IA */
   canUseAIAssistant: boolean;
 
+  // ─── Suscripción ──────────────────────────────────────
+  /** Fecha de vencimiento del plan en ISO string (null si Free o sin suscripción) */
+  planEndDate: string | null;
+
   // ─── Equipo ───────────────────────────────────────────
   /** Máximo de miembros en el equipo (-1 = ilimitado) */
   maxTeamMembers: number;
@@ -68,7 +72,10 @@ export interface BusinessEntitlements {
  */
 export const PLAN_ENTITLEMENTS: Record<
   PlanType,
-  Omit<BusinessEntitlements, 'plan' | 'isActive' | 'isPaymentConfigured' | 'culqiPublicKey'>
+  Omit<
+    BusinessEntitlements,
+    'plan' | 'isActive' | 'isPaymentConfigured' | 'culqiPublicKey' | 'planEndDate'
+  >
 > = {
   basico: {
     hasPaymentGateway: false,
