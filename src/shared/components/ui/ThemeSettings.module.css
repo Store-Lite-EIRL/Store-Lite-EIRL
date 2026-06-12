@@ -1,0 +1,114 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   ThemeSettings — Minimal panel theme controls
+   ───────────────────────────────────────────────────────────────────────── */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Section ──────────────────────────────────────────────────────────── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+/* ── Mode Selector (segmented button) ─────────────────────────────────── */
+.modeGroup {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--md-sys-color-surface-container-high);
+  border-radius: 14px;
+}
+
+.modeOption {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+  line-height: 1;
+}
+
+.modeOption:hover {
+  color: var(--md-sys-color-on-surface);
+}
+
+.modeOptionActive {
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.modeOptionActive:hover {
+  color: var(--md-sys-color-on-surface);
+}
+
+/* ── Contrast row ─────────────────────────────────────────────────────── */
+.contrastRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.contrastIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.contrastInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.contrastLabel {
+  margin: 0;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface);
+}
+
+.contrastDescription {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.4;
+}
+
+.selectWrapper {
+  margin-top: 4px;
+}

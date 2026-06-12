@@ -1,7 +1,12 @@
 import { env } from '@/config/env';
 import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
-import { businessSettings } from '@/core/database/schema';
+import {
+  businessSettings,
+  businessSubscriptions,
+  businessTeamMembers,
+  products,
+} from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import {
   getStorefrontLayoutFromPreferences,
@@ -10,7 +15,7 @@ import {
 } from '@/core/storefront';
 import { getMemberPermissions } from '@/lib/permissions/checkPermission';
 import { createServerClient } from '@supabase/ssr';
-import { eq } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
@@ -83,6 +88,26 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
     },
   });
 
+  // Fecha de vencimiento del plan activo
+  const subscription = await db.query.businessSubscriptions.findFirst({
+    where: and(
+      eq(businessSubscriptions.businessId, business.id),
+      eq(businessSubscriptions.planStatus, 'active'),
+    ),
+    orderBy: [desc(businessSubscriptions.createdAt)],
+    columns: { planEndDate: true },
+  });
+
+  // Conteo real de productos y miembros del equipo
+  const [{ count: productCount }] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(products)
+    .where(eq(products.businessId, business.id));
+  const [{ count: memberCount }] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(businessTeamMembers)
+    .where(eq(businessTeamMembers.businessId, business.id));
+
   return (
     <SettingsClient
       business={
@@ -92,7 +117,12 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
           culqiSecretKey: settings?.culqiSecretKey ?? null,
         } as SettingsBusiness
       }
-      entitlements={entitlements}
+      entitlements={{
+        ...entitlements,
+        planEndDate: subscription?.planEndDate?.toISOString() ?? null,
+        productCount,
+        memberCount,
+      }}
       initialStorefrontLayout={getStorefrontLayoutFromPreferences(settings?.preferences)}
       initialStorefrontTheme={getStorefrontThemeFromPreferences(settings?.preferences)}
       initialHasCustomTheme={hasCustomStorefrontTheme(settings?.preferences)}

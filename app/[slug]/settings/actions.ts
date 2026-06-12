@@ -113,6 +113,24 @@ export async function updateBusinessSlug(
   }
 }
 
+export async function checkSlugAvailability(
+  slug: string,
+  businessId: string,
+): Promise<{ success: boolean; available: boolean; error?: string }> {
+  try {
+    await requireAccessOnId(businessId, 'business.edit');
+  } catch {
+    return { success: false, available: false, error: 'No autorizado' };
+  }
+
+  if (slug.length < 10 || slug.length > 30) {
+    return { success: true, available: false };
+  }
+
+  const taken = await isBusinessSlugTaken(slug, { excludeBusinessId: businessId });
+  return { success: true, available: !taken };
+}
+
 export async function toggleBusinessActive(
   businessId: string,
   currentIsActive: boolean,
