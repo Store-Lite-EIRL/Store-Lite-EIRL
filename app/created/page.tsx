@@ -406,7 +406,10 @@ export default function CreatedPage() {
         >
           <div className="slide-track" style={{ transform: `translateX(-${currentStep * 100}%)` }}>
             {/* Steps remain same... */}
-            <div className={`slide-step ${currentStep !== 0 ? 'inactive' : ''}`}>
+            <div
+              className={`slide-step ${currentStep !== 0 ? 'inactive' : ''}`}
+              inert={currentStep !== 0}
+            >
               <BusinessForm
                 stepNumber={1}
                 title="Datos Generales"
@@ -421,7 +424,10 @@ export default function CreatedPage() {
               />
             </div>
 
-            <div className={`slide-step ${currentStep !== 1 ? 'inactive' : ''}`}>
+            <div
+              className={`slide-step ${currentStep !== 1 ? 'inactive' : ''}`}
+              inert={currentStep !== 1}
+            >
               <BusinessForm
                 stepNumber={2}
                 title="Actividad Económica"
@@ -434,7 +440,10 @@ export default function CreatedPage() {
               />
             </div>
 
-            <div className={`slide-step ${currentStep !== 2 ? 'inactive' : ''}`}>
+            <div
+              className={`slide-step ${currentStep !== 2 ? 'inactive' : ''}`}
+              inert={currentStep !== 2}
+            >
               <BusinessForm
                 stepNumber={3}
                 title="Ubicación y Contacto"
@@ -450,7 +459,10 @@ export default function CreatedPage() {
               />
             </div>
 
-            <div className={`slide-step ${currentStep !== 3 ? 'inactive' : ''}`}>
+            <div
+              className={`slide-step ${currentStep !== 3 ? 'inactive' : ''}`}
+              inert={currentStep !== 3}
+            >
               <BusinessForm
                 stepNumber={4}
                 title="Representante Legal"
