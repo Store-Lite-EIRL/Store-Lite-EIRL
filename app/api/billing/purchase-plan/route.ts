@@ -211,8 +211,9 @@ export async function POST(request: Request) {
 
       if (isRenewal) {
         // Mismo plan vigente → extender desde el fin actual
+        // isRenewal garantiza que currentSubscription.planEndDate no es null
         planStartDate = currentSubscription.planStartDate ?? now;
-        planEndDate = new Date(currentSubscription.planEndDate);
+        planEndDate = new Date(currentSubscription.planEndDate!.getTime());
         planEndDate.setDate(planEndDate.getDate() + PERIOD_DAYS[period]);
       } else {
         // Plan diferente o primera compra → comenzar desde hoy

@@ -13,13 +13,14 @@ import { and, eq, lt } from 'drizzle-orm';
 export async function expireSubscriptions(): Promise<{ expired: number }> {
   const result = await db
     .update(businessSubscriptions)
-    .set({ planStatus: 'inactive' })
+    .set({ planStatus: 'inactive', updatedAt: new Date() })
     .where(
       and(
         lt(businessSubscriptions.planEndDate, new Date()),
         eq(businessSubscriptions.planStatus, 'active'),
       ),
-    );
+    )
+    .returning({ id: businessSubscriptions.id });
 
-  return { expired: result.rowCount ?? 0 };
+  return { expired: result.length };
 }

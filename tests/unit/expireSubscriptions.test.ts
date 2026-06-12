@@ -9,9 +9,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
 
-const mockUpdateChain = vi.fn();
-const mockSetChain = vi.fn(() => ({ where: mockUpdateChain }));
-const mockWhereChain = vi.fn(() => ({ rowCount: 0 }));
+const mockReturningChain = vi.fn();
+const mockWhereChain = vi.fn(() => ({ returning: mockReturningChain }));
+const mockSetChain = vi.fn(() => ({ where: mockWhereChain }));
 const mockUpdate = vi.fn(() => ({ set: mockSetChain }));
 
 vi.mock('@/core/database/client', () => ({
@@ -28,7 +28,7 @@ describe('expireSubscriptions', () => {
   });
 
   test('updates expired active subscriptions to inactive', async () => {
-    mockUpdateChain.mockResolvedValue({ rowCount: 3 });
+    mockReturningChain.mockResolvedValue([{ id: 'sub_1' }, { id: 'sub_2' }, { id: 'sub_3' }]);
 
     const { expireSubscriptions } = await import('@/core/entitlements/expireSubscriptions');
 
@@ -38,11 +38,14 @@ describe('expireSubscriptions', () => {
 
     // Verify the correct table and conditions
     expect(mockUpdate).toHaveBeenCalledTimes(1);
-    expect(mockSetChain).toHaveBeenCalledWith({ planStatus: 'inactive' });
+    expect(mockSetChain).toHaveBeenCalledWith({
+      planStatus: 'inactive',
+      updatedAt: expect.any(Date),
+    });
   });
 
   test('returns 0 when no subscriptions are expired', async () => {
-    mockUpdateChain.mockResolvedValue({ rowCount: 0 });
+    mockReturningChain.mockResolvedValue([]);
 
     const { expireSubscriptions } = await import('@/core/entitlements/expireSubscriptions');
 
@@ -52,7 +55,7 @@ describe('expireSubscriptions', () => {
   });
 
   test('is idempotent — running twice returns same result', async () => {
-    mockUpdateChain.mockResolvedValue({ rowCount: 2 });
+    mockReturningChain.mockResolvedValue([{ id: 'sub_1' }, { id: 'sub_2' }]);
 
     const { expireSubscriptions } = await import('@/core/entitlements/expireSubscriptions');
 
@@ -67,18 +70,7 @@ describe('expireSubscriptions', () => {
   test('does not update subscriptions that are already inactive', async () => {
     // The WHERE clause filters planStatus = 'active',
     // so inactive subscriptions are never touched.
-    mockUpdateChain.mockResolvedValue({ rowCount: 0 });
-
-    const { expireSubscriptions } = await import('@/core/entitlements/expireSubscriptions');
-
-    const result = await expireSubscriptions();
-
-    expect(result).toEqual({ expired: 0 });
-  });
-
-  test('handles rowCount being null gracefully', async () => {
-    // Simulate driver returning null rowCount
-    mockUpdateChain.mockResolvedValue({ rowCount: null });
+    mockReturningChain.mockResolvedValue([]);
 
     const { expireSubscriptions } = await import('@/core/entitlements/expireSubscriptions');
 
