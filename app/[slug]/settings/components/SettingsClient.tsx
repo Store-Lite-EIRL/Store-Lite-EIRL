@@ -17,12 +17,10 @@ import {
 } from '@/core/storefront';
 import type { Permission } from '@/lib/permissions/definitions';
 import { DEFAULT_ROLE_PERMISSIONS } from '@/lib/permissions/definitions';
-import { BusinessPreviewCard } from '@/shared/components/business/BusinessPreviewCard';
 import {
   AlertSnackbar,
   Button,
   Card,
-  Chips,
   CircularProgress,
   Divider,
   Icon,
@@ -37,17 +35,18 @@ import {
 } from '@/shared/components/ui';
 import { Dialog } from '@/shared/components/ui/surfaces/Dialog';
 import { ThemeSettings } from '@/shared/components/ui/ThemeSettings';
-import { useTheme } from '@/shared/context/ThemeContext';
 import { getBusinessPath } from '@/shared/utils/url';
 import { useParams, useRouter } from 'next/navigation';
 import React, {
   useCallback,
   useEffect,
   useOptimistic,
+  useRef,
   useState,
   useTransition,
   type CSSProperties,
 } from 'react';
+import { updateBusinessLogo } from '../../../actions/business';
 import {
   generateInvitationCode,
   getInvitationCode,
@@ -58,6 +57,7 @@ import {
   updateMemberRole,
 } from '../../../actions/team';
 import {
+  checkSlugAvailability,
   clearStorefrontTheme,
   toggleBusinessActive,
   updateBusinessSEO,
@@ -68,6 +68,7 @@ import {
 } from '../actions';
 import styles from '../settings.module.css';
 import { PermissionsMatrix } from './PermissionsMatrix';
+import { NAV_GROUPS, SettingsNav, type Section } from './SettingsNav';
 
 export interface SettingsBusiness {
   id: string;
@@ -117,6 +118,9 @@ interface Entitlements {
   canUseAIAssistant: boolean;
   maxTeamMembers: number;
   seoEnabled: boolean;
+  planEndDate: string | null;
+  productCount: number;
+  memberCount: number;
 }
 
 interface SettingsClientProps {
@@ -130,29 +134,6 @@ interface SettingsClientProps {
   permissions: Permission[];
   isOwner: boolean;
 }
-
-type Section =
-  | 'business'
-  | 'appearance'
-  | 'storefront'
-  | 'plan'
-  | 'team'
-  | 'contact'
-  | 'legal'
-  | 'seo'
-  | 'payments';
-
-const NAV_ITEMS: { id: Section; label: string; icon: string }[] = [
-  { id: 'business', label: 'Mi Negocio', icon: 'store' },
-  { id: 'appearance', label: 'Apariencia', icon: 'palette' },
-  { id: 'storefront', label: 'Storefront', icon: 'view_quilt' },
-  { id: 'plan', label: 'Plan y Límites', icon: 'workspace_premium' },
-  { id: 'team', label: 'Equipo', icon: 'group' },
-  { id: 'contact', label: 'Contacto', icon: 'contact_page' },
-  { id: 'seo', label: 'SEO y Ubicación', icon: 'travel_explore' },
-  { id: 'payments', label: 'Pagos', icon: 'payments' },
-  { id: 'legal', label: 'Legal', icon: 'gavel' },
-];
 
 const PLAN_CONFIG: Record<
   string,
@@ -271,6 +252,115 @@ function BusinessSection({
 }) {
   const router = useRouter();
   const canEditSlug = entitlements.plan !== 'basico';
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+  const SLUG_MIN = 10;
+  const SLUG_MAX = 30;
+
+  // Slug availability check
+  const [slugAvailability, setSlugAvailability] = useState<
+    'idle' | 'checking' | 'available' | 'taken'
+  >('idle');
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  const checkAvailability = useCallback(
+    (slug: string) => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+
+      if (slug.length < SLUG_MIN || slug.length > SLUG_MAX || slug === business.slug) {
+        setSlugAvailability('idle');
+        return;
+      }
+
+      setSlugAvailability('checking');
+      debounceRef.current = setTimeout(async () => {
+        const res = await checkSlugAvailability(slug, business.id);
+        if (res.success) {
+          setSlugAvailability(res.available ? 'available' : 'taken');
+        } else {
+          setSlugAvailability('idle');
+        }
+      }, 500);
+    },
+    [business.id, business.slug],
+  );
+  const [localLogoUrl, setLocalLogoUrl] = useState<string | null>(null);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  const AVATAR_MAX_SIZE = 5 * 1024 * 1024; // 5MB
+  const AVATAR_MAX_WIDTH = 2048;
+  const AVATAR_MAX_HEIGHT = 2048;
+  const ALLOWED_AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+  function getImageDimensions(file: File): Promise<{ width: number; height: number } | null> {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(null);
+      };
+      img.src = url;
+    });
+  }
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAvatarError(null);
+
+    // Validate file type
+    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+      setAvatarError('Solo se permiten imágenes JPG, PNG o WebP.');
+      e.target.value = '';
+      return;
+    }
+
+    // Validate file size
+    if (file.size > AVATAR_MAX_SIZE) {
+      setAvatarError(`La imagen no debe superar los 5 MB.`);
+      e.target.value = '';
+      return;
+    }
+
+    // Validate image dimensions
+    const dimensions = await getImageDimensions(file);
+    if (!dimensions) {
+      setAvatarError('No se pudo leer la imagen.');
+      e.target.value = '';
+      return;
+    }
+    if (dimensions.width > AVATAR_MAX_WIDTH || dimensions.height > AVATAR_MAX_HEIGHT) {
+      setAvatarError(`La imagen no debe superar ${AVATAR_MAX_WIDTH}×${AVATAR_MAX_HEIGHT} px.`);
+      e.target.value = '';
+      return;
+    }
+
+    // Upload
+    setIsUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const result = await updateBusinessLogo(business.id, business.slug, formData);
+      if (result.success && result.url) {
+        setLocalLogoUrl(result.url);
+        router.refresh();
+      } else {
+        setAvatarError(result.error || 'Error al subir el avatar.');
+      }
+    } catch {
+      setAvatarError('Error inesperado al subir el avatar.');
+    } finally {
+      setIsUploadingAvatar(false);
+      e.target.value = '';
+    }
+  };
 
   // State for slug editing
   const [origin, setOrigin] = useState('');
@@ -295,6 +385,12 @@ function BusinessSection({
       return;
     }
 
+    // Client-side validation antes de mandar al server
+    if (newSlug.length < SLUG_MIN || newSlug.length > SLUG_MAX) {
+      setSlugError(`El slug debe tener entre ${SLUG_MIN} y ${SLUG_MAX} caracteres.`);
+      return;
+    }
+
     startTransitionSlug(async () => {
       setSlugError(null);
       const res = await updateBusinessSlug(business.id, newSlug, entitlements.plan);
@@ -302,6 +398,7 @@ function BusinessSection({
         setSlugError(res.error || 'Error al actualizar el slug');
       } else {
         setIsEditingSlug(false);
+        setSlugAvailability('idle');
         router.push(getBusinessPath(res.newSlug!, '/settings'));
       }
     });
@@ -321,10 +418,18 @@ function BusinessSection({
 
   return (
     <div className={styles.sectionArea}>
-      <SectionHeader
-        title="Mi Negocio"
-        subtitle="Información pública que los visitantes ven en tu tienda."
-      />
+      <div className={styles.businessHero}>
+        <div className={styles.businessHeroIcon}>
+          <Icon size={28}>store</Icon>
+        </div>
+        <div>
+          <h2 className={styles.businessHeroTitle}>Mi Negocio</h2>
+          <p className={styles.businessHeroSubtitle}>
+            Toda la identidad de tu tienda en un solo lugar. Acá podés cambiar el logo, la
+            descripción, la URL y el estado de tu negocio.
+          </p>
+        </div>
+      </div>
 
       {!canEditSlug && (
         <Card variant="outlined" className={styles.upgradeBanner}>
@@ -365,31 +470,60 @@ function BusinessSection({
 
         {/* Logo + identity */}
         <div className={styles.profileRow}>
-          <div className={styles.logoCircle}>
-            {business.logoUrl ? (
+          <div
+            className={styles.logoCircle}
+            role="button"
+            tabIndex={0}
+            aria-label="Cambiar foto de perfil"
+            onClick={() => !isUploadingAvatar && avatarInputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') avatarInputRef.current?.click();
+            }}
+            style={{ cursor: isUploadingAvatar ? 'default' : 'pointer' } as React.CSSProperties}
+          >
+            {(localLogoUrl ?? business.logoUrl) ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={business.logoUrl} alt="Logo" className={styles.logoImage} />
+              <img
+                src={localLogoUrl ?? business.logoUrl!}
+                alt="Logo"
+                className={styles.logoImage}
+              />
             ) : (
               <span className={styles.logoInitial}>{business.name.charAt(0).toUpperCase()}</span>
             )}
+            <div className={styles.logoEditOverlay}>
+              {isUploadingAvatar ? <CircularProgress /> : <Icon size={28}>photo_camera</Icon>}
+            </div>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className={styles.logoFileInput}
+              disabled={isUploadingAvatar}
+              onChange={handleAvatarChange}
+            />
           </div>
           <div className={styles.profileMeta}>
             <p className={styles.businessName}>{business.name}</p>
-            <p className={styles.businessSlug}>@{business.slug}</p>
+            <div className={styles.slugBadge}>
+              <Icon size={14}>link</Icon>@{business.slug}
+            </div>
           </div>
 
           <div className={styles.statusToggleContainer}>
             <div className={styles.statusLabelWrapper}>
+              <span
+                className={styles.statusDot}
+                data-active={optimisticIsActive}
+                data-pending={isPendingActive || undefined}
+              />
               {isPendingActive && (
                 <Icon className={styles.spinIcon} size={16}>
                   sync
                 </Icon>
               )}
               <span className={styles.statusToggleLabel}>
-                {(() => {
-                  if (isPendingActive) return 'Guardando...';
-                  return optimisticIsActive ? 'Activo' : 'Inactivo';
-                })()}
+                {isPendingActive ? 'Guardando...' : optimisticIsActive ? 'Activo' : 'Inactivo'}
               </span>
             </div>
             <Switch
@@ -401,15 +535,34 @@ function BusinessSection({
           </div>
         </div>
 
-        {business.description && <p className={styles.descriptionText}>{business.description}</p>}
+        {avatarError && (
+          <div className={styles.avatarError}>
+            <Icon size={16}>error</Icon>
+            <span>{avatarError}</span>
+          </div>
+        )}
+
+        {business.description && (
+          <div className={styles.descriptionCard}>
+            <div className={styles.descriptionInner}>
+              <Icon className={styles.descriptionIcon} size={20}>
+                description
+              </Icon>
+              <div className={styles.descriptionContent}>
+                <p className={styles.descriptionLabel}>Descripción</p>
+                <p className={styles.descriptionText}>{business.description}</p>
+              </div>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Enlace de la Tienda */}
       <Card variant="outlined" className={styles.infoCard}>
         <div className={styles.slugEditHeader}>
-          <div>
-            <p className={styles.cardLabel}>URL del negocio</p>
-            <p className={styles.cardSupporting}>
+          <div className={styles.slugEditHeaderText}>
+            <p className={styles.slugEditTitle}>URL del negocio</p>
+            <p className={styles.slugCardSupporting}>
               Este es el enlace público que verán tus clientes.
             </p>
           </div>
@@ -426,12 +579,11 @@ function BusinessSection({
         <div className={styles.slugEditContent}>
           {!isEditingSlug ? (
             <div className={styles.slugDisplayContainer}>
-              <CopyableValue value={origin ? `${origin}/${business.slug}` : `/${business.slug}`} />
+              <CopyableValue value={`${business.slug}.${appDomain}`} />
             </div>
           ) : (
             <div className={styles.slugEditor}>
               <div className={styles.slugInputWrapper}>
-                <span className={styles.slugPrefix}>app.com/</span>
                 <TextField
                   value={newSlug}
                   onInput={(e: React.FormEvent<HTMLInputElement>) => {
@@ -441,14 +593,29 @@ function BusinessSection({
                       .replace(/\s+/g, '-')
                       .replace(/[^a-z0-9-]/g, '');
                     setNewSlug(cleanSlug);
+                    setSlugError(null);
+                    checkAvailability(cleanSlug);
                   }}
-                  placeholder="mi-negocio"
+                  placeholder="mi-tienda-ejemplo"
                   className={styles.slugInputStandalone}
                   disabled={isPendingSlug}
                   error={!!slugError}
                   errorText={slugError || ''}
                 />
+                <span className={styles.slugDomainSuffix}>.{appDomain}</span>
               </div>
+
+              <div className={styles.slugMeta}>
+                <span className={styles.slugCharCount}>
+                  {newSlug.length}/{SLUG_MAX}
+                </span>
+                <span className={styles.slugStatusBadge} data-availability={slugAvailability}>
+                  {slugAvailability === 'checking' && 'Verificando…'}
+                  {slugAvailability === 'available' && '✓ Disponible'}
+                  {slugAvailability === 'taken' && '✕ No disponible'}
+                </span>
+              </div>
+
               <div className={styles.slugEditActions}>
                 <Button
                   variant="text"
@@ -456,6 +623,8 @@ function BusinessSection({
                     setIsEditingSlug(false);
                     setNewSlug(business.slug);
                     setSlugError(null);
+                    setSlugAvailability('idle');
+                    if (debounceRef.current) clearTimeout(debounceRef.current);
                   }}
                   disabled={isPendingSlug}
                 >
@@ -464,7 +633,12 @@ function BusinessSection({
                 <Button
                   variant="filled"
                   onClick={handleSaveSlug}
-                  disabled={isPendingSlug || newSlug === business.slug}
+                  disabled={
+                    isPendingSlug ||
+                    newSlug === business.slug ||
+                    newSlug.length < SLUG_MIN ||
+                    slugAvailability !== 'available'
+                  }
                 >
                   Guardar
                 </Button>
@@ -474,36 +648,26 @@ function BusinessSection({
         </div>
       </Card>
 
-      {/* Info list usando MD3 List */}
+      {/* Info del negocio */}
       <Card variant="outlined" className={styles.infoCard}>
         <p className={styles.cardLabel}>Información del registro</p>
         <List>
           <ListItem
-            headline="ID del Negocio"
-            supportingText={<CopyableValue value={business.id} />}
-            trailingSupportingText={undefined}
+            headline={business.storeType ?? 'Sin configurar'}
+            supportingText="Tipo de tienda"
           >
             <Icon slot="start" size={20}>
-              fingerprint
+              store
             </Icon>
           </ListItem>
           <Divider />
           <ListItem
-            headline="Tipo de Tienda"
-            supportingText={business.storeType ?? 'Sin configurar'}
-          >
-            <Icon slot="start" size={20}>
-              storefront
-            </Icon>
-          </ListItem>
-          <Divider />
-          <ListItem
-            headline="País / Ciudad"
-            supportingText={
+            headline={
               business.country
                 ? [business.country, business.city].filter(Boolean).join(', ')
                 : 'Sin configurar'
             }
+            supportingText="País / Ciudad"
           >
             <Icon slot="start" size={20}>
               location_on
@@ -511,21 +675,54 @@ function BusinessSection({
           </ListItem>
           <Divider />
           <ListItem
-            headline="Ubicación"
-            supportingText={
+            headline={
               [business.departamento, business.provincia, business.distrito]
                 .filter(Boolean)
                 .join(', ') || 'Sin configurar'
             }
+            supportingText="Ubicación"
           >
             <Icon slot="start" size={20}>
               map
             </Icon>
           </ListItem>
           <Divider />
+          {business.address && (
+            <>
+              <ListItem headline={business.address} supportingText="Dirección">
+                <Icon slot="start" size={20}>
+                  home_pin
+                </Icon>
+              </ListItem>
+              <Divider />
+            </>
+          )}
           <ListItem
-            headline="Fecha de registro"
-            supportingText={new Date(business.createdAt).toISOString().split('T')[0]}
+            headline={business.email ?? 'Sin configurar'}
+            supportingText="Correo electrónico"
+          >
+            <Icon slot="start" size={20}>
+              mail
+            </Icon>
+          </ListItem>
+          {business.whatsappNumber && (
+            <>
+              <Divider />
+              <ListItem headline={business.whatsappNumber} supportingText="WhatsApp">
+                <Icon slot="start" size={20}>
+                  chat
+                </Icon>
+              </ListItem>
+            </>
+          )}
+          <Divider />
+          <ListItem
+            headline={new Date(business.createdAt).toLocaleDateString('es-PE', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+            supportingText="Registrado el"
           >
             <Icon slot="start" size={20}>
               calendar_today
@@ -533,23 +730,23 @@ function BusinessSection({
           </ListItem>
         </List>
       </Card>
-
-      <div className={styles.actionRow}>
-        <Button variant="tonal" disabled={!isOwner && !permissions.includes('business.edit')}>
-          <Icon slot="icon" size={20}>
-            edit
-          </Icon>
-          Editar información
-        </Button>
-        <Button variant="outlined" disabled={!isOwner && !permissions.includes('business.edit')}>
-          <Icon slot="icon" size={20}>
-            photo_camera
-          </Icon>
-          Cambiar imágenes
-        </Button>
-      </div>
     </div>
   );
+}
+
+function getFontFamilyCSS(fontFamily: StorefrontTheme['fontFamily']): string {
+  switch (fontFamily) {
+    case 'google-sans':
+      return "'Google Sans', var(--mio-theme-text-font-family), sans-serif";
+    case 'inter':
+      return 'var(--font-storefront-inter), var(--mio-theme-text-font-family), sans-serif';
+    case 'roboto':
+      return 'var(--font-storefront-roboto), var(--mio-theme-text-font-family), sans-serif';
+    case 'poppins':
+      return 'var(--font-storefront-poppins), var(--mio-theme-text-font-family), sans-serif';
+    default:
+      return "'Google Sans', var(--mio-theme-text-font-family), sans-serif";
+  }
 }
 
 function AppearanceSection({
@@ -569,7 +766,6 @@ function AppearanceSection({
   isOwner: boolean;
   permissions: Permission[];
 }) {
-  const { setTheme: setGlobalTheme } = useTheme();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [usePlatformColors, setUsePlatformColors] = useState(!initialHasCustomTheme);
@@ -647,21 +843,30 @@ function AppearanceSection({
 
   return (
     <div className={styles.sectionArea}>
-      <SectionHeader
-        title="Apariencia"
-        subtitle="Separá la apariencia de tu panel privado de la imagen pública de tu tienda."
-      />
+      <div className={styles.businessHero}>
+        <div className={styles.businessHeroIcon}>
+          <Icon size={28}>palette</Icon>
+        </div>
+        <div>
+          <h2 className={styles.businessHeroTitle}>Apariencia</h2>
+          <p className={styles.businessHeroSubtitle}>
+            Personalizá el look de tu panel de administración y la imagen pública de tu tienda.
+          </p>
+        </div>
+      </div>
 
       <Card variant="elevated" className={styles.appearanceCard} style={{ padding: 0 }}>
         <div style={{ padding: '24px 24px 0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
-            <Icon style={{ color: 'var(--md-sys-color-primary)' }}>settings_brightness</Icon>
-            <p className={styles.cardLabel} style={{ padding: 0, margin: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '2px' }}>
+            <Icon style={{ color: 'var(--md-sys-color-primary)', fontSize: '22px' }}>
+              settings_brightness
+            </Icon>
+            <p className={styles.appearanceSectionTitle} style={{ padding: 0, margin: 0 }}>
               Panel privado
             </p>
           </div>
-          <p className={styles.previewSupporting}>
-            Ajustes personalizados para tu experiencia de administración.
+          <p className={styles.appearanceSectionDesc} style={{ marginTop: '2px', padding: 0 }}>
+            Elegí el modo visual y la accesibilidad que más cómodos te queden para administrar.
           </p>
         </div>
         <div className={styles.appearanceInner} style={{ padding: '0 24px 24px' }}>
@@ -733,78 +938,6 @@ function AppearanceSection({
               </div>
             </div>
 
-            {/* Preview del tema */}
-            <div
-              className={`${styles.themePreviewWrap} ${usePlatformColors ? styles.disabledCard : ''}`}
-            >
-              <BusinessPreviewCard
-                commercialName={business.name}
-                sector={business.storeType || ''}
-                country={business.country || ''}
-                city={business.city || ''}
-                address={business.address || ''}
-                email={business.email || ''}
-                description={business.description || ''}
-                taxId={business.taxId || ''}
-                legalRepName={business.legalRepName || ''}
-                legalRepRole={business.legalRepRole || ''}
-                logoPreview={business.logoUrl}
-                storefrontTheme={
-                  usePlatformColors ? createDefaultStorefrontTheme() : storefrontTheme
-                }
-                colorScheme={scheme}
-                onStorefrontThemeChange={(theme) => setStorefrontTheme(theme)}
-                showDownloadButton={false}
-              />
-            </div>
-
-            {/* ── Selector modo claro/oscuro ── */}
-            <div
-              className={usePlatformColors ? styles.disabledCard : ''}
-              style={{ padding: '16px 24px 0' }}
-            >
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {[
-                  { value: 'light' as const, label: 'Modo claro', icon: 'light_mode' },
-                  { value: 'dark' as const, label: 'Modo oscuro', icon: 'dark_mode' },
-                ].map((tab) => (
-                  <button
-                    key={tab.value}
-                    onClick={() => {
-                      setScheme(tab.value);
-                      setGlobalTheme(tab.value);
-                    }}
-                    style={{
-                      flex: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      border: `1px solid ${scheme === tab.value ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline-variant)'}`,
-                      background:
-                        scheme === tab.value
-                          ? 'color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent)'
-                          : 'var(--md-sys-color-surface)',
-                      color:
-                        scheme === tab.value
-                          ? 'var(--md-sys-color-primary)'
-                          : 'var(--md-sys-color-on-surface-variant)',
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      fontWeight: 600,
-                      fontFamily: 'inherit',
-                      transition: 'border-color 0.2s',
-                    }}
-                  >
-                    <Icon size={18}>{tab.icon}</Icon>
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Divisor */}
             <div
               style={{
@@ -844,6 +977,24 @@ function AppearanceSection({
                     );
                   }}
                 />
+
+                <div
+                  className={styles.fontPreviewCard}
+                  style={{
+                    opacity: usePlatformColors ? 0.5 : 1,
+                    fontFamily: usePlatformColors
+                      ? 'inherit'
+                      : getFontFamilyCSS(storefrontTheme.fontFamily),
+                  }}
+                >
+                  <p className={styles.fontPreviewLabel}>Vista previa</p>
+                  <p className={styles.fontPreviewText}>
+                    Cada letra cuenta una historia. Este texto se ve en la tipografía{' '}
+                    {STOREFRONT_FONT_OPTIONS.find((o) => o.value === storefrontTheme.fontFamily)
+                      ?.label ?? ''}
+                    .
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -867,45 +1018,63 @@ function AppearanceSection({
                 </p>
               </div>
               <div className={styles.themeColorGrid}>
-                {THEME_COLOR_FIELDS.map((field) => (
-                  <div key={field.key} className={styles.themeColorField}>
-                    <label className={styles.themeColorLabel} htmlFor={`theme-${field.key}`}>
-                      {field.label}
-                    </label>
-                    <p className={styles.themeColorHelper}>{field.helper}</p>
-                    <div className={styles.themeColorControl}>
-                      <input
-                        id={`theme-${field.key}`}
-                        className={styles.themeColorPicker}
-                        type="color"
-                        disabled={usePlatformColors}
-                        value={currentConfig.palette[field.key]}
-                        onChange={(event) =>
-                          setStorefrontTheme((prev) =>
-                            normalizeStorefrontTheme({
-                              ...prev,
-                              [scheme]: {
-                                ...prev[scheme],
-                                palette: {
-                                  ...prev[scheme].palette,
-                                  [field.key]: event.target.value,
-                                },
-                              },
-                            }),
-                          )
-                        }
-                      />
-                      <span className={styles.themeColorCode}>
-                        {currentConfig.palette[field.key]}
-                      </span>
+                {THEME_COLOR_FIELDS.map((field) => {
+                  const colorValue = currentConfig.palette[field.key];
+                  return (
+                    <div key={field.key} className={styles.themeColorField}>
+                      <label className={styles.themeColorLabel} htmlFor={`theme-${field.key}`}>
+                        {field.label}
+                      </label>
+                      <p className={styles.themeColorHelper}>{field.helper}</p>
+                      <div className={styles.themeColorControl}>
+                        <div className={styles.themeColorSwatch}>
+                          <input
+                            id={`theme-${field.key}`}
+                            className={styles.themeColorSwatchInput}
+                            type="color"
+                            disabled={usePlatformColors}
+                            value={colorValue}
+                            onChange={(event) =>
+                              setStorefrontTheme((prev) =>
+                                normalizeStorefrontTheme({
+                                  ...prev,
+                                  [scheme]: {
+                                    ...prev[scheme],
+                                    palette: {
+                                      ...prev[scheme].palette,
+                                      [field.key]: event.target.value,
+                                    },
+                                  },
+                                }),
+                              )
+                            }
+                          />
+                          <div
+                            className={styles.themeColorSwatchFill}
+                            style={{ backgroundColor: colorValue }}
+                          />
+                        </div>
+                        <span className={styles.themeColorCode}>
+                          <span
+                            className={styles.themeColorCodeDot}
+                            style={{ backgroundColor: colorValue }}
+                          />
+                          {colorValue}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
-              {/* Botones de paleta — integrados con padding correcto */}
+              {/* Botones de paleta */}
               <div
-                style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', padding: '8px 24px 24px' }}
+                style={{
+                  display: 'flex',
+                  gap: '10px',
+                  flexWrap: 'wrap',
+                  padding: '4px 24px 24px',
+                }}
               >
                 <Button
                   variant="tonal"
@@ -917,347 +1086,21 @@ function AppearanceSection({
                   }
                 >
                   <Icon slot="icon" size={20}>
-                    palette
+                    casino
                   </Icon>
-                  Probar combinación aleatoria
+                  Combinación aleatoria
                 </Button>
                 <Button
                   variant="text"
                   disabled={usePlatformColors}
                   onClick={() => setStorefrontTheme(createDefaultStorefrontTheme())}
                 >
-                  Volver al inicio
+                  <Icon slot="icon" size={20}>
+                    restart_alt
+                  </Icon>
+                  Valores iniciales
                 </Button>
               </div>
-            </div>
-          </Card>
-
-          {/* ── Fondo de página ── */}
-          <Card
-            variant="outlined"
-            className={styles.infoCard}
-            style={{ padding: 0, overflow: 'hidden' }}
-          >
-            <div
-              className={usePlatformColors ? styles.disabledCard : ''}
-              style={{ padding: '20px 24px 16px' }}
-            >
-              <p className={styles.cardLabel} style={{ padding: 0 }}>
-                Fondo de página
-              </p>
-              <p className={styles.previewSupporting} style={{ marginTop: '4px', padding: 0 }}>
-                Personalizá el fondo que verán tus clientes.
-              </p>
-
-              {/* Tipo de fondo */}
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '16px' }}>
-                {(['solid', 'gradient', 'dots', 'lines', 'squares'] as const).map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => {
-                      const current = currentConfig.background;
-                      let colors: string[];
-                      switch (type) {
-                        case 'solid':
-                          colors = ['#ffffff'];
-                          break;
-                        case 'gradient':
-                          colors = ['#6366f1', '#a855f7'];
-                          break;
-                        default:
-                          colors = ['#ffffff', '#cbd5e1'];
-                      }
-                      setStorefrontTheme(
-                        normalizeStorefrontTheme({
-                          ...storefrontTheme,
-                          [scheme]: {
-                            ...storefrontTheme[scheme],
-                            background: { type, colors, patternSize: 16 },
-                          },
-                        }),
-                      );
-                    }}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '8px',
-                      border: `1px solid ${currentConfig.background?.type === type ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline-variant)'}`,
-                      background:
-                        currentConfig.background?.type === type
-                          ? 'color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent)'
-                          : 'var(--md-sys-color-surface)',
-                      color:
-                        currentConfig.background?.type === type
-                          ? 'var(--md-sys-color-primary)'
-                          : 'var(--md-sys-color-on-surface)',
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      fontWeight: 500,
-                      fontFamily: 'inherit',
-                      transition: 'border-color 0.2s',
-                    }}
-                  >
-                    {type === 'solid'
-                      ? 'Sólido'
-                      : type === 'gradient'
-                        ? 'Degradado'
-                        : type === 'dots'
-                          ? 'Puntos'
-                          : type === 'lines'
-                            ? 'Líneas'
-                            : 'Cuadrados'}
-                  </button>
-                ))}
-              </div>
-
-              {/* Color pickers */}
-              {currentConfig.background && (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px',
-                    marginTop: '16px',
-                  }}
-                >
-                  {(() => {
-                    const bg = currentConfig.background;
-                    const count =
-                      bg.type === 'solid' ? 1 : bg.type === 'gradient' ? bg.colors.length : 2;
-                    return bg.colors.slice(0, count).map((color, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div
-                          style={{
-                            position: 'relative',
-                            width: '36px',
-                            height: '36px',
-                            borderRadius: '6px',
-                            overflow: 'hidden',
-                            border: '1px solid var(--md-sys-color-outline-variant)',
-                          }}
-                        >
-                          <input
-                            type="color"
-                            value={color}
-                            onChange={(e) => {
-                              const next = [...bg.colors];
-                              next[i] = e.target.value;
-                              setStorefrontTheme(
-                                normalizeStorefrontTheme({
-                                  ...storefrontTheme,
-                                  [scheme]: {
-                                    ...storefrontTheme[scheme],
-                                    background: { ...bg, colors: next },
-                                  },
-                                }),
-                              );
-                            }}
-                            style={{
-                              position: 'absolute',
-                              inset: 0,
-                              width: '100%',
-                              height: '100%',
-                              opacity: 0,
-                              cursor: 'pointer',
-                            }}
-                          />
-                          <div
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              backgroundColor: color,
-                              borderRadius: '5px',
-                            }}
-                          />
-                        </div>
-                        <span
-                          style={{
-                            fontSize: '0.75rem',
-                            color: 'var(--md-sys-color-on-surface-variant)',
-                            fontWeight: 500,
-                            minWidth: '40px',
-                          }}
-                        >
-                          {i === 0 && bg.type !== 'solid'
-                            ? 'Fondo'
-                            : i === 1
-                              ? 'Patrón'
-                              : `Color ${i + 1}`}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: '0.7rem',
-                            color: 'var(--md-sys-color-on-surface)',
-                            fontFamily: 'monospace',
-                          }}
-                        >
-                          {color}
-                        </span>
-                      </div>
-                    ));
-                  })()}
-
-                  {/* Color count for gradient */}
-                  {currentConfig.background.type === 'gradient' && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span
-                        style={{
-                          fontSize: '0.75rem',
-                          color: 'var(--md-sys-color-on-surface-variant)',
-                          fontWeight: 500,
-                        }}
-                      >
-                        Colores:
-                      </span>
-                      {[2, 3, 4].map((n) => {
-                        const bg = currentConfig.background!;
-                        const isSelected = bg.colors.length === n;
-
-                        return (
-                          <button
-                            key={n}
-                            onClick={() => {
-                              const next = [...bg.colors];
-                              while (next.length < n) next.push('#6366f1');
-                              setStorefrontTheme(
-                                normalizeStorefrontTheme({
-                                  ...storefrontTheme,
-                                  [scheme]: {
-                                    ...storefrontTheme[scheme],
-                                    background: { ...bg, colors: next.slice(0, n) },
-                                  },
-                                }),
-                              );
-                            }}
-                            style={{
-                              width: '32px',
-                              height: '32px',
-                              borderRadius: '6px',
-                              border: `1px solid ${isSelected ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline-variant)'}`,
-                              background: isSelected
-                                ? 'color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent)'
-                                : 'var(--md-sys-color-surface)',
-                              color: 'var(--md-sys-color-on-surface)',
-                              fontWeight: 600,
-                              fontSize: '0.8rem',
-                              cursor: 'pointer',
-                              fontFamily: 'inherit',
-                            }}
-                          >
-                            {n}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Pattern size for dots/lines/squares */}
-                  {(currentConfig.background.type === 'dots' ||
-                    currentConfig.background.type === 'lines' ||
-                    currentConfig.background.type === 'squares') && (
-                    <div>
-                      <span
-                        style={{
-                          fontSize: '0.75rem',
-                          color: 'var(--md-sys-color-on-surface-variant)',
-                          fontWeight: 500,
-                        }}
-                      >
-                        Tamaño: {currentConfig.background.patternSize}px
-                      </span>
-                      <input
-                        type="range"
-                        min={4}
-                        max={60}
-                        value={currentConfig.background.patternSize}
-                        onChange={(e) => {
-                          const bg = currentConfig.background!;
-                          setStorefrontTheme(
-                            normalizeStorefrontTheme({
-                              ...storefrontTheme,
-                              [scheme]: {
-                                ...storefrontTheme[scheme],
-                                background: { ...bg, patternSize: Number(e.target.value) },
-                              },
-                            }),
-                          );
-                        }}
-                        style={{
-                          width: '100%',
-                          marginTop: '6px',
-                          accentColor: 'var(--md-sys-color-primary)',
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                    <button
-                      onClick={() => {
-                        const bg = currentConfig.background!;
-                        const randomColor = () =>
-                          '#' +
-                          Math.floor(Math.random() * 16777215)
-                            .toString(16)
-                            .padStart(6, '0');
-                        const newColors = bg.colors.map(() => randomColor());
-                        setStorefrontTheme(
-                          normalizeStorefrontTheme({
-                            ...storefrontTheme,
-                            [scheme]: {
-                              ...storefrontTheme[scheme],
-                              background: { ...bg, colors: newColors },
-                            },
-                          }),
-                        );
-                      }}
-                      style={{
-                        flex: 1,
-                        padding: '8px 12px',
-                        borderRadius: '8px',
-                        border: '1px solid var(--md-sys-color-primary)',
-                        background:
-                          'color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent)',
-                        color: 'var(--md-sys-color-primary)',
-                        fontWeight: 600,
-                        fontSize: '0.8rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        justifyContent: 'center',
-                        fontFamily: 'inherit',
-                      }}
-                    >
-                      Random
-                    </button>
-                    <button
-                      onClick={() => {
-                        setStorefrontTheme(
-                          normalizeStorefrontTheme({
-                            ...storefrontTheme,
-                            [scheme]: { ...storefrontTheme[scheme], background: undefined },
-                          }),
-                        );
-                      }}
-                      style={{
-                        flex: 1,
-                        padding: '8px 12px',
-                        borderRadius: '8px',
-                        border: '1px solid var(--md-sys-color-outline-variant)',
-                        background: 'var(--md-sys-color-surface)',
-                        color: 'var(--md-sys-color-on-surface-variant)',
-                        fontWeight: 600,
-                        fontSize: '0.8rem',
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                      }}
-                    >
-                      Restablecer
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </Card>
 
@@ -1292,6 +1135,25 @@ function AppearanceSection({
   );
 }
 
+function getRemainingTime(planEndDate: string | null): string | null {
+  if (!planEndDate) return null;
+  const end = new Date(planEndDate);
+  const now = new Date();
+  const diff = end.getTime() - now.getTime();
+  if (diff <= 0) return 'Vencido';
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  if (days >= 30) {
+    const months = Math.floor(days / 30);
+    const remainingDays = days % 30;
+    if (remainingDays === 0) {
+      return `${months} mes${months !== 1 ? 'es' : ''}`;
+    }
+    return `${months} mes${months !== 1 ? 'es' : ''} y ${remainingDays} día${remainingDays !== 1 ? 's' : ''}`;
+  }
+  return `${days} día${days !== 1 ? 's' : ''} restante${days !== 1 ? 's' : ''}`;
+}
+
 function PlanSection({
   entitlements,
   isOwner: _isOwner,
@@ -1304,101 +1166,181 @@ function PlanSection({
   const slug = params.slug as string;
   const planKey = entitlements.plan;
   const config = PLAN_CONFIG[planKey as keyof typeof PLAN_CONFIG] ?? PLAN_CONFIG.basico;
+  const remainingTime = getRemainingTime(entitlements.planEndDate);
 
   const features = [
     {
-      label: 'Gateway de pago (Yape / Plin)',
+      label: 'Gateway de pago',
+      detail: 'Cobrá con Yape, Plin y tarjeta de crédito/débito',
       enabled: entitlements.hasPaymentGateway,
       icon: 'payments',
     },
     {
-      label: 'Importación masiva de productos',
+      label: 'Productos en catálogo',
+      detail:
+        entitlements.maxProducts === -1
+          ? '∞ Ilimitados'
+          : `Hasta ${entitlements.maxProducts} productos`,
+      enabled: true,
+      icon: 'inventory_2',
+    },
+    {
+      label: 'Importación masiva',
+      detail: 'Subí productos desde Excel/CSV en lotes',
       enabled: entitlements.canImportProducts,
       icon: 'upload',
     },
     {
-      label: 'Personalización de storefront',
+      label: 'Storefront personalizable',
+      detail: 'Colores, tipografía y layout de tu tienda',
       enabled: entitlements.canCustomizeStorefront,
       icon: 'tune',
     },
-    { label: 'Chat con clientes', enabled: entitlements.chatEnabled, icon: 'chat' },
-    { label: 'Dashboard de métricas', enabled: entitlements.dashboardEnabled, icon: 'bar_chart' },
-    { label: 'Asistente de IA', enabled: entitlements.canUseAIAssistant, icon: 'auto_awesome' },
+    {
+      label: 'Chat con clientes',
+      detail: 'Respondé consultas de tus clientes en tiempo real',
+      enabled: entitlements.chatEnabled,
+      icon: 'chat',
+    },
+    {
+      label: 'Dashboard de métricas',
+      detail: 'Ventas, visitas y rendimiento en tiempo real',
+      enabled: entitlements.dashboardEnabled,
+      icon: 'bar_chart',
+    },
+    {
+      label: 'SEO avanzado',
+      detail: 'Meta tags, JSON-LD y sitemap automático',
+      enabled: entitlements.seoEnabled,
+      icon: 'search',
+    },
+    {
+      label: 'Asistente de IA',
+      detail: 'Generación de contenido y respuestas inteligentes',
+      enabled: entitlements.canUseAIAssistant,
+      icon: 'auto_awesome',
+    },
+    {
+      label: 'Equipo',
+      detail:
+        entitlements.maxTeamMembers === -1
+          ? 'Miembros ilimitados'
+          : `Hasta ${entitlements.maxTeamMembers} miembros`,
+      enabled: true,
+      icon: 'group',
+    },
   ];
+
+  // Feature chips for hero — top 3 enabled features
+  const heroFeatures = features
+    .filter((f) => f.enabled)
+    .slice(0, 3)
+    .map((f) => ({ label: f.label, icon: f.icon }));
 
   return (
     <div className={styles.sectionArea}>
-      <SectionHeader title="Plan y Límites" subtitle="Tu plan actual y todo lo que incluye." />
-
-      {/* Hero plan */}
-      <div className={styles.planHero} style={{ background: config.gradient, color: config.color }}>
-        <div className={styles.planHeroLeft}>
-          <div className={styles.planIconCircle}>
-            <Icon size={28}>{config.icon}</Icon>
-          </div>
-          <div>
-            <p className={styles.planHeroLabel}>Plan activo</p>
-            <p className={styles.planHeroName}>{config.label}</p>
-          </div>
+      <div className={styles.businessHero}>
+        <div className={styles.businessHeroIcon}>
+          <Icon size={28}>workspace_premium</Icon>
         </div>
-        <Chips
-          label={entitlements.isActive ? 'Al día' : 'Inactivo'}
-          variant="filter"
-          selected={entitlements.isActive}
-        />
+        <div>
+          <h2 className={styles.businessHeroTitle}>Plan y Límites</h2>
+          <p className={styles.businessHeroSubtitle}>Tu plan actual y todo lo que incluye.</p>
+        </div>
       </div>
 
-      {/* Features MD3 List */}
-      <Card variant="outlined" className={styles.infoCard}>
-        <p className={styles.cardLabel}>Funcionalidades incluidas</p>
-        <List>
-          {features.map((feat, i) => (
-            <div key={feat.label}>
-              {i > 0 && <Divider />}
-              <ListItem
-                headline={feat.label}
-                trailingSupportingText={
-                  feat.enabled ? (
-                    <Chips label="Incluido" variant="filter" selected />
-                  ) : (
-                    <Chips label="No incluido" variant="assist" />
-                  )
-                }
-              >
-                <Icon
-                  slot="start"
-                  style={
-                    {
-                      color: feat.enabled
-                        ? 'var(--md-sys-color-primary)'
-                        : 'var(--md-sys-color-outline)',
-                    } as React.CSSProperties
-                  }
-                >
-                  {feat.icon}
-                </Icon>
-              </ListItem>
+      {/* Hero plan — llamativo según el plan */}
+      <div className={styles.planHero} style={{ background: config.gradient, color: config.color }}>
+        <span className={styles.planHeroDecoration}>
+          <Icon style={{ fontSize: 'inherit' }}>{config.icon}</Icon>
+        </span>
+
+        <div className={styles.planHeroBody}>
+          <div className={styles.planHeroTop}>
+            <div className={styles.planIconCircle}>
+              <Icon size={32}>{config.icon}</Icon>
             </div>
-          ))}
-        </List>
+            <div className={styles.planHeroInfo}>
+              <p className={styles.planHeroLabel}>Plan activo</p>
+              <p className={styles.planHeroName}>{config.label}</p>
+            </div>
+          </div>
+
+          {heroFeatures.length > 0 && (
+            <div className={styles.planHeroFeatures}>
+              {heroFeatures.map((feat) => (
+                <span key={feat.label} className={styles.planHeroFeatureChip}>
+                  <Icon size={14}>{feat.icon}</Icon>
+                  {feat.label}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <span
+          className={`${styles.planHeroBadge} ${!entitlements.isActive ? styles.planHeroBadgeInactive : ''}`}
+        >
+          <Icon size={16}>{entitlements.isActive ? 'check_circle' : 'pause_circle'}</Icon>
+          {entitlements.isActive ? remainingTime || 'Al día' : 'Inactivo'}
+        </span>
+      </div>
+
+      {/* Features — layout limpio sin chips/buttons */}
+      <Card variant="elevated" className={styles.planFeaturesCard}>
+        <div className={styles.teamMembersHeader}>
+          <span className={styles.teamMembersTitle}>Funcionalidades incluidas</span>
+        </div>
+        {features.map((feat, i) => (
+          <div key={feat.label}>
+            {i > 0 && <div className={styles.planFeatureDivider} />}
+            <div
+              className={`${styles.planFeatureItem} ${!feat.enabled ? styles.planFeatureDisabled : ''}`}
+            >
+              <div
+                className={`${styles.planFeatureIcon} ${!feat.enabled ? styles.planFeatureIconDisabled : ''}`}
+              >
+                <Icon size={20}>{feat.icon}</Icon>
+              </div>
+              <div className={styles.planFeatureBody}>
+                <span className={styles.planFeatureLabel}>{feat.label}</span>
+                <span className={styles.planFeatureDesc}>{feat.detail}</span>
+              </div>
+              <div className={styles.planFeatureStatus}>
+                <Icon
+                  size={20}
+                  style={{
+                    color: feat.enabled
+                      ? 'var(--md-sys-color-primary)'
+                      : 'var(--md-sys-color-outline-variant)',
+                  }}
+                >
+                  {feat.enabled ? 'check_circle' : 'cancel'}
+                </Icon>
+              </div>
+            </div>
+          </div>
+        ))}
       </Card>
 
       {/* Limits */}
-      <Card variant="outlined" className={styles.infoCard}>
-        <p className={styles.cardLabel}>Límites del plan</p>
+      <Card variant="elevated" className={styles.planLimitsCard}>
+        <div className={styles.teamMembersHeader}>
+          <span className={styles.teamMembersTitle}>Límites del plan</span>
+        </div>
         <div className={styles.limitsContainer}>
           <LimitItem
             icon="inventory_2"
             label="Productos en catálogo"
             max={entitlements.maxProducts}
-            used={0}
+            used={entitlements.productCount}
           />
           <Divider />
           <LimitItem
             icon="group"
             label="Miembros del equipo"
             max={entitlements.maxTeamMembers}
-            used={1}
+            used={entitlements.memberCount}
           />
         </div>
       </Card>
@@ -1443,107 +1385,6 @@ function LimitItem({
   );
 }
 
-function ContactSection({
-  business,
-  isOwner: _isOwner,
-  permissions: _permissions,
-}: {
-  business: SettingsBusiness;
-  isOwner: boolean;
-  permissions: Permission[];
-}) {
-  return (
-    <div className={styles.sectionArea}>
-      <SectionHeader
-        title="Contacto"
-        subtitle="Información con la que tus clientes se comunican contigo."
-      />
-
-      <Card variant="outlined" className={styles.infoCard}>
-        <List>
-          <ListItem
-            headline="WhatsApp"
-            supportingText={business.whatsappNumber ?? 'Sin configurar'}
-          >
-            <Icon slot="start" size={20}>
-              whatsapp
-            </Icon>
-          </ListItem>
-          <Divider />
-          <ListItem
-            headline="Correo electrónico"
-            supportingText={business.email ?? 'Sin configurar'}
-          >
-            <Icon slot="start" size={20}>
-              email
-            </Icon>
-          </ListItem>
-          <Divider />
-          <ListItem headline="Dirección" supportingText={business.address ?? 'Sin configurar'}>
-            <Icon slot="start" size={20}>
-              location_on
-            </Icon>
-          </ListItem>
-          <Divider />
-          <ListItem
-            headline="Departamento"
-            supportingText={business.departamento ?? 'Sin configurar'}
-          >
-            <Icon slot="start" size={20}>
-              map
-            </Icon>
-          </ListItem>
-          <Divider />
-          <ListItem headline="Provincia" supportingText={business.provincia ?? 'Sin configurar'}>
-            <Icon slot="start" size={20}>
-              map
-            </Icon>
-          </ListItem>
-          <Divider />
-          <ListItem headline="Distrito" supportingText={business.distrito ?? 'Sin configurar'}>
-            <Icon slot="start" size={20}>
-              map
-            </Icon>
-          </ListItem>
-          <Divider />
-          <ListItem
-            headline="País / Ciudad"
-            supportingText={
-              !business.country
-                ? 'Sin configurar'
-                : [business.country, business.city].filter(Boolean).join(', ')
-            }
-          >
-            <Icon slot="start" size={20}>
-              public
-            </Icon>
-          </ListItem>
-        </List>
-      </Card>
-
-      {business.paymentFlow && business.paymentFlow.length > 0 && (
-        <Card variant="outlined" className={styles.infoCard}>
-          <p className={styles.cardLabel}>Flujos de pago configurados</p>
-          <div className={styles.chipsRow}>
-            {business.paymentFlow.map((flow) => (
-              <Chips key={flow} label={flow} variant="assist" elevated />
-            ))}
-          </div>
-        </Card>
-      )}
-
-      <div className={styles.actionRow}>
-        <Button variant="tonal">
-          <Icon slot="icon" size={20}>
-            edit
-          </Icon>
-          Editar contacto
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 function LegalSection({
   business,
   isOwner: _isOwner,
@@ -1555,10 +1396,17 @@ function LegalSection({
 }) {
   return (
     <div className={styles.sectionArea}>
-      <SectionHeader
-        title="Legal"
-        subtitle="Datos tributarios y representante legal del negocio."
-      />
+      <div className={styles.businessHero}>
+        <div className={styles.businessHeroIcon}>
+          <Icon size={28}>gavel</Icon>
+        </div>
+        <div>
+          <h2 className={styles.businessHeroTitle}>Información Legal</h2>
+          <p className={styles.businessHeroSubtitle}>
+            Datos tributarios del negocio e información del representante legal.
+          </p>
+        </div>
+      </div>
 
       <Card variant="outlined" className={styles.infoCard}>
         <p className={styles.cardLabel}>Datos tributarios</p>
@@ -1622,50 +1470,135 @@ function SearchPreview({
   title,
   description,
   slug,
+  logoUrl,
+  businessName,
   geoPlacename,
   geoRegion,
 }: {
   title: string;
   description: string;
   slug: string;
+  logoUrl?: string | null;
+  businessName?: string;
   geoPlacename?: string;
   geoRegion?: string;
 }) {
-  const displayTitle = title || 'Tí­tulo de tu tienda | Store Lite';
+  const displayTitle = title || 'Título de tu tienda | Store Lite';
   const displayDesc =
     description ||
-    'Configura la descripción SEO para que tus clientes te encuentren más fácil en Google.';
+    'Configurá la descripción SEO para que tus clientes te encuentren más fácil en Google.';
   const locationLabel = [geoPlacename, geoRegion].filter(Boolean).join(' - ');
+  const domain = businessName?.toLowerCase().replace(/\s+/g, '') || 'store.lite';
 
   return (
     <div className={styles.searchPreview}>
-      <div className={styles.previewHeader}>
-        <div>
-          <span className={styles.previewLabel}>Vista previa en Google</span>
+      <div className={styles.googlePreview}>
+        {/* URL bar — favicon + breadcrumb estilo Google */}
+        <div className={styles.googleUrl}>
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt=""
+              className={styles.googleFaviconImg}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+                const fallback = (e.target as HTMLImageElement)
+                  .nextElementSibling as HTMLElement | null;
+                if (fallback) fallback.style.display = 'inline-flex';
+              }}
+            />
+          ) : null}
+          <span
+            className={styles.googleFavicon}
+            style={{
+              display: logoUrl ? 'none' : 'inline-flex',
+            }}
+          >
+            {(businessName || 'S')[0].toUpperCase()}
+          </span>
+          <span>
+            {domain} › {slug}
+          </span>
+          <span className={styles.googleUrlArrow}>▾</span>
         </div>
-        <span className={styles.previewBadge}>SEO</span>
-      </div>
 
-      <div className={styles.previewUrl}>
-        <span className={styles.previewUrlDomain}>store.lite</span>
-        <span>https://store.lite/{slug}</span>
-        <Icon size={12}>arrow_drop_down</Icon>
-      </div>
+        {/* Título — azul Google */}
+        <a href="#" className={styles.googleTitle} onClick={(e) => e.preventDefault()}>
+          {displayTitle}
+        </a>
 
-      <a href="#" className={styles.previewTitle} onClick={(e) => e.preventDefault()}>
-        {displayTitle}
-      </a>
+        {/* Descripción — gris, 2 líneas */}
+        <p className={styles.googleSnippet}>{displayDesc}</p>
 
-      <p className={styles.previewSnippet}>{displayDesc}</p>
-
-      <div className={styles.previewMeta}>
-        <span className={styles.previewMetaItem}>Slug: /{slug}</span>
-        {locationLabel ? (
-          <span className={styles.previewMetaItem}>Ubicación: {locationLabel}</span>
-        ) : (
-          <span className={styles.previewMetaItemMuted}>Sin ubicación geográfica configurada</span>
+        {/* Ubicación geográfica — opcional */}
+        {locationLabel && (
+          <div className={styles.googleLocation}>
+            <Icon style={{ fontSize: 14, lineHeight: 1 }}>location_on</Icon>
+            {locationLabel}
+          </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function CharCounter({ current, limit }: { current: number; limit: number }) {
+  const isOver = current > limit;
+  return (
+    <div className={styles.charCounter}>
+      <span className={`${styles.charCountText} ${isOver ? styles.charCountWarning : ''}`}>
+        {isOver && (
+          <Icon style={{ fontSize: 12, marginRight: 2, verticalAlign: 'middle' }}>warning</Icon>
+        )}
+        {current}/{limit}
+      </span>
+    </div>
+  );
+}
+
+/* ── Reusable catalog card (device icon + name header) ──────────── */
+function DeviceCard({
+  icon,
+  name,
+  children,
+}: {
+  icon: string;
+  name: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={styles.catalogCard}>
+      <div className={styles.catalogCardHeader}>
+        <Icon className={styles.catalogCardIcon}>{icon}</Icon>
+        <span className={styles.catalogCardName}>{name}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/* ── Reusable column chip group ─────────────────────────────────── */
+function ColumnChips({
+  options,
+  value,
+  onChange,
+}: {
+  options: readonly { value: string; label?: string }[];
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <div className={styles.catalogChipGroup}>
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          className={`${styles.catalogChip} ${String(value) === opt.value ? styles.catalogChipActive : ''}`}
+          onClick={() => onChange(Number(opt.value))}
+        >
+          {opt.label ?? opt.value}
+        </button>
+      ))}
     </div>
   );
 }
@@ -1699,6 +1632,11 @@ function StorefrontSectionEditor({
   const [layout, setLayout] = useState<StorefrontLayout>(
     normalizeStorefrontLayout(initialStorefrontLayout),
   );
+
+  // Track changes vs. initial normalized state
+  const initialRef = useRef<StorefrontLayout>(normalizeStorefrontLayout(initialStorefrontLayout));
+  const hasChanges = JSON.stringify(layout) !== JSON.stringify(initialRef.current);
+  const canSave = isOwner || permissions.includes('storefront.edit');
 
   const productGridSection =
     layout.sections.find(
@@ -1776,10 +1714,17 @@ function StorefrontSectionEditor({
   if (!entitlements.canCustomizeStorefront) {
     return (
       <div className={styles.sectionArea}>
-        <SectionHeader
-          title="Storefront"
-          subtitle="Ordena bloques y configura el catálogo público de tu tienda."
-        />
+        <div className={styles.businessHero}>
+          <div className={styles.businessHeroIcon}>
+            <Icon size={28}>storefront</Icon>
+          </div>
+          <div>
+            <h2 className={styles.businessHeroTitle}>Storefront</h2>
+            <p className={styles.businessHeroSubtitle}>
+              Organizá la página pública de tu tienda de una forma simple y segura.
+            </p>
+          </div>
+        </div>
         <Card variant="outlined" className={styles.upgradeBanner}>
           <div className={styles.upgradeBannerContent}>
             <Icon size={24} style={{ color: 'var(--md-sys-color-primary)' } as CSSProperties}>
@@ -1802,55 +1747,54 @@ function StorefrontSectionEditor({
 
   return (
     <div className={styles.sectionArea}>
-      <SectionHeader
-        title="Storefront"
-        subtitle="Organizá la página pública de tu tienda de una forma simple y segura."
-      />
+      <div className={styles.businessHero}>
+        <div className={styles.businessHeroIcon}>
+          <Icon size={28}>storefront</Icon>
+        </div>
+        <div>
+          <h2 className={styles.businessHeroTitle}>Storefront</h2>
+          <p className={styles.businessHeroSubtitle}>
+            Organizá la página pública de tu tienda de una forma simple y segura.
+          </p>
+        </div>
+      </div>
 
       <Card variant="outlined" className={styles.infoCard}>
         <p className={styles.cardLabel}>Bloques visibles en tu página</p>
         <p className={styles.previewSupporting}>
-          Elegí qué partes querés mostrar primero en la página pública de tu tienda.
+          Elegí qué partes mostrar y en qué orden aparecen.
         </p>
         <div className={styles.storefrontBlockList}>
           {layout.sections.map((section, index) => (
             <div key={section.id} className={styles.storefrontBlockRow}>
-              <div className={styles.storefrontBlockInfo}>
-                <strong>{SECTION_LABELS[section.type]}</strong>
-                <span className={styles.storefrontBlockMeta}>
-                  Posición {index + 1} en la página
-                </span>
-              </div>
-
+              <span className={styles.storefrontBlockDrag}>≡</span>
+              <span className={styles.storefrontBlockName}>{SECTION_LABELS[section.type]}</span>
               <div className={styles.storefrontBlockActions}>
-                <div className={styles.storefrontVisibility}>
-                  <span>Mostrar</span>
-                  <Switch
-                    selected={section.visible}
-                    onClick={() =>
-                      setLayout((prev) =>
-                        updateSection(prev, section.id, (current) => ({
-                          ...current,
-                          visible: !current.visible,
-                        })),
-                      )
-                    }
-                  />
-                </div>
-                <Button
-                  variant="outlined"
+                <Switch
+                  selected={section.visible}
+                  onClick={() =>
+                    setLayout((prev) =>
+                      updateSection(prev, section.id, (current) => ({
+                        ...current,
+                        visible: !current.visible,
+                      })),
+                    )
+                  }
+                />
+                <IconButton
+                  aria-label="Subir bloque"
                   disabled={index === 0}
                   onClick={() => setLayout((prev) => moveSection(prev, section.id, 'up'))}
                 >
-                  Subir
-                </Button>
-                <Button
-                  variant="outlined"
+                  <Icon>arrow_upward</Icon>
+                </IconButton>
+                <IconButton
+                  aria-label="Bajar bloque"
                   disabled={index === layout.sections.length - 1}
                   onClick={() => setLayout((prev) => moveSection(prev, section.id, 'down'))}
                 >
-                  Bajar
-                </Button>
+                  <Icon>arrow_downward</Icon>
+                </IconButton>
               </div>
             </div>
           ))}
@@ -1860,101 +1804,93 @@ function StorefrontSectionEditor({
       <Card variant="outlined" className={styles.infoCard}>
         <p className={styles.cardLabel}>Configuración del catálogo</p>
         <p className={styles.previewSupporting}>
-          Definí cuántos productos se ven por fila y cuánto espacio querés entre ellos según el
-          tamaño de pantalla.
+          Definí cuántos productos se ven por fila y el espaciado entre ellos para cada tipo de
+          pantalla.
         </p>
-        <div className={styles.formGrid}>
-          <Select
-            label="Productos por fila en celular"
-            value={String(productGridSection.config.columns.mobile)}
-            options={MOBILE_COLUMN_OPTIONS}
-            onChange={(e: SelectValueEvent) =>
-              updateGridColumns('mobile', Number(getSelectValue(e)))
-            }
-          />
-          <Select
-            label="Productos por fila en tablet"
-            value={String(productGridSection.config.columns.tablet)}
-            options={TABLET_COLUMN_OPTIONS}
-            onChange={(e: SelectValueEvent) =>
-              updateGridColumns('tablet', Number(getSelectValue(e)))
-            }
-          />
-          <Select
-            label="Productos por fila en computadora"
-            value={String(productGridSection.config.columns.desktop)}
-            options={DESKTOP_COLUMN_OPTIONS}
-            onChange={(e: SelectValueEvent) =>
-              updateGridColumns('desktop', Number(getSelectValue(e)))
-            }
-          />
 
-          <Select
-            label="Espacio entre productos en celular"
-            value={productGridSection.config.gap.mobile}
-            options={GAP_OPTIONS}
-            onChange={(e: SelectValueEvent) =>
-              updateGridGap('mobile', getSelectValue(e) as GridGap)
-            }
-          />
-          <Select
-            label="Espacio entre productos en tablet"
-            value={productGridSection.config.gap.tablet}
-            options={GAP_OPTIONS}
-            onChange={(e: SelectValueEvent) =>
-              updateGridGap('tablet', getSelectValue(e) as GridGap)
-            }
-          />
-          <Select
-            label="Espacio entre productos en computadora"
-            value={productGridSection.config.gap.desktop}
-            options={GAP_OPTIONS}
-            onChange={(e: SelectValueEvent) =>
-              updateGridGap('desktop', getSelectValue(e) as GridGap)
-            }
-          />
-        </div>
-        <div className={styles.storefrontInfoNote}>
-          <Chips
-            label="El estilo visual de las tarjetas lo sumamos en la próxima fase"
-            variant="assist"
-            elevated
-          />
-        </div>
-      </Card>
+        <div className={styles.catalogSection}>
+          {/* ── Productos por fila ── */}
+          <div className={styles.catalogRow}>
+            <h4 className={styles.catalogRowTitle}>Productos por fila</h4>
+            <p className={styles.catalogRowDesc}>
+              Cantidad de columnas visibles según el dispositivo.
+            </p>
+            <div className={styles.catalogCards}>
+              <DeviceCard icon="phone_android" name="Celular">
+                <span className={styles.catalogFixedValue}>
+                  {productGridSection.config.columns.mobile}
+                </span>
+              </DeviceCard>
 
-      <Card variant="outlined" className={styles.infoCard}>
-        <p className={styles.cardLabel}>Resumen rápido</p>
-        <div className={styles.storefrontSummaryRow}>
-          <Chips
-            label={`Celular: ${productGridSection.config.columns.mobile} por fila`}
-            variant="assist"
-            elevated
-          />
-          <Chips
-            label={`Tablet: ${productGridSection.config.columns.tablet} por fila`}
-            variant="assist"
-            elevated
-          />
-          <Chips
-            label={`Computadora: ${productGridSection.config.columns.desktop} por fila`}
-            variant="assist"
-            elevated
-          />
-          <Chips
-            label={`Espaciado: ${GAP_OPTIONS.find((option) => option.value === productGridSection.config.gap.desktop)?.label ?? 'Equilibrado'}`}
-            variant="assist"
-            elevated
-          />
+              <DeviceCard icon="tablet" name="Tablet">
+                <ColumnChips
+                  options={TABLET_COLUMN_OPTIONS}
+                  value={productGridSection.config.columns.tablet}
+                  onChange={(v) => updateGridColumns('tablet', v)}
+                />
+              </DeviceCard>
+
+              <DeviceCard icon="desktop_windows" name="Computadora">
+                <ColumnChips
+                  options={DESKTOP_COLUMN_OPTIONS}
+                  value={productGridSection.config.columns.desktop}
+                  onChange={(v) => updateGridColumns('desktop', v)}
+                />
+              </DeviceCard>
+            </div>
+          </div>
+
+          {/* ── Espaciado ── */}
+          <div className={styles.catalogRow}>
+            <h4 className={styles.catalogRowTitle}>Espaciado</h4>
+            <p className={styles.catalogRowDesc}>Separación entre cada producto en la grilla.</p>
+            <div className={styles.catalogCards}>
+              {(['mobile', 'tablet', 'desktop'] as const).map((bp) => (
+                <DeviceCard
+                  key={bp}
+                  icon={
+                    bp === 'mobile'
+                      ? 'phone_android'
+                      : bp === 'tablet'
+                        ? 'tablet'
+                        : 'desktop_windows'
+                  }
+                  name={bp === 'mobile' ? 'Celular' : bp === 'tablet' ? 'Tablet' : 'Computadora'}
+                >
+                  <select
+                    className={styles.catalogSelect}
+                    value={productGridSection.config.gap[bp]}
+                    onChange={(e) => updateGridGap(bp, e.target.value as GridGap)}
+                  >
+                    {GAP_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </DeviceCard>
+              ))}
+            </div>
+          </div>
         </div>
       </Card>
 
       <div className={styles.actionRow}>
-        <Button variant="filled" onClick={handleSave} disabled={isPending}>
+        <Button
+          variant="filled"
+          onClick={handleSave}
+          disabled={isPending || !canSave || !hasChanges}
+        >
           <Icon slot="icon" size={20}>
             {isPending ? 'sync' : 'save'}
           </Icon>
-          {isPending ? 'Guardando...' : 'Guardar cambios'}
+          {isPending
+            ? 'Guardando...'
+            : !canSave
+              ? 'Sin permiso para guardar'
+              : !hasChanges
+                ? 'Sin cambios pendientes'
+                : 'Guardar cambios'}
         </Button>
       </div>
 
@@ -2022,22 +1958,11 @@ function getSelectValue(event: SelectValueEvent): string {
   return event.currentTarget?.value ?? event.target?.value ?? '';
 }
 
-function CharCounter({ current, limit }: { current: number; limit: number }) {
-  const isOver = current > limit;
-  return (
-    <div className={styles.charCounter}>
-      <span className={`${styles.charCountText} ${isOver ? styles.charCountWarning : ''}`}>
-        {current}/{limit} {isOver ? '⚠️' : ''}
-      </span>
-    </div>
-  );
-}
-
 function SEOSection({
   business,
   entitlements,
-  isOwner: _isOwner,
-  permissions: _permissions,
+  isOwner,
+  permissions,
 }: {
   business: SettingsBusiness;
   entitlements: Entitlements;
@@ -2046,7 +1971,7 @@ function SEOSection({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [formData, setFormData] = useState({
+  const initialForm = {
     seoTitle: business.seoTitle || '',
     seoDescription: business.seoDescription || '',
     seoKeywords: business.seoKeywords?.join(', ') || '',
@@ -2054,7 +1979,11 @@ function SEOSection({
     longitude: business.longitude || '',
     geoRegion: business.geoRegion || '',
     geoPlacename: business.geoPlacename || '',
-  });
+  };
+  const [formData, setFormData] = useState(initialForm);
+  const initialRef = useRef(initialForm);
+  const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialRef.current);
+  const canSave = isOwner || permissions.includes('seo.edit');
 
   const handleSave = () => {
     startTransition(async () => {
@@ -2080,10 +2009,17 @@ function SEOSection({
   if (!entitlements.seoEnabled) {
     return (
       <div className={styles.sectionArea}>
-        <SectionHeader
-          title="SEO y Ubicación"
-          subtitle="Optimiza cómo aparece tu tienda en Google y mapas."
-        />
+        <div className={styles.businessHero}>
+          <div className={styles.businessHeroIcon}>
+            <Icon size={28}>travel_explore</Icon>
+          </div>
+          <div>
+            <h2 className={styles.businessHeroTitle}>SEO y Ubicación</h2>
+            <p className={styles.businessHeroSubtitle}>
+              Optimizá cómo aparece tu tienda en Google y mapas.
+            </p>
+          </div>
+        </div>
         <Card variant="outlined" className={styles.upgradeBanner}>
           <div className={styles.upgradeBannerContent}>
             <Icon size={24} style={{ color: 'var(--md-sys-color-primary)' } as React.CSSProperties}>
@@ -2107,30 +2043,40 @@ function SEOSection({
 
   return (
     <div className={styles.sectionArea}>
-      <SectionHeader
-        title="SEO y Ubicación"
-        subtitle="Configura cómo aparece tu tienda en buscadores y mapas para atraer más clientes."
-      />
+      <div className={styles.businessHero}>
+        <div className={styles.businessHeroIcon}>
+          <Icon size={28}>travel_explore</Icon>
+        </div>
+        <div>
+          <h2 className={styles.businessHeroTitle}>SEO y Ubicación</h2>
+          <p className={styles.businessHeroSubtitle}>
+            Configurá cómo aparece tu tienda en buscadores y mapas para atraer más clientes.
+          </p>
+        </div>
+      </div>
 
       <SearchPreview
         title={formData.seoTitle}
         description={formData.seoDescription}
         slug={business.slug}
+        logoUrl={business.logoUrl}
+        businessName={business.name}
         geoPlacename={formData.geoPlacename}
         geoRegion={formData.geoRegion}
       />
 
       <Card variant="outlined" className={styles.infoCard}>
         <p className={styles.cardLabel}>Metadata de Búsqueda</p>
-        <div className={styles.formGrid}>
+        <div className={styles.metaFields}>
           <div>
             <TextField
               label="Título SEO"
               value={formData.seoTitle}
+              placeholder="Ej: Mi Tienda Online | Store Lite"
               onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setFormData({ ...formData, seoTitle: e.target.value })
               }
-              supportingText="Ideal: entre 50 y 60 caracteres."
+              supportingText="Entre 50 y 60 caracteres. Aparece como el título azul en Google."
             >
               <Icon slot="leading-icon">title</Icon>
             </TextField>
@@ -2143,40 +2089,51 @@ function SEOSection({
               type="textarea"
               rows="3"
               value={formData.seoDescription}
+              placeholder="Ej: Comprá productos únicos en Mi Tienda — envíos a todo el país."
               onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setFormData({ ...formData, seoDescription: e.target.value })
               }
-              supportingText="Ideal: menos de 160 caracteres."
+              supportingText="Máximo 160 caracteres. Aparece como el texto gris debajo del título en Google."
             >
               <Icon slot="leading-icon">description</Icon>
             </TextField>
             <CharCounter current={formData.seoDescription.length} limit={160} />
           </div>
 
-          <TextField
-            label="Keywords (etiquetas clave)"
-            value={formData.seoKeywords}
-            onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setFormData({ ...formData, seoKeywords: e.target.value })
-            }
-            supportingText="Sencilla lista separada por comas."
-          >
-            <Icon slot="leading-icon">key</Icon>
-          </TextField>
+          <Divider />
+
+          <div>
+            <TextField
+              label="Keywords (etiquetas clave)"
+              value={formData.seoKeywords}
+              placeholder="ropa, zapatos, ofertas, envíos"
+              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setFormData({ ...formData, seoKeywords: e.target.value })
+              }
+              supportingText="Palabras clave separadas por comas. Ayudan a Google a entender el contenido de tu tienda."
+            >
+              <Icon slot="leading-icon">key</Icon>
+            </TextField>
+          </div>
         </div>
       </Card>
 
       <Card variant="outlined" className={styles.infoCard}>
         <p className={styles.cardLabel}>Posicionamiento Local (GPS)</p>
+        <p className={styles.previewSupporting} style={{ padding: '0 24px', margin: 0 }}>
+          Estas coordenadas y datos geográficos ayudan a Google a mostrar tu tienda en resultados
+          locales y Google Maps.
+        </p>
         <div className={styles.formGrid}>
-          <div className={styles.twoColRow}>
+          <div className={styles.twoColRow} style={{ gridColumn: '1 / -1' }}>
             <TextField
               label="Latitud"
               value={formData.latitude}
               onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setFormData({ ...formData, latitude: e.target.value })
               }
-              placeholder="-16.398"
+              placeholder="-16.398764"
+              supportingText="Coordenada sur o norte de tu tienda."
             >
               <Icon slot="leading-icon">location_on</Icon>
             </TextField>
@@ -2186,30 +2143,33 @@ function SEOSection({
               onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setFormData({ ...formData, longitude: e.target.value })
               }
-              placeholder="-71.537"
+              placeholder="-71.535004"
+              supportingText="Coordenada este u oeste de tu tienda."
             >
               <Icon slot="leading-icon">explore</Icon>
             </TextField>
           </div>
 
-          <div className={styles.twoColRow}>
+          <div className={styles.twoColRow} style={{ gridColumn: '1 / -1' }}>
             <TextField
               label="Región Geo (ISO)"
               value={formData.geoRegion}
               onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setFormData({ ...formData, geoRegion: e.target.value })
               }
-              supportingText="Ej: PE-ARE"
+              placeholder="PE-ARE"
+              supportingText="Código ISO de la región. Ej: PE-ARE para Arequipa."
             >
               <Icon slot="leading-icon">public</Icon>
             </TextField>
             <TextField
-              label="Ciudad / Lugar"
+              label="Ciudad / Localidad"
               value={formData.geoPlacename}
               onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setFormData({ ...formData, geoPlacename: e.target.value })
               }
-              supportingText="Ej: Arequipa"
+              placeholder="ej: Arequipa"
+              supportingText="Nombre de la ciudad o localidad de tu tienda."
             >
               <Icon slot="leading-icon">apartment</Icon>
             </TextField>
@@ -2218,11 +2178,21 @@ function SEOSection({
       </Card>
 
       <div className={styles.actionRow}>
-        <Button variant="filled" onClick={handleSave} disabled={isPending}>
+        <Button
+          variant="filled"
+          onClick={handleSave}
+          disabled={isPending || !canSave || !hasChanges}
+        >
           <Icon slot="icon" size={21}>
             {isPending ? 'sync' : 'save'}
           </Icon>
-          {isPending ? 'Guardando...' : 'Guardar Configuración SEO'}
+          {isPending
+            ? 'Guardando...'
+            : !canSave
+              ? 'Sin permiso'
+              : !hasChanges
+                ? 'Sin cambios pendientes'
+                : 'Guardar Configuración SEO'}
         </Button>
       </div>
     </div>
@@ -2500,10 +2470,17 @@ function TeamSection({
   if (entitlements.maxTeamMembers <= 1) {
     return (
       <div className={styles.sectionArea}>
-        <SectionHeader
-          title="Equipo"
-          subtitle="Invita a colaboradores para gestionar tu negocio."
-        />
+        <div className={styles.businessHero}>
+          <div className={styles.businessHeroIcon}>
+            <Icon size={28}>group</Icon>
+          </div>
+          <div>
+            <h2 className={styles.businessHeroTitle}>Equipo</h2>
+            <p className={styles.businessHeroSubtitle}>
+              Invitá a colaboradores para gestionar tu negocio.
+            </p>
+          </div>
+        </div>
         <Card variant="outlined" className={styles.upgradeBanner}>
           <div className={styles.upgradeBannerContent}>
             <Icon size={24} style={{ color: 'var(--md-sys-color-primary)' } as React.CSSProperties}>
@@ -2526,140 +2503,131 @@ function TeamSection({
 
   return (
     <div className={styles.sectionArea}>
-      <SectionHeader title="Equipo" subtitle="Gestiona quién tiene acceso a tu negocio." />
+      <div className={styles.businessHero}>
+        <div className={styles.businessHeroIcon}>
+          <Icon size={28}>group</Icon>
+        </div>
+        <div>
+          <h2 className={styles.businessHeroTitle}>Equipo</h2>
+          <p className={styles.businessHeroSubtitle}>Gestioná quién tiene acceso a tu negocio.</p>
+        </div>
+      </div>
 
       {isLoading ? (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '300px',
-          }}
-        >
+        <div className={styles.teamLoading}>
           <CircularProgress indeterminate />
         </div>
       ) : (
         <>
           {/* Members List */}
-          <Card variant="outlined" className={styles.infoCard}>
-            <div className={styles.sectionHeader}>
-              <p className={styles.cardLabel}>
-                Miembros ({currentMemberCount}/{maxMembers === -1 ? '∞' : maxMembers})
-              </p>
+          <Card variant="elevated" className={styles.teamMembersCard}>
+            <div className={styles.teamMembersHeader}>
+              <span className={styles.teamMembersTitle}>Miembros</span>
+              <span className={styles.teamMembersCount}>
+                {currentMemberCount}/{maxMembers === -1 ? '∞' : maxMembers}
+              </span>
             </div>
-            <List>
-              {members.map((member, index) => (
-                <React.Fragment key={member.userId}>
-                  {index > 0 && <Divider />}
-                  <ListItem
-                    headline={member.fullName || 'Sin nombre'}
-                    supportingText={member.email || 'Sin email'}
-                    style={
-                      {
-                        '--md-list-item-headline-size': '16px',
-                        '--md-list-item-headline-weight': '600',
-                      } as React.CSSProperties
-                    }
-                    trailingSupportingText={
-                      member.role === 'owner' ? (
-                        <Chips label="Owner" variant="filter" selected />
-                      ) : (
-                        <div className={styles.memberActions}>
-                          {(isOwner || permissions.includes('team.manage')) && (
-                            <>
-                              <div className={styles.roleSelectContainer}>
-                                <Select
-                                  value={member.role}
-                                  onChange={(e: any) =>
-                                    handleChangeRole(
-                                      member.userId,
-                                      (e.target?.value || e.currentTarget?.value) as
-                                        | 'admin'
-                                        | 'member',
-                                    )
-                                  }
-                                  style={{ minWidth: '130px' }}
-                                >
-                                  <SelectOption value="admin">Admin</SelectOption>
-                                  <SelectOption value="member">Miembro</SelectOption>
-                                </Select>
-                              </div>
-                              <div className={styles.actionButtons}>
-                                <IconButton
-                                  onClick={() => handleOpenPermissionsModal(member)}
-                                  disabled={isPending}
-                                  title="Ajustar permisos"
-                                >
-                                  <Icon size={20}>settings</Icon>
-                                </IconButton>
-                                <IconButton
-                                  onClick={() => handleRemoveMember(member.userId, member.fullName)}
-                                  disabled={isPending}
-                                  title="Eliminar miembro"
-                                >
-                                  <Icon size={20} style={{ color: 'var(--md-sys-color-error)' }}>
-                                    delete
-                                  </Icon>
-                                </IconButton>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      )
-                    }
+            {members.map((member, index) => (
+              <React.Fragment key={member.userId}>
+                {index > 0 && <div className={styles.teamMemberDivider} />}
+                <div className={styles.teamMemberItem}>
+                  <div
+                    className={`${styles.teamMemberAvatar} ${member.role === 'owner' ? styles.teamMemberAvatarOwner : ''}`}
                   >
-                    <Icon slot="start" size={20}>
-                      {member.avatarUrl ? 'account_circle' : 'person'}
-                    </Icon>
-                  </ListItem>
-                </React.Fragment>
-              ))}
-            </List>
+                    {(member.fullName || '?').charAt(0).toUpperCase()}
+                  </div>
+                  <div className={styles.teamMemberInfo}>
+                    <span className={styles.teamMemberName}>{member.fullName || 'Sin nombre'}</span>
+                    <span className={styles.teamMemberEmail}>{member.email || 'Sin email'}</span>
+                  </div>
+                  <div className={styles.teamMemberMeta}>
+                    {member.role === 'owner' ? (
+                      <span className={`${styles.teamRoleBadge} ${styles.teamRoleBadgeOwner}`}>
+                        <Icon size={14}>star</Icon>
+                        Owner
+                      </span>
+                    ) : (
+                      <>
+                        <div className={styles.teamMemberRoleSelect}>
+                          <Select
+                            value={member.role}
+                            onChange={(e: any) =>
+                              handleChangeRole(
+                                member.userId,
+                                (e.target?.value || e.currentTarget?.value) as 'admin' | 'member',
+                              )
+                            }
+                          >
+                            <SelectOption value="admin">Admin</SelectOption>
+                            <SelectOption value="member">Miembro</SelectOption>
+                          </Select>
+                        </div>
+                        {(isOwner || permissions.includes('team.manage')) && (
+                          <div className={styles.teamMemberActions}>
+                            <IconButton
+                              onClick={() => handleOpenPermissionsModal(member)}
+                              disabled={isPending}
+                              title="Permisos"
+                            >
+                              <Icon size={20}>settings</Icon>
+                            </IconButton>
+                            <IconButton
+                              onClick={() => handleRemoveMember(member.userId, member.fullName)}
+                              disabled={isPending}
+                              title="Eliminar"
+                            >
+                              <Icon size={20} style={{ color: 'var(--md-sys-color-error)' }}>
+                                delete
+                              </Icon>
+                            </IconButton>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </React.Fragment>
+            ))}
           </Card>
 
           {/* Invitation Code */}
           {(isOwner || permissions.includes('team.invite')) && (
-            <Card variant="outlined" className={styles.infoCard}>
-              <p className={styles.cardLabel}>Código de invitación</p>
+            <Card variant="elevated" className={styles.teamInviteCard}>
+              <div className={styles.teamMembersHeader}>
+                <span className={styles.teamMembersTitle}>Código de invitación</span>
+              </div>
 
               {canAddMembers ? (
-                <div
-                  className={styles.formGrid}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '16px',
-                    padding: '0 24px 24px',
-                  }}
-                >
-                  <p className={styles.previewSupporting} style={{ padding: 0 }}>
+                <div className={styles.teamInviteContent}>
+                  <p className={styles.teamMemberEmail} style={{ padding: 0, margin: 0 }}>
                     {invitationCode
-                      ? 'Compartí este código con quienes quieras invitar a tu equipo. Por seguridad, el código cambia automáticamente.'
-                      : 'Generá un código para invitar a nuevos miembros.'}
+                      ? 'Compartí este código con quienes quieras invitar. Por seguridad, rota automáticamente.'
+                      : 'Generá un código para invitar a nuevos miembros al equipo.'}
                   </p>
 
                   {invitationCode ? (
-                    <div style={{ textAlign: 'center' }}>
-                      <div className={styles.rotationTimer}>
+                    <div className={styles.teamInviteCodeDisplay}>
+                      <div className={styles.teamInviteRotation}>
                         <Icon size={16} className={styles.rotatingIcon}>
                           sync
                         </Icon>
-                        Protección activa: El código rotará pronto
+                        Protección activa — rotación automática
                       </div>
-                      <div
-                        className={styles.monoValue}
-                        onClick={handleCopyCode}
-                        style={{ cursor: 'pointer' }}
-                      >
+                      <span className={styles.teamInviteCode} onClick={handleCopyCode}>
                         {invitationCode}
-                      </div>
-                      <div className={styles.slugEditActions} style={{ justifyContent: 'center' }}>
+                      </span>
+                      <div className={styles.teamInviteActions}>
                         <Button variant="tonal" onClick={handleCopyCode}>
                           <Icon slot="icon" size={20}>
                             content_copy
                           </Icon>
                           Copiar código
+                        </Button>
+                        <Button variant="text" onClick={handleRevokeCode} disabled={isPending}>
+                          <Icon slot="icon" size={20}>
+                            block
+                          </Icon>
+                          Revocar
                         </Button>
                       </div>
                     </div>
@@ -2698,16 +2666,28 @@ function TeamSection({
           )}
 
           {/* How to join */}
-          <Card variant="outlined" className={styles.infoCard}>
-            <p className={styles.cardLabel}>Cómo unirse</p>
-            <div className={styles.formGrid}>
-              <p className={styles.previewSupporting}>Los invitados deben:</p>
-              <ol style={{ paddingLeft: '1.5rem', margin: '0.5rem 0' }}>
-                <li style={{ marginBottom: '0.5rem' }}>Iniciar sesión con Google</li>
-                <li style={{ marginBottom: '0.5rem' }}>Ir a la página de unirse al equipo</li>
-                <li style={{ marginBottom: '0.5rem' }}>Ingresar el código de invitación</li>
-              </ol>
+          <Card variant="elevated" className={styles.teamHowCard}>
+            <div className={styles.teamMembersHeader}>
+              <span className={styles.teamMembersTitle}>Cómo unirse</span>
             </div>
+            <ol className={styles.teamHowList}>
+              <li className={styles.teamHowStep}>
+                <span className={styles.teamHowStepNumber}>1</span>
+                <span className={styles.teamHowStepText}>
+                  Iniciar sesión con Google en la plataforma
+                </span>
+              </li>
+              <li className={styles.teamHowStep}>
+                <span className={styles.teamHowStepNumber}>2</span>
+                <span className={styles.teamHowStepText}>Ir a la página de unirse al equipo</span>
+              </li>
+              <li className={styles.teamHowStep}>
+                <span className={styles.teamHowStepNumber}>3</span>
+                <span className={styles.teamHowStepText}>
+                  Ingresar el código de invitación compartido
+                </span>
+              </li>
+            </ol>
           </Card>
         </>
       )}
@@ -2807,6 +2787,8 @@ function PaymentsSection({
   const [showSecretKeyPreview, setShowSecretKeyPreview] = useState(false);
   const [showSecretKeyInput, setShowSecretKeyInput] = useState(false);
 
+  const router = useRouter();
+
   const [feedback, setFeedback] = useState<{
     open: boolean;
     description: string;
@@ -2858,12 +2840,21 @@ function PaymentsSection({
   const isConfigured = business.culqiPublicKey && business.culqiSecretKey;
 
   const isPremiumPlan = ['business_pro', 'enterprise_ai'].includes(entitlements.plan);
-  const router = useRouter();
 
   if (!isPremiumPlan) {
     return (
       <div className={styles.sectionArea}>
-        <SectionHeader title="Pagos" subtitle="Configurá cómo recibís el dinero de tus ventas." />
+        <div className={styles.businessHero}>
+          <div className={styles.businessHeroIcon}>
+            <Icon size={28}>payments</Icon>
+          </div>
+          <div>
+            <h2 className={styles.businessHeroTitle}>Pagos</h2>
+            <p className={styles.businessHeroSubtitle}>
+              Configurá cómo recibís el dinero de tus ventas.
+            </p>
+          </div>
+        </div>
         <Card variant="outlined" className={styles.upgradeBanner}>
           <div className={styles.upgradeBannerContent}>
             <Icon size={24} style={{ color: 'var(--md-sys-color-primary)' } as React.CSSProperties}>
@@ -2887,151 +2878,113 @@ function PaymentsSection({
 
   return (
     <div className={styles.sectionArea}>
-      <SectionHeader title="Pagos" subtitle="Configurá cómo recibís el dinero de tus ventas." />
+      <div className={styles.businessHero}>
+        <div className={styles.businessHeroIcon}>
+          <Icon size={28}>payments</Icon>
+        </div>
+        <div>
+          <h2 className={styles.businessHeroTitle}>Pagos</h2>
+          <p className={styles.businessHeroSubtitle}>
+            Configurá cómo recibís el dinero de tus ventas.
+          </p>
+        </div>
+      </div>
 
-      <Card variant="outlined" className={styles.infoCard}>
-        <div style={{ padding: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
-            <div
-              style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
-                backgroundColor: isConfigured
-                  ? 'var(--md-sys-color-primary-container)'
-                  : 'var(--md-sys-color-surface-container-highest)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Icon
-                size={24}
-                style={{
-                  color: isConfigured
-                    ? 'var(--md-sys-color-on-primary-container)'
-                    : 'var(--md-sys-color-on-surface-variant)',
-                }}
-              >
-                payments
-              </Icon>
-            </div>
-            <div>
-              <p className={styles.cardLabel} style={{ padding: 0 }}>
-                Pasarela Culqi
-              </p>
-              <p className={styles.previewSupporting} style={{ padding: 0 }}>
-                {isConfigured
-                  ? 'Tus clientes pueden pagar con tarjeta directamente a tu cuenta.'
-                  : 'Configurá tus llaves de Culqi para aceptar pagos con tarjeta.'}
-              </p>
+      <Card variant="elevated" className={styles.paymentCard}>
+        {/* ── Cabecera Pasarela Culqi ── */}
+        <div className={styles.paymentCardInner}>
+          <div className={styles.paymentServiceRow}>
+            <span className={styles.paymentServiceLabel}>Pasarela Culqi</span>
+            <div className={styles.statusIndicator}>
+              <div
+                className={`${styles.statusDot} ${isConfigured ? styles.statusDotActive : styles.statusDotInactive}`}
+              />
+              <span className={styles.statusText}>
+                {isConfigured ? 'Conectado' : 'Desconectado'}
+              </span>
             </div>
           </div>
 
-          <div
-            style={{
-              backgroundColor: 'var(--md-sys-color-surface-container-low)',
-              borderRadius: '12px',
-              padding: '20px',
-              marginBottom: '16px',
-              border: '1px solid var(--md-sys-color-outline-variant)',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '20px',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: 'var(--md-sys-color-on-surface-variant)',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Estado del Servicio
-              </span>
-              <div className={styles.statusIndicator}>
-                <div
-                  className={`${styles.statusDot} ${isConfigured ? styles.statusDotActive : styles.statusDotInactive}`}
-                />
-                <span className={styles.statusText}>
-                  {isConfigured ? 'Conectado' : 'Desconectado'}
-                </span>
-              </div>
-            </div>
-
-            {isConfigured ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div className={styles.keyRow}>
-                  <div className={styles.keyLabelGroup}>
-                    <span
-                      style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}
-                    >
-                      Public Key
-                    </span>
-                    <span className={styles.keyValue}>
+          {isConfigured ? (
+            <>
+              <div className={styles.paymentKeysList}>
+                <div className={styles.paymentKeyItem}>
+                  <div>
+                    <div className={styles.paymentKeyLabel}>Public Key</div>
+                    <div className={styles.paymentKeyValue}>
                       {showPublicKeyPreview
                         ? business.culqiPublicKey
                         : maskKey(business.culqiPublicKey)}
-                    </span>
+                    </div>
                   </div>
-                  <IconButton onClick={() => setShowPublicKeyPreview(!showPublicKeyPreview)}>
-                    <Icon size={20}>{showPublicKeyPreview ? 'visibility_off' : 'visibility'}</Icon>
-                  </IconButton>
+                  <div className={styles.paymentKeyActions}>
+                    <IconButton
+                      aria-label={showPublicKeyPreview ? 'Ocultar' : 'Mostrar'}
+                      onClick={() => setShowPublicKeyPreview(!showPublicKeyPreview)}
+                    >
+                      <Icon size={20}>
+                        {showPublicKeyPreview ? 'visibility_off' : 'visibility'}
+                      </Icon>
+                    </IconButton>
+                  </div>
                 </div>
 
-                <div className={styles.keyRow}>
-                  <div className={styles.keyLabelGroup}>
-                    <span
-                      style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}
-                    >
-                      Secret Key
-                    </span>
-                    <span className={styles.keyValue}>
+                <div className={styles.paymentKeyItem}>
+                  <div>
+                    <div className={styles.paymentKeyLabel}>Secret Key</div>
+                    <div className={styles.paymentKeyValue}>
                       {showSecretKeyPreview
                         ? business.culqiSecretKey
                         : maskKey(business.culqiSecretKey)}
-                    </span>
+                    </div>
                   </div>
-                  <IconButton onClick={() => setShowSecretKeyPreview(!showSecretKeyPreview)}>
-                    <Icon size={20}>{showSecretKeyPreview ? 'visibility_off' : 'visibility'}</Icon>
-                  </IconButton>
+                  <div className={styles.paymentKeyActions}>
+                    <IconButton
+                      aria-label={showSecretKeyPreview ? 'Ocultar' : 'Mostrar'}
+                      onClick={() => setShowSecretKeyPreview(!showSecretKeyPreview)}
+                    >
+                      <Icon size={20}>
+                        {showSecretKeyPreview ? 'visibility_off' : 'visibility'}
+                      </Icon>
+                    </IconButton>
+                  </div>
                 </div>
               </div>
-            ) : (
-              <div
-                style={{
-                  padding: '12px',
-                  backgroundColor: 'var(--md-sys-color-error-container)',
-                  color: 'var(--md-sys-color-on-error-container)',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                }}
-              >
-                <Icon size={18}>info</Icon>
-                Acción requerida: Configura tus llaves para activar los pagos.
-              </div>
-            )}
-          </div>
 
-          <Button
-            variant={isConfigured ? 'outlined' : 'filled'}
-            onClick={() => setShowConfigDialog(true)}
-            disabled={!isOwner && !permissions.includes('business.edit')}
-          >
-            <Icon slot="icon" size={20}>
-              {isConfigured ? 'edit' : 'add'}
-            </Icon>
-            {isConfigured ? 'Cambiar credenciales' : 'Configurar Culqi'}
-          </Button>
+              <div className={styles.paymentActionRow}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setShowConfigDialog(true)}
+                  disabled={!isOwner && !permissions.includes('business.edit')}
+                >
+                  <Icon slot="icon" size={20}>
+                    edit
+                  </Icon>
+                  Cambiar credenciales
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className={styles.paymentEmptyState}>
+                <Icon size={18}>info</Icon>
+                Acción requerida: Configurá tus llaves para activar los pagos con tarjeta.
+              </div>
+
+              <div className={styles.paymentActionRow}>
+                <Button
+                  variant="filled"
+                  onClick={() => setShowConfigDialog(true)}
+                  disabled={!isOwner && !permissions.includes('business.edit')}
+                >
+                  <Icon slot="icon" size={20}>
+                    add
+                  </Icon>
+                  Configurar Culqi
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </Card>
 
@@ -3050,38 +3003,12 @@ function PaymentsSection({
           </p>
 
           {/* Información sobre métodos de pago */}
-          <div
-            style={{
-              backgroundColor: 'var(--md-sys-color-surface-container-low)',
-              borderRadius: '8px',
-              padding: '16px',
-              marginBottom: '20px',
-              border: '1px solid var(--md-sys-color-outline-variant)',
-            }}
-          >
-            <p
-              style={{
-                fontSize: '13px',
-                fontWeight: 600,
-                color: 'var(--md-sys-color-on-surface)',
-                marginBottom: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
+          <div className={styles.paymentMethodsBox}>
+            <p className={styles.paymentMethodsTitle}>
               <Icon size={16}>info</Icon>
               Métodos de pago disponibles
             </p>
-            <ul
-              style={{
-                fontSize: '12px',
-                color: 'var(--md-sys-color-on-surface-variant)',
-                margin: 0,
-                paddingLeft: '20px',
-                lineHeight: 1.8,
-              }}
-            >
+            <ul className={styles.paymentMethodsList}>
               <li>
                 <strong>Yape:</strong> Monto entre S/ 6.00 y S/ 1,000.00 — Por límite de Yape para
                 compras por internet (el tope de Culqi es S/ 2,000).
@@ -3166,41 +3093,40 @@ export function SettingsClient({
   isOwner,
 }: SettingsClientProps) {
   const navItemsWithAccess = React.useMemo(() => {
-    return NAV_ITEMS.map((item) => {
-      let hasAccess = false;
-      if (isOwner) {
-        hasAccess = true;
-      } else {
-        switch (item.id) {
-          case 'business':
-            hasAccess =
-              permissions.includes('business.edit') || permissions.includes('contact.edit');
-            break;
-          case 'appearance':
-          case 'storefront':
-            hasAccess = permissions.includes('storefront.edit');
-            break;
-          case 'plan':
-          case 'team':
-            break; // Ya es false por defecto
-          case 'contact':
-            hasAccess = permissions.includes('contact.edit');
-            break;
-          case 'seo':
-            hasAccess = permissions.includes('seo.edit');
-            break;
-          case 'legal':
-            hasAccess = permissions.includes('legal.edit');
-            break;
-          case 'payments': {
-            const isPremiumPlan = ['business_pro', 'enterprise_ai'].includes(entitlements.plan);
-            hasAccess = isPremiumPlan && permissions.includes('business.edit');
-            break;
+    return NAV_GROUPS.flatMap((group) =>
+      group.items.map((item) => {
+        let hasAccess = false;
+        if (isOwner) {
+          hasAccess = true;
+        } else {
+          switch (item.id) {
+            case 'business':
+              hasAccess =
+                permissions.includes('business.edit') || permissions.includes('contact.edit');
+              break;
+            case 'appearance':
+            case 'storefront':
+              hasAccess = permissions.includes('storefront.edit');
+              break;
+            case 'plan':
+            case 'team':
+              break;
+            case 'legal':
+              hasAccess = permissions.includes('legal.edit');
+              break;
+            case 'seo':
+              hasAccess = permissions.includes('seo.edit');
+              break;
+            case 'payments': {
+              const isPremiumPlan = ['business_pro', 'enterprise_ai'].includes(entitlements.plan);
+              hasAccess = isPremiumPlan && permissions.includes('business.edit');
+              break;
+            }
           }
         }
-      }
-      return { ...item, hasAccess };
-    });
+        return { ...item, hasAccess };
+      }),
+    );
   }, [isOwner, permissions, entitlements]);
 
   const accessibleItems = navItemsWithAccess.filter((i) => i.hasAccess);
@@ -3209,138 +3135,115 @@ export function SettingsClient({
   );
 
   return (
-    <div className={styles.root}>
-      {/* Navigation Drawer MD3 sidebar */}
-      <nav className={styles.sidebar}>
-        <div className={styles.sidebarHeader}>
-          <p className={styles.sidebarGroupLabel}>Ajustes</p>
-        </div>
-        <div className={styles.sidebarNav}>
-          {navItemsWithAccess.map((item) => (
-            <button
-              key={item.id}
-              className={`${styles.navItem} ${active === item.id && item.hasAccess ? styles.navItemActive : ''}`}
-              onClick={() => item.hasAccess && setActive(item.id)}
-              disabled={!item.hasAccess}
-              style={{
-                opacity: item.hasAccess ? 1 : 0.6,
-                cursor: item.hasAccess ? 'pointer' : 'not-allowed',
-              }}
-            >
-              <Icon size={20}>{item.hasAccess ? item.icon : 'lock'}</Icon>
-              <span className={styles.navLabel}>{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </nav>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+      <div className={styles.root}>
+        <SettingsNav items={navItemsWithAccess} active={active} onChange={setActive} />
 
-      {/* Content area */}
-      <main className={styles.content}>
-        <div className={styles.contentInner}>
-          {accessibleItems.length === 0 ? (
-            <div
-              style={{
-                display: 'flex',
-                flex: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: '60vh',
-              }}
-            >
-              <Card
-                variant="outlined"
-                style={{ padding: '3rem', textAlign: 'center', maxWidth: '400px' }}
+        {/* Content area */}
+        <main className={styles.content}>
+          <div className={styles.contentInner}>
+            {accessibleItems.length === 0 ? (
+              <div
+                style={{
+                  display: 'flex',
+                  flex: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '60vh',
+                }}
               >
-                <Icon
-                  size={48}
-                  style={
-                    {
-                      color: 'var(--md-sys-color-primary)',
-                      marginBottom: '1rem',
-                    } as React.CSSProperties
-                  }
+                <Card
+                  variant="outlined"
+                  style={{ padding: '3rem', textAlign: 'center', maxWidth: '400px' }}
                 >
-                  lock_person
-                </Icon>
-                <h2
-                  style={{
-                    fontSize: '1.5rem',
-                    marginBottom: '0.5rem',
-                    color: 'var(--md-sys-color-on-surface)',
-                  }}
-                >
-                  Acceso restringido
-                </h2>
-                <p style={{ color: 'var(--md-sys-color-on-surface-variant)', lineHeight: '1.5' }}>
-                  No tienes permisos para ver o editar las configuraciones de este negocio.
-                </p>
-              </Card>
-            </div>
-          ) : (
-            <>
-              {active === 'business' && (
-                <BusinessSection
-                  business={business}
-                  entitlements={entitlements}
-                  isOwner={isOwner}
-                  permissions={permissions}
-                />
-              )}
-              {active === 'appearance' && (
-                <AppearanceSection
-                  business={business}
-                  entitlements={entitlements}
-                  initialStorefrontTheme={initialStorefrontTheme}
-                  initialHasCustomTheme={initialHasCustomTheme}
-                  initialScheme={initialScheme}
-                  isOwner={isOwner}
-                  permissions={permissions}
-                />
-              )}
-              {active === 'storefront' && (
-                <StorefrontSectionEditor
-                  business={business}
-                  entitlements={entitlements}
-                  initialStorefrontLayout={initialStorefrontLayout}
-                  isOwner={isOwner}
-                  permissions={permissions}
-                />
-              )}
-              {active === 'plan' && <PlanSection entitlements={entitlements} isOwner={isOwner} />}
-              {active === 'team' && (
-                <TeamSection
-                  business={business}
-                  entitlements={entitlements}
-                  isOwner={isOwner}
-                  permissions={permissions}
-                />
-              )}
-              {active === 'contact' && (
-                <ContactSection business={business} isOwner={isOwner} permissions={permissions} />
-              )}
-              {active === 'seo' && (
-                <SEOSection
-                  business={business}
-                  entitlements={entitlements}
-                  isOwner={isOwner}
-                  permissions={permissions}
-                />
-              )}
-              {active === 'legal' && (
-                <LegalSection business={business} isOwner={isOwner} permissions={permissions} />
-              )}
-              {active === 'payments' && (
-                <PaymentsSection
-                  business={business}
-                  entitlements={entitlements}
-                  isOwner={isOwner}
-                  permissions={permissions}
-                />
-              )}
-            </>
-          )}
-        </div>
-      </main>
+                  <Icon
+                    size={48}
+                    style={
+                      {
+                        color: 'var(--md-sys-color-primary)',
+                        marginBottom: '1rem',
+                      } as React.CSSProperties
+                    }
+                  >
+                    lock_person
+                  </Icon>
+                  <h2
+                    style={{
+                      fontSize: '1.5rem',
+                      marginBottom: '0.5rem',
+                      color: 'var(--md-sys-color-on-surface)',
+                    }}
+                  >
+                    Acceso restringido
+                  </h2>
+                  <p style={{ color: 'var(--md-sys-color-on-surface-variant)', lineHeight: '1.5' }}>
+                    No tienes permisos para ver o editar las configuraciones de este negocio.
+                  </p>
+                </Card>
+              </div>
+            ) : (
+              <>
+                {active === 'business' && (
+                  <BusinessSection
+                    business={business}
+                    entitlements={entitlements}
+                    isOwner={isOwner}
+                    permissions={permissions}
+                  />
+                )}
+                {active === 'appearance' && (
+                  <AppearanceSection
+                    business={business}
+                    entitlements={entitlements}
+                    initialStorefrontTheme={initialStorefrontTheme}
+                    initialHasCustomTheme={initialHasCustomTheme}
+                    initialScheme={initialScheme}
+                    isOwner={isOwner}
+                    permissions={permissions}
+                  />
+                )}
+                {active === 'storefront' && (
+                  <StorefrontSectionEditor
+                    business={business}
+                    entitlements={entitlements}
+                    initialStorefrontLayout={initialStorefrontLayout}
+                    isOwner={isOwner}
+                    permissions={permissions}
+                  />
+                )}
+                {active === 'plan' && <PlanSection entitlements={entitlements} isOwner={isOwner} />}
+                {active === 'team' && (
+                  <TeamSection
+                    business={business}
+                    entitlements={entitlements}
+                    isOwner={isOwner}
+                    permissions={permissions}
+                  />
+                )}
+                {active === 'seo' && (
+                  <SEOSection
+                    business={business}
+                    entitlements={entitlements}
+                    isOwner={isOwner}
+                    permissions={permissions}
+                  />
+                )}
+                {active === 'legal' && (
+                  <LegalSection business={business} isOwner={isOwner} permissions={permissions} />
+                )}
+                {active === 'payments' && (
+                  <PaymentsSection
+                    business={business}
+                    entitlements={entitlements}
+                    isOwner={isOwner}
+                    permissions={permissions}
+                  />
+                )}
+              </>
+            )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
