@@ -1,15 +1,13 @@
 // =====================================================
-// POST /api/billing/purchase-plan — Unit tests
+// POST /api/billing/purchase-plan — Proration tests
 // =====================================================
-// Verifies that the route handler correctly omits
-// ticketCorrelative from insert values so the DB
-// default (sequence) fills it automatically.
+// Verifies SCD-003: plan date calculation with prorating
+// for renewals, upgrades, downgrades, and first purchase.
 // =====================================================
 
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
-// Must be before module imports (vi.mock is hoisted)
 
 const mockSaasIssuerFindFirst = vi.fn();
 const mockSubscriptionFindFirst = vi.fn();
@@ -21,9 +19,6 @@ const mockValues = vi.fn(() => ({
 }));
 const mockInsert = vi.fn(() => ({ values: mockValues }));
 
-// db.transaction executes the callback with a tx that delegates
-// to the same mocks — existing tests still work because
-// mockSubscriptionFindFirst returns null by default.
 const mockTransaction = vi.fn((callback) =>
   callback({
     insert: mockInsert,
@@ -52,7 +47,7 @@ globalThis.fetch = mockFetch;
 function createValidPayload(overrides: Record<string, unknown> = {}) {
   return {
     token: 'ype_test_token_123',
-    planType: 'business_pro',
+    planType: 'emprendedor',
     period: 'monthly',
     businessId: 'biz_123',
     buyerEmail: 'test@example.com',
@@ -63,13 +58,25 @@ function createValidPayload(overrides: Record<string, unknown> = {}) {
   };
 }
 
+// Fixed reference date for all proration tests
+const REFERENCE_DATE = new Date('2026-06-15T12:00:00Z');
+
 // ── Suite ────────────────────────────────────────────
 
-describe('POST /api/billing/purchase-plan', () => {
-  beforeEach(async () => {
+describe('POST /api/billing/purchase-plan — proration', () => {
+  beforeAll(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(REFERENCE_DATE);
+  });
+
+  afterAll(() => {
+    vi.useRealTimers();
+  });
+
+  beforeEach(() => {
     vi.clearAllMocks();
 
-    // Default mock setup — Culqi charge succeeds
+    // Default — Culqi succeeds
     mockFetch.mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -79,7 +86,7 @@ describe('POST /api/billing/purchase-plan', () => {
       }),
     });
 
-    // Default mock setup — SaaS issuer exists
+    // Default — SaaS issuer exists
     mockSaasIssuerFindFirst.mockResolvedValue({
       id: 'issuer_1',
       businessName: 'Store Lite',
@@ -87,119 +94,7 @@ describe('POST /api/billing/purchase-plan', () => {
       documentNumber: '20123456789',
     });
 
-    // Default mock setup — DB insert returns a payment
-    mockReturning.mockResolvedValue([
-      {
-        id: 'payment_001',
-        ticketSeries: 'B001',
-        ticketCorrelative: 42,
-      },
-    ]);
-
-    // Default mock setup — subscription upsert succeeds
-    mockOnConflict.mockResolvedValue(undefined);
-
-    vi.stubEnv('CULQI_SK', 'sk_test_culqi_key');
-  });
-
-  // ============================================================
-  // RED-GREEN CORE: ticketCorrelative must not be passed to DB
-  // ============================================================
-
-  test('omits ticketCorrelative from insert values — DB default fills it', async () => {
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
-    const request = new Request('http://localhost/api/billing/purchase-plan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(createValidPayload()),
-    });
-
-    const response = await POST(request);
-    const body = await response.json();
-
-    // Endpoint returns 200
-    expect(response.status).toBe(200);
-    expect(body.success).toBe(true);
-
-    // The values passed to the first insert (planPayments)
-    // must NOT contain ticketCorrelative — the DB default
-    // (nextval of seq_plan_payment_b001) fills it.
-    const planPaymentValues = mockValues.mock.calls[0][0];
-    expect(planPaymentValues).not.toHaveProperty('ticketCorrelative');
-  });
-
-  // ============================================================
-  // EDGE CASES
-  // ============================================================
-
-  test('returns 400 for invalid plan type', async () => {
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
-    const request = new Request('http://localhost/api/billing/purchase-plan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(createValidPayload({ planType: 'nonexistent' })),
-    });
-
-    const response = await POST(request);
-    expect(response.status).toBe(400);
-
-    const body = await response.json();
-    expect(body).toHaveProperty('error');
-  });
-
-  test('returns 400 for free plan (basico)', async () => {
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
-    const request = new Request('http://localhost/api/billing/purchase-plan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(createValidPayload({ planType: 'basico' })),
-    });
-
-    const response = await POST(request);
-    expect(response.status).toBe(400);
-
-    const body = await response.json();
-    expect(body).toHaveProperty('error');
-  });
-
-  test('returns 500 when saas issuer config is missing', async () => {
-    mockSaasIssuerFindFirst.mockResolvedValue(null);
-
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
-    const request = new Request('http://localhost/api/billing/purchase-plan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(createValidPayload()),
-    });
-
-    const response = await POST(request);
-    expect(response.status).toBe(500);
-
-    const body = await response.json();
-    expect(body).toHaveProperty('error');
-  });
-
-  test('returns 400 when missing required fields', async () => {
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
-    const request = new Request('http://localhost/api/billing/purchase-plan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
-    });
-
-    const response = await POST(request);
-    expect(response.status).toBe(400);
-
-    const body = await response.json();
-    expect(body).toHaveProperty('error');
-  });
-
-  test('returns ticketNumber computed from returned correlative', async () => {
+    // Default — insert returns a payment
     mockReturning.mockResolvedValue([
       {
         id: 'payment_001',
@@ -208,6 +103,157 @@ describe('POST /api/billing/purchase-plan', () => {
       },
     ]);
 
+    // Default — upsert succeeds
+    mockOnConflict.mockResolvedValue(undefined);
+
+    vi.stubEnv('CULQI_SK', 'sk_test_culqi_key');
+  });
+
+  // ============================================================
+  // SCD-003 Scenario: Renew same plan (monthly)
+  // ============================================================
+
+  test('renewing the same plan extends from current planEndDate (monthly)', async () => {
+    // Current subscription: emprendedor, ends 2026-07-15
+    mockSubscriptionFindFirst.mockResolvedValue({
+      planType: 'emprendedor',
+      planEndDate: new Date('2026-07-15T00:00:00Z'),
+      planStartDate: new Date('2026-01-01T00:00:00Z'),
+    });
+
+    const { POST } = await import('@/app/api/billing/purchase-plan/route');
+
+    const request = new Request('http://localhost/api/billing/purchase-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(createValidPayload({ planType: 'emprendedor', period: 'monthly' })),
+    });
+
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.success).toBe(true);
+
+    // Should be extended from 2026-07-15 + 30 days = 2026-08-14
+    const activatedUntil = new Date(body.planActivatedUntil);
+    expect(activatedUntil.toISOString()).toBe('2026-08-14T00:00:00.000Z');
+  });
+
+  // ============================================================
+  // SCD-003 Scenario: Renew same plan (annual)
+  // ============================================================
+
+  test('renewing the same plan extends from current planEndDate (annual)', async () => {
+    mockSubscriptionFindFirst.mockResolvedValue({
+      planType: 'business_pro',
+      planEndDate: new Date('2026-09-01T00:00:00Z'),
+      planStartDate: new Date('2026-03-01T00:00:00Z'),
+    });
+
+    const { POST } = await import('@/app/api/billing/purchase-plan/route');
+
+    const request = new Request('http://localhost/api/billing/purchase-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(createValidPayload({ planType: 'business_pro', period: 'annual' })),
+    });
+
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    // 2026-09-01 + 365 = 2027-09-01
+    expect(body.planActivatedUntil).toBe('2027-09-01T00:00:00.000Z');
+  });
+
+  // ============================================================
+  // SCD-003 Scenario: Upgrade / downgrade to different plan
+  // ============================================================
+
+  test('upgrading to a different plan resets dates from today', async () => {
+    // Current subscription: emprendedor, ends 2026-08-15
+    mockSubscriptionFindFirst.mockResolvedValue({
+      planType: 'emprendedor',
+      planEndDate: new Date('2026-08-15T00:00:00Z'),
+      planStartDate: new Date('2026-01-01T00:00:00Z'),
+    });
+
+    const { POST } = await import('@/app/api/billing/purchase-plan/route');
+
+    const request = new Request('http://localhost/api/billing/purchase-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(createValidPayload({ planType: 'business_pro', period: 'monthly' })),
+    });
+
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    // Today (2026-06-15) + 30 = 2026-07-15
+    expect(body.planActivatedUntil).toBe('2026-07-15T12:00:00.000Z');
+  });
+
+  // ============================================================
+  // SCD-003 Scenario: First purchase (no previous subscription)
+  // ============================================================
+
+  test('first purchase without previous subscription starts from today', async () => {
+    // No previous subscription
+    mockSubscriptionFindFirst.mockResolvedValue(null);
+
+    const { POST } = await import('@/app/api/billing/purchase-plan/route');
+
+    const request = new Request('http://localhost/api/billing/purchase-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(createValidPayload({ planType: 'business_pro', period: 'monthly' })),
+    });
+
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    // Today (2026-06-15) + 30 = 2026-07-15
+    expect(body.planActivatedUntil).toBe('2026-07-15T12:00:00.000Z');
+  });
+
+  // ============================================================
+  // SCD-003: Previous subscription expired before renewal
+  // ============================================================
+
+  test('renewing when current plan is expired starts from today', async () => {
+    // Current subscription exists but is expired
+    mockSubscriptionFindFirst.mockResolvedValue({
+      planType: 'emprendedor',
+      planEndDate: new Date('2026-01-01T00:00:00Z'), // expired
+      planStartDate: new Date('2025-06-01T00:00:00Z'),
+    });
+
+    const { POST } = await import('@/app/api/billing/purchase-plan/route');
+
+    const request = new Request('http://localhost/api/billing/purchase-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(createValidPayload({ planType: 'emprendedor', period: 'monthly' })),
+    });
+
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    // Expired → starts from today (2026-06-15) + 30 = 2026-07-15
+    expect(body.planActivatedUntil).toBe('2026-07-15T12:00:00.000Z');
+  });
+
+  // ============================================================
+  // Transaction wrapping
+  // ============================================================
+
+  test('wraps subscription read + write in a DB transaction', async () => {
+    mockSubscriptionFindFirst.mockResolvedValue(null);
+
     const { POST } = await import('@/app/api/billing/purchase-plan/route');
 
     const request = new Request('http://localhost/api/billing/purchase-plan', {
@@ -217,10 +263,11 @@ describe('POST /api/billing/purchase-plan', () => {
     });
 
     const response = await POST(request);
-    const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body).toHaveProperty('ticketNumber');
-    expect(body.ticketNumber).toMatch(/^B001-/);
+    // transaction should have been called
+    expect(mockTransaction).toHaveBeenCalledTimes(1);
+    // The callback receives a tx object
+    expect(typeof mockTransaction.mock.calls[0][0]).toBe('function');
   });
 });
