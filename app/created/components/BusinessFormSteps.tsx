@@ -488,6 +488,7 @@ export const Step1General = ({
               title="Subir logo de la empresa"
               placeholder="Seleccionar archivo"
               style={{ display: 'none' }}
+              tabIndex={-1}
               onChange={(e) => {
                 onFileChange?.(e.target.files?.[0] || null);
               }}
