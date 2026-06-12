@@ -61,27 +61,29 @@ function CustomerAuthContent() {
 
     const supabase = supabaseRef.current!;
 
-    supabase.auth.exchangeCodeForSession(code).then(({ data, error }) => {
-      if (error || !data.session) {
-        console.error('[CustomerAuth] Error exchanging code:', error);
-        window.opener?.postMessage({ type: 'AUTH_ERROR', error: error?.message }, storeOrigin);
+    supabase.auth
+      .exchangeCodeForSession(code)
+      .then(({ data, error }: Awaited<ReturnType<typeof supabase.auth.exchangeCodeForSession>>) => {
+        if (error || !data.session) {
+          console.error('[CustomerAuth] Error exchanging code:', error);
+          window.opener?.postMessage({ type: 'AUTH_ERROR', error: error?.message }, storeOrigin);
+          window.close();
+          return;
+        }
+
+        // Send tokens to the store window via postMessage
+        window.opener?.postMessage(
+          {
+            type: 'AUTH_SUCCESS',
+            slug,
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          },
+          storeOrigin,
+        );
+
         window.close();
-        return;
-      }
-
-      // Send tokens to the store window via postMessage
-      window.opener?.postMessage(
-        {
-          type: 'AUTH_SUCCESS',
-          slug,
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        },
-        storeOrigin,
-      );
-
-      window.close();
-    });
+      });
   }, [code, slug, storeOrigin]);
 
   // ─── First load — check for existing session ───
@@ -96,26 +98,28 @@ function CustomerAuthContent() {
 
     const supabase = supabaseRef.current!;
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        // User is already authenticated — show confirmation instead of
-        // silently sending tokens. Let them decide which account to use.
-        const user = data.session.user;
-        pendingTokensRef.current = {
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        };
-        setSessionUser({
-          name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario',
-          email: user.email || '',
-          avatarUrl: user.user_metadata?.avatar_url || null,
-        });
-        setStep('session_confirmed');
-      } else {
-        // No session — show the Google sign-in button
-        setStep('ready');
-      }
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }: Awaited<ReturnType<typeof supabase.auth.getSession>>) => {
+        if (data.session) {
+          // User is already authenticated — show confirmation instead of
+          // silently sending tokens. Let them decide which account to use.
+          const user = data.session.user;
+          pendingTokensRef.current = {
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          };
+          setSessionUser({
+            name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario',
+            email: user.email || '',
+            avatarUrl: user.user_metadata?.avatar_url || null,
+          });
+          setStep('session_confirmed');
+        } else {
+          // No session — show the Google sign-in button
+          setStep('ready');
+        }
+      });
   }, [code, slug, storeOrigin]);
 
   // ─── Continue with the current session ───

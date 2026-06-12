@@ -1,6 +1,7 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
+import type { AuthError } from '@supabase/supabase-js';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 
@@ -37,7 +38,7 @@ export default function ChatOAuthPopup() {
 
       supabase.auth
         .exchangeCodeForSession(code)
-        .then(({ error }) => {
+        .then(({ error }: { error: AuthError | null }) => {
           if (error) {
             console.error('[ChatPopup] Error exchanging code:', error);
             // Notify parent of failure

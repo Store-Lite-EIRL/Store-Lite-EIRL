@@ -54,7 +54,7 @@ function normalizeKey(key: string): string {
 
 function getMatchedCol(
   row: Record<string, unknown>,
-  possibleNames: string[],
+  possibleNames: readonly string[],
   usedKeys?: Set<string>,
 ): unknown {
   const normNames = possibleNames.map(normalizeKey);
