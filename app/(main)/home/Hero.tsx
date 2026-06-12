@@ -30,27 +30,37 @@ export default function Hero({
     confirmDeleteBackground,
     cursorStyle,
     fileInputRef,
+    goNext,
+    goPrev,
+    goToSlide,
     handleCancel,
+    handleDeleteAllClick,
     handleDeleteClick,
     handleFileChange,
     handleMenuClick,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
+    handleMouseEnter,
+    handleMouseLeave,
     handleSave,
+    handleTouchStart,
+    handleTouchEnd,
+    handleUploadClick,
     heroRef,
+    imagesCount,
+    activeSlide,
     isEditing,
+    isPaused,
     isSaving,
+    maxImagesReached,
     menuRef,
     setShowDeleteDialog,
     setSnackbar,
     showDeleteDialog,
     snackbar,
+    hasMultipleImages,
   } = useHeroController({ business: business || null });
-
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
 
   return (
     <>
@@ -60,7 +70,13 @@ export default function Hero({
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        onMouseLeave={() => {
+          handleMouseUp();
+          handleMouseLeave();
+        }}
+        onMouseEnter={handleMouseEnter}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
         style={{
           backgroundImage: backgroundImage ? `url('${backgroundImage}')` : undefined,
           backgroundPosition: backgroundPositionStyle,
@@ -69,6 +85,29 @@ export default function Hero({
       >
         {isSaving && <md-linear-progress indeterminate className={styles.progressBar} />}
 
+        {/* ─── Carrusel: Flechas ────────────────────────────── */}
+        {!isEditing && hasMultipleImages && (
+          <>
+            <button
+              className={`${styles.arrow} ${styles.arrowLeft}`}
+              onClick={goPrev}
+              aria-label="Imagen anterior"
+              type="button"
+            >
+              <Icon>chevron_left</Icon>
+            </button>
+            <button
+              className={`${styles.arrow} ${styles.arrowRight}`}
+              onClick={goNext}
+              aria-label="Siguiente imagen"
+              type="button"
+            >
+              <Icon>chevron_right</Icon>
+            </button>
+          </>
+        )}
+
+        {/* ─── Owner Menu ───────────────────────────────────── */}
         {isOwner && !isEditing && business && (
           <div className={styles.menuContainer}>
             <IconButton id="hero-menu-trigger" onClick={handleMenuClick} suppressHydrationWarning>
@@ -83,23 +122,42 @@ export default function Hero({
               positioning="popover"
               suppressHydrationWarning
             >
-              <md-menu-item onClick={handleUploadClick} suppressHydrationWarning>
-                <div slot="headline">Subir publicidad (Portada)</div>
-                <Icon slot="icon" size={21}>
-                  upload
-                </Icon>
-              </md-menu-item>
-              <md-menu-item onClick={handleDeleteClick} suppressHydrationWarning>
-                <div slot="headline">Eliminar imagen</div>
-                <Icon slot="icon" size={21}>
-                  delete
-                </Icon>
-              </md-menu-item>
+              {/* Subir nueva imagen (solo si no llegó al límite) */}
+              {!maxImagesReached && (
+                <md-menu-item onClick={handleUploadClick} suppressHydrationWarning>
+                  <div slot="headline">Subir publicidad (Portada)</div>
+                  <Icon slot="icon" size={21}>
+                    upload
+                  </Icon>
+                </md-menu-item>
+              )}
+
+              {/* Eliminar imagen actual */}
+              {imagesCount > 0 && (
+                <md-menu-item onClick={() => handleDeleteClick()} suppressHydrationWarning>
+                  <div slot="headline">
+                    {hasMultipleImages ? 'Eliminar imagen actual' : 'Eliminar imagen'}
+                  </div>
+                  <Icon slot="icon" size={21}>
+                    delete
+                  </Icon>
+                </md-menu-item>
+              )}
+
+              {/* Eliminar todas (solo si hay más de 1) */}
+              {hasMultipleImages && (
+                <md-menu-item onClick={handleDeleteAllClick} suppressHydrationWarning>
+                  <div slot="headline">Eliminar todas</div>
+                  <Icon slot="icon" size={21}>
+                    delete_forever
+                  </Icon>
+                </md-menu-item>
+              )}
             </md-menu>
           </div>
         )}
 
-        {/* Public light/dark toggle — only for visitors, owner has it in the bottom-right */}
+        {/* ─── Public light/dark toggle ─────────────────────── */}
         {!isOwner && effectiveScheme && onSchemeChange && (
           <div className={styles.publicSchemeToggle}>
             <button
@@ -121,6 +179,7 @@ export default function Hero({
           </div>
         )}
 
+        {/* ─── Hero content (logo + name) ───────────────────── */}
         <div className={styles.heroContent}>
           <div className={styles.textContainer}>
             {business?.logoUrl && (
@@ -137,6 +196,30 @@ export default function Hero({
           </div>
         </div>
 
+        {/* ─── Dots de navegación ───────────────────────────── */}
+        {!isEditing && hasMultipleImages && (
+          <div className={styles.dotsContainer}>
+            {Array.from({ length: imagesCount }).map((_, index) => (
+              <button
+                key={index}
+                className={`${styles.dot} ${index === activeSlide ? styles.dotActive : ''}`}
+                onClick={() => goToSlide(index)}
+                aria-label={`Ir a imagen ${index + 1}`}
+                type="button"
+              />
+            ))}
+          </div>
+        )}
+
+        {/* ─── Indicador de slide (1/3 + pausa) ─────────────── */}
+        {!isEditing && hasMultipleImages && (
+          <div className={`${styles.slideIndicator} ${isPaused ? styles.slidePaused : ''}`}>
+            {isPaused && <Icon>pause</Icon>}
+            {activeSlide + 1}/{imagesCount}
+          </div>
+        )}
+
+        {/* ─── Editing controls ─────────────────────────────── */}
         {isEditing && (
           <div className={styles.editControls}>
             <div className={styles.instructionText}>Arrastra para posicionar la publicidad</div>
@@ -151,6 +234,7 @@ export default function Hero({
           </div>
         )}
 
+        {/* ─── Hidden file input ────────────────────────────── */}
         <input
           type="file"
           ref={fileInputRef}
@@ -164,17 +248,18 @@ export default function Hero({
         />
       </section>
 
+      {/* ─── Dialog eliminar todas ──────────────────────────── */}
       <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)} type="alert">
-        <div slot="headline">¿Eliminar imagen?</div>
+        <div slot="headline">¿Eliminar todas las imágenes?</div>
         <div slot="content">
-          ¿Estas seguro de que deseas eliminar la imagen de publicidad de tu negocio?
+          ¿Estás seguro de que deseas eliminar todas las imágenes de publicidad de tu negocio?
         </div>
         <div slot="actions">
           <Button variant="text" onClick={() => setShowDeleteDialog(false)}>
             Cancelar
           </Button>
           <Button variant="text" onClick={confirmDeleteBackground}>
-            Eliminar
+            Eliminar todas
           </Button>
         </div>
       </Dialog>

@@ -149,6 +149,7 @@ export const businesses = pgTable(
     name: text('name').notNull(),
     slug: text('slug').notNull().unique(),
     coverImageUrl: text('cover_image_url'),
+    heroImages: text('hero_images').array(),
     logoUrl: text('logo_url'),
     address: text('address'),
     storeType: text('store_type'),
