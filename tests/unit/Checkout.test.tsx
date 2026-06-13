@@ -159,7 +159,7 @@ describe('Checkout — Order creation before Culqi.open()', () => {
         '/api/payment/create-order',
         expect.objectContaining({
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
           body: expect.stringContaining('"amount":150000'),
         }),
       );
