@@ -1,5 +1,6 @@
 'use client';
 
+import { useProductLike } from '@/features/products/hooks/useProductLike';
 import { useCart } from '@/features/storage/context/CartContext';
 import { formatPrice } from '@/features/storage/utils/currency';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
@@ -7,7 +8,6 @@ import { getBusinessPath } from '@/shared/utils/url';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback } from 'react';
-import { useProductLike } from '../../hooks/useProductLike';
 import { toCartProduct } from '../../utils/cartHelpers';
 import styles from './RelatedProductsSection.module.css';
 
