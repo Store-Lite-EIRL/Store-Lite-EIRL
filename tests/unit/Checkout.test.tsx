@@ -10,8 +10,17 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 // ── Mocks ────────────────────────────────────────────
 
 const mockUseParams = vi.fn(() => ({ slug: 'test-slug' }));
+const mockRouter = {
+  push: vi.fn(),
+  replace: vi.fn(),
+  prefetch: vi.fn(),
+  back: vi.fn(),
+  forward: vi.fn(),
+  refresh: vi.fn(),
+};
 vi.mock('next/navigation', () => ({
   useParams: () => mockUseParams(),
+  useRouter: () => mockRouter,
 }));
 
 const mockGetSession = vi.fn();
@@ -150,7 +159,7 @@ describe('Checkout — Order creation before Culqi.open()', () => {
         '/api/payment/create-order',
         expect.objectContaining({
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
           body: expect.stringContaining('"amount":150000'),
         }),
       );

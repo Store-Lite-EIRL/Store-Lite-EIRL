@@ -47,6 +47,8 @@ jobs:
 
       - name: Build application
         run: pnpm build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
   commitlint:
     name: Commit Lint
