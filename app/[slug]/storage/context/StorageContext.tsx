@@ -1,6 +1,7 @@
 'use client';
 
 import type { BusinessEntitlements } from '@/core/entitlements/plans';
+import type { SaveProductMediaItem, SaveProductPayload } from '@/types/storage';
 import { createContext, useContext, type ReactNode } from 'react';
 import { usePermissions } from '../../context/PermissionsContext';
 import type { Product } from '../data';
@@ -9,7 +10,6 @@ import {
   type CategoryItem,
   type SortConfig,
 } from '../hooks/useStorageProducts';
-import type { SaveProductMediaItem, SaveProductPayload } from '../types';
 
 interface StorageContextType {
   products: Product[];

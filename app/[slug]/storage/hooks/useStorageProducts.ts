@@ -1,5 +1,6 @@
 import type { BusinessEntitlements } from '@/core/entitlements/plans';
 import { isBusinessError } from '@/lib/errorHandling';
+import type { SaveProductMediaItem, SaveProductPayload } from '@/types/storage';
 import { useEffect, useMemo, useState } from 'react';
 import {
   createProduct,
@@ -13,7 +14,6 @@ import {
 } from '../actions';
 import type { Product } from '../data';
 import { deleteProductImage, uploadProductImage } from '../services/storageService';
-import type { SaveProductMediaItem, SaveProductPayload } from '../types';
 import { parsePriceValue } from '../utils/currency';
 
 export type SortDirection = 'asc' | 'desc';

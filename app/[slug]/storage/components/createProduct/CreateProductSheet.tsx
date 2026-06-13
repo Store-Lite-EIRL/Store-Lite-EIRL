@@ -3,6 +3,7 @@
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
 import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
+import type { SaveProductMediaItem, SaveProductPayload } from '@/types/storage';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -10,7 +11,6 @@ import { useStorage } from '../../context/StorageContext';
 import type { Product } from '../../data';
 import { useCreateProductForm } from '../../hooks/useCreateProductForm';
 import '../../styles/create-product-sheet.css';
-import type { SaveProductMediaItem, SaveProductPayload } from '../../types';
 import { BasicInfoSection } from './BasicInfoSection';
 import { CategorySection } from './CategorySection';
 import { ExtraInfoSection } from './ExtraInfoSection';

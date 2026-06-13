@@ -1,3 +1,4 @@
+import type { SaveProductMediaItem, SaveProductPayload } from '@/types/storage';
 import { useEffect, useRef, useState } from 'react';
 import {
   EMPTY_FORM,
@@ -6,7 +7,6 @@ import {
   type FormState,
 } from '../components/createProduct/types';
 import type { Product } from '../data';
-import type { SaveProductMediaItem, SaveProductPayload } from '../types';
 import { formatPrice, parsePriceValue } from '../utils/currency';
 import { useProductFormMedia } from './useProductFormMedia';
 import { useProductFormValidation } from './useProductFormValidation';

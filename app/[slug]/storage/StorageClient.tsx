@@ -13,10 +13,10 @@ import { TableControls } from './components/TableControls';
 import { TablePagination } from './components/TablePagination';
 
 // Hooks & Logic
+import type { SaveProductMediaItem, SaveProductPayload } from '@/types/storage';
 import { StorageProvider, useStorage } from './context/StorageContext';
 import type { Product } from './data';
 import { useExtraColumns } from './hooks/useExtraColumns';
-import type { SaveProductMediaItem, SaveProductPayload } from './types';
 
 import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
 

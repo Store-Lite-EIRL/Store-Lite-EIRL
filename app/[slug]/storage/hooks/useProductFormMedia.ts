@@ -1,6 +1,6 @@
+import type { SaveProductMediaItem } from '@/types/storage';
 import { useState } from 'react';
 import { MAX_IMAGES } from '../components/createProduct/types';
-import type { SaveProductMediaItem } from '../types';
 import { validateProductImageFile } from '../utils/productImageValidation';
 
 export type MediaItem = SaveProductMediaItem;

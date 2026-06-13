@@ -22,6 +22,7 @@ import { AlertSnackbar } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
 import { useTheme } from '@/shared/context/ThemeContext';
+import type { SaveProductMediaItem, SaveProductPayload } from '@/types/storage';
 import { useRouter } from 'next/navigation';
 import {
   useCallback,
@@ -54,7 +55,6 @@ import { DeleteProductDialog } from './storage/components/DeleteProductDialog';
 import { CreateProductSheet } from './storage/components/createProduct/CreateProductSheet';
 import { StorageProvider, useStorage } from './storage/context/StorageContext';
 import type { Product as StorageProduct } from './storage/data';
-import type { SaveProductMediaItem, SaveProductPayload } from './storage/types';
 
 const PAGE_SIZE = 12;
 
