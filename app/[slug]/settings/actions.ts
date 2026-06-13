@@ -14,9 +14,9 @@ import {
   normalizeStorefrontLayout,
   normalizeStorefrontTheme,
 } from '@/core/storefront';
+import { requireAccessOnId } from '@/features/storage/actions/authz';
 import { and, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
-import { requireAccessOnId } from '../storage/actions/authz';
 
 export interface ActionState {
   error?: string;

@@ -1,7 +1,7 @@
 'use client';
 
+import { toggleLikeProductIsolated } from '@/features/storage/isolatedUpdateAction';
 import { useCallback, useState } from 'react';
-import { toggleLikeProductIsolated } from '../../storage/isolatedUpdateAction';
 
 interface UseProductLikeOptions {
   productId: string;

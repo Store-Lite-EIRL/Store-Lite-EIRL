@@ -1,8 +1,8 @@
 import { useNotifications } from '@/hooks/useNotifications';
 import { AlertSnackbar, Button, Icon } from '@/shared/components/ui';
+import { usePermissions } from '@app/[slug]/context/PermissionsContext';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
-import { usePermissions } from '../../context/PermissionsContext';
 import { useStorage } from '../context/StorageContext';
 import type { Product } from '../data';
 import { ImportProgressDialog } from './import/ImportProgressDialog';

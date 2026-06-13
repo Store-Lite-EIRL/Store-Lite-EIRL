@@ -12,14 +12,14 @@ import { createServerClient } from '@supabase/ssr';
 import { and, eq, inArray, ne, notInArray, or } from 'drizzle-orm';
 import { cookies, headers } from 'next/headers';
 
-import { Icon } from '@/shared/components/ui/data-display/Icon';
-import { getBusinessPath } from '@/shared/utils/url';
-import { notFound } from 'next/navigation';
 import {
   formatPrice,
   getCurrencyByCountry,
   parsePriceValue,
-} from '../../../storage/utils/currency';
+} from '@/features/storage/utils/currency';
+import { Icon } from '@/shared/components/ui/data-display/Icon';
+import { getBusinessPath } from '@/shared/utils/url';
+import { notFound } from 'next/navigation';
 import BackButton from './BackButton';
 import LikeSection from './LikeSection';
 import styles from './ProductDetail.module.css';

@@ -4,15 +4,15 @@ import type { ReactNode } from 'react';
 
 import type { BusinessEntitlements } from '@/core/entitlements/plans';
 
+import { CartProvider } from '@/features/storage/context/CartContext';
+import { CurrencyProvider } from '@/features/storage/context/CurrencyContext';
+import { StorageProvider } from '@/features/storage/context/StorageContext';
+import type { Product } from '@/features/storage/data';
+import type { CategoryItem } from '@/features/storage/hooks/useStorageProducts';
+import { getCurrencyByCountry } from '@/features/storage/utils/currency';
 import type { Permission, Role } from '@/lib/permissions/definitions';
 import { BusinessEntitlementsProvider } from '../context/BusinessEntitlementsContext';
 import { PermissionsProvider } from '../context/PermissionsContext';
-import { CartProvider } from '../storage/context/CartContext';
-import { CurrencyProvider } from '../storage/context/CurrencyContext';
-import { StorageProvider } from '../storage/context/StorageContext';
-import type { Product } from '../storage/data';
-import type { CategoryItem } from '../storage/hooks/useStorageProducts';
-import { getCurrencyByCountry } from '../storage/utils/currency';
 
 interface BusinessProvidersProps {
   children: ReactNode;

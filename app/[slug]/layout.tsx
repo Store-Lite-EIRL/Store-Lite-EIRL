@@ -2,13 +2,13 @@ import { resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { productCategories, products } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
+import type { Product } from '@/features/storage/data';
 import { getMemberPermissions } from '@/lib/permissions/checkPermission';
 import { createClient } from '@/lib/supabase/server';
 import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import AppLayout from '../../src/shared/components/layout/AppLayout';
 import { BusinessProviders } from './components/BusinessProviders';
-import type { Product } from './storage/data';
 
 interface BusinessLayoutProps {
   children: React.ReactNode;

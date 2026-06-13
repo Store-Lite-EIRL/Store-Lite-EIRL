@@ -5,7 +5,7 @@ import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
 import { getMaterialSelectValue, type MaterialSelectEvent } from '@/shared/utils';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
-import { AddCategoryModal } from '../../../../(main)/home/components/AddCategoryModal';
+import { AddCategoryModal } from '../../../../../app/(main)/home/components/AddCategoryModal';
 import { createCategory } from '../../actions/categories';
 import { useStorage } from '../../context/StorageContext';
 import { uploadCategoryImage } from '../../services/storageService';

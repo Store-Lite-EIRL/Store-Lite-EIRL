@@ -2,8 +2,8 @@
 
 import type { BusinessEntitlements } from '@/core/entitlements/plans';
 import type { SaveProductMediaItem, SaveProductPayload } from '@/types/storage';
+import { usePermissions } from '@app/[slug]/context/PermissionsContext';
 import { createContext, useContext, type ReactNode } from 'react';
-import { usePermissions } from '../../context/PermissionsContext';
 import type { Product } from '../data';
 import {
   useStorageProducts,

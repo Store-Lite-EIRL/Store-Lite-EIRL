@@ -1,13 +1,13 @@
 'use client';
 
 import type { Business } from '@/core/database/schema';
+import { useCart } from '@/features/storage/context/CartContext';
+import type { Product } from '@/features/storage/data';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { BasicContactDialog } from '../../../components/BasicContactDialog';
 import Checkout from '../../../components/Checkout';
-import { useCart } from '../../../storage/context/CartContext';
-import type { Product } from '../../../storage/data';
 import LikeSection from './LikeSection';
 import styles from './ProductDetail.module.css';
 

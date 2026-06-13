@@ -1,6 +1,9 @@
 'use client';
 
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
+import { updateProductPublicMetadata } from '@/features/storage/actions/products';
+import { useCart } from '@/features/storage/context/CartContext';
+import { formatPrice } from '@/features/storage/utils/currency';
 import { Button, Sheet } from '@/shared/components/ui';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
 import { Checkbox } from '@/shared/components/ui/inputs/Checkbox';
@@ -9,9 +12,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toCartProduct } from '../product/utils/cartHelpers';
-import { updateProductPublicMetadata } from '../storage/actions/products';
-import { useCart } from '../storage/context/CartContext';
-import { formatPrice } from '../storage/utils/currency';
 import Checkout from './Checkout';
 import styles from './ProductPreviewSheet.module.css';
 

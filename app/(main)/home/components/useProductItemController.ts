@@ -2,16 +2,16 @@
 'use client';
 
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
-import { CartContext } from 'app/[slug]/storage/context/CartContext';
-import { StorageContext } from 'app/[slug]/storage/context/StorageContext';
-import type { Product } from 'app/[slug]/storage/data';
+import { CartContext } from '@/features/storage/context/CartContext';
+import { StorageContext } from '@/features/storage/context/StorageContext';
+import type { Product } from '@/features/storage/data';
 import {
   toggleLikeProductIsolated,
   toggleProductStatus,
   updateProductIsolated,
-} from 'app/[slug]/storage/isolatedUpdateAction';
-import { uploadProductImage } from 'app/[slug]/storage/services/storageService';
-import { parsePriceValue } from 'app/[slug]/storage/utils/currency';
+} from '@/features/storage/isolatedUpdateAction';
+import { uploadProductImage } from '@/features/storage/services/storageService';
+import { parsePriceValue } from '@/features/storage/utils/currency';
 import { useParams, useRouter } from 'next/navigation';
 import { useContext, useState } from 'react';
 

@@ -17,6 +17,10 @@ import {
 import type { BrandFilterOption } from '@/features/products/hooks/useProductFilters';
 import { useProductFilters } from '@/features/products/hooks/useProductFilters';
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
+import { DeleteProductDialog } from '@/features/storage/components/DeleteProductDialog';
+import { CreateProductSheet } from '@/features/storage/components/createProduct/CreateProductSheet';
+import { StorageProvider, useStorage } from '@/features/storage/context/StorageContext';
+import type { Product as StorageProduct } from '@/features/storage/data';
 import { BusinessPreviewCard } from '@/shared/components/business/BusinessPreviewCard';
 import { AlertSnackbar } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/buttons/Button';
@@ -51,10 +55,6 @@ import ProductPreviewSheet from './components/ProductPreviewSheet';
 import { StorefrontEditor } from './components/StorefrontEditor';
 import { ThemeToggle } from './components/ThemeToggle';
 import { resolveActiveScheme } from './components/schemeResolution';
-import { DeleteProductDialog } from './storage/components/DeleteProductDialog';
-import { CreateProductSheet } from './storage/components/createProduct/CreateProductSheet';
-import { StorageProvider, useStorage } from './storage/context/StorageContext';
-import type { Product as StorageProduct } from './storage/data';
 
 const PAGE_SIZE = 12;
 

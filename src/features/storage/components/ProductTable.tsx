@@ -4,9 +4,9 @@ import type { ProductWithRelations } from '@/features/products/types/productType
 import { AlertSnackbar, Icon, IconButton } from '@/shared/components/ui';
 import { getBusinessPath } from '@/shared/utils/url';
 import ProductPreviewSheet from '@app/[slug]/components/ProductPreviewSheet';
+import { usePermissions } from '@app/[slug]/context/PermissionsContext';
 import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useRef, useState } from 'react';
-import { usePermissions } from '../../context/PermissionsContext';
 import { useCurrency } from '../context/CurrencyContext';
 import type { Product } from '../data';
 import type { SortConfig } from '../hooks/useStorageProducts';
