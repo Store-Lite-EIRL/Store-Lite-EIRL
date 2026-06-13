@@ -1,8 +1,8 @@
 'use client';
 
+import { processPayment } from '@/features/payment/actions/paymentActions';
+import { tokenizeCard, tokenizeYape } from '@/features/payment/services/culqiService';
 import { useState } from 'react';
-import { processPayment } from '../actions/paymentActions';
-import { tokenizeCard, tokenizeYape } from '../services/culqiService';
 
 interface UsePaymentFormProps {
   productId: string;

@@ -1,12 +1,12 @@
 'use client';
 
+import { CardPaymentForm } from '@/features/payment/components/CardPaymentForm';
+import type { PaymentMethodId } from '@/features/payment/components/PaymentMethodSelector';
+import { PaymentMethodSelector } from '@/features/payment/components/PaymentMethodSelector';
+import { YapePaymentForm } from '@/features/payment/components/YapePaymentForm';
+import { usePaymentForm } from '@/features/payment/hooks/usePaymentForm';
 import { Dialog } from '@/shared/components/ui';
 import React from 'react';
-import { CardPaymentForm } from '../payment/components/CardPaymentForm';
-import type { PaymentMethodId } from '../payment/components/PaymentMethodSelector';
-import { PaymentMethodSelector } from '../payment/components/PaymentMethodSelector';
-import { YapePaymentForm } from '../payment/components/YapePaymentForm';
-import { usePaymentForm } from '../payment/hooks/usePaymentForm';
 
 interface PaymentModalProps {
   open: boolean;
