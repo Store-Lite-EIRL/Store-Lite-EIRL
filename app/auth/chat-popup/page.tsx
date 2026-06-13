@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/client';
 import type { AuthError } from '@supabase/supabase-js';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 
 /**
  * Chat OAuth Popup
@@ -19,7 +19,7 @@ import { useEffect, useRef } from 'react';
  * The parent window's AuthProvider detects the session change
  * via BroadcastChannel automatically.
  */
-export default function ChatOAuthPopup() {
+function ChatOAuthPopupContent() {
   const searchParams = useSearchParams();
   const code = searchParams.get('code');
   const slug = searchParams.get('slug');
@@ -91,5 +91,26 @@ export default function ChatOAuthPopup() {
     >
       {code ? 'Completando autenticación…' : 'Redirigiendo a Google…'}
     </div>
+  );
+}
+
+export default function ChatOAuthPopup() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100vh',
+          }}
+        >
+          Cargando…
+        </div>
+      }
+    >
+      <ChatOAuthPopupContent />
+    </Suspense>
   );
 }
