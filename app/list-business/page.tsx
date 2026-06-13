@@ -10,11 +10,11 @@ import { cookies } from 'next/headers';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 
+import BusinessGrid from '@/features/business/components/BusinessGrid';
+import CreateBusinessButton from '@/features/business/components/CreateBusinessButton';
+import LogoutButton from '@/features/business/components/LogoutButton';
+import PremiumButton from '@/features/business/components/PremiumButton';
 import style from './ListBusiness.module.css';
-import BusinessGrid from './components/BusinessGrid';
-import CreateBusinessButton from './components/CreateBusinessButton';
-import LogoutButton from './components/LogoutButton';
-import PremiumButton from './components/PremiumButton';
 
 export default async function ListBusinessPage() {
   const cookieStore = await cookies();

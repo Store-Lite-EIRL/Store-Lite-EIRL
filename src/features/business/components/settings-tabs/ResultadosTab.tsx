@@ -1,9 +1,9 @@
 'use client';
 
 import type { Business } from '@/core/database/schema';
+import { getBusinessResults } from '@/features/business/actions/businessActions';
 import { Icon } from '@/shared/components/ui/data-display';
 import React, { useEffect, useState } from 'react';
-import { getBusinessResults } from '../../actions';
 import styles from '../BusinessSettingsModal.module.css';
 
 interface ResultadosTabProps {

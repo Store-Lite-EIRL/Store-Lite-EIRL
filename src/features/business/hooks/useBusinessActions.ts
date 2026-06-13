@@ -1,7 +1,7 @@
 'use client';
 
+import { updateBusinessData } from '@app/actions/business';
 import { useState } from 'react';
-import { updateBusinessData } from '../../actions/business';
 
 export interface AlertState {
   open: boolean;

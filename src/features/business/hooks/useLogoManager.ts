@@ -1,7 +1,7 @@
 'use client';
 
+import { updateBusinessLogo } from '@app/actions/business';
 import { useState } from 'react';
-import { updateBusinessLogo } from '../../actions/business';
 import type { AlertState } from './useBusinessActions';
 
 export function useLogoManager(

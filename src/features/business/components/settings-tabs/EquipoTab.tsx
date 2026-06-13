@@ -1,9 +1,9 @@
 'use client';
 
+import { getBusinessTeam } from '@/features/business/actions/businessActions';
 import { Icon } from '@/shared/components/ui/data-display';
 import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
-import { getBusinessTeam } from '../../actions';
 import styles from '../BusinessSettingsModal.module.css';
 
 interface TeamMember {

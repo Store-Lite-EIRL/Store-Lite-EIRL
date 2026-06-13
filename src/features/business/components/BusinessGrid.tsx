@@ -1,8 +1,8 @@
 'use client';
 
 import type { Business } from '@/core/database/schema';
+import style from '@app/list-business/ListBusiness.module.css';
 import { useState } from 'react';
-import style from '../ListBusiness.module.css';
 import BusinessCard from './BusinessCard';
 import BusinessSettingsModal from './BusinessSettingsModal';
 import DeleteBusinessDialog from './DeleteBusinessDialog';

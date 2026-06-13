@@ -6,10 +6,10 @@ import { CircularProgress } from '@/shared/components/ui/feedback/Progress';
 import { SwitchBusinessModal } from '@/shared/components/ui/feedback/SwitchBusinessModal';
 import { getSectorIcon } from '@/shared/utils/business';
 import { getBusinessPath } from '@/shared/utils/url';
+import styles from '@app/list-business/ListBusiness.module.css';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import styles from '../ListBusiness.module.css';
 
 interface BusinessCardProps {
   biz: {

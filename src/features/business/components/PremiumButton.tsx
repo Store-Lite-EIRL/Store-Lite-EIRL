@@ -2,9 +2,9 @@
 
 import { Icon } from '@/shared/components/ui/data-display';
 import { CircularProgress } from '@/shared/components/ui/feedback/Progress';
+import style from '@app/list-business/ListBusiness.module.css';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import style from '../ListBusiness.module.css';
 
 export default function PremiumButton() {
   const [isLoading, setIsLoading] = useState(false);

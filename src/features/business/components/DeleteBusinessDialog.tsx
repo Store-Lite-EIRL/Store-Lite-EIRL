@@ -1,10 +1,10 @@
 'use client';
 
+import { deleteBusinessAction } from '@/features/business/actions/businessActions';
 import { Icon } from '@/shared/components/ui/data-display';
 import { LinearProgress } from '@/shared/components/ui/feedback/Progress';
 import { Dialog } from '@/shared/components/ui/surfaces/Dialog';
 import { useState } from 'react';
-import { deleteBusinessAction } from '../actions';
 
 interface DeleteBusinessDialogProps {
   business: {

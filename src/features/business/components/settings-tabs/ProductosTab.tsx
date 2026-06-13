@@ -1,9 +1,9 @@
 'use client';
 
+import { getProductStats, getProductsForExport } from '@/features/business/actions/businessActions';
 import { Icon } from '@/shared/components/ui/data-display';
 import React, { useCallback, useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
-import { getProductStats, getProductsForExport } from '../../actions';
 import styles from '../BusinessSettingsModal.module.css';
 
 interface ProductStats {
