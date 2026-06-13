@@ -14,6 +14,8 @@ import {
   getReadableTextColor,
   getStorefrontColorConfig,
 } from '@/core/storefront';
+import type { BrandFilterOption } from '@/features/products/hooks/useProductFilters';
+import { useProductFilters } from '@/features/products/hooks/useProductFilters';
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
 import { BusinessPreviewCard } from '@/shared/components/business/BusinessPreviewCard';
 import { AlertSnackbar } from '@/shared/components/ui';
@@ -37,8 +39,6 @@ import filterStyles from '../(main)/home/FilterBar.module.css';
 import Hero from '../(main)/home/Hero';
 import Pagination from '../(main)/home/Pagination';
 import ProductFiltersTopBar from '../(main)/home/components/ProductFiltersTopBar';
-import type { BrandFilterOption } from '../(main)/home/hooks/useProductFilters';
-import { useProductFilters } from '../(main)/home/hooks/useProductFilters';
 import styles from './BusinessPageContent.module.css';
 import { Footer } from './Footer';
 import { BasicContactDialog } from './components/BasicContactDialog';

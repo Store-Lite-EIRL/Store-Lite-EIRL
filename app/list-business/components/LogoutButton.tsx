@@ -1,9 +1,9 @@
 'use client';
 
 import { useAuth } from '@/features/auth';
+import { clearBusinessSessionData } from '@/hooks/useBusinessSession';
 import { Icon } from '@/shared/components/ui/data-display';
 import { CircularProgress } from '@/shared/components/ui/feedback/Progress';
-import { clearBusinessSessionData } from '@/shared/hooks/useBusinessSession';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import styles from '../ListBusiness.module.css';

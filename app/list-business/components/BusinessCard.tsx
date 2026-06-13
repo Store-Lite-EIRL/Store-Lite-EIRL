@@ -1,9 +1,9 @@
 'use client';
 
+import { clearBusinessSessionData, useBusinessSession } from '@/hooks/useBusinessSession';
 import { Icon } from '@/shared/components/ui/data-display';
 import { CircularProgress } from '@/shared/components/ui/feedback/Progress';
 import { SwitchBusinessModal } from '@/shared/components/ui/feedback/SwitchBusinessModal';
-import { clearBusinessSessionData, useBusinessSession } from '@/shared/hooks/useBusinessSession';
 import { getSectorIcon } from '@/shared/utils/business';
 import { getBusinessPath } from '@/shared/utils/url';
 import Image from 'next/image';
