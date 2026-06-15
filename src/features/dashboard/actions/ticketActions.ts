@@ -166,7 +166,7 @@ export async function notifyDelivery(
       await tx
         .update(payments)
         .set({
-          status: 'en_reparto' as any,
+          status: 'en_reparto',
           updatedAt: new Date(),
         })
         .where(eq(payments.id, paymentId));

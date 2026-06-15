@@ -8,7 +8,6 @@ import {
   normalizeStorefrontColorScheme,
 } from '@/core/storefront';
 import { Button, Icon } from '@/shared/components/ui';
-import { toPng } from 'html-to-image';
 import { useRef, useState } from 'react';
 
 // ─── SVG Icons inline (reemplazan Material Symbols para compatibilidad con html-to-image) ─────
@@ -365,6 +364,7 @@ export const BusinessPreviewCard = ({
       const { width, height } = getCaptureDimensions(captureRef.current);
       const pixelRatio = getSafePixelRatio(width, height);
       const containsBlobImages = hasBlobImages(captureRef.current);
+      const { toPng } = await import('html-to-image');
       const dataUrl = await toPng(captureRef.current, {
         backgroundColor: 'transparent',
         width,

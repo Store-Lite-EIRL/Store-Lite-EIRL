@@ -10,6 +10,7 @@ import { Checkbox } from '@/shared/components/ui/inputs/Checkbox';
 import { getBusinessPath } from '@/shared/utils/url';
 import Image from 'next/image';
 import Link from 'next/link';
+import { posthog } from 'posthog-js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toCartProduct } from '../product/utils/cartHelpers';
 import Checkout from './Checkout';
@@ -135,7 +136,19 @@ export default function ProductPreviewSheet({
     const safeIndex = Math.min(initialImageIndex, maxIndex);
     setCurrentImageIndex(safeIndex);
     setIsPaymentModalOpen(false);
-  }, [product, openSignal, initialImageIndex]);
+
+    try {
+      if (typeof posthog?.capture === 'function') {
+        posthog.capture('product_viewed', {
+          productId: product.id,
+          productName: product.title,
+          businessSlug: slug,
+        });
+      }
+    } catch {
+      // Analytics should never block user flow
+    }
+  }, [product, openSignal, initialImageIndex, slug]);
 
   if (!product) {
     return <Sheet id={SHEET_ID} title="Vista previa" direction="bottom" className={styles.sheet} />;
@@ -215,7 +228,13 @@ export default function ProductPreviewSheet({
                 {businessName && (
                   <div className={styles.storeBadge}>
                     {businessLogoUrl ? (
-                      <img src={businessLogoUrl} alt={businessName} className={styles.storeLogo} />
+                      <Image
+                        src={businessLogoUrl}
+                        alt={businessName}
+                        className={styles.storeLogo}
+                        width={24}
+                        height={24}
+                      />
                     ) : (
                       <Icon size={18}>store</Icon>
                     )}

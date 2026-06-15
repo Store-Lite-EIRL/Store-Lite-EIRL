@@ -573,6 +573,7 @@ export const payments = pgTable(
         'validando',
         'not_delivered',
         'delivered',
+        'en_reparto',
         'completed',
         'failed',
         'disputed',

@@ -21,10 +21,12 @@
     "test:coverage": "vitest run --coverage",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
-    "test": "pnpm test:unit && pnpm test:e2e"
+    "test": "pnpm test:unit && pnpm test:e2e",
+    "analyze:bundle": "next build",
+    "security:check": "pnpm audit --prod",
+    "performance:audit": "lighthouse http://localhost:3000 --output=json --output-path=./reports/lighthouse.json --chrome-flags='--headless'"
   },
   "dependencies": {
-    "@fontsource/google-sans": "^5.2.1",
     "@material/web": "^2.4.1",
     "@sentry/nextjs": "10",
     "@supabase/ssr": "^0.8.0",
@@ -41,6 +43,7 @@
     "react-barcode": "^1.6.1",
     "react-dom": "19.2.3",
     "twilio": "^6.0.1",
+    "web-vitals": "^5.3.0",
     "xlsx": "^0.18.5",
     "zod": "^4.3.6"
   },

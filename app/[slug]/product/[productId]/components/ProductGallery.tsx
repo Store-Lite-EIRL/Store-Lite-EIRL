@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import styles from './ProductDetail.module.css';
 
@@ -25,8 +26,14 @@ export default function ProductGallery({ images, productName }: ProductGalleryPr
     <div className={styles.galleryContainer}>
       {/* Main Large Image */}
       <div className={styles.mainImageContainer}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img alt={`${productName} main view`} className={styles.mainImage} src={mainImage} />
+        <Image
+          alt={`${productName} main view`}
+          src={mainImage}
+          fill
+          sizes="(max-width: 768px) 100vw, 50vw"
+          className={styles.mainImage}
+          priority
+        />
       </div>
 
       {/* Thumbnail Row */}
@@ -48,10 +55,17 @@ export default function ProductGallery({ images, productName }: ProductGalleryPr
               aria-label={`View image ${i + 1}`}
               style={{
                 border: mainImage === thumb ? '2px solid #000' : '2px solid transparent',
+                position: 'relative',
               }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img alt={`Thumbnail ${i + 1}`} className={styles.thumbnailImage} src={thumb} />
+              <Image
+                alt={`Thumbnail ${i + 1}`}
+                src={thumb}
+                fill
+                sizes="(max-width: 768px) 33vw, 150px"
+                className={styles.thumbnailImage}
+                loading="lazy"
+              />
             </div>
           ))}
         </div>

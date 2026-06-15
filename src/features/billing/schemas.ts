@@ -63,3 +63,16 @@ export const createOrderRequestSchema = z.object({
   description: z.string().optional(),
 });
 export type CreateOrderRequestInput = z.infer<typeof createOrderRequestSchema>;
+
+export const trackOrderSchema = z.object({
+  dni: z.string().min(1, 'DNI es requerido'),
+  orderNumber: z.string().min(1, 'Número de orden es requerido'),
+});
+export type TrackOrderInput = z.infer<typeof trackOrderSchema>;
+
+export const lookupOrderSchema = z.object({
+  dni: z.string().min(1, 'DNI es requerido'),
+  orderNumber: z.string().min(1, 'Número de orden es requerido'),
+  businessSlug: z.string().min(1, 'Business slug es requerido'),
+});
+export type LookupOrderInput = z.infer<typeof lookupOrderSchema>;

@@ -15,14 +15,14 @@ export function KybStep1Identity({
   loading,
   initialData,
 }: {
-  onSubmit: (data: any) => void;
+  onSubmit: (data: Partial<WizardData>) => void;
   loading: boolean;
   initialData: WizardData;
 }) {
   const [personType, setPersonType] = useState<'natural' | 'juridica'>(
     initialData.personType || 'natural',
   );
-  const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
+  const [state, formAction] = useActionState(async (prevState: unknown, formData: FormData) => {
     // Debug: Log what's actually being submitted from the client
     const res = await verifyIdentityAction(formData);
     if (!res.error && res.data) {

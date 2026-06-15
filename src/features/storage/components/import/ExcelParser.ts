@@ -1,5 +1,3 @@
-import * as XLSX from 'xlsx';
-
 /* ──────── Types ──────── */
 
 export interface ExcelRow {
@@ -395,8 +393,9 @@ export function parseWorkbook(file: File, maxRows = 200): Promise<ParseResult> {
 
     reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
 
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
+        const XLSX = await import('xlsx');
         const wb = XLSX.read(e.target?.result, { type: 'binary' });
         const out: Record<string, ExcelRow[]> = {};
         const sheetInfo: RawSheetInfo[] = [];

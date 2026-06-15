@@ -11,6 +11,7 @@ import { getBusinessPath } from '@/shared/utils/url';
 import type { AuthTokenResponse } from '@supabase/supabase-js';
 import { toBlob } from 'html-to-image';
 import { useParams, useRouter } from 'next/navigation';
+import { posthog } from 'posthog-js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './Checkout.module.css';
@@ -447,6 +448,23 @@ export default function Checkout({
             });
             setShowReceipt(true);
             setShowConfetti(true);
+
+            try {
+              if (typeof posthog?.capture === 'function') {
+                posthog.capture('order_created', {
+                  orderId: orderNumber,
+                  amount: finalTotal,
+                  businessSlug: slug,
+                });
+                posthog.capture('payment_completed', {
+                  paymentId: order.id,
+                  amount: finalTotal,
+                  method: paymentMethod,
+                });
+              }
+            } catch {
+              // Analytics should never block user flow
+            }
           } catch (error) {
             console.error('Order card payment failed:', error);
             const message =
@@ -580,6 +598,23 @@ export default function Checkout({
           });
           setShowReceipt(true);
           setShowConfetti(true);
+
+          try {
+            if (typeof posthog?.capture === 'function') {
+              posthog.capture('order_created', {
+                orderId: orderNumber,
+                amount: finalTotal,
+                businessSlug: slug,
+              });
+              posthog.capture('payment_completed', {
+                paymentId: paymentResult?.charge?.id ?? token,
+                amount: finalTotal,
+                method: paymentMethod,
+              });
+            }
+          } catch {
+            // Analytics should never block user flow
+          }
 
           if (window.Culqi && window.Culqi.close) window.Culqi.close();
         } catch (error) {

@@ -5,6 +5,12 @@
 // Usage: Automatically runs on all routes except static files
 // =====================================
 
+import {
+  checkRateLimit,
+  getClientIdentifier,
+  RATE_LIMITS,
+  type RateLimitConfig,
+} from '@/lib/rateLimit';
 import { type NextRequest, NextResponse } from 'next/server';
 import { env } from './src/config/env';
 import { updateProxy } from './src/lib/supabase/proxy';
@@ -20,6 +26,38 @@ import { extractTenantSlugFromHost, isTenantHost } from './src/shared/utils/url'
  */
 export async function proxy(request: NextRequest) {
   let rewriteUrl: URL | null = null;
+
+  // ── Rate limiting (step 0 — before everything else) ────
+  // Different limits based on route type.
+  // Auth and API routes are rate-limited; storefront is not (for now).
+  const pathname = request.nextUrl.pathname;
+  let rateLimitConfig: RateLimitConfig | null = null;
+
+  if (pathname.startsWith('/auth/')) {
+    rateLimitConfig = RATE_LIMITS.auth;
+  } else if (pathname.startsWith('/api/')) {
+    rateLimitConfig = RATE_LIMITS.api;
+  }
+
+  if (rateLimitConfig) {
+    const clientIp = getClientIdentifier(request);
+    const result = checkRateLimit(clientIp, rateLimitConfig);
+
+    if (!result.allowed) {
+      return new NextResponse(
+        JSON.stringify({ error: 'Too many requests. Please try again later.' }),
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil(result.resetInMs / 1000)),
+            'Content-Type': 'application/json',
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': String(Math.ceil(result.resetInMs / 1000)),
+          },
+        },
+      );
+    }
+  }
 
   // Phase 2: Subdomain storefront rewrite
   // Cuando FEATURE_SUBDOMAIN_REWRITE esta habilitado, detectamos subdominios

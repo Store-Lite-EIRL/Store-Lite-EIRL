@@ -49,7 +49,7 @@ export interface FactilizaDniInfo {
 
 // Cache structure
 export interface CacheEntry {
-  data: any;
+  data: unknown;
   timestamp: number;
 }
 

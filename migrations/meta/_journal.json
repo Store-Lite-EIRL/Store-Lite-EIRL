@@ -120,6 +120,13 @@
       "when": 1780670670510,
       "tag": "0016_heavy_hannibal_king",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1781540857554,
+      "tag": "0017_medical_nick_fury",
+      "breakpoints": true
     }
   ]
 }

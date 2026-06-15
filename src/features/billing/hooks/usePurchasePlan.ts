@@ -1,7 +1,6 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
-import { toPng } from 'html-to-image';
 import { useCallback, useRef, useState } from 'react';
 
 /**
@@ -90,6 +89,7 @@ export function usePurchasePlan() {
             // El `filter` solo filtra nodos DOM, NO el proceso de lectura de stylesheets.
             // Con skipFonts:true la librería omite ese proceso completamente.
             // Las fuentes del sistema (Inter, Roboto, Segoe UI) seguirán funcionando correctamente.
+            const { toPng } = await import('html-to-image');
             const dataUrl = await toPng(ticketRef.current, {
               cacheBust: true,
               backgroundColor: '#ffffff',

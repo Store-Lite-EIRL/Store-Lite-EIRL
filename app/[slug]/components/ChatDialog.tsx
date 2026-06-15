@@ -11,6 +11,7 @@ import {
 } from '@/features/chat/actions/chatActions';
 import { createClient } from '@/lib/supabase/client';
 import type { RealtimePostgresInsertPayload } from '@supabase/supabase-js';
+import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styles from './ChatDialog.module.css';
 
@@ -204,7 +205,10 @@ export function ChatDialog({
     };
 
     initChat();
-  }, [user, authLoading, businessId, isStarting, step]);
+
+    // guard values set BY this effect, not reactive inputs. Including them causes
+    // the effect to re-run 2-3x during init instead of once.
+  }, [user, authLoading, businessId]);
 
   // ─── Fetch messages when session is ready (with cache) ───
   useEffect(() => {
@@ -369,7 +373,8 @@ export function ChatDialog({
   // ─── Focus input when chat opens ───
   useEffect(() => {
     if (step === 'chat') {
-      setTimeout(() => inputRef.current?.focus(), 100);
+      const timer = setTimeout(() => inputRef.current?.focus(), 100);
+      return () => clearTimeout(timer);
     }
   }, [step]);
 
@@ -511,7 +516,13 @@ export function ChatDialog({
       <div className={styles.header}>
         <div className={styles.headerAvatar}>
           {businessLogo ? (
-            <img src={businessLogo} alt={businessName} className={styles.businessLogo} />
+            <Image
+              src={businessLogo}
+              alt={businessName}
+              className={styles.businessLogo}
+              width={44}
+              height={44}
+            />
           ) : (
             <span className="material-symbols-outlined">store</span>
           )}
@@ -551,10 +562,12 @@ export function ChatDialog({
             <div className={styles.userBar}>
               <div className={styles.userBarAvatar}>
                 {guestAvatar ? (
-                  <img
+                  <Image
                     src={guestAvatar}
                     alt=""
                     className={styles.userBarAvatarImg}
+                    width={36}
+                    height={36}
                     referrerPolicy="no-referrer"
                   />
                 ) : (

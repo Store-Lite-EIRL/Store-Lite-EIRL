@@ -12,11 +12,23 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { dni, orderNumber } = await request.json();
+    const rawBody = await request.json();
 
-    if (!dni || !orderNumber) {
-      return NextResponse.json({ error: 'DNI y Número de Orden son requeridos' }, { status: 400 });
+    // 0. Validate Data using Zod
+    const { trackOrderSchema } = await import('@/features/billing/schemas');
+    const validationResult = trackOrderSchema.safeParse(rawBody);
+
+    if (!validationResult.success) {
+      return NextResponse.json(
+        {
+          error:
+            validationResult.error.issues[0]?.message || 'DNI y Número de Orden son requeridos',
+        },
+        { status: 400 },
+      );
     }
+
+    const { dni, orderNumber } = validationResult.data;
 
     // Buscamos el pago que coincida con ambos campos
     // Nota: el orderNumber en la DB puede venir con o sin el '#' dependiendo de cómo se guarde

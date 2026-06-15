@@ -29,6 +29,7 @@ import type { Business } from '@/types/business';
 import type { ProductCategory } from '@/types/product';
 import type { SaveProductMediaItem, SaveProductPayload } from '@/types/storage';
 import { useRouter } from 'next/navigation';
+import { posthog } from 'posthog-js';
 import {
   useCallback,
   useEffect,
@@ -315,6 +316,20 @@ function BusinessPageContentUI({
         color: 'success',
         icon: 'check_circle',
       });
+
+      if (!isEdit) {
+        try {
+          if (typeof posthog?.capture === 'function') {
+            posthog.capture('product_created', {
+              productId: optimisticProduct.id,
+              businessSlug: business.slug,
+            });
+          }
+        } catch {
+          // Analytics should never block user flow
+        }
+      }
+
       setIsEditOpen(false);
       setIsCreateOpen(false);
       router.refresh();

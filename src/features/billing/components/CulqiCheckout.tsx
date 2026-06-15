@@ -3,14 +3,6 @@
 import { loadCulqiScript } from '@/features/payment/services/culqiService';
 import React, { useCallback, useEffect, useState } from 'react';
 
-// Declaración global para acceder a los scripts dinámicos de Culqi
-declare global {
-  interface Window {
-    Culqi: any;
-    culqi: () => void;
-  }
-}
-
 interface CulqiCheckoutProps {
   planId: string;
   planName: string;
@@ -75,12 +67,12 @@ export function CulqiCheckout({
   // Hookea la función global `culqi` que es invocada por el v4 interno
   useEffect(() => {
     window.culqi = function () {
-      if (window.Culqi.token) {
+      if (window.Culqi?.token) {
         const token = window.Culqi.token.id;
         console.log('✅ Token de Culqi recibido exitosamente:', token, 'para el plan:', planId);
-        if (window.Culqi) window.Culqi.close();
+        window.Culqi.close();
         onTokenSuccess(token);
-      } else if (window.Culqi.error) {
+      } else if (window.Culqi?.error) {
         console.error('❌ Error desde Culqi:', window.Culqi.error);
       }
     };
@@ -94,19 +86,19 @@ export function CulqiCheckout({
   const openCheckout = async () => {
     if (disabled) return;
 
-    if (window.Culqi) {
+    const culqi = window.Culqi;
+    if (culqi) {
       initCulqi();
       if (onOpening) onOpening();
-      window.Culqi.open();
+      culqi.open();
     } else {
       console.log('🔄 Culqi no detectado, intentando cargar manualmente...');
       try {
         await loadCulqiScript();
         initCulqi();
         if (onOpening) onOpening();
-        if (window.Culqi) {
-          window.Culqi.open();
-        }
+        const culqiAfterLoad = window.Culqi;
+        if (culqiAfterLoad) culqiAfterLoad.open();
       } catch (error) {
         console.error('❌ Error cargando Culqi al intentar pagar:', error);
       }

@@ -105,7 +105,7 @@ export async function requestFinalization(
     await db
       .update(payments)
       .set({
-        status: 'not_delivered' as any, // Waiting for customer confirmation
+        status: 'not_delivered', // Waiting for customer confirmation
         finalizationRequestedAt: now,
         finalizationDeadline: deadline,
         updatedAt: now,
@@ -240,7 +240,7 @@ export async function confirmFinalization(
       await tx
         .update(payments)
         .set({
-          status: 'completed' as any,
+          status: 'completed',
           finalizationConfirmedAt: now,
           completedAt: now,
           updatedAt: now,
@@ -373,7 +373,7 @@ export async function rejectFinalization(
       await tx
         .update(payments)
         .set({
-          status: 'disputed' as any,
+          status: 'disputed',
           rejectionReason: reason,
           completedAt: null, // P17: clear completion date on rejection
           updatedAt: now,
@@ -478,7 +478,7 @@ export async function autoFinalizeExpiredPayments(): Promise<{
       .from(payments)
       .where(
         and(
-          eq(payments.status, 'not_delivered' as any),
+          eq(payments.status, 'not_delivered'),
           lt(payments.finalizationDeadline, now), // Deadline has passed
         ),
       );
@@ -496,7 +496,7 @@ export async function autoFinalizeExpiredPayments(): Promise<{
         await db
           .update(payments)
           .set({
-            status: 'completed' as any,
+            status: 'completed',
             completedAt: now,
             updatedAt: now,
           })
