@@ -3,15 +3,15 @@
 'use client';
 
 import { useAuth } from '@/features/auth';
-import { createClient } from '@/lib/supabase/client';
-import type { RealtimePostgresInsertPayload } from '@supabase/supabase-js';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   fetchMessages,
   getActiveChatSession,
   sendMessage,
   startChatSession,
-} from '../chat/actions/chatActions';
+} from '@/features/chat/actions/chatActions';
+import { createClient } from '@/lib/supabase/client';
+import type { RealtimePostgresInsertPayload } from '@supabase/supabase-js';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styles from './ChatDialog.module.css';
 
 const DEBUG_ABORTS = process.env.NEXT_PUBLIC_DEBUG_ABORTS === '1';

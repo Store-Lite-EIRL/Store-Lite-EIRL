@@ -1,13 +1,13 @@
 'use client';
 
 import type { StorefrontColorScheme } from '@/core/storefront';
+import { useHeroController, type HeroBusiness } from '@/features/products/hooks/useHeroController';
 import { Button, IconButton } from '@/shared/components/ui/buttons';
 import { Icon } from '@/shared/components/ui/data-display';
 import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
 import { Dialog } from '@/shared/components/ui/surfaces/Dialog';
 import Image from 'next/image';
 import styles from './Hero.module.css';
-import { useHeroController, type HeroBusiness } from './useHeroController';
 
 interface HeroProps {
   business?: HeroBusiness | null;

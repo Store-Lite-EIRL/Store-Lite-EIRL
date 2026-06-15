@@ -1,9 +1,9 @@
 'use client';
 
+import { confirmFinalization } from '@/features/dashboard/actions/finalizationActions';
 import { Icon } from '@/shared/components/ui';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { confirmFinalization } from '../../dashboard/actions/finalizationActions';
 import './FlowModals.css';
 
 interface ConfirmationFlowProps {
