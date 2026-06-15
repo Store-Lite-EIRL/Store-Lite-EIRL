@@ -1,8 +1,8 @@
 'use client';
 
-import type { Business } from '@/core/database/schema';
 import { Icon } from '@/shared/components/ui/data-display';
 import { AlertSnackbar } from '@/shared/components/ui/feedback';
+import type { Business } from '@/types/business';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useBusinessSettings } from '../hooks/useBusinessSettings';
 import styles from './BusinessSettingsModal.module.css';

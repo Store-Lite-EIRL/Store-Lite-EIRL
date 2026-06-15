@@ -7,14 +7,11 @@ import { businesses, profiles } from '@/core/database/schema';
 import { createBusinessSchema } from '@/features/business/schemas';
 import { generateBusinessSlug } from '@/shared/utils/slugify';
 import { getBusinessPath } from '@/shared/utils/url';
+import type { ActionState } from '@/types/actions';
 import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-
-export interface ActionState {
-  error?: string;
-}
 
 /**
  * Server Action: Creates a new business store.

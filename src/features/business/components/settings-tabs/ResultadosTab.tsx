@@ -1,8 +1,8 @@
 'use client';
 
-import type { Business } from '@/core/database/schema';
 import { getBusinessResults } from '@/features/business/actions/businessActions';
 import { Icon } from '@/shared/components/ui/data-display';
+import type { Business } from '@/types/business';
 import React, { useEffect, useState } from 'react';
 import styles from '../BusinessSettingsModal.module.css';
 

@@ -1,6 +1,5 @@
 'use client';
 
-import type { Business, ProductCategory } from '@/core/database/schema';
 import type {
   ProductGridSection,
   StorefrontColorScheme,
@@ -26,6 +25,8 @@ import { AlertSnackbar } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
 import { useTheme } from '@/shared/context/ThemeContext';
+import type { Business } from '@/types/business';
+import type { ProductCategory } from '@/types/product';
 import type { SaveProductMediaItem, SaveProductPayload } from '@/types/storage';
 import { useRouter } from 'next/navigation';
 import {

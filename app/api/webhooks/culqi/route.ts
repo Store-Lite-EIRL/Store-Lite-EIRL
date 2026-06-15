@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 
 import { db } from '@/core/database/client';
-import type { OrderStatus } from '@/core/database/schema';
 import { paymentOrders, payments } from '@/core/database/schema';
+import type { OrderStatus } from '@/types/order';
 import { eq } from 'drizzle-orm';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 

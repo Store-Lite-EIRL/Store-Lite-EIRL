@@ -1,9 +1,9 @@
 'use client';
 
-import type { Business } from '@/core/database/schema';
 import { useCart } from '@/features/storage/context/CartContext';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
+import type { Business } from '@/types/business';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './BasicContactDialog.module.css';

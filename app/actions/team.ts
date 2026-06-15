@@ -10,21 +10,12 @@ import {
   businesses,
 } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
+import type { ActionState } from '@/types/actions';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { and, eq, isNull, or, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
-
-// =====================================================
-// TYPES
-// =====================================================
-
-export interface ActionState {
-  error?: string;
-  success?: boolean;
-  message?: string;
-}
 
 export interface TeamMember {
   id: string;

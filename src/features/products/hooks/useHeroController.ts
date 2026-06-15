@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import type { Business } from '@/core/database/schema';
+import type { Business } from '@/types/business';
 
 import { removeBusinessCover, updateBusinessCover } from '@app/actions/business';
 

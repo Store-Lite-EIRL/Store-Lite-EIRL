@@ -1,6 +1,6 @@
 'use client';
 
-import type { Business } from '@/core/database/schema';
+import type { Business } from '@/types/business';
 import { useEffect, useState } from 'react';
 import { useBusinessActions } from './useBusinessActions';
 import { useLogoManager } from './useLogoManager';

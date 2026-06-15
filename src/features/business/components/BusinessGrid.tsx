@@ -1,6 +1,6 @@
 'use client';
 
-import type { Business } from '@/core/database/schema';
+import type { Business } from '@/types/business';
 import style from '@app/list-business/ListBusiness.module.css';
 import { useState } from 'react';
 import BusinessCard from './BusinessCard';
