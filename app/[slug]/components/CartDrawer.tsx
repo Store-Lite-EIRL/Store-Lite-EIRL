@@ -1,5 +1,8 @@
 'use client';
 
+import type { CartItem, CartServerItem } from '@/features/storage/context/CartContext';
+import { useCart } from '@/features/storage/context/CartContext';
+import { formatPrice } from '@/features/storage/utils/currency';
 import { Icon } from '@/shared/components/ui';
 import { IconButton } from '@/shared/components/ui/buttons';
 import { getBusinessPath } from '@/shared/utils/url';
@@ -7,9 +10,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import type { CartItem, CartServerItem } from '../storage/context/CartContext';
-import { useCart } from '../storage/context/CartContext';
-import { formatPrice } from '../storage/utils/currency';
 import styles from './CartDrawer.module.css';
 import Checkout from './Checkout';
 

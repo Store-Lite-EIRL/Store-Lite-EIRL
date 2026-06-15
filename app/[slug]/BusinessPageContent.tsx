@@ -1,6 +1,5 @@
 'use client';
 
-import type { Business, ProductCategory } from '@/core/database/schema';
 import type {
   ProductGridSection,
   StorefrontColorScheme,
@@ -14,12 +13,21 @@ import {
   getReadableTextColor,
   getStorefrontColorConfig,
 } from '@/core/storefront';
+import type { BrandFilterOption } from '@/features/products/hooks/useProductFilters';
+import { useProductFilters } from '@/features/products/hooks/useProductFilters';
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
+import { DeleteProductDialog } from '@/features/storage/components/DeleteProductDialog';
+import { CreateProductSheet } from '@/features/storage/components/createProduct/CreateProductSheet';
+import { StorageProvider, useStorage } from '@/features/storage/context/StorageContext';
+import type { Product as StorageProduct } from '@/features/storage/data';
 import { BusinessPreviewCard } from '@/shared/components/business/BusinessPreviewCard';
 import { AlertSnackbar } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
 import { useTheme } from '@/shared/context/ThemeContext';
+import type { Business } from '@/types/business';
+import type { ProductCategory } from '@/types/product';
+import type { SaveProductMediaItem, SaveProductPayload } from '@/types/storage';
 import { useRouter } from 'next/navigation';
 import {
   useCallback,
@@ -37,8 +45,6 @@ import filterStyles from '../(main)/home/FilterBar.module.css';
 import Hero from '../(main)/home/Hero';
 import Pagination from '../(main)/home/Pagination';
 import ProductFiltersTopBar from '../(main)/home/components/ProductFiltersTopBar';
-import type { BrandFilterOption } from '../(main)/home/hooks/useProductFilters';
-import { useProductFilters } from '../(main)/home/hooks/useProductFilters';
 import styles from './BusinessPageContent.module.css';
 import { Footer } from './Footer';
 import { BasicContactDialog } from './components/BasicContactDialog';
@@ -50,11 +56,6 @@ import ProductPreviewSheet from './components/ProductPreviewSheet';
 import { StorefrontEditor } from './components/StorefrontEditor';
 import { ThemeToggle } from './components/ThemeToggle';
 import { resolveActiveScheme } from './components/schemeResolution';
-import { DeleteProductDialog } from './storage/components/DeleteProductDialog';
-import { CreateProductSheet } from './storage/components/createProduct/CreateProductSheet';
-import { StorageProvider, useStorage } from './storage/context/StorageContext';
-import type { Product as StorageProduct } from './storage/data';
-import type { SaveProductMediaItem, SaveProductPayload } from './storage/types';
 
 const PAGE_SIZE = 12;
 

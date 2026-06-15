@@ -1,8 +1,8 @@
 'use client';
 
+import { useProductItemController } from '@/features/products/hooks/useProductItemController';
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
 import { ProductItemView } from './ProductItemView';
-import { useProductItemController } from './useProductItemController';
 
 interface ProductItemProps {
   product: ProductWithRelations;

@@ -1,8 +1,8 @@
 'use client';
 
+import { useBusinessSession } from '@/hooks/useBusinessSession';
 import Navbar from '@/shared/components/navigation/Navbar';
 import { CircularProgress } from '@/shared/components/ui/feedback/Progress';
-import { useBusinessSession } from '@/shared/hooks/useBusinessSession';
 import { getBusinessPath } from '@/shared/utils/url';
 import '@/styles/components/layout.css';
 import '@/styles/components/navbar.css';

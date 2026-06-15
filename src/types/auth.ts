@@ -8,6 +8,8 @@
 import type { Profile } from '@/core/database/schema';
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 
+export type { Profile };
+
 // =====================================================
 // USER TYPES
 // =====================================================

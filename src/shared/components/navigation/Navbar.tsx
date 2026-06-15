@@ -1,7 +1,7 @@
 'use client';
 
+import { clearBusinessSessionData, STORAGE_KEY } from '@/hooks/useBusinessSession';
 import { createClient } from '@/lib/supabase/client';
-import { clearBusinessSessionData, STORAGE_KEY } from '@/shared/hooks/useBusinessSession';
 import { getBusinessPath } from '@/shared/utils/url';
 import '@/styles/components/navbar.css';
 import Link from 'next/link';

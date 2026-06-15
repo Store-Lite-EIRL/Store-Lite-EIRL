@@ -1,12 +1,12 @@
 'use client';
 
 import type { ProductCategory } from '@/core/database/schema';
+import type { BrandFilterOption } from '@/features/products/hooks/useProductFilters';
 import { IconButton } from '@/shared/components/ui/buttons/IconButton';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
 import { DropdownCheckbox } from '@/shared/components/ui/inputs/DropdownCheckbox';
 import { Switch } from '@/shared/components/ui/inputs/Switch';
 import { getMaterialSwitchSelected } from '@/shared/utils';
-import type { BrandFilterOption } from '../hooks/useProductFilters';
 import { PriceRangeFilter } from './PriceRangeFilter';
 import styles from './ProductFiltersTopBar.module.css';
 

@@ -2,6 +2,7 @@
 
 import { PERU_LOCATIONS } from '@/core/logistics/peruLocations';
 import { URBANO_AGENCIES } from '@/core/logistics/urbanoAgencies';
+import type { CartItem } from '@/features/storage/context/CartContext';
 import { createClient } from '@/lib/supabase/client';
 import { AlertSnackbar, Confetti, Icon, Receipt } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/buttons/Button';
@@ -12,7 +13,6 @@ import { toBlob } from 'html-to-image';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { CartItem } from '../storage/context/CartContext';
 import styles from './Checkout.module.css';
 
 // ─── Límites de métodos de pago ─────────────────────────────────────────

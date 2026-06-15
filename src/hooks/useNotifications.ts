@@ -6,8 +6,8 @@
 
 'use client';
 
-import type { Notification, NotificationCategory } from '@/core/database/schema';
 import { createClient } from '@/lib/supabase/client';
+import type { Notification, NotificationCategory } from '@/types/notifications';
 import type { RealtimeChannel, RealtimePostgresInsertPayload } from '@supabase/supabase-js';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 

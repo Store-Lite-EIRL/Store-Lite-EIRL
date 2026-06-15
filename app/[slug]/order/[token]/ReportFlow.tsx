@@ -1,9 +1,9 @@
 'use client';
 
+import { rejectFinalization } from '@/features/dashboard/actions/finalizationActions';
 import { Icon } from '@/shared/components/ui';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { rejectFinalization } from '../../dashboard/actions/finalizationActions';
 import './FlowModals.css';
 
 interface ReportFlowProps {

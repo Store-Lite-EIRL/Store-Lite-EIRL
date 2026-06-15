@@ -1,7 +1,7 @@
 'use client';
 
+import { useProductLike } from '@/features/products/hooks/useProductLike';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
-import { useProductLike } from '../../hooks/useProductLike';
 import styles from './ProductDetail.module.css';
 
 interface LikeSectionProps {

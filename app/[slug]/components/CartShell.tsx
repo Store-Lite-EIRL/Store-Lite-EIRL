@@ -1,6 +1,6 @@
 'use client';
 
-import type { Business } from '@/core/database/schema';
+import type { Business } from '@/types/business';
 import { useState } from 'react';
 import { BasicContactDialog } from './BasicContactDialog';
 import { CartDrawer } from './CartDrawer';

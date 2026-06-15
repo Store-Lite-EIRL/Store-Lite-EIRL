@@ -1,12 +1,12 @@
 'use client';
 
 import type { ProductCategory } from '@/core/database/schema';
+import { createCategory, deleteCategory, updateCategory } from '@/features/storage/actions';
 import { Button, Dialog, Icon } from '@/shared/components/ui';
 import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { createCategory, deleteCategory, updateCategory } from '../../[slug]/storage/actions';
 import styles from './FeaturedItems.module.css';
 import { AddCategoryModal } from './components/AddCategoryModal';
 import { EditCategoryModal } from './components/EditCategoryModal';
@@ -203,8 +203,7 @@ export default function FeaturedItems({
       let finalImageUrl = editingCategory?.imageUrl || null;
 
       if (imageFile) {
-        const { uploadCategoryImage } =
-          await import('../../[slug]/storage/services/storageService');
+        const { uploadCategoryImage } = await import('@/features/storage/services/storageService');
 
         finalImageUrl = await uploadCategoryImage(imageFile, businessSlug);
       }
@@ -246,8 +245,7 @@ export default function FeaturedItems({
       let finalImageUrl: string | null = null;
 
       if (imageFile) {
-        const { uploadCategoryImage } =
-          await import('../../[slug]/storage/services/storageService');
+        const { uploadCategoryImage } = await import('@/features/storage/services/storageService');
         finalImageUrl = await uploadCategoryImage(imageFile, businessSlug);
       }
 

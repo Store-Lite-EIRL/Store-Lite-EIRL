@@ -21,5 +21,12 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./tests/setup.ts'],
     exclude: ['**/node_modules/**', '**/dist/**', 'tests/e2e/**'],
+    coverage: {
+      enabled: true,
+      provider: 'v8',
+      reporter: ['text', 'lcov', 'html'],
+      include: ['src/**', 'app/**', 'tests/**'],
+      exclude: ['src/**/*.d.ts', 'src/**/*.test.*', 'app/**/*.test.*', '**/node_modules/**'],
+    },
   },
 });

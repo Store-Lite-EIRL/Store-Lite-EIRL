@@ -1,4 +1,4 @@
-import { validateProductImageFile } from '@/app/[slug]/storage/utils/productImageValidation';
+import { validateProductImageFile } from '@/features/storage/utils/productImageValidation';
 import { describe, expect, test } from 'vitest';
 
 function createFile(name: string, type: string, content = 'image-content') {

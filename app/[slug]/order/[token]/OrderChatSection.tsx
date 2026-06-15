@@ -1,9 +1,9 @@
 'use client';
 
+import { fetchMessages, sendMessage } from '@/features/chat/actions/chatActions';
 import { createClient } from '@/lib/supabase/client';
 import { Icon } from '@/shared/components/ui';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { fetchMessages, sendMessage } from '../../chat/actions/chatActions';
 import { syncChatSession } from './actions';
 
 interface Message {

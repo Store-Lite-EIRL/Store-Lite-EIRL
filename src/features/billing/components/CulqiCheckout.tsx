@@ -1,6 +1,6 @@
 'use client';
 
-import { loadCulqiScript } from '@app/[slug]/payment/services/culqiService';
+import { loadCulqiScript } from '@/features/payment/services/culqiService';
 import React, { useCallback, useEffect, useState } from 'react';
 
 // Declaración global para acceder a los scripts dinámicos de Culqi

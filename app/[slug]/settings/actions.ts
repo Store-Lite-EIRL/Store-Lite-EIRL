@@ -14,15 +14,10 @@ import {
   normalizeStorefrontLayout,
   normalizeStorefrontTheme,
 } from '@/core/storefront';
+import { requireAccessOnId } from '@/features/storage/actions/authz';
+import type { ActionState } from '@/types/actions';
 import { and, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
-import { requireAccessOnId } from '../storage/actions/authz';
-
-export interface ActionState {
-  error?: string;
-  success?: boolean;
-  message?: string;
-}
 
 export interface SlugActionState extends ActionState {
   newSlug?: string;

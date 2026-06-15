@@ -3,16 +3,14 @@
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businesses } from '@/core/database/schema';
+import type { ActionState as BaseActionState } from '@/types/actions';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 
-export interface ActionState {
-  error?: string;
-  success?: boolean;
-  message?: string;
+export interface ActionState extends BaseActionState {
   url?: string;
 }
 

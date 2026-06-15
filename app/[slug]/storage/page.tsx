@@ -1,11 +1,11 @@
 import { env } from '@/config/env';
 import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
+import { StorageClient } from '@/features/storage/StorageClient';
 import { getMemberPermissions } from '@/lib/permissions/checkPermission';
 import { createServerClient } from '@supabase/ssr';
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
-import { StorageClient } from './StorageClient';
 
 interface StoragePageProps {
   params: Promise<{ slug: string }>;

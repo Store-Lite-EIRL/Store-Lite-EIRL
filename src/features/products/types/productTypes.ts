@@ -1,4 +1,4 @@
-import type { Product, ProductCategory, ProductMedia } from '@/core/database/schema';
+import type { Product, ProductCategory, ProductMedia } from '@/types/product';
 
 export type ProductWithRelations = Product & {
   media: ProductMedia[];

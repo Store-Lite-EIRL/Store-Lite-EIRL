@@ -1,10 +1,10 @@
 'use client';
 
-import type { Business } from '@/core/database/schema';
 import type { StorefrontColorScheme, StorefrontTheme } from '@/core/storefront';
 import { createDefaultStorefrontTheme } from '@/core/storefront';
 import { BusinessPreviewCard } from '@/shared/components/business/BusinessPreviewCard';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
+import type { Business } from '@/types/business';
 import styles from './AboutSection.module.css';
 import { LocationMap } from './components/LocationMap';
 

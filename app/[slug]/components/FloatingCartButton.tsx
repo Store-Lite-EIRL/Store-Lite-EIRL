@@ -1,8 +1,8 @@
 'use client';
 
+import { useCart } from '@/features/storage/context/CartContext';
 import { Badge, Icon } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/buttons';
-import { useCart } from '../storage/context/CartContext';
 import styles from './FloatingCartButton.module.css';
 
 export function FloatingCartButton() {

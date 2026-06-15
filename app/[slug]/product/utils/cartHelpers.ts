@@ -1,4 +1,4 @@
-import type { Product } from '../../storage/data';
+import type { Product } from '@/features/storage/data';
 
 interface CartProductInput {
   id: string;

@@ -1,13 +1,13 @@
 'use client';
 
+import { DeleteProductDialog } from '@/features/storage/components/DeleteProductDialog';
+import { CreateProductSheet } from '@/features/storage/components/createProduct/CreateProductSheet';
+import type { Product } from '@/features/storage/data';
+import { formatPrice } from '@/features/storage/utils/currency';
 import { AlertSnackbar, Icon } from '@/shared/components/ui';
 import { Button, IconButton } from '@/shared/components/ui/buttons';
 import { getBusinessPath } from '@/shared/utils/url';
 import Checkout from '@app/[slug]/components/Checkout';
-import { DeleteProductDialog } from '@app/[slug]/storage/components/DeleteProductDialog';
-import { CreateProductSheet } from '@app/[slug]/storage/components/createProduct/CreateProductSheet';
-import type { Product } from '@app/[slug]/storage/data';
-import { formatPrice } from '@app/[slug]/storage/utils/currency';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';

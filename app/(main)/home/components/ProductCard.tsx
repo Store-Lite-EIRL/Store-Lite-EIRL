@@ -1,8 +1,8 @@
 'use client';
 
-import type { Product, ProductCategory } from '@/core/database/schema';
 import { Button, IconButton } from '@/shared/components/ui/buttons';
 import { Icon } from '@/shared/components/ui/data-display';
+import type { Product, ProductCategory } from '@/types/product';
 import Checkout from '@app/[slug]/components/Checkout';
 import Image from 'next/image';
 import { useState } from 'react';

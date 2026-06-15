@@ -3,10 +3,10 @@
 import { CulqiCheckout } from '@/features/billing/components/CulqiCheckout';
 import { PlanTicketTemplate } from '@/features/billing/components/PlanTicketTemplate';
 import { usePurchasePlan } from '@/features/billing/hooks/usePurchasePlan';
+import { loadCulqiScript } from '@/features/payment/services/culqiService';
 import { Dialog, Select } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { Icon } from '@/shared/components/ui/data-display';
-import { loadCulqiScript } from '@app/[slug]/payment/services/culqiService';
 import confetti from 'canvas-confetti';
 import React from 'react';
 

@@ -1,7 +1,7 @@
 'use client';
 
-import type { Business } from '@/core/database/schema';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
+import type { Business } from '@/types/business';
 import Image from 'next/image';
 import styles from './Footer.module.css';
 
