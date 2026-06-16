@@ -300,6 +300,14 @@ export default function Checkout({
         icon: 'error',
       });
     }, []),
+    onWarning: useCallback((message: string) => {
+      setAlert({
+        open: true,
+        description: message,
+        color: 'warning',
+        icon: 'warning',
+      });
+    }, []),
   });
 
   // ─── handleNextStep validation ───

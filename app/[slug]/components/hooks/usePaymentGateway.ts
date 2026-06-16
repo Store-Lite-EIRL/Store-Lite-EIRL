@@ -6,12 +6,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ShippingInfo } from '../Checkout';
 
 // ─── Límites de métodos de pago ─────────────────────────────────────────
-// Yape tiene un tope propio para compras por internet (S/ 1,000) que es
-// menor al tope de Culqi Cargos Únicos (S/ 2,000). Usamos el menor.
-// Fuente: centro de ayuda Yape + docs Culqi Checkout v4
+// Yape tiene un tope de S/ 950 para pagos en comercios (según validación
+// del propio Culqi Checkout v4). Montos mayores a 950 son rechazados por
+// Culqi con error "invalid_number" en el parámetro amount.
+// Fuente: error real de Culqi Checkout v4 + docs Culqi.
 const YAPE_LIMITS = {
   min: 6.0,
-  max: 1000.0,
+  max: 950.0,
 } as const;
 
 export { YAPE_LIMITS };
@@ -51,6 +52,7 @@ export interface UsePaymentGatewayOptions {
   }) => void;
   onPaymentInstructions: (instructions: PaymentInstructionsData) => void;
   onError: (message: string) => void;
+  onWarning?: (message: string) => void;
 }
 
 export interface UsePaymentGatewayReturn {
@@ -75,6 +77,7 @@ export function usePaymentGateway({
   onOrderPaid,
   onPaymentInstructions,
   onError,
+  onWarning,
 }: UsePaymentGatewayOptions): UsePaymentGatewayReturn {
   const [culqiReady, setCulqiReady] = useState(false);
   const [isCulqiProcessing, setIsCulqiProcessing] = useState(false);
@@ -361,12 +364,27 @@ export function usePaymentGateway({
         // Success alert is handled by the orchestrator via onOrderPaid
       } else {
         const culqiError = window.Culqi?.error;
-        const errorMsg =
-          culqiError?.user_message ||
-          culqiError?.merchant_message ||
-          'Hubo un problema con el pago. Intenta nuevamente.';
         console.error('[Culqi] Error:', culqiError);
-        onError(errorMsg);
+
+        // Friendly error when Yape rejects amount > S/ 950
+        if (culqiError?.code === 'invalid_number' && culqiError?.param === 'amount') {
+          const exceedAmount = finalTotal > YAPE_LIMITS.max;
+          if (exceedAmount) {
+            onError(
+              `Yape solo permite pagos hasta S/ ${YAPE_LIMITS.max.toFixed(2)}. ` +
+                `Para esta compra de S/ ${finalTotal.toFixed(2)}, usá tarjeta de débito o crédito.`,
+            );
+          } else {
+            onError(culqiError?.user_message || 'El monto del pago no es válido para este método.');
+          }
+        } else {
+          const errorMsg =
+            culqiError?.user_message ||
+            culqiError?.merchant_message ||
+            'Hubo un problema con el pago. Intenta nuevamente.';
+          onError(errorMsg);
+        }
+
         culqiCallbackGuardRef.current = false;
       }
       paymentGuardRef.current = false;
@@ -472,6 +490,16 @@ export function usePaymentGateway({
         },
       });
 
+      // Pre-warning: avisar al usuario antes de abrir Culqi si el monto
+      // supera el límite de Yape, para que no se lleve la sorpresa
+      if (finalTotal > YAPE_LIMITS.max) {
+        onWarning?.(
+          `El total (S/ ${finalTotal.toFixed(2)}) supera el límite de Yape ` +
+            `(S/ ${YAPE_LIMITS.max.toFixed(2)}). ` +
+            `Si elegís Yape, el pago será rechazado. Usá tarjeta de débito o crédito.`,
+        );
+      }
+
       Culqi.open();
 
       // El loading se mantiene hasta que Culqi responda (success o error)
@@ -482,7 +510,17 @@ export function usePaymentGateway({
       paymentGuardRef.current = false;
       setIsCulqiProcessing(false);
     }
-  }, [culqiReady, finalTotal, businessId, businessName, cartItems, email, shippingInfo, onError]);
+  }, [
+    culqiReady,
+    finalTotal,
+    businessId,
+    businessName,
+    cartItems,
+    email,
+    shippingInfo,
+    onError,
+    onWarning,
+  ]);
 
   return {
     culqiReady,
