@@ -18,3 +18,6 @@ export const showNextSiblingElement = (element: HTMLElement) => {
   const sibling = element.nextElementSibling as ShowableElement | null;
   sibling?.show();
 };
+
+export const getFieldValue = (event: React.FormEvent<HTMLElement>) =>
+  (event.target as HTMLInputElement | HTMLTextAreaElement).value;
