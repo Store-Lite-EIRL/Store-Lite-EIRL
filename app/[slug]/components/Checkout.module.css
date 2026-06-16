@@ -605,6 +605,18 @@
   }
 }
 
+.yapeWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--md-sys-color-warning-container, #fff3e0);
+  color: var(--md-sys-color-on-warning-container, #231a00);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
 .footer {
   padding: 1.25rem 1.5rem 1.5rem;
   display: flex;

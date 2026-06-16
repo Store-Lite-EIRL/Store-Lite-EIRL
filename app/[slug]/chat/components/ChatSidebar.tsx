@@ -1,4 +1,5 @@
 import { CircularProgress, Icon, IconButton } from '@/shared/components/ui';
+import Image from 'next/image';
 import { useCallback, useState } from 'react';
 import styles from './ChatSidebar.module.css';
 
@@ -159,9 +160,21 @@ export function ChatSidebar({
         {/* Avatar */}
         <div className={styles.avatarContainer}>
           {chat.avatarUrl ? (
-            <img src={chat.avatarUrl} alt={`Avatar de ${chat.name}`} className={styles.avatar} />
+            <Image
+              src={chat.avatarUrl}
+              alt={`Avatar de ${chat.name}`}
+              className={styles.avatar}
+              width={44}
+              height={44}
+            />
           ) : storeLogo ? (
-            <img src={storeLogo} alt={`Logo de ${chat.name}`} className={styles.avatar} />
+            <Image
+              src={storeLogo}
+              alt={`Logo de ${chat.name}`}
+              className={styles.avatar}
+              width={44}
+              height={44}
+            />
           ) : (
             <div className={styles.avatarFallback}>
               <Icon size={22}>person</Icon>

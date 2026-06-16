@@ -183,9 +183,9 @@ export async function verifyIdentityAction(formData: FormData) {
         },
       };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[KYB] Error verifying ${formData.get('documentNumber')}:`, error);
-    return { error: error.message || 'Error al verificar el documento' };
+    return { error: error instanceof Error ? error.message : 'Error al verificar el documento' };
   }
 }
 
@@ -271,10 +271,10 @@ export async function requestOtpAction(formData: FormData) {
         }
 
         console.log(`[KYB] OTP sent successfully via Twilio. SID: ${result.sid}`);
-      } catch (twilioError: any) {
+      } catch (twilioError: unknown) {
         console.error(`[KYB] Twilio error:`, twilioError);
         return {
-          error: `Error al enviar OTP: ${twilioError.message || 'Verifica el número e intenta nuevamente'}`,
+          error: `Error al enviar OTP: ${twilioError instanceof Error ? twilioError.message : 'Verifica el número e intenta nuevamente'}`,
         };
       }
     } else {
@@ -282,9 +282,9 @@ export async function requestOtpAction(formData: FormData) {
     }
 
     return { success: true, message: 'Código OTP enviado via WhatsApp' };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[KYB] Error requesting OTP:`, error);
-    return { error: error.message || 'Error al solicitar código OTP' };
+    return { error: error instanceof Error ? error.message : 'Error al solicitar código OTP' };
   }
 }
 
@@ -332,9 +332,9 @@ export async function verifyOtpAction(formData: FormData) {
     console.log(`[KYB] OTP verified successfully for ${identifier}`);
 
     return { success: true, message: 'Código verificado exitosamente' };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[KYB] Error verifying OTP:`, error);
-    return { error: error.message || 'Error al verificar código' };
+    return { error: error instanceof Error ? error.message : 'Error al verificar código' };
   }
 }
 
@@ -364,8 +364,8 @@ export async function createVerifiedBusinessAction(formData: FormData) {
       message: 'Negocio creado exitosamente',
       data: { businessId: 'temp-id' }, // Replace with actual ID
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[KYB] Error creating business:`, error);
-    return { error: error.message || 'Error al crear el negocio' };
+    return { error: error instanceof Error ? error.message : 'Error al crear el negocio' };
   }
 }

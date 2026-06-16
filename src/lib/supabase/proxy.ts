@@ -5,6 +5,7 @@
 // Usage: Import from '@/lib/supabase/proxy'
 // =====================================================
 
+import { env } from '@/config/env';
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
@@ -43,9 +44,17 @@ export async function updateProxy(request: NextRequest) {
         });
 
         // Propagate cookies to response for the browser.
-        // Mantener options originales: el flujo admin local es path-based.
+        // Apply shared cookie domain for cross-subdomain auth when set.
+        // Cuando FEATURE_SUBDOMAIN_REWRITE está activo, las cookies de sesión
+        // deben compartirse entre subdominios (slug.localhost → slug.localhost).
+        // Sin esto, Supabase crea cookies host-only y la sesión se pierde al
+        // navegar entre subdominios.
         cookiesToSet.forEach(({ name, value, options }) =>
-          supabaseResponse.cookies.set(name, value, options),
+          supabaseResponse.cookies.set(
+            name,
+            value,
+            env.sharedCookieDomain ? { ...options, domain: env.sharedCookieDomain } : options,
+          ),
         );
       },
     },
@@ -80,11 +89,19 @@ export async function updateProxy(request: NextRequest) {
     // público (ej: validación de carrito sin sesión) lleguen al handler.
     const isApiRoute = pathname.startsWith('/api/');
 
-    // Helper to return redirects while preserving refreshed cookies
+    // Helper to return redirects while preserving refreshed cookies.
+    // NOTA: supabaseResponse.cookies.getAll() devuelve solo name/value sin options.
+    // Aplicamos sharedCookieDomain manualmente para mantener consistencia cross-subdominio.
     const redirectWithCookies = (url: URL) => {
       const redirectResponse = NextResponse.redirect(url);
       supabaseResponse.cookies.getAll().forEach((cookie) => {
-        redirectResponse.cookies.set(cookie.name, cookie.value);
+        if (env.sharedCookieDomain) {
+          redirectResponse.cookies.set(cookie.name, cookie.value, {
+            domain: env.sharedCookieDomain,
+          });
+        } else {
+          redirectResponse.cookies.set(cookie.name, cookie.value);
+        }
       });
       return redirectResponse;
     };

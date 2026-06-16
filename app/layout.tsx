@@ -1,8 +1,8 @@
 import { AuthProvider } from '@/features/auth';
 import { MaterialWebInit } from '@/lib/material-design/MaterialWebInit';
+import { WebVitalsReporter } from '@/shared/components/WebVitalsReporter';
 import { ThemeProvider } from '@/shared/context/ThemeContext';
 import { CSPostHogProvider } from '@/shared/providers/PostHogProvider';
-import '@fontsource/google-sans';
 import type { Metadata } from 'next';
 import { Inter, Poppins, Roboto, Roboto_Mono } from 'next/font/google';
 import './globals.css';
@@ -93,6 +93,7 @@ export default function RootLayout({
           <ThemeProvider>
             <AuthProvider>
               <MaterialWebInit />
+              <WebVitalsReporter />
               {children}
             </AuthProvider>
           </ThemeProvider>

@@ -19,6 +19,7 @@ import {
 } from '@/features/storage/utils/currency';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
 import { getBusinessPath } from '@/shared/utils/url';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import BackButton from './BackButton';
 import LikeSection from './LikeSection';
@@ -850,7 +851,13 @@ export default async function ProductDetailContent({
                         <div className={styles.teamCardHeader}>
                           <span className={styles.teamAvatar}>
                             {member.avatarUrl ? (
-                              <img src={member.avatarUrl} alt="" className={styles.teamAvatarImg} />
+                              <Image
+                                src={member.avatarUrl}
+                                alt=""
+                                className={styles.teamAvatarImg}
+                                width={36}
+                                height={36}
+                              />
                             ) : (
                               member.name.charAt(0).toUpperCase()
                             )}

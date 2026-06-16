@@ -2,8 +2,8 @@
 
 import { getProductStats, getProductsForExport } from '@/features/business/actions/businessActions';
 import { Icon } from '@/shared/components/ui/data-display';
+import { posthog } from 'posthog-js';
 import React, { useCallback, useEffect, useState } from 'react';
-import * as XLSX from 'xlsx';
 import styles from '../BusinessSettingsModal.module.css';
 
 interface ProductStats {
@@ -41,6 +41,7 @@ export const ProductosTab: React.FC<ProductosTabProps> = ({ businessId }) => {
     if (isDownloading) return;
     setIsDownloading(true);
     try {
+      const XLSX = await import('xlsx');
       const { products, categorySummary } = await getProductsForExport(businessId);
 
       // Helper: auto-fit column width
@@ -100,6 +101,17 @@ export const ProductosTab: React.FC<ProductosTabProps> = ({ businessId }) => {
 
       const date = new Date().toISOString().split('T')[0];
       XLSX.writeFile(wb, `productos_${date}.xlsx`);
+
+      try {
+        if (typeof posthog?.capture === 'function') {
+          posthog.capture('export_downloaded', {
+            type: 'products',
+            businessId,
+          });
+        }
+      } catch {
+        // Analytics should never block user flow
+      }
     } catch (error) {
       console.error('Error exporting products:', error);
     } finally {

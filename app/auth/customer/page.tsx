@@ -1,6 +1,7 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import styles from './page.module.css';
@@ -200,7 +201,13 @@ function CustomerAuthContent() {
         <div className={styles.card}>
           {/* Store Logo */}
           {storeLogo ? (
-            <img src={storeLogo} alt={storeName || ''} className={styles.storeLogo} />
+            <Image
+              src={storeLogo}
+              alt={storeName || ''}
+              className={styles.storeLogo}
+              width={64}
+              height={64}
+            />
           ) : (
             <div className={styles.storeLogoFallback}>
               <span className="material-symbols-outlined">store</span>
@@ -220,7 +227,13 @@ function CustomerAuthContent() {
           <div className={styles.accountCard}>
             <div className={styles.accountAvatar}>
               {sessionUser.avatarUrl ? (
-                <img src={sessionUser.avatarUrl} alt="" className={styles.accountAvatarImg} />
+                <Image
+                  src={sessionUser.avatarUrl}
+                  alt=""
+                  className={styles.accountAvatarImg}
+                  width={44}
+                  height={44}
+                />
               ) : (
                 <span className="material-symbols-outlined">person</span>
               )}
@@ -261,7 +274,13 @@ function CustomerAuthContent() {
       <div className={styles.card}>
         {/* Store Logo */}
         {storeLogo ? (
-          <img src={storeLogo} alt={storeName || ''} className={styles.storeLogo} />
+          <Image
+            src={storeLogo}
+            alt={storeName || ''}
+            className={styles.storeLogo}
+            width={64}
+            height={64}
+          />
         ) : (
           <div className={styles.storeLogoFallback}>
             <span className="material-symbols-outlined">store</span>

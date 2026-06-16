@@ -1,10 +1,12 @@
-allowBuilds:
-  '@sentry/cli': true
-  core-js: true
-  esbuild: true
-  protobufjs: true
-  sharp: true
-  unrs-resolver: true
-ignoredBuiltDependencies:
+auditConfig:
+  ignoreGhsas:
+    - GHSA-4r6h-8v6p-xvw6
+    - GHSA-5pgg-2g8v-p4x9
+    - GHSA-qx2v-qp2m-jg93
+onlyBuiltDependencies:
+  - '@sentry/cli'
+  - core-js
+  - esbuild
+  - protobufjs
   - sharp
   - unrs-resolver

@@ -1,8 +1,10 @@
 'use client';
 
 import { Button, Card, Icon } from '@/shared/components/ui';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { posthog } from 'posthog-js';
+import { useEffect, useRef, useState } from 'react';
 import styles from './onboarding.module.css';
 
 interface OnboardingUser {
@@ -15,6 +17,8 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [user, setUser] = useState<OnboardingUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const trackedRef = useRef(false);
 
   useEffect(() => {
     // Fetch current user info from auth
@@ -37,6 +41,20 @@ export default function OnboardingPage() {
     fetchUser();
   }, []);
 
+  useEffect(() => {
+    if (trackedRef.current) return;
+    if (!user) return;
+
+    trackedRef.current = true;
+    try {
+      if (typeof posthog?.capture === 'function') {
+        posthog.capture('user_registered');
+      }
+    } catch {
+      // Analytics should never block user flow
+    }
+  }, [user]);
+
   if (isLoading) {
     return (
       <div className={styles.container}>
@@ -54,8 +72,13 @@ export default function OnboardingPage() {
         {/* Welcome Header */}
         <div className={styles.header}>
           {user?.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.avatarUrl} alt="Avatar" className={styles.avatar} />
+            <Image
+              src={user.avatarUrl}
+              alt="Avatar"
+              className={styles.avatar}
+              width={96}
+              height={96}
+            />
           ) : (
             <div className={styles.avatarPlaceholder}>
               <Icon size={48}>person</Icon>

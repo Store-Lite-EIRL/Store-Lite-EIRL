@@ -51,8 +51,10 @@ export async function sendOtpWhatsApp(phone: string, code: string): Promise<Twil
       to: message.to,
       body: message.body,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[Twilio] Error sending OTP:`, error);
-    throw new Error(`Twilio error: ${error.message || 'Failed to send OTP'}`);
+    throw new Error(
+      `Twilio error: ${error instanceof Error ? error.message : 'Failed to send OTP'}`,
+    );
   }
 }

@@ -45,7 +45,7 @@ export function KYBWizard() {
   const nextStep = () => setStep((s) => Math.min(s + 1, 4));
   const prevStep = () => setStep((s) => Math.max(s - 1, 1));
 
-  const handleStep1 = async (stepData: any) => {
+  const handleStep1 = async (stepData: Partial<WizardData>) => {
     // We receive the data returned by the server action
     setData((prev) => ({ ...prev, ...stepData }));
     nextStep();

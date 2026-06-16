@@ -9,16 +9,6 @@
  * The public key (PK) is safe to expose here per Culqi documentation.
  */
 
-// Extend Window to include the Culqi global
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Culqi: any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    CulqiObject: any;
-  }
-}
-
 const CULQI_SCRIPT_URL = 'https://checkout.culqi.com/js/v4';
 
 /**

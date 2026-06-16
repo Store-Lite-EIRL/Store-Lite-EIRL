@@ -1,4 +1,5 @@
 import type { BusinessEntitlements } from '@/core/entitlements/plans';
+import Image from 'next/image';
 import styles from './DashboardHeader.module.css';
 import { NotificationBell } from './NotificationBell';
 
@@ -55,8 +56,13 @@ export function DashboardHeader({
       <div className={styles.identity}>
         <div className={styles.logoWrap}>
           {logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoUrl} alt={businessName} className={styles.logo} />
+            <Image
+              src={logoUrl}
+              alt={businessName}
+              className={styles.logo}
+              width={56}
+              height={56}
+            />
           ) : (
             <div className={styles.logoFallback}>{initials}</div>
           )}

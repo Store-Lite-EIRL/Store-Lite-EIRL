@@ -4,7 +4,7 @@ import { db } from '@/core/database/client';
 import { products } from '@/core/database/schema';
 import { and, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
-import { updateProduct } from './actions';
+import { updateProduct, type SaleStatus } from './actions';
 import { requireOwnedBusinessBySlug } from './actions/authz';
 
 export async function updateProductIsolated(
@@ -22,14 +22,14 @@ export async function updateProductIsolated(
     tags?: string[];
     shippingInfo?: string;
     secondPrice?: number;
-    saleStatus?: string;
+    saleStatus?: SaleStatus;
   },
 ) {
   try {
     // Delegate to canonical storage action to avoid duplicated update flows.
     const result = await updateProduct(businessSlug, productId, {
       ...payload,
-      saleStatus: payload.saleStatus as any,
+      saleStatus: payload.saleStatus,
     });
     return { success: result.success, error: result.error ?? undefined };
   } catch (error: unknown) {

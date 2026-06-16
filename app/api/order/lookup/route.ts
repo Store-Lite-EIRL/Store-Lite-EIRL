@@ -12,16 +12,24 @@ import { NextResponse } from 'next/server';
  */
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { dni, orderNumber, businessSlug } = body;
+    const rawBody = await request.json();
 
-    // Validación básica
-    if (!dni || !orderNumber || !businessSlug) {
+    // 0. Validate Data using Zod
+    const { lookupOrderSchema } = await import('@/features/billing/schemas');
+    const validationResult = lookupOrderSchema.safeParse(rawBody);
+
+    if (!validationResult.success) {
       return NextResponse.json(
-        { success: false, error: 'Faltan datos (DNI, Nro Orden o Slug)' },
+        {
+          success: false,
+          error:
+            validationResult.error.issues[0]?.message || 'Faltan datos (DNI, Nro Orden o Slug)',
+        },
         { status: 400 },
       );
     }
+
+    const { dni, orderNumber, businessSlug } = validationResult.data;
 
     // 🔒 SECURITY: Check if the requester is a seller/team member of this business.
     // Sellers should NOT be able to lookup trackingTokens for their own orders.

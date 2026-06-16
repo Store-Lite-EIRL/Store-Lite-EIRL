@@ -110,8 +110,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (isAbortLikeError(error)) {
               authDebug('fetchProfile:abort-like-error', {
                 requestId,
-                code: (error as any).code,
-                message: (error as any).message,
+                code: error.code,
+                message: error.message,
               });
               setStableAuthState(session, { ...session.user, profile: undefined } as AuthUser);
               return;
