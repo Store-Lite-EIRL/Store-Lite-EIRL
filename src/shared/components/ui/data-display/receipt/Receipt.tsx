@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Barcode from 'react-barcode';
 import StoreLogo from '../StoreLogo';
 import styles from './Receipt.module.css';
@@ -137,11 +138,18 @@ export function Receipt({
     });
   };
 
+  const [generatedId, setGeneratedId] = useState('');
+  useEffect(() => {
+    if (!orderNumber) {
+      setGeneratedId(`ORD-${Date.now().toString(36).toUpperCase()}`);
+    }
+  }, [orderNumber]);
+
   const formatAmount = (amount: number) => {
     return `${currency} ${amount.toFixed(2)}`;
   };
 
-  const orderNum = orderNumber || `ORD-${Date.now().toString(36).toUpperCase()}`;
+  const orderNum = orderNumber || generatedId;
 
   const shippingLabel =
     shippingType === 'pickup'
