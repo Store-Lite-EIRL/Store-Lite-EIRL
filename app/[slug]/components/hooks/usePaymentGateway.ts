@@ -52,7 +52,6 @@ export interface UsePaymentGatewayOptions {
   }) => void;
   onPaymentInstructions: (instructions: PaymentInstructionsData) => void;
   onError: (message: string) => void;
-  onWarning?: (message: string) => void;
 }
 
 export interface UsePaymentGatewayReturn {
@@ -77,7 +76,6 @@ export function usePaymentGateway({
   onOrderPaid,
   onPaymentInstructions,
   onError,
-  onWarning,
 }: UsePaymentGatewayOptions): UsePaymentGatewayReturn {
   const [culqiReady, setCulqiReady] = useState(false);
   const [isCulqiProcessing, setIsCulqiProcessing] = useState(false);
@@ -490,15 +488,8 @@ export function usePaymentGateway({
         },
       });
 
-      // Pre-warning: avisar al usuario antes de abrir Culqi si el monto
-      // supera el límite de Yape, para que no se lleve la sorpresa
-      if (finalTotal > YAPE_LIMITS.max) {
-        onWarning?.(
-          `El total (S/ ${finalTotal.toFixed(2)}) supera el límite de Yape ` +
-            `(S/ ${YAPE_LIMITS.max.toFixed(2)}). ` +
-            `Si elegís Yape, el pago será rechazado. Usá tarjeta de débito o crédito.`,
-        );
-      }
+      // La advertencia de Yape se muestra inline en el footer del checkout
+      // (antes del botón de pago) para que el usuario la vea antes de hacer clic
 
       Culqi.open();
 
@@ -510,17 +501,7 @@ export function usePaymentGateway({
       paymentGuardRef.current = false;
       setIsCulqiProcessing(false);
     }
-  }, [
-    culqiReady,
-    finalTotal,
-    businessId,
-    businessName,
-    cartItems,
-    email,
-    shippingInfo,
-    onError,
-    onWarning,
-  ]);
+  }, [culqiReady, finalTotal, businessId, businessName, cartItems, email, shippingInfo, onError]);
 
   return {
     culqiReady,

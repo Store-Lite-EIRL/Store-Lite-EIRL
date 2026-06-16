@@ -14,7 +14,7 @@ import styles from './Checkout.module.css';
 import { CheckoutPaymentStep } from './CheckoutPaymentStep';
 import { CheckoutShippingStep } from './CheckoutShippingStep';
 import { CheckoutSuccessView } from './CheckoutSuccessView';
-import { usePaymentGateway } from './hooks/usePaymentGateway';
+import { usePaymentGateway, YAPE_LIMITS } from './hooks/usePaymentGateway';
 import { PaymentInstructionsView } from './PaymentInstructionsView';
 
 interface CheckoutProps {
@@ -300,14 +300,6 @@ export default function Checkout({
         icon: 'error',
       });
     }, []),
-    onWarning: useCallback((message: string) => {
-      setAlert({
-        open: true,
-        description: message,
-        color: 'warning',
-        icon: 'warning',
-      });
-    }, []),
   });
 
   // ─── handleNextStep validation ───
@@ -566,20 +558,31 @@ export default function Checkout({
               Continuar <Icon>arrow_forward</Icon>
             </button>
           ) : (
-            <button
-              className={styles.payBtn}
-              onClick={handlePayment}
-              disabled={loading || isCulqiProcessing || isPaymentProcessing}
-            >
-              {loading || isCulqiProcessing || isPaymentProcessing ? (
-                <>
-                  <span className={styles.spinner} />
-                  {isPaymentProcessing ? 'Procesando pago...' : 'Abriendo pasarela...'}
-                </>
-              ) : (
-                <>Ir a Pagar S/ {finalTotal.toFixed(2)}</>
+            <>
+              {finalTotal > YAPE_LIMITS.max && (
+                <div className={styles.yapeWarning}>
+                  <Icon size={16}>info</Icon>
+                  <span>
+                    Yape solo hasta <strong>S/ {YAPE_LIMITS.max.toFixed(2)}</strong>. Para montos
+                    mayores, usá tarjeta de débito o crédito.
+                  </span>
+                </div>
               )}
-            </button>
+              <button
+                className={styles.payBtn}
+                onClick={handlePayment}
+                disabled={loading || isCulqiProcessing || isPaymentProcessing}
+              >
+                {loading || isCulqiProcessing || isPaymentProcessing ? (
+                  <>
+                    <span className={styles.spinner} />
+                    {isPaymentProcessing ? 'Procesando pago...' : 'Abriendo pasarela...'}
+                  </>
+                ) : (
+                  <>Ir a Pagar S/ {finalTotal.toFixed(2)}</>
+                )}
+              </button>
+            </>
           )}
           <div className={styles.secureBadge}>
             <Icon size={14}>verified_user</Icon> Pagos por Culqi
