@@ -14,7 +14,7 @@ import styles from './Checkout.module.css';
 import { CheckoutPaymentStep } from './CheckoutPaymentStep';
 import { CheckoutShippingStep } from './CheckoutShippingStep';
 import { CheckoutSuccessView } from './CheckoutSuccessView';
-import { usePaymentGateway, YAPE_LIMITS } from './hooks/usePaymentGateway';
+import { useCheckoutPayment, YAPE_LIMITS } from './hooks/useCheckoutPayment';
 import { PaymentInstructionsView } from './PaymentInstructionsView';
 
 interface CheckoutProps {
@@ -260,13 +260,13 @@ export default function Checkout({
     }
   }, [showReceipt]);
 
-  // ─── usePaymentGateway hook ───
+  // ─── useCheckoutPayment hook ───
   const {
     culqiReady,
     isCulqiProcessing,
     isPaymentProcessing,
     handlePayment: hookHandlePayment,
-  } = usePaymentGateway({
+  } = useCheckoutPayment({
     culqiPublicKey,
     businessId,
     businessName,

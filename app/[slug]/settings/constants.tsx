@@ -178,7 +178,7 @@ export const THEME_COLOR_FIELDS = [
 export function getFontFamilyCSS(fontFamily: StorefrontTheme['fontFamily']): string {
   switch (fontFamily) {
     case 'google-sans':
-      return "'Google Sans', var(--mio-theme-text-font-family), sans-serif";
+      return "var(--font-google-sans-flex), 'Google Sans', var(--mio-theme-text-font-family), sans-serif";
     case 'inter':
       return 'var(--font-storefront-inter), var(--mio-theme-text-font-family), sans-serif';
     case 'roboto':
@@ -186,7 +186,7 @@ export function getFontFamilyCSS(fontFamily: StorefrontTheme['fontFamily']): str
     case 'poppins':
       return 'var(--font-storefront-poppins), var(--mio-theme-text-font-family), sans-serif';
     default:
-      return "'Google Sans', var(--mio-theme-text-font-family), sans-serif";
+      return "var(--font-google-sans-flex), 'Google Sans', var(--mio-theme-text-font-family), sans-serif";
   }
 }
 

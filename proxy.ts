@@ -5,14 +5,14 @@
 // Usage: Automatically runs on all routes except static files
 // =====================================
 
+import { type NextRequest, NextResponse } from 'next/server';
+import { env } from './src/config/env';
 import {
   checkRateLimit,
   getClientIdentifier,
   RATE_LIMITS,
   type RateLimitConfig,
-} from '@/lib/rateLimit';
-import { type NextRequest, NextResponse } from 'next/server';
-import { env } from './src/config/env';
+} from './src/lib/rateLimit';
 import { updateProxy } from './src/lib/supabase/proxy';
 import { extractTenantSlugFromHost, isTenantHost } from './src/shared/utils/url';
 

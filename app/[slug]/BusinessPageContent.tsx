@@ -439,14 +439,14 @@ function BusinessPageContentUI({
     const palette = getStorefrontColorConfig(editableTheme, activeScheme).palette;
     const ff =
       editableTheme.fontFamily === 'google-sans'
-        ? "'Google Sans', var(--mio-theme-text-font-family), sans-serif"
+        ? "var(--font-google-sans-flex), 'Google Sans', var(--mio-theme-text-font-family), sans-serif"
         : editableTheme.fontFamily === 'inter'
           ? 'var(--font-storefront-inter), var(--mio-theme-text-font-family), sans-serif'
           : editableTheme.fontFamily === 'roboto'
             ? 'var(--font-storefront-roboto), var(--mio-theme-text-font-family), sans-serif'
             : editableTheme.fontFamily === 'poppins'
               ? 'var(--font-storefront-poppins), var(--mio-theme-text-font-family), sans-serif'
-              : "'Google Sans', var(--mio-theme-text-font-family), sans-serif";
+              : "var(--font-google-sans-flex), 'Google Sans', var(--mio-theme-text-font-family), sans-serif";
     const isDark = activeScheme === 'dark';
     return {
       '--storefront-font-family': ff,

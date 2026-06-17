@@ -1,6 +1,6 @@
 'use client';
 
-import { createClient } from '@/lib/supabase/client';
+import { generateAndUploadTicket } from '@/shared/payments/ticketGenerator';
 import { useCallback, useRef, useState } from 'react';
 
 /**
@@ -80,47 +80,25 @@ export function usePurchasePlan() {
 
         let ticketUrl: string | undefined;
 
-        // ── 3. Generar PNG del ticket ──────────────────────────────────────────
+        // ── 3. Generar PNG del ticket y subir a Supabase ────────────────────────
+        // Usa el módulo compartido ticketGenerator para captura + upload.
+        // La notificación al backend se hace manualmente porque el endpoint
+        // de billing espera { planPaymentId, ticketUrl } (no { orderNumber, ticketUrl }).
         if (ticketRef.current) {
           try {
-            // IMPORTANTE: skipFonts:true es la única solución real al SecurityError.
-            // html-to-image itera document.styleSheets internamente para inlinear fuentes.
-            // Esto falla con SecurityError en hojas cross-origin (Google Fonts, Material Symbols, etc.).
-            // El `filter` solo filtra nodos DOM, NO el proceso de lectura de stylesheets.
-            // Con skipFonts:true la librería omite ese proceso completamente.
-            // Las fuentes del sistema (Inter, Roboto, Segoe UI) seguirán funcionando correctamente.
-            const { toPng } = await import('html-to-image');
-            const dataUrl = await toPng(ticketRef.current, {
-              cacheBust: true,
-              backgroundColor: '#ffffff',
-              pixelRatio: 2,
-              skipFonts: true,
-              quality: 0.95,
+            const result = await generateAndUploadTicket(
+              ticketRef,
+              `${purchaseResult.ticketNumber}_${purchaseResult.planPaymentId}`,
+              { bucket: 'tickets_plans' },
+            );
+            ticketUrl = result.publicUrl;
+
+            // ── 4. Actualizar ticket_url en plan_payments ────────────────────
+            await fetch('/api/billing/update-plan-ticket', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ planPaymentId: purchaseResult.planPaymentId, ticketUrl }),
             });
-
-            // ── 4. Subir PNG a Supabase bucket 'tickets_plans' ─────────────────
-            const supabase = createClient();
-            const blob = await fetch(dataUrl).then((r) => r.blob());
-            const fileName = `${purchaseResult.ticketNumber.replace('-', '_')}_${purchaseResult.planPaymentId}.png`;
-
-            const { error: uploadError } = await supabase.storage
-              .from('tickets_plans')
-              .upload(fileName, blob, { contentType: 'image/png', upsert: true });
-
-            if (!uploadError) {
-              const {
-                data: { publicUrl },
-              } = supabase.storage.from('tickets_plans').getPublicUrl(fileName);
-
-              ticketUrl = publicUrl;
-
-              // ── 5. Actualizar ticket_url en plan_payments ────────────────────
-              await fetch('/api/billing/update-plan-ticket', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ planPaymentId: purchaseResult.planPaymentId, ticketUrl }),
-              });
-            }
           } catch (ticketError) {
             console.error('[usePurchasePlan] Error generando ticket PNG:', ticketError);
           }

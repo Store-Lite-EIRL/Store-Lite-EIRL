@@ -4,8 +4,14 @@ import { WebVitalsReporter } from '@/shared/components/WebVitalsReporter';
 import { ThemeProvider } from '@/shared/context/ThemeContext';
 import { CSPostHogProvider } from '@/shared/providers/PostHogProvider';
 import type { Metadata } from 'next';
-import { Inter, Poppins, Roboto, Roboto_Mono } from 'next/font/google';
+import { Google_Sans_Flex, Inter, Poppins, Roboto, Roboto_Mono } from 'next/font/google';
 import './globals.css';
+
+const google_sans_flex = Google_Sans_Flex({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-google-sans-flex',
+});
 
 const roboto_mono = Roboto_Mono({
   subsets: ['latin'],
@@ -86,7 +92,7 @@ export default function RootLayout({
       </head>
       <body
         suppressHydrationWarning
-        className={`${roboto_mono.variable} ${inter.variable} ${roboto.variable} ${poppins.variable} antialiased`}
+        className={`${google_sans_flex.variable} ${roboto_mono.variable} ${inter.variable} ${roboto.variable} ${poppins.variable} antialiased`}
       >
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
         <CSPostHogProvider>

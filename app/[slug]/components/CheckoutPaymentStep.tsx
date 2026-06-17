@@ -4,7 +4,7 @@ import type { CartItem } from '@/features/storage/context/CartContext';
 import { Icon } from '@/shared/components/ui';
 import type { ShippingInfo } from './Checkout';
 import styles from './Checkout.module.css';
-import { YAPE_LIMITS } from './hooks/usePaymentGateway';
+import { YAPE_LIMITS } from './hooks/useCheckoutPayment';
 
 interface CustomerAuth {
   provider: string;
