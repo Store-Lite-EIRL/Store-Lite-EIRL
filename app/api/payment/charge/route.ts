@@ -25,6 +25,101 @@ import { NextResponse } from 'next/server';
 
 const LOW_STOCK_THRESHOLD = 5;
 
+// ─── Helper: Resolve and validate Culqi secret key ──────────────────
+async function resolveCulqiSecretKey(
+  businessId: string,
+): Promise<{ secretKey: string; error: NextResponse | null }> {
+  const settings = await db.query.businessSettings.findFirst({
+    where: eq(businessSettings.businessId, businessId),
+    columns: { culqiSecretKey: true },
+  });
+
+  if (!settings?.culqiSecretKey) {
+    return {
+      secretKey: '',
+      error: NextResponse.json(
+        { error: 'El negocio no tiene configurada pasarela de pagos' },
+        { status: 400 },
+      ),
+    };
+  }
+
+  const secretKey = decrypt(settings.culqiSecretKey);
+  const isProd = process.env.NODE_ENV === 'production';
+  const isKeyLive = secretKey.startsWith('sk_live');
+
+  if (isProd && !isKeyLive) {
+    return {
+      secretKey: '',
+      error: NextResponse.json(
+        { error: 'Configuración inválida: Se requiere una llave de producción (sk_live).' },
+        { status: 400 },
+      ),
+    };
+  }
+
+  if (!isProd && isKeyLive) {
+    return {
+      secretKey: '',
+      error: NextResponse.json(
+        {
+          error:
+            'Configuración inválida: No se permiten llaves sk_live en entorno de desarrollo.',
+        },
+        { status: 400 },
+      ),
+    };
+  }
+
+  return { secretKey, error: null };
+}
+
+// ─── Helper: Execute Culqi charge API call ──────────────────────────
+async function executeCulqiCharge(
+  token: string,
+  secretKey: string,
+  amount: number,
+  currency: string,
+  email: string,
+  productTitle: string | undefined,
+  businessId: string,
+  productId: string,
+): Promise<{ culqiData: CulqiChargeResponse; error: NextResponse | null }> {
+  const response = await fetch('https://api.culqi.com/v2/charges', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${secretKey}`,
+    },
+    body: JSON.stringify({
+      amount,
+      currency_code: currency,
+      email: email || 'cliente@culqi.com',
+      source_id: token,
+      description: `Compra: ${productTitle || 'Producto'} - Store Lite`,
+      metadata: { businessId, productId, platform: 'store-lite' },
+    }),
+  });
+
+  const culqiData: CulqiChargeResponse = await response.json();
+  const isSuccess = culqiData?.outcome?.type === 'venta_exitosa' || culqiData?.paid === true;
+
+  if (!response.ok || !isSuccess) {
+    return {
+      culqiData,
+      error: NextResponse.json(
+        {
+          error: 'Error en Culqi',
+          details: culqiData?.user_message || culqiData?.outcome?.user_message || 'Pago rechazado',
+        },
+        { status: 400 },
+      ),
+    };
+  }
+
+  return { culqiData, error: null };
+}
+
 export async function POST(request: Request) {
   try {
     const idempotencyKey = request.headers.get('Idempotency-Key');
@@ -64,61 +159,34 @@ export async function POST(request: Request) {
       );
     }
 
-    // ─── FLOW: ORDER-BASED PAYMENT (tarjeta pagó una orden) ───
+    // ─── FLOW BRANCHING ─────────────────────────────────────────────
     let culqiData: CulqiChargeResponse | null = null;
-    let paymentMethodOverride:
-      | 'card'
-      | 'yape'
-      | 'plin'
-      | 'pago_efectivo'
-      | 'billetera_movil'
-      | 'cuotealo'
-      | undefined;
+    const isOrderFlow = !!culqiOrderId;
+    const isTokenFlow = !!token;
 
-    let culqiSecretKey: string | null = null;
+    if (isOrderFlow) {
+      // ORDER-BASED: Culqi Checkout ya cobró contra la orden
+      // Solo creamos el payment en DB y marcamos la orden como pagada
+    } else if (isTokenFlow) {
+      // TOKEN-BASED: Ejecutar el cargo contra Culqi con la key del negocio
+      const { secretKey, error: keyError } = await resolveCulqiSecretKey(businessId);
+      if (keyError) return keyError;
 
-    if (culqiOrderId) {
-      // Ya fue cobrado por Culqi Checkout contra la orden
-      // Solo marcar la orden como pagada y crear el payment
-      paymentMethodOverride = 'card';
-    } else {
-      // ─── FLOW: TOKEN-BASED CHARGE (tarjeta/Yape directo) ───
-      // 1. Obtener y descifrar la Secret Key (cached, reuse below)
-      const settings = await db.query.businessSettings.findFirst({
-        where: eq(businessSettings.businessId, businessId),
-        columns: { culqiSecretKey: true },
-      });
-
-      if (!settings?.culqiSecretKey) {
-        return NextResponse.json(
-          { error: 'El negocio no tiene configurada pasarela de pagos' },
-          { status: 400 },
-        );
-      }
-
-      // 🔥 SECURITY: Decrypt and Validate Key Environment
-      culqiSecretKey = decrypt(settings.culqiSecretKey);
-      const isProd = process.env.NODE_ENV === 'production';
-      const isKeyLive = culqiSecretKey.startsWith('sk_live');
-
-      if (isProd && !isKeyLive) {
-        return NextResponse.json(
-          { error: 'Configuración inválida: Se requiere una llave de producción (sk_live).' },
-          { status: 400 },
-        );
-      }
-      if (!isProd && isKeyLive) {
-        return NextResponse.json(
-          {
-            error:
-              'Configuración inválida: No se permiten llaves sk_live en entorno de desarrollo.',
-          },
-          { status: 400 },
-        );
-      }
+      const { culqiData: chargeResult, error: chargeError } = await executeCulqiCharge(
+        token,
+        secretKey,
+        amount,
+        currency,
+        email,
+        undefined, // product title fetched below
+        businessId,
+        productId,
+      );
+      if (chargeError) return chargeError;
+      culqiData = chargeResult;
     }
 
-    // 2. Obtener info necesaria para Culqi (aplica a ambos flujos)
+    // ─── COMMON: Product + Business lookup + Security checks ────────
     const [product, business] = await Promise.all([
       db.query.products.findFirst({ where: eq(products.id, productId), columns: { title: true } }),
       db.query.businesses.findFirst({
@@ -151,45 +219,6 @@ export async function POST(request: Request) {
       return idempotencyReservation.response;
     }
     reservedIdempotencyKey = idempotencyReservation?.key ?? null;
-
-    // 3. Crear el cargo en Culqi (solo token flow)
-    // Uses cached culqiSecretKey from the token-based flow block above
-    if (token) {
-      if (!culqiSecretKey) {
-        return NextResponse.json(
-          { error: 'El negocio no tiene configurada pasarela de pagos' },
-          { status: 400 },
-        );
-      }
-
-      const culqiResponse = await fetch('https://api.culqi.com/v2/charges', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${culqiSecretKey}`,
-        },
-        body: JSON.stringify({
-          amount,
-          currency_code: currency,
-          email: email || 'cliente@culqi.com',
-          source_id: token,
-          description: `Compra: ${product?.title || 'Producto'} - Store Lite`,
-          metadata: { businessId, productId, platform: 'store-lite' },
-        }),
-      });
-
-      culqiData = await culqiResponse.json();
-      const isSuccess = culqiData?.outcome?.type === 'venta_exitosa' || culqiData?.paid === true;
-
-      if (!culqiResponse.ok || !isSuccess) {
-        const responseBody = {
-          error: 'Error en Culqi',
-          details: culqiData?.user_message || culqiData?.outcome?.user_message || 'Pago rechazado',
-        };
-        await completeIdempotencyKey(reservedIdempotencyKey, responseBody, 400);
-        return NextResponse.json(responseBody, { status: 400 });
-      }
-    }
 
     const culqiChargeIdForLookup = culqiOrderId || culqiData?.id || null;
     if (culqiChargeIdForLookup) {
@@ -225,7 +254,7 @@ export async function POST(request: Request) {
             ? 'domicilio'
             : 'recojo';
 
-      const pm = paymentMethodOverride || (token?.startsWith('ype_') ? 'yape' : 'card');
+      const pm = isOrderFlow ? 'card' : (token?.startsWith('ype_') ? 'yape' : 'card');
       const culqiChargeId = culqiOrderId || culqiData?.id || null;
       const culqiRefCode = culqiData?.reference_code || null;
 
