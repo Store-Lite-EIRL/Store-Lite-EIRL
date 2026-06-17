@@ -17,8 +17,8 @@ import type { RefObject } from 'react';
 export interface TicketGeneratorOptions {
   /** Supabase storage bucket name */
   bucket: string;
-  /** API endpoint to notify after upload */
-  updateUrl: string;
+  /** API endpoint to notify after upload (optional — sent as { orderNumber, ticketUrl }) */
+  updateUrl?: string;
 }
 
 export interface TicketGeneratorResult {
@@ -74,15 +74,17 @@ export async function generateAndUploadTicket(
     data: { publicUrl },
   } = supabase.storage.from(options.bucket).getPublicUrl(fileName);
 
-  // Notify backend
-  const response = await fetch(options.updateUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ orderNumber: identifier, ticketUrl: publicUrl }),
-  });
+  // Notify backend (if updateUrl is configured)
+  if (options.updateUrl) {
+    const response = await fetch(options.updateUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderNumber: identifier, ticketUrl: publicUrl }),
+    });
 
-  if (!response.ok) {
-    console.error(`[ticketGenerator] Error notifying ${options.updateUrl}:`, response.status);
+    if (!response.ok) {
+      console.error(`[ticketGenerator] Error notifying ${options.updateUrl}:`, response.status);
+    }
   }
 
   return { publicUrl };
