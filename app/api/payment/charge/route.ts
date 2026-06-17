@@ -14,67 +14,16 @@ import {
   products,
 } from '@/core/database/schema';
 import { completeIdempotencyKey, reserveIdempotencyKey } from '@/core/payments/idempotency';
+import { paymentRateLimiter } from '@/core/payments/rateLimiter';
 import { generateTrackingToken } from '@/core/utils/trackingToken';
 import { notifyLowStock, notifyNewOrder, notifyOutOfStock } from '@/lib/notifications';
 import { createClient } from '@/lib/supabase/server';
+import type { CulqiChargeResponse } from '@/types/culqi';
 import { decrypt } from '@/utils/crypto';
 import { eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 const LOW_STOCK_THRESHOLD = 5;
-
-// ─── Rate Limiter ────────────────────────────────────────────────────
-// Sliding window: máx 3 requests por (businessId + productId) en 30s
-const rateLimitStore = new Map<string, number[]>();
-const RATE_LIMIT_WINDOW = 30_000; // 30 segundos
-const RATE_LIMIT_MAX = 3;
-
-function checkRateLimit(businessId: string, productId: string): boolean {
-  const key = `${businessId}:${productId}`;
-  const now = Date.now();
-  const windowStart = now - RATE_LIMIT_WINDOW;
-
-  let timestamps = rateLimitStore.get(key) ?? [];
-  // Filtrar solo los que están dentro de la ventana
-  timestamps = timestamps.filter((t) => t > windowStart);
-
-  if (timestamps.length >= RATE_LIMIT_MAX) return false; // bloqueado
-
-  timestamps.push(now);
-  rateLimitStore.set(key, timestamps);
-  return true;
-}
-
-// Limpieza periódica cada 60s para evitar fuga de memoria
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, timestamps] of rateLimitStore) {
-    const valid = timestamps.filter((t) => t > now - RATE_LIMIT_WINDOW);
-    if (valid.length === 0) rateLimitStore.delete(key);
-    else rateLimitStore.set(key, valid);
-  }
-}, 60_000);
-
-interface CulqiChargeResponse {
-  object: string;
-  id: string;
-  amount: number;
-  currency_code: string;
-  email: string;
-  paid?: boolean;
-  user_message?: string;
-  merchant_message?: string;
-  outcome?: {
-    type: string;
-    user_message: string;
-    merchant_message: string;
-  };
-  description?: string;
-  reference_code?: string;
-  metadata?: Record<string, unknown>;
-  creation_date?: number;
-  status: string;
-}
 
 export async function POST(request: Request) {
   try {
@@ -108,7 +57,7 @@ export async function POST(request: Request) {
     } = validationResult.data;
 
     // ─── Rate Limit Check ──────────────────────────────────────────
-    if (!checkRateLimit(businessId, productId)) {
+    if (!paymentRateLimiter.check(`${businessId}:${productId}`)) {
       return NextResponse.json(
         { error: 'Demasiados intentos. Esperá unos segundos antes de reintentar.' },
         { status: 429 },
