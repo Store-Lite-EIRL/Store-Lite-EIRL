@@ -1,6 +1,6 @@
 'use client';
 
-import { loadCulqiScript } from '@/features/payment/services/culqiService';
+import { loadCulqiScript } from '@/shared/payments/culqiScript';
 import React, { useCallback, useEffect, useState } from 'react';
 
 interface CulqiCheckoutProps {
@@ -94,7 +94,7 @@ export function CulqiCheckout({
     } else {
       console.log('🔄 Culqi no detectado, intentando cargar manualmente...');
       try {
-        await loadCulqiScript();
+        await loadCulqiScript(process.env.NEXT_PUBLIC_CULQI_PK || '');
         initCulqi();
         if (onOpening) onOpening();
         const culqiAfterLoad = window.Culqi;
@@ -106,7 +106,7 @@ export function CulqiCheckout({
   };
 
   useEffect(() => {
-    loadCulqiScript().then(() => {
+    loadCulqiScript(process.env.NEXT_PUBLIC_CULQI_PK || '').then(() => {
       if (window.Culqi) setIsCulqiReady(true);
     });
   }, []);
