@@ -3,7 +3,7 @@
 import { CulqiCheckout } from '@/features/billing/components/CulqiCheckout';
 import { PlanTicketTemplate } from '@/features/billing/components/PlanTicketTemplate';
 import { usePurchasePlan } from '@/features/billing/hooks/usePurchasePlan';
-import { loadCulqiScript } from '@/features/payment/services/culqiService';
+import { loadCulqiScript } from '@/shared/payments/culqiScript';
 import { Dialog, Select } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { Icon } from '@/shared/components/ui/data-display';
@@ -89,7 +89,7 @@ export function PricingCard({
     setStep('select');
 
     // Pre-cargar Culqi asíncronamente mientras el usuario selecciona negocio
-    loadCulqiScript().catch((e) => console.error('Error cargando culqi:', e));
+    loadCulqiScript(process.env.NEXT_PUBLIC_CULQI_PK || '').catch((e) => console.error('Error cargando culqi:', e));
     if (preselectedBusinessId) {
       setSelectedBusiness(preselectedBusinessId);
     } else if (businesses.length === 1) {
