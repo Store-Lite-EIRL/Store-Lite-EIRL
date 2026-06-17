@@ -126,13 +126,15 @@ export async function POST(request: Request) {
       | 'cuotealo'
       | undefined;
 
+    let culqiSecretKey: string | null = null;
+
     if (culqiOrderId) {
       // Ya fue cobrado por Culqi Checkout contra la orden
       // Solo marcar la orden como pagada y crear el payment
       paymentMethodOverride = 'card';
     } else {
       // ─── FLOW: TOKEN-BASED CHARGE (tarjeta/Yape directo) ───
-      // 1. Obtener y descifrar la Secret Key
+      // 1. Obtener y descifrar la Secret Key (cached, reuse below)
       const settings = await db.query.businessSettings.findFirst({
         where: eq(businessSettings.businessId, businessId),
         columns: { culqiSecretKey: true },
@@ -146,7 +148,7 @@ export async function POST(request: Request) {
       }
 
       // 🔥 SECURITY: Decrypt and Validate Key Environment
-      const culqiSecretKey = decrypt(settings.culqiSecretKey);
+      culqiSecretKey = decrypt(settings.culqiSecretKey);
       const isProd = process.env.NODE_ENV === 'production';
       const isKeyLive = culqiSecretKey.startsWith('sk_live');
 
@@ -202,20 +204,14 @@ export async function POST(request: Request) {
     reservedIdempotencyKey = idempotencyReservation?.key ?? null;
 
     // 3. Crear el cargo en Culqi (solo token flow)
+    // Uses cached culqiSecretKey from the token-based flow block above
     if (token) {
-      const settings = await db.query.businessSettings.findFirst({
-        where: eq(businessSettings.businessId, businessId),
-        columns: { culqiSecretKey: true },
-      });
-
-      if (!settings?.culqiSecretKey) {
+      if (!culqiSecretKey) {
         return NextResponse.json(
           { error: 'El negocio no tiene configurada pasarela de pagos' },
           { status: 400 },
         );
       }
-
-      const culqiSecretKey = decrypt(settings.culqiSecretKey);
 
       const culqiResponse = await fetch('https://api.culqi.com/v2/charges', {
         method: 'POST',
