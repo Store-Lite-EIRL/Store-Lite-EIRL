@@ -8,8 +8,8 @@
 
 import { createClient } from '@/lib/supabase/client';
 import type { Notification, NotificationCategory } from '@/types/notifications';
-import type { RealtimeChannel, RealtimePostgresInsertPayload } from '@supabase/supabase-js';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { RealtimePostgresInsertPayload } from '@supabase/supabase-js';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 export interface NotificationWithMeta extends Notification {
   isNew?: boolean;
@@ -40,12 +40,12 @@ export function useNotifications({
   enableRealtime = true,
   onNewNotification,
 }: UseNotificationsOptions): UseNotificationsReturn {
+  const hookId = useId().replace(/:/g, '');
   const supabase = useMemo(() => createClient(), []);
 
   const [notifications, setNotifications] = useState<NotificationWithMeta[]>([]);
   const [isLoading, setIsLoading] = useState(autoFetch);
   const [error, setError] = useState<string | null>(null);
-  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
 
   const unreadCount = useMemo(
     () => notifications.filter((n) => !n.isRead && !n.isDismissed).length,
@@ -173,6 +173,17 @@ export function useNotifications({
     }
   }, [autoFetch, fetchNotifications]);
 
+  // Keep mutable references of callbacks to avoid tearing down/rebuilding realtime subscription
+  const onNewNotificationRef = useRef(onNewNotification);
+  useEffect(() => {
+    onNewNotificationRef.current = onNewNotification;
+  }, [onNewNotification]);
+
+  const fetchNotificationsRef = useRef(fetchNotifications);
+  useEffect(() => {
+    fetchNotificationsRef.current = fetchNotifications;
+  }, [fetchNotifications]);
+
   // Real-time subscription + fallback polling optimizado
   useEffect(() => {
     if (!enableRealtime || !businessId) {
@@ -181,13 +192,10 @@ export function useNotifications({
 
     console.log('[useNotifications] Creating channel for businessId:', businessId);
 
-    // Cleanup anterior
-    if (channel) {
-      supabase.removeChannel(channel);
-    }
+    const channelName = `notifications:${businessId}-${hookId}`;
 
     const newChannel = supabase
-      .channel(`notifications:${businessId}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -212,8 +220,8 @@ export function useNotifications({
             return [notificationWithMeta, ...prev];
           });
 
-          if (onNewNotification) {
-            onNewNotification(newNotification);
+          if (onNewNotificationRef.current) {
+            onNewNotificationRef.current(newNotification);
           }
 
           setTimeout(() => {
@@ -226,24 +234,24 @@ export function useNotifications({
       .subscribe((status: string, err?: Error) => {
         console.log('[useNotifications] Realtime status:', {
           businessId,
-          channel: `notifications:${businessId}`,
+          channel: channelName,
           status,
           error: err?.message,
         });
       });
 
-    setChannel(newChannel);
-
     // FALLBACK OPTIMIZADO: Polling silencioso cada 30 seg (sin spinner)
     const pollingInterval = setInterval(() => {
-      fetchNotifications(false); // Sin spinner
+      if (fetchNotificationsRef.current) {
+        fetchNotificationsRef.current(false);
+      }
     }, 30000);
 
     return () => {
       supabase.removeChannel(newChannel);
       clearInterval(pollingInterval);
     };
-  }, [businessId, supabase, enableRealtime, onNewNotification, fetchNotifications]);
+  }, [businessId, supabase, enableRealtime, hookId]);
 
   return {
     notifications,
