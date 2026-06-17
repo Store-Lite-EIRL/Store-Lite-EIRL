@@ -4,6 +4,8 @@ import type { CartItem } from '@/features/storage/context/CartContext';
 import { posthog } from 'posthog-js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ShippingInfo } from '../Checkout';
+import { loadCulqiScript } from '@/shared/payments/culqiScript';
+import { chargePayment, createOrder } from '@/shared/payments/paymentApi';
 
 // ─── Límites de métodos de pago ─────────────────────────────────────────
 // Yape tiene un tope de S/ 950 para pagos en comercios (según validación
@@ -85,28 +87,11 @@ export function usePaymentGateway({
 
   const primaryProduct = cartItems[0];
 
-  // Load Culqi Script (v4)
+  // Load Culqi Script (v4) — using shared promise-cached loader
   useEffect(() => {
     if (!culqiPublicKey || typeof window === 'undefined') return;
 
-    if (window.Culqi) {
-      window.Culqi.publicKey = culqiPublicKey;
-      setCulqiReady(true);
-      return;
-    }
-
-    const scriptId = 'culqi-checkout-v4-js';
-    const script = document.createElement('script');
-    script.id = scriptId;
-    script.src = 'https://checkout.culqi.com/js/v4';
-    script.async = true;
-    script.onload = () => {
-      if (window.Culqi) {
-        window.Culqi.publicKey = culqiPublicKey;
-      }
-      setCulqiReady(true);
-    };
-    document.head.appendChild(script);
+    loadCulqiScript(culqiPublicKey).then(() => setCulqiReady(true));
   }, [culqiPublicKey]);
 
   // Culqi Callback
@@ -129,67 +114,49 @@ export function usePaymentGateway({
           if (window.Culqi?.close) window.Culqi.close();
 
           try {
-            const idempotencyKey = `charge-${order.id}`;
-            const response = await fetch('/api/payment/charge', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Idempotency-Key': idempotencyKey,
-              },
-              body: JSON.stringify({
-                culqiOrderId: order.id,
-                amount: order.amount || Math.round(finalTotal * 100),
-                currency: 'PEN',
-                email,
-                phone: shippingInfo.phone,
-                businessId,
-                productId: primaryProduct.id,
-                ...(customerAuth
-                  ? {
-                      customerAuth: {
-                        provider: customerAuth.provider,
-                        authId: customerAuth.authId,
-                        name: customerAuth.name,
-                        email: customerAuth.email,
-                        avatarUrl: customerAuth.avatarUrl,
-                      },
-                    }
-                  : {}),
-                metadata: {
-                  orderNumber,
+            const paymentResult = await chargePayment({
+              culqiOrderId: order.id,
+              amount: order.amount || Math.round(finalTotal * 100),
+              currency: 'PEN',
+              email,
+              phone: shippingInfo.phone,
+              businessId,
+              productId: primaryProduct.id,
+              ...(customerAuth
+                ? {
+                    customerAuth: {
+                      provider: customerAuth.provider,
+                      authId: customerAuth.authId,
+                      name: customerAuth.name,
+                      email: customerAuth.email,
+                      avatarUrl: customerAuth.avatarUrl,
+                    },
+                  }
+                : {}),
+              metadata: {
+                orderNumber,
+                dni: shippingInfo.dni,
+                cartItems: cartItems.map((item) => ({
+                  id: item.id,
+                  name: item.name,
+                  quantity: item.quantity,
+                  price: item.secondPrice || item.price,
+                })),
+                shippingInfo: {
+                  ...shippingInfo,
+                  address:
+                    shippingInfo.courier === 'recojo' ? businessAddress : shippingInfo.address,
+                  district:
+                    shippingInfo.courier === 'recojo' ? businessCity : shippingInfo.district,
                   dni: shippingInfo.dni,
-                  cartItems: cartItems.map((item) => ({
-                    id: item.id,
-                    name: item.name,
-                    quantity: item.quantity,
-                    price: item.secondPrice || item.price,
-                  })),
-                  shippingInfo: {
-                    ...shippingInfo,
-                    address:
-                      shippingInfo.courier === 'recojo' ? businessAddress : shippingInfo.address,
-                    district:
-                      shippingInfo.courier === 'recojo' ? businessCity : shippingInfo.district,
-                    dni: shippingInfo.dni,
-                  },
                 },
-              }),
+              },
             });
-
-            const paymentResult = await response.json();
-
-            if (!response.ok || !paymentResult?.success) {
-              throw new Error(
-                paymentResult?.details ||
-                  paymentResult?.error ||
-                  'No se pudo procesar el pago con tarjeta.',
-              );
-            }
 
             onOrderPaid({
               orderNumber,
               paymentMethod,
-              trackingToken: paymentResult?.payment?.trackingToken,
+              trackingToken: paymentResult?.payment?.trackingToken as string | undefined,
             });
 
             try {
@@ -254,63 +221,44 @@ export function usePaymentGateway({
         if (window.Culqi?.close) window.Culqi.close();
 
         try {
-          const idempotencyKey = `charge-${token}`;
-          const response = await fetch('/api/payment/charge', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Idempotency-Key': idempotencyKey,
-            },
-            body: JSON.stringify({
-              token,
-              amount: Math.round(finalTotal * 100),
-              currency: 'PEN',
-              email,
-              phone: shippingInfo.phone,
-              businessId,
-              productId: primaryProduct.id,
-              ...(customerAuth
-                ? {
-                    customerAuth: {
-                      provider: customerAuth.provider,
-                      authId: customerAuth.authId,
-                      name: customerAuth.name,
-                      email: customerAuth.email,
-                      avatarUrl: customerAuth.avatarUrl,
-                    },
-                  }
-                : {}),
-              metadata: {
-                orderNumber,
+          const paymentResult = await chargePayment({
+            token,
+            amount: Math.round(finalTotal * 100),
+            currency: 'PEN',
+            email,
+            phone: shippingInfo.phone,
+            businessId,
+            productId: primaryProduct.id,
+            ...(customerAuth
+              ? {
+                  customerAuth: {
+                    provider: customerAuth.provider,
+                    authId: customerAuth.authId,
+                    name: customerAuth.name,
+                    email: customerAuth.email,
+                    avatarUrl: customerAuth.avatarUrl,
+                  },
+                }
+              : {}),
+            metadata: {
+              orderNumber,
+              dni: shippingInfo.dni,
+              cartItems: cartItems.map((item) => ({
+                id: item.id,
+                name: item.name,
+                quantity: item.quantity,
+                price: item.secondPrice || item.price,
+              })),
+              shippingInfo: {
+                ...shippingInfo,
+                address:
+                  shippingInfo.courier === 'recojo' ? businessAddress : shippingInfo.address,
+                district:
+                  shippingInfo.courier === 'recojo' ? businessCity : shippingInfo.district,
                 dni: shippingInfo.dni,
-                cartItems: cartItems.map((item) => ({
-                  id: item.id,
-                  name: item.name,
-                  quantity: item.quantity,
-                  price: item.secondPrice || item.price,
-                })),
-                shippingInfo: {
-                  ...shippingInfo,
-                  address:
-                    shippingInfo.courier === 'recojo' ? businessAddress : shippingInfo.address,
-                  district:
-                    shippingInfo.courier === 'recojo' ? businessCity : shippingInfo.district,
-                  dni: shippingInfo.dni,
-                },
               },
-            }),
+            },
           });
-
-          const paymentResult = await response.json();
-
-          // SEGURIDAD: Verificar que el pago fue exitoso en el servidor
-          if (!response.ok || !paymentResult?.success) {
-            throw new Error(
-              paymentResult?.details ||
-                paymentResult?.error ||
-                'No se pudo procesar el pago con Culqi.',
-            );
-          }
 
           // SEGURIDAD EXTRA: Verificar que el cargo en Culqi también fue exitoso
           const chargeStatus = paymentResult?.charge?.status;
@@ -326,7 +274,7 @@ export function usePaymentGateway({
           onOrderPaid({
             orderNumber,
             paymentMethod,
-            trackingToken: paymentResult?.payment?.trackingToken,
+            trackingToken: paymentResult?.payment?.trackingToken as string | undefined,
           });
 
           try {
@@ -426,7 +374,6 @@ export function usePaymentGateway({
     paymentGuardRef.current = true;
     culqiCallbackGuardRef.current = false;
     setIsCulqiProcessing(true);
-    const checkoutAttemptId = crypto.randomUUID();
 
     try {
       const Culqi = window.Culqi;
@@ -438,24 +385,13 @@ export function usePaymentGateway({
       let orderId: string | null = null;
       if (finalTotal > YAPE_LIMITS.max) {
         try {
-          const orderResponse = await fetch('/api/payment/create-order', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Idempotency-Key': `order-${checkoutAttemptId}`,
-            },
-            body: JSON.stringify({
-              amount: Math.round(finalTotal * 100),
-              email: email || 'cliente@store-lite.com',
-              businessId,
-              description: `Compra - ${cartItems.length} productos`,
-            }),
+          const orderData = await createOrder({
+            amount: Math.round(finalTotal * 100),
+            email: email || 'cliente@store-lite.com',
+            businessId,
+            description: `Compra - ${cartItems.length} productos`,
           });
-
-          if (orderResponse.ok) {
-            const orderData = await orderResponse.json();
-            orderId = orderData.culqiOrderId;
-          }
+          orderId = orderData.culqiOrderId;
         } catch (e) {
           console.warn('[Checkout] Order creation failed, falling back to charge-only flow:', e);
         }

@@ -1,21 +1,21 @@
 /**
- * Variables de tipografía alineadas con m3.material.io
- * Display/headline/title → Google Sans
- * Body/label → Google Sans Text (fallback: Google Sans)
- * Mono → Google Sans Mono (fallback: Google Sans Code)
- * Iconos → Google Symbols (fallback: Material Symbols Outlined en layout)
+ * Typography variables aligned with the fonts loaded by next/font in app/layout.tsx.
+ * Display/headline/title -> Poppins
+ * Body/label -> Inter
+ * Mono -> Roboto Mono
+ * Icons -> Material Symbols from the stylesheet linked in app/layout.tsx
  */
 :root {
-  --mio-theme-display-font-family: 'Google Sans', sans-serif;
-  --mio-theme-text-font-family: 'Google Sans', sans-serif;
+  --mio-theme-display-font-family: var(--font-google-sans-flex), var(--font-storefront-poppins), var(--font-storefront-inter), sans-serif;
+  --mio-theme-text-font-family: var(--font-google-sans-flex), var(--font-storefront-inter), var(--font-storefront-roboto), sans-serif;
   --mio-theme-mono-font-family: var(--font-roboto-mono), 'ID Mono', monospace;
-  --mio-theme-google-symbol-font-family: 'Google Symbols';
+  --mio-theme-google-symbol-font-family: 'Material Symbols Rounded', 'Material Symbols Outlined';
 
-  /* Mapeo a tokens de Material Web (@material/web) */
+  /* Material Web (@material/web) typeface mapping */
   --md-ref-typeface-brand: var(--mio-theme-display-font-family);
   --md-ref-typeface-plain: var(--mio-theme-text-font-family);
 
-  /* Typescale: display/headline/title usan brand, body/label usan plain */
+  /* Typescale: display/headline/title use brand, body/label use plain. */
   --md-sys-typescale-display-large-font: var(--mio-theme-display-font-family);
   --md-sys-typescale-display-medium-font: var(--mio-theme-display-font-family);
   --md-sys-typescale-display-small-font: var(--mio-theme-display-font-family);

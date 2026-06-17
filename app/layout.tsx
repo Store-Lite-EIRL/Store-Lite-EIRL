@@ -4,8 +4,14 @@ import { WebVitalsReporter } from '@/shared/components/WebVitalsReporter';
 import { ThemeProvider } from '@/shared/context/ThemeContext';
 import { CSPostHogProvider } from '@/shared/providers/PostHogProvider';
 import type { Metadata } from 'next';
-import { Inter, Poppins, Roboto, Roboto_Mono } from 'next/font/google';
+import { Google_Sans_Flex, Inter, Poppins, Roboto, Roboto_Mono } from 'next/font/google';
 import './globals.css';
+
+const google_sans_flex = Google_Sans_Flex({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-google-sans-flex',
+});
 
 const roboto_mono = Roboto_Mono({
   subsets: ['latin'],
@@ -78,21 +84,10 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
-        />
-      </head>
-      <body
-        suppressHydrationWarning
-        className={`${roboto_mono.variable} ${inter.variable} ${roboto.variable} ${poppins.variable} antialiased`}
-      >
-        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
-        <CSPostHogProvider>
-          <ThemeProvider>
-            <AuthProvider>
-              <MaterialWebInit />
               <WebVitalsReporter />
               {children}
             </AuthProvider>
