@@ -236,9 +236,7 @@ export function ChatClient({
                   : new Date().toISOString(),
               unread: 0,
               online: true,
-              avatarUrl:
-                s.guestAvatarUrl ||
-                `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.guestName || s.id}`,
+              avatarUrl: s.guestAvatarUrl || '',
               status: s.status ?? 'active',
               email: s.guestEmail || undefined,
               isGoogleAuth: !!s.authUserId,
@@ -327,9 +325,7 @@ export function ChatClient({
           const newChat: Chat = {
             id: String(newSession.id),
             name: (newSession.guest_name as string) || 'Invitado',
-            avatarUrl:
-              (newSession.guest_avatar_url as string) ||
-              `https://api.dicebear.com/7.x/avataaars/svg?seed=${String(newSession.guest_name || newSession.id)}`,
+            avatarUrl: (newSession.guest_avatar_url as string) || '',
             preview: '',
             time: `${padTwo(now.getHours())}:${padTwo(now.getMinutes())}`,
             lastMessageAt: now.toISOString(),
@@ -524,9 +520,7 @@ export function ChatClient({
                     : new Date().toISOString(),
                 unread: 0,
                 online: true,
-                avatarUrl:
-                  s.guestAvatarUrl ||
-                  `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.guestName || s.id}`,
+                avatarUrl: s.guestAvatarUrl || '',
                 status: s.status ?? 'active',
                 email: s.guestEmail || undefined,
                 isGoogleAuth: !!s.authUserId,

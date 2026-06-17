@@ -167,14 +167,6 @@ export function ChatSidebar({
               width={44}
               height={44}
             />
-          ) : storeLogo ? (
-            <Image
-              src={storeLogo}
-              alt={`Logo de ${chat.name}`}
-              className={styles.avatar}
-              width={44}
-              height={44}
-            />
           ) : (
             <div className={styles.avatarFallback}>
               <Icon size={22}>person</Icon>

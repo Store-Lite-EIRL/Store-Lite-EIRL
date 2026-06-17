@@ -288,14 +288,20 @@ export function ChatWindow({
             </IconButton>
           )}
           <div className={styles.avatarContainer}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={session.avatarUrl}
-              alt={session.name}
-              width={40}
-              height={40}
-              className={styles.avatar}
-            />
+            {session.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={session.avatarUrl}
+                alt={session.name}
+                width={40}
+                height={40}
+                className={styles.avatar}
+              />
+            ) : (
+              <div className={styles.avatarFallback}>
+                <Icon size={22}>person</Icon>
+              </div>
+            )}
             {session.online && <span className={styles.onlineBadge} />}
           </div>
           <div className={styles.userDetails}>
@@ -384,14 +390,19 @@ export function ChatWindow({
               <div
                 className={`${styles.messageRow} ${isMe ? styles.messageRowMe : styles.messageRowThem}`}
               >
-                {!isMe && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={session.avatarUrl}
-                    alt={session.name}
-                    className={styles.messageAvatar}
-                  />
-                )}
+                {!isMe &&
+                  (session.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={session.avatarUrl}
+                      alt={session.name}
+                      className={styles.messageAvatar}
+                    />
+                  ) : (
+                    <div className={styles.messageAvatarFallback}>
+                      <Icon size={18}>person</Icon>
+                    </div>
+                  ))}
 
                 {isImage ? (
                   <div
