@@ -20,19 +20,19 @@
   --md-ref-typeface-plain: var(--mio-theme-text-font-family);
 
   /* Typescale: display/headline/title use brand, body/label use plain. */
-  --md-sys-typescale-display-large-font: var(--mio-theme-display-font-family);
-  --md-sys-typescale-display-medium-font: var(--mio-theme-display-font-family);
-  --md-sys-typescale-display-small-font: var(--mio-theme-display-font-family);
-  --md-sys-typescale-headline-large-font: var(--mio-theme-display-font-family);
-  --md-sys-typescale-headline-medium-font: var(--mio-theme-display-font-family);
-  --md-sys-typescale-headline-small-font: var(--mio-theme-display-font-family);
-  --md-sys-typescale-title-large-font: var(--mio-theme-display-font-family);
-  --md-sys-typescale-title-medium-font: var(--mio-theme-display-font-family);
-  --md-sys-typescale-title-small-font: var(--mio-theme-display-font-family);
-  --md-sys-typescale-body-large-font: var(--mio-theme-text-font-family);
-  --md-sys-typescale-body-medium-font: var(--mio-theme-text-font-family);
-  --md-sys-typescale-body-small-font: var(--mio-theme-text-font-family);
-  --md-sys-typescale-label-large-font: var(--mio-theme-text-font-family);
-  --md-sys-typescale-label-medium-font: var(--mio-theme-text-font-family);
-  --md-sys-typescale-label-small-font: var(--mio-theme-text-font-family);
+  --md-sys-typescale-display-large-font-family-name: var(--mio-theme-display-font-family);
+  --md-sys-typescale-display-medium-font-family-name: var(--mio-theme-display-font-family);
+  --md-sys-typescale-display-small-font-family-name: var(--mio-theme-display-font-family);
+  --md-sys-typescale-headline-large-font-family-name: var(--mio-theme-display-font-family);
+  --md-sys-typescale-headline-medium-font-family-name: var(--mio-theme-display-font-family);
+  --md-sys-typescale-headline-small-font-family-name: var(--mio-theme-display-font-family);
+  --md-sys-typescale-title-large-font-family-name: var(--mio-theme-display-font-family);
+  --md-sys-typescale-title-medium-font-family-name: var(--mio-theme-display-font-family);
+  --md-sys-typescale-title-small-font-family-name: var(--mio-theme-display-font-family);
+  --md-sys-typescale-body-large-font-family-name: var(--mio-theme-text-font-family);
+  --md-sys-typescale-body-medium-font-family-name: var(--mio-theme-text-font-family);
+  --md-sys-typescale-body-small-font-family-name: var(--mio-theme-text-font-family);
+  --md-sys-typescale-label-large-font-family-name: var(--mio-theme-text-font-family);
+  --md-sys-typescale-label-medium-font-family-name: var(--mio-theme-text-font-family);
+  --md-sys-typescale-label-small-font-family-name: var(--mio-theme-text-font-family);
 }
