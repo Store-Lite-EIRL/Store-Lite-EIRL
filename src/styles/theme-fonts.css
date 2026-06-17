@@ -6,8 +6,12 @@
  * Icons -> Material Symbols from the stylesheet linked in app/layout.tsx
  */
 :root {
-  --mio-theme-display-font-family: var(--font-google-sans-flex), var(--font-storefront-poppins), var(--font-storefront-inter), sans-serif;
-  --mio-theme-text-font-family: var(--font-google-sans-flex), var(--font-storefront-inter), var(--font-storefront-roboto), sans-serif;
+  --mio-theme-display-font-family:
+    var(--font-google-sans-flex), var(--font-storefront-poppins), var(--font-storefront-inter),
+    sans-serif;
+  --mio-theme-text-font-family:
+    var(--font-google-sans-flex), var(--font-storefront-inter), var(--font-storefront-roboto),
+    sans-serif;
   --mio-theme-mono-font-family: var(--font-roboto-mono), 'ID Mono', monospace;
   --mio-theme-google-symbol-font-family: 'Material Symbols Rounded', 'Material Symbols Outlined';
 

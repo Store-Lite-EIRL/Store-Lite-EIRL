@@ -62,9 +62,7 @@ export interface CreateOrderResponse {
  * Sends a POST request to `/api/payment/charge`.
  * Handles both order-based (culqiOrderId) and token-based charges.
  */
-export async function chargePayment(
-  params: ChargePaymentParams,
-): Promise<ChargePaymentResponse> {
+export async function chargePayment(params: ChargePaymentParams): Promise<ChargePaymentResponse> {
   const idempotencyKey = `charge-${params.token || params.culqiOrderId || crypto.randomUUID()}`;
 
   const response = await fetch('/api/payment/charge', {
@@ -110,9 +108,7 @@ export async function chargePayment(
  * Sends a POST request to `/api/payment/create-order`.
  * Creates an async payment order (PagoEfectivo, Billetera Móvil, Cuotéalo).
  */
-export async function createOrder(
-  params: CreateOrderParams,
-): Promise<CreateOrderResponse> {
+export async function createOrder(params: CreateOrderParams): Promise<CreateOrderResponse> {
   const idempotencyKey = `order-${crypto.randomUUID()}`;
 
   const response = await fetch('/api/payment/create-order', {

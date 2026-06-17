@@ -25,6 +25,20 @@ import { NextResponse } from 'next/server';
 
 const LOW_STOCK_THRESHOLD = 5;
 
+// ─── Internal types ─────────────────────────────────────────────────
+interface ShippingInfoData {
+  phone?: string | null;
+  dni?: string | null;
+  department?: string | null;
+  province?: string | null;
+  district?: string | null;
+  address?: string | null;
+  agency?: string | null;
+  cost?: number | string;
+  reference?: string | null;
+  courier?: string;
+}
+
 // ─── Helper: Resolve and validate Culqi secret key ──────────────────
 async function resolveCulqiSecretKey(
   businessId: string,
@@ -63,8 +77,7 @@ async function resolveCulqiSecretKey(
       secretKey: '',
       error: NextResponse.json(
         {
-          error:
-            'Configuración inválida: No se permiten llaves sk_live en entorno de desarrollo.',
+          error: 'Configuración inválida: No se permiten llaves sk_live en entorno de desarrollo.',
         },
         { status: 400 },
       ),
@@ -75,16 +88,30 @@ async function resolveCulqiSecretKey(
 }
 
 // ─── Helper: Execute Culqi charge API call ──────────────────────────
-async function executeCulqiCharge(
-  token: string,
-  secretKey: string,
-  amount: number,
-  currency: string,
-  email: string,
-  productTitle: string | undefined,
-  businessId: string,
-  productId: string,
-): Promise<{ culqiData: CulqiChargeResponse; error: NextResponse | null }> {
+interface ExecuteCulqiChargeParams {
+  token: string;
+  secretKey: string;
+  amount: number;
+  currency: string;
+  email?: string;
+  productTitle?: string;
+  businessId: string;
+  productId: string;
+}
+
+async function executeCulqiCharge({
+  token,
+  secretKey,
+  amount,
+  currency,
+  email,
+  productTitle,
+  businessId,
+  productId,
+}: ExecuteCulqiChargeParams): Promise<{
+  culqiData: CulqiChargeResponse;
+  error: NextResponse | null;
+}> {
   const response = await fetch('https://api.culqi.com/v2/charges', {
     method: 'POST',
     headers: {
@@ -120,6 +147,7 @@ async function executeCulqiCharge(
   return { culqiData, error: null };
 }
 
+// eslint-disable-next-line complexity, sonarjs/cognitive-complexity
 export async function POST(request: Request) {
   try {
     const idempotencyKey = request.headers.get('Idempotency-Key');
@@ -146,7 +174,6 @@ export async function POST(request: Request) {
       businessId,
       productId,
       currency = 'PEN',
-      phone,
       customerAuth,
       metadata = {},
     } = validationResult.data;
@@ -172,28 +199,25 @@ export async function POST(request: Request) {
       const { secretKey, error: keyError } = await resolveCulqiSecretKey(businessId);
       if (keyError) return keyError;
 
-      const { culqiData: chargeResult, error: chargeError } = await executeCulqiCharge(
+      const { culqiData: chargeResult, error: chargeError } = await executeCulqiCharge({
         token,
         secretKey,
         amount,
         currency,
         email,
-        undefined, // product title fetched below
+        productTitle: undefined, // product title not needed for charge
         businessId,
         productId,
-      );
+      });
       if (chargeError) return chargeError;
       culqiData = chargeResult;
     }
 
-    // ─── COMMON: Product + Business lookup + Security checks ────────
-    const [product, business] = await Promise.all([
-      db.query.products.findFirst({ where: eq(products.id, productId), columns: { title: true } }),
-      db.query.businesses.findFirst({
-        where: eq(businesses.id, businessId),
-        columns: { ownerId: true },
-      }),
-    ]);
+    // ─── COMMON: Business lookup + Security checks ────────
+    const business = await db.query.businesses.findFirst({
+      where: eq(businesses.id, businessId),
+      columns: { ownerId: true },
+    });
 
     if (!business?.ownerId) {
       return NextResponse.json(
@@ -242,93 +266,100 @@ export async function POST(request: Request) {
     }
 
     // 🔥 ATOMICITY: Transacción de Base de Datos
-    const result = await db.transaction(async (tx) => {
-      // 4. Guardar Pago
-      const shippingInfo = metadata?.shippingInfo || {};
+    const result = await db.transaction(
+      // eslint-disable-next-line complexity
+      async (tx) => {
+        // 4. Guardar Pago
+        const rawShipping = (metadata?.shippingInfo || {}) as ShippingInfoData;
 
-      // Mapear tipo de courier: urbano_agencia -> agencia, urbano_domicilio -> domicilio, recojo -> recojo
-      const shippingType =
-        shippingInfo.courier === 'urbano_agencia'
-          ? 'agencia'
-          : shippingInfo.courier === 'urbano_domicilio'
-            ? 'domicilio'
-            : 'recojo';
+        // Mapear tipo de courier
+        let shippingType: 'agencia' | 'domicilio' | 'recojo';
+        if (rawShipping.courier === 'urbano_agencia') {
+          shippingType = 'agencia';
+        } else if (rawShipping.courier === 'urbano_domicilio') {
+          shippingType = 'domicilio';
+        } else {
+          shippingType = 'recojo';
+        }
 
-      const pm = isOrderFlow ? 'card' : (token?.startsWith('ype_') ? 'yape' : 'card');
-      const culqiChargeId = culqiOrderId || culqiData?.id || null;
-      const culqiRefCode = culqiData?.reference_code || null;
+        let pm: 'card' | 'yape';
+        if (isOrderFlow) {
+          pm = 'card';
+        } else if (token?.startsWith('ype_')) {
+          pm = 'yape';
+        } else {
+          pm = 'card';
+        }
+        const culqiChargeId = culqiOrderId || culqiData?.id || null;
+        const culqiRefCode = culqiData?.reference_code || null;
 
-      const [payment] = await tx
-        .insert(payments)
-        .values({
-          businessId,
-          productId,
-          sellerUserId: business.ownerId,
-          amount: String(amount / 100),
-          currency,
-          paymentMethod: pm,
-          culqiChargeId,
-          culqiReferenceCode: culqiRefCode,
-          buyerEmail: email || 'cliente@culqi.com',
-          buyerPhone: (shippingInfo as any).phone || null,
-          buyerDni: (shippingInfo as any).dni || null,
-          status: 'paid',
-          orderNumber: (metadata?.orderNumber as string) || null,
-          shippingType: shippingType as any,
-          shippingDepartment: (shippingInfo as any).department || null,
-          shippingProvince: (shippingInfo as any).province || null,
-          shippingDistrict: (shippingInfo as any).district || null,
-          shippingAddress: (shippingInfo as any).address || null,
-          shippingAgency: (shippingInfo as any).agency || null,
-          shippingPhone: (shippingInfo as any).phone || null,
-          shippingCost: String((shippingInfo as any).cost || 0),
-          shippingReference: (shippingInfo as any).reference || null,
-          metadata: {
-            ...metadata,
-            culqiId: culqiChargeId,
-            ...(customerAuth ? { customerAuth } : {}),
-          },
-          trackingToken: generateTrackingToken(),
-        })
-        .returning();
+        const [payment] = await tx
+          .insert(payments)
+          .values({
+            businessId,
+            productId,
+            sellerUserId: business.ownerId,
+            amount: String(amount / 100),
+            currency,
+            paymentMethod: pm,
+            culqiChargeId,
+            culqiReferenceCode: culqiRefCode,
+            buyerEmail: email || 'cliente@culqi.com',
+            buyerPhone: rawShipping.phone ?? null,
+            buyerDni: rawShipping.dni ?? null,
+            status: 'paid',
+            orderNumber: (metadata?.orderNumber as string) ?? null,
+            shippingType,
+            shippingDepartment: rawShipping.department ?? null,
+            shippingProvince: rawShipping.province ?? null,
+            shippingDistrict: rawShipping.district ?? null,
+            shippingAddress: rawShipping.address ?? null,
+            shippingAgency: rawShipping.agency ?? null,
+            shippingPhone: rawShipping.phone ?? null,
+            shippingCost: String(rawShipping.cost ?? 0),
+            shippingReference: rawShipping.reference ?? null,
+            metadata: {
+              ...metadata,
+              culqiId: culqiChargeId,
+              ...(customerAuth ? { customerAuth } : {}),
+            },
+            trackingToken: generateTrackingToken(),
+          })
+          .returning();
 
-      // 5b. Si es pago contra orden, marcar la orden como pagada
-      if (culqiOrderId) {
-        await tx
-          .update(paymentOrders)
-          .set({ status: 'paid', updatedAt: sql`now()` })
-          .where(eq(paymentOrders.culqiOrderId, culqiOrderId));
-      }
+        // 5b. Si es pago contra orden, marcar la orden como pagada
+        if (culqiOrderId) {
+          await tx
+            .update(paymentOrders)
+            .set({ status: 'paid', updatedAt: sql`now()` })
+            .where(eq(paymentOrders.culqiOrderId, culqiOrderId));
+        }
 
-      // 5. Actualizar Stock
-      const cartItems = (metadata?.cartItems as { id: string; quantity: number }[]) || [];
-      const itemsToUpdate = cartItems.length > 0 ? cartItems : [{ id: productId, quantity: 1 }];
+        // 5. Actualizar Stock
+        const cartItems = (metadata?.cartItems as { id: string; quantity: number }[]) || [];
+        const itemsToUpdate = cartItems.length > 0 ? cartItems : [{ id: productId, quantity: 1 }];
 
-      for (const item of itemsToUpdate) {
-        await tx
-          .update(products)
-          .set({ stock: sql`GREATEST(${products.stock} - ${Math.max(1, item.quantity)}, 0)` })
-          .where(eq(products.id, item.id));
-      }
+        for (const item of itemsToUpdate) {
+          await tx
+            .update(products)
+            .set({ stock: sql`GREATEST(${products.stock} - ${Math.max(1, item.quantity)}, 0)` })
+            .where(eq(products.id, item.id));
+        }
 
-      return payment;
-    });
+        return payment;
+      },
+    );
 
     // ─── Notificar al negocio ───
     // Fire-and-forget: no fallar si la notificación falla
-    console.log('[DEBUG] Intentando notificar nueva orden para business:', businessId);
     notifyNewOrder(businessId, {
       orderId: result.id,
       customerName: email || 'cliente@culqi.com',
       amount: amount / 100,
       itemsCount: (metadata?.cartItems as { id: string; quantity: number }[])?.length || 1,
-    })
-      .then(() => {
-        console.log('[DEBUG] Notification sent successfully');
-      })
-      .catch((notifyErr) => {
-        console.error('[notifyNewOrder] Error:', notifyErr);
-      });
+    }).catch((notifyErr) => {
+      console.error('[notifyNewOrder] Error:', notifyErr);
+    });
 
     // Notificar stock bajo/agotado
     const cartItems = (metadata?.cartItems as { id: string; quantity: number }[]) || [];
@@ -344,14 +375,18 @@ export async function POST(request: Request) {
         notifyOutOfStock(businessId, {
           productId: updatedProduct.id,
           productName: updatedProduct.title,
-        }).catch(() => {});
+        })
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
+          .catch(() => {});
       } else if (updatedProduct && updatedProduct.stock <= LOW_STOCK_THRESHOLD) {
         notifyLowStock(businessId, {
           productId: updatedProduct.id,
           productName: updatedProduct.title,
           currentStock: updatedProduct.stock,
           minStock: LOW_STOCK_THRESHOLD,
-        }).catch(() => {});
+        })
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
+          .catch(() => {});
       }
     }
 

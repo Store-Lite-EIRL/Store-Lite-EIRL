@@ -1,4 +1,4 @@
-import { describe, expect, test, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // Mock html-to-image
 vi.mock('html-to-image', () => ({
@@ -90,17 +90,19 @@ describe('generateAndUploadTicket', () => {
     });
 
     // Verify toPng was called with the ref
-    expect(toPng).toHaveBeenCalledWith(ref.current, expect.objectContaining({
-      cacheBust: true,
-      backgroundColor: '#ffffff',
-    }));
+    expect(toPng).toHaveBeenCalledWith(
+      ref.current,
+      expect.objectContaining({
+        cacheBust: true,
+        backgroundColor: '#ffffff',
+      }),
+    );
 
     // Verify upload was called
-    expect(mockUpload).toHaveBeenCalledWith(
-      'ORD-123.png',
-      expect.any(Blob),
-      { contentType: 'image/png', upsert: true },
-    );
+    expect(mockUpload).toHaveBeenCalledWith('ORD-123.png', expect.any(Blob), {
+      contentType: 'image/png',
+      upsert: true,
+    });
 
     // Verify updateUrl was called
     expect(mockFetch).toHaveBeenCalledWith(

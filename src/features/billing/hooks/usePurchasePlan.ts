@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
 import { generateAndUploadTicket } from '@/shared/payments/ticketGenerator';
+import { useCallback, useRef, useState } from 'react';
 
 /**
  * usePurchasePlan

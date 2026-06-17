@@ -49,7 +49,7 @@ interface CulqiTokenResult {
   [key: string]: unknown;
 }
 
-interface CulqiOrderResult {
+export interface CulqiOrderResult {
   id: string;
   status: string;
   amount?: number;
@@ -94,7 +94,9 @@ export interface CulqiChargeResponse {
   status: string;
 }
 
-interface Window {
-  Culqi: Culqi | undefined;
-  culqi: () => void;
+declare global {
+  interface Window {
+    Culqi: Culqi | undefined;
+    culqi: () => void;
+  }
 }
