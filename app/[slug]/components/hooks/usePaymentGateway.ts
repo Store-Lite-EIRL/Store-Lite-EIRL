@@ -91,6 +91,13 @@ export function usePaymentGateway({
   useEffect(() => {
     if (!culqiPublicKey || typeof window === 'undefined') return;
 
+    // Synchronous path: when Culqi is already loaded (tests, other callers)
+    if (window.Culqi) {
+      window.Culqi.publicKey = culqiPublicKey;
+      setCulqiReady(true);
+      return;
+    }
+
     loadCulqiScript(culqiPublicKey).then(() => setCulqiReady(true));
   }, [culqiPublicKey]);
 
