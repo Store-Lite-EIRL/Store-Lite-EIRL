@@ -9,42 +9,7 @@
  * The public key (PK) is safe to expose here per Culqi documentation.
  */
 
-const CULQI_SCRIPT_URL = 'https://checkout.culqi.com/js/v4';
-
-/**
- * Injects the Culqi v4 JS script into the document once.
- * Safe to call multiple times — it will only inject the script once.
- */
-export function loadCulqiScript(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (typeof window === 'undefined') {
-      reject(new Error('loadCulqiScript must be called in a browser context'));
-      return;
-    }
-
-    // Already loaded
-    if (window.Culqi) {
-      resolve();
-      return;
-    }
-
-    // Already injected but not loaded yet — wait for it
-    const existing = document.getElementById('culqi-js-script');
-    if (existing) {
-      existing.addEventListener('load', () => resolve());
-      existing.addEventListener('error', () => reject(new Error('Failed to load Culqi script')));
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.id = 'culqi-js-script';
-    script.src = CULQI_SCRIPT_URL;
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Failed to load Culqi script'));
-    document.head.appendChild(script);
-  });
-}
+import { loadCulqiScript } from '@/shared/payments/culqiScript';
 
 export interface CardTokenPayload {
   card_number: string;
@@ -73,9 +38,8 @@ export interface CulqiToken {
  * Returns the token object from Culqi or throws with an error message.
  */
 export async function tokenizeCard(payload: CardTokenPayload): Promise<CulqiToken> {
-  await loadCulqiScript();
-
   const pk = process.env.NEXT_PUBLIC_CULQI_PK;
+  await loadCulqiScript(pk || '');
   if (!pk) {
     throw new Error('Culqi public key (NEXT_PUBLIC_CULQI_PK) is not configured.');
   }
@@ -107,9 +71,8 @@ export async function tokenizeCard(payload: CardTokenPayload): Promise<CulqiToke
  * Creates a tokenization request for Yape.
  */
 export async function tokenizeYape(payload: YapeTokenPayload): Promise<CulqiToken> {
-  await loadCulqiScript();
-
   const pk = process.env.NEXT_PUBLIC_CULQI_PK;
+  await loadCulqiScript(pk || '');
   if (!pk) {
     throw new Error('Culqi public key (NEXT_PUBLIC_CULQI_PK) is not configured.');
   }
