@@ -11,6 +11,9 @@ const google_sans_flex = Google_Sans_Flex({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-google-sans-flex',
+  adjustFontFallback: false,
+  fallback: ['system-ui', 'sans-serif'],
+  weight: 'variable',
 });
 
 const roboto_mono = Roboto_Mono({

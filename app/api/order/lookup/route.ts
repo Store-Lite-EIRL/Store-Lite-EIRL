@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { dni, orderNumber, businessSlug } = validationResult.data;
+    const { dni, orderNumber: cleanOrderNumber, businessSlug } = validationResult.data;
 
     // 🔒 SECURITY: Check if the requester is a seller/team member of this business.
     // Sellers should NOT be able to lookup trackingTokens for their own orders.
@@ -78,9 +78,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // Limpiar el número de orden (por si viene con #)
-    const cleanOrderNumber = orderNumber.startsWith('#') ? orderNumber.slice(1) : orderNumber;
-
     // Buscar el pago que coincida con DNI y Nro de Orden
     const payment = await db.query.payments.findFirst({
       where: and(eq(payments.buyerDni, dni), eq(payments.orderNumber, cleanOrderNumber)),
@@ -100,7 +97,10 @@ export async function POST(request: Request) {
     // Verificar que la orden exista Y que pertenezca al negocio correcto
     if (!payment || !payment.trackingToken) {
       return NextResponse.json(
-        { success: false, error: 'No se encontró ningún pedido con esos datos' },
+        {
+          success: false,
+          error: `No encontramos un pedido con el DNI ${dni} y la orden #${cleanOrderNumber}. Revisá que los datos sean correctos.`,
+        },
         { status: 404 },
       );
     }

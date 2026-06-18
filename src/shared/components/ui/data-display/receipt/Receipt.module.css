@@ -1,11 +1,11 @@
 /* Modern Glassmorphism Receipt — High Fidelity Design */
 .receipt {
-  --glass-bg: rgba(255, 255, 255, 0.95);
-  --glass-border: rgba(255, 255, 255, 0.4);
-  --accent: var(--md-sys-color-primary, #6750a4);
-  --on-surface: var(--md-sys-color-on-surface, #1c1b1f);
-  --on-surface-variant: var(--md-sys-color-on-surface-variant, #49454f);
-  --outline-variant: var(--md-sys-color-outline-variant, #cac4d0);
+  --glass-bg: #ffffff;
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --accent: var(--md-sys-color-primary, #0061a4);
+  --on-surface: #1c1b1f; /* MD3 Light On-Surface */
+  --on-surface-variant: #49454f; /* MD3 Light On-Surface Variant */
+  --outline-variant: #cac4d0; /* MD3 Light Outline Variant */
 
   background: var(--glass-bg);
   backdrop-filter: blur(12px);
@@ -38,8 +38,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: var(--md-sys-color-tertiary-container, #e8f5e9);
-  color: var(--md-sys-color-on-tertiary-container, #2e7d32);
+  background: #e8f5e9; /* Fixed light tertiary container */
+  color: #2e7d32; /* Fixed light on-tertiary container */
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 11px;
