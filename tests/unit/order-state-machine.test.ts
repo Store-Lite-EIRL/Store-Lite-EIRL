@@ -40,12 +40,20 @@ describe('isValidTransition', () => {
     expect(isValidTransition(PAID, PREPARING)).toBe(true);
   });
 
+  test('PAID → WAITING_CUSTOMER_CONFIRMATION is valid (uploadTicket V2 path)', () => {
+    expect(isValidTransition(PAID, WAITING)).toBe(true);
+  });
+
   test('PAID → CANCELLED is valid', () => {
     expect(isValidTransition(PAID, CANCELLED)).toBe(true);
   });
 
   test('PREPARING_ORDER → WAITING_CUSTOMER_CONFIRMATION is valid', () => {
     expect(isValidTransition(PREPARING, WAITING)).toBe(true);
+  });
+
+  test('PREPARING_ORDER → DELIVERED is valid (migration path: requestFinalization)', () => {
+    expect(isValidTransition(PREPARING, DELIVERED)).toBe(true);
   });
 
   test('PREPARING_ORDER → SELLER_TIMEOUT is valid', () => {
@@ -157,6 +165,16 @@ describe('validateTransition (with actor)', () => {
     expect(result.error).toContain('not permitted');
   });
 
+  test('allows seller for PAID → WAITING_CUSTOMER_CONFIRMATION (uploadTicket)', () => {
+    const result = validateTransition(PAID, WAITING, 'seller');
+    expect(result.valid).toBe(true);
+  });
+
+  test('allows seller for PREPARING_ORDER → DELIVERED (requestFinalization)', () => {
+    const result = validateTransition(PREPARING, DELIVERED, 'seller');
+    expect(result.valid).toBe(true);
+  });
+
   test('allows customer for WAITING → READY_TO_SHIP (confirm)', () => {
     const result = validateTransition(WAITING, READY, 'customer');
     expect(result.valid).toBe(true);
@@ -261,6 +279,21 @@ describe('getAllowedTransitions', () => {
   test('filter by actor: seller not allowed for CREATED', () => {
     const result = getAllowedTransitions(CREATED, 'seller');
     expect(result).toEqual([]);
+  });
+
+  test('PAID returns PREPARING_ORDER, WAITING_CUSTOMER_CONFIRMATION, CANCELLED', () => {
+    const result = getAllowedTransitions(PAID);
+    expect(result.map(r => r.to)).toEqual([PREPARING, WAITING, CANCELLED]);
+  });
+
+  test('filter by actor: seller allowed for PAID (uploadTicket V2 path)', () => {
+    const result = getAllowedTransitions(PAID, 'seller');
+    expect(result.map(r => r.to)).toEqual([PREPARING, WAITING, CANCELLED]);
+  });
+
+  test('PREPARING_ORDER returns WAITING, DELIVERED, SELLER_TIMEOUT, CANCELLED', () => {
+    const result = getAllowedTransitions(PREPARING);
+    expect(result.map(r => r.to)).toEqual([WAITING, DELIVERED, TIMEOUT, CANCELLED]);
   });
 
   test('READY_TO_SHIP returns IN_TRANSIT and ISSUE_REPORTED', () => {

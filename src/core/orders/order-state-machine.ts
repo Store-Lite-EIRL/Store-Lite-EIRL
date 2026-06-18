@@ -45,12 +45,17 @@ const TRANSITION_MATRIX: Record<OrderStatusV2, TransitionConfig> = {
     allowedActors: ['system', 'customer'],
   },
   [ORDER_STATUS_V2.PAID]: {
-    to: [ORDER_STATUS_V2.PREPARING_ORDER, ORDER_STATUS_V2.CANCELLED],
-    allowedActors: ['system', 'customer'],
+    to: [
+      ORDER_STATUS_V2.PREPARING_ORDER,
+      ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION,
+      ORDER_STATUS_V2.CANCELLED,
+    ],
+    allowedActors: ['system', 'customer', 'seller'],
   },
   [ORDER_STATUS_V2.PREPARING_ORDER]: {
     to: [
       ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION,
+      ORDER_STATUS_V2.DELIVERED,          // migration path: legacy 'aceptado' → finalization
       ORDER_STATUS_V2.SELLER_TIMEOUT,
       ORDER_STATUS_V2.CANCELLED,
     ],

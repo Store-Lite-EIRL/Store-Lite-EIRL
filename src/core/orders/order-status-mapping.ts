@@ -3,19 +3,27 @@
 // Legacy (current DB) ↔ New (order_status_v2 enum) mapping
 // ──────────────────────────────────────────
 
-import { ORDER_STATUS } from './order-status';
+import { ORDER_STATUS, ORDER_STATUS_INTERNAL } from './order-status';
 import type { OrderStatusV2 } from './order-status';
 import { ORDER_STATUS_V2 } from './order-status';
 
 /**
  * Legacy Spanish / current status strings → new OrderStatusV2.
+ *
+ * Note: 'delivered' in legacy means the CUSTOMER confirmed the ticket/shipping info,
+ * which maps to READY_TO_SHIP (not PREPARING_ORDER). Use ORDER_STATUS.VALIDANDO
+ * for the WAITING_CUSTOMER_CONFIRMATION equivalent.
+ *
+ * Internal statuses like 'aceptado' map to PREPARING_ORDER for migration compatibility
+ * (the seller accepted the order and is preparing it).
  */
 const LEGACY_TO_NEW: Record<string, OrderStatusV2> = {
   [ORDER_STATUS.PENDING]: ORDER_STATUS_V2.CREATED,
   [ORDER_STATUS.PAID]: ORDER_STATUS_V2.PAID,
   [ORDER_STATUS.VALIDANDO]: ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION,
   'esperando_confirmacion': ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION,
-  [ORDER_STATUS.DELIVERED]: ORDER_STATUS_V2.PREPARING_ORDER,
+  // 'delivered' = customer confirmed ticket → READY_TO_SHIP
+  [ORDER_STATUS.DELIVERED]: ORDER_STATUS_V2.READY_TO_SHIP,
   [ORDER_STATUS.EN_REPARTO]: ORDER_STATUS_V2.IN_TRANSIT,
   [ORDER_STATUS.NOT_DELIVERED]: ORDER_STATUS_V2.DELIVERED,
   [ORDER_STATUS.COMPLETED]: ORDER_STATUS_V2.COMPLETED,
@@ -23,6 +31,8 @@ const LEGACY_TO_NEW: Record<string, OrderStatusV2> = {
   [ORDER_STATUS.FAILED]: ORDER_STATUS_V2.PAID,
   [ORDER_STATUS.REFUND_REQUESTED]: ORDER_STATUS_V2.CANCELLED,
   [ORDER_STATUS.REFUNDED]: ORDER_STATUS_V2.CANCELLED,
+  // Internal statuses for migration compatibility
+  [ORDER_STATUS_INTERNAL.ACEPTADO]: ORDER_STATUS_V2.PREPARING_ORDER,
 };
 
 /**
@@ -32,7 +42,8 @@ const NEW_TO_LEGACY: Partial<Record<OrderStatusV2, string>> = {
   [ORDER_STATUS_V2.CREATED]: ORDER_STATUS.PENDING,
   [ORDER_STATUS_V2.PAID]: ORDER_STATUS.PAID,
   [ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION]: ORDER_STATUS.VALIDANDO,
-  [ORDER_STATUS_V2.PREPARING_ORDER]: ORDER_STATUS.DELIVERED,
+  [ORDER_STATUS_V2.PREPARING_ORDER]: ORDER_STATUS_INTERNAL.ACEPTADO,
+  [ORDER_STATUS_V2.READY_TO_SHIP]: ORDER_STATUS.DELIVERED,
   [ORDER_STATUS_V2.IN_TRANSIT]: ORDER_STATUS.EN_REPARTO,
   [ORDER_STATUS_V2.DELIVERED]: ORDER_STATUS.NOT_DELIVERED,
   [ORDER_STATUS_V2.COMPLETED]: ORDER_STATUS.COMPLETED,

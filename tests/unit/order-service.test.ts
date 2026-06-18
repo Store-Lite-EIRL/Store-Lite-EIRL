@@ -171,8 +171,9 @@ describe('OrderService.transition', () => {
   });
 
   test('sets courier/tracking fields when transitioning to WAITING_CUSTOMER_CONFIRMATION', async () => {
+    // 'aceptado' maps to PREPARING_ORDER → WAITING_CUSTOMER_CONFIRMATION is valid for seller
     mockDb._selectLimit.mockResolvedValue([
-      makePayment({ status: 'delivered', version: 1 }),
+      makePayment({ status: 'aceptado', version: 1 }),
     ]);
 
     await transition(

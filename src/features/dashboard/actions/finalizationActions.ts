@@ -115,7 +115,9 @@ export async function requestFinalization(
     if (env.orderFlowV2) {
       const result = await transition({
         paymentId,
-        toStatus: ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION,
+        // In legacy flow, requestFinalization moves to 'not_delivered' which maps to DELIVERED.
+        // In V2, this means the seller confirms the order was delivered to the customer.
+        toStatus: ORDER_STATUS_V2.DELIVERED,
         actor: { type: 'seller', id: businessId },
         expectedVersion,
         extraFields: { finalizationRequestedAt: now, finalizationDeadline: deadline },

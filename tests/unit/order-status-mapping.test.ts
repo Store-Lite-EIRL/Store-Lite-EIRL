@@ -17,6 +17,7 @@ const C = ORDER_STATUS_V2.CREATED;
 const P = ORDER_STATUS_V2.PAID;
 const PREP = ORDER_STATUS_V2.PREPARING_ORDER;
 const WAIT = ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION;
+const READY = ORDER_STATUS_V2.READY_TO_SHIP;
 const TRANSIT = ORDER_STATUS_V2.IN_TRANSIT;
 const DEL = ORDER_STATUS_V2.DELIVERED;
 const COMP = ORDER_STATUS_V2.COMPLETED;
@@ -40,8 +41,8 @@ describe('mapToNewStatus (legacy → V2)', () => {
     expect(mapToNewStatus('esperando_confirmacion')).toBe(WAIT);
   });
 
-  test('maps delivered to PREPARING_ORDER (legacy delivered = seller preparing)', () => {
-    expect(mapToNewStatus('delivered')).toBe(PREP);
+  test('maps delivered to READY_TO_SHIP (legacy delivered = customer confirmed ticket)', () => {
+    expect(mapToNewStatus('delivered')).toBe(READY);
   });
 
   test('maps en_reparto to IN_TRANSIT', () => {
@@ -80,6 +81,10 @@ describe('mapToNewStatus (legacy → V2)', () => {
     expect(mapToNewStatus('rechazado')).toBeUndefined();
   });
 
+  test('maps aceptado (internal) to PREPARING_ORDER', () => {
+    expect(mapToNewStatus('aceptado')).toBe(PREP);
+  });
+
   // ── Pass-through: V2 statuses return as-is ──
   test('passes through CREATED', () => {
     expect(mapToNewStatus('CREATED')).toBe(C);
@@ -91,7 +96,7 @@ describe('mapToNewStatus (legacy → V2)', () => {
 
   // ── Known gaps (not in LEGACY_TO_NEW): return undefined ──
   test.each([
-    'processing', 'aceptado', 'shipped', 'analizando',
+    'processing', 'shipped', 'analizando',
   ])('maps %s to undefined (known gap — no mapping defined)', (status) => {
     expect(mapToNewStatus(status)).toBeUndefined();
   });
@@ -118,8 +123,8 @@ describe('mapToLegacyStatus (V2 → legacy)', () => {
     expect(mapToLegacyStatus(WAIT)).toBe('validando');
   });
 
-  test('maps PREPARING_ORDER to delivered (V2 preparing = legacy delivered)', () => {
-    expect(mapToLegacyStatus(PREP)).toBe('delivered');
+  test('maps PREPARING_ORDER to aceptado (V2 preparing = seller accepted order)', () => {
+    expect(mapToLegacyStatus(PREP)).toBe('aceptado');
   });
 
   test('maps IN_TRANSIT to en_reparto', () => {
@@ -138,9 +143,12 @@ describe('mapToLegacyStatus (V2 → legacy)', () => {
     expect(mapToLegacyStatus(DISP)).toBe('disputed');
   });
 
+  test('maps READY_TO_SHIP to delivered', () => {
+    expect(mapToLegacyStatus(READY)).toBe('delivered');
+  });
+
   // ── V2 statuses with no legacy mapping ──
   test.each([
-    ['READY_TO_SHIP', ORDER_STATUS_V2.READY_TO_SHIP],
     ['ISSUE_REPORTED', ORDER_STATUS_V2.ISSUE_REPORTED],
     ['SELLER_TIMEOUT', ORDER_STATUS_V2.SELLER_TIMEOUT],
     ['CANCELLED', CANC],
@@ -159,6 +167,14 @@ describe('mapToLegacyStatus (V2 → legacy)', () => {
 
   test('round-trip: not_delivered → DELIVERED → not_delivered', () => {
     expect(mapToLegacyStatus(mapToNewStatus('not_delivered')!)).toBe('not_delivered');
+  });
+
+  test('round-trip: delivered → READY_TO_SHIP → delivered', () => {
+    expect(mapToLegacyStatus(mapToNewStatus('delivered')!)).toBe('delivered');
+  });
+
+  test('round-trip: aceptado → PREPARING_ORDER → aceptado', () => {
+    expect(mapToLegacyStatus(mapToNewStatus('aceptado')!)).toBe('aceptado');
   });
 });
 
@@ -211,7 +227,8 @@ describe('getLegacyStatuses', () => {
     expect(statuses).toContain('failed');
     expect(statuses).toContain('refund_requested');
     expect(statuses).toContain('refunded');
-    expect(statuses.length).toBe(12);
+    expect(statuses).toContain('aceptado');
+    expect(statuses.length).toBe(13);
   });
 
   test('every returned status passes isLegacyStatus', () => {
