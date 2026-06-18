@@ -1,3 +1,4 @@
+import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businesses, businessTeamMembers, payments } from '@/core/database/schema';
 import { createClient } from '@/lib/supabase/server';
@@ -13,7 +14,9 @@ import OrderAuthGate from './OrderAuthGate';
 import OrderChatSection from './OrderChatSection';
 import OrderGuide from './OrderGuide';
 import OrderRealtimeHandler from './OrderRealtimeHandler';
+import OrderV2Timeline from './OrderV2Timeline';
 import ReportFlow from './ReportFlow';
+import ReportV2Flow from './ReportV2Flow';
 
 interface OrderTrackingPageProps {
   params: Promise<{
@@ -173,10 +176,20 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
   }
 
   const getStep = () => {
+    // V2 step mapping (compressed to 5-step display)
+    const V2_STEP: Record<string, number> = {
+      CREATED: 0, PAID: 1, PREPARING_ORDER: 1,
+      WAITING_CUSTOMER_CONFIRMATION: 1, READY_TO_SHIP: 2,
+      IN_TRANSIT: 2, DELIVERED: 3, COMPLETED: 4,
+      ISSUE_REPORTED: 1, DISPUTE: 1,
+      SELLER_TIMEOUT: 4, CANCELLED: 0,
+    };
+    if (order.status in V2_STEP) return V2_STEP[order.status];
+    // Legacy steps
     if (order.status === 'pending') return 0;
     if (order.status === 'validando') return 1;
     if (order.status === 'delivered') return 2;
-    if ((order.status as string) === 'en_reparto') return 3; // Pedido llegó, customer debe confirmar recepción
+    if ((order.status as string) === 'en_reparto') return 3;
     if (order.status === 'disputed') return order.ticketImageUrl ? 1 : 0;
     if (order.status === 'completed') return 4;
     if (order.status === 'not_delivered') return order.ticketImageUrl ? 1 : 0;
@@ -244,6 +257,91 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
       color: 'var(--md-sys-color-on-error-container)',
       bgColor: 'var(--md-sys-color-error-container)',
       desc: 'Reportaste un inconveniente con el comprobante. El vendedor debe corregirlo y subir uno nuevo.',
+    },
+    // ── V2 Statuses ──
+    CREATED: {
+      label: 'Pedido Creado',
+      icon: 'shopping_cart',
+      color: 'var(--md-sys-color-on-surface-variant)',
+      bgColor: 'var(--md-sys-color-surface-variant)',
+      desc: 'El pedido fue registrado y está pendiente de pago.',
+    },
+    PAID: {
+      label: 'Pago Confirmado',
+      icon: 'payments',
+      color: 'var(--md-sys-color-on-primary-container)',
+      bgColor: 'var(--md-sys-color-primary-container)',
+      desc: 'El pago fue procesado correctamente. El vendedor está preparando tu pedido.',
+    },
+    PREPARING_ORDER: {
+      label: 'Preparando Pedido',
+      icon: 'inventory_2',
+      color: 'var(--md-sys-color-on-tertiary-container)',
+      bgColor: 'var(--md-sys-color-tertiary-container)',
+      desc: 'El vendedor está alistando los productos para el despacho.',
+    },
+    WAITING_CUSTOMER_CONFIRMATION: {
+      label: 'Esperando Confirmación',
+      icon: 'fact_check',
+      color: 'var(--md-sys-color-on-primary-container)',
+      bgColor: 'var(--md-sys-color-primary-container)',
+      desc: 'El vendedor subió el comprobante de envío. Revisá los datos y confirmá si todo está correcto.',
+    },
+    READY_TO_SHIP: {
+      label: 'Listo para Envío',
+      icon: 'check_circle',
+      color: 'var(--md-sys-color-on-secondary-container)',
+      bgColor: 'var(--md-sys-color-secondary-container)',
+      desc: 'Todo listo. El paquete será entregado al courier próximamente.',
+    },
+    IN_TRANSIT: {
+      label: 'En Camino',
+      icon: 'local_shipping',
+      color: 'var(--md-sys-color-on-tertiary-container)',
+      bgColor: 'var(--md-sys-color-tertiary-container)',
+      desc: 'Tu paquete fue entregado al courier y está en ruta hacia tu destino.',
+    },
+    DELIVERED: {
+      label: 'Entregado',
+      icon: 'home',
+      color: 'var(--md-sys-color-on-secondary-container)',
+      bgColor: 'var(--md-sys-color-secondary-container)',
+      desc: 'El pedido llegó a su destino. Por favor confirmá que lo recibiste correctamente.',
+    },
+    COMPLETED: {
+      label: 'Compra Finalizada',
+      icon: 'verified',
+      color: 'var(--md-sys-color-on-secondary-container)',
+      bgColor: 'var(--md-sys-color-secondary-container)',
+      desc: '¡Excelente! La transacción se completó exitosamente.',
+    },
+    ISSUE_REPORTED: {
+      label: 'Problema Reportado',
+      icon: 'report_problem',
+      color: 'var(--md-sys-color-on-error-container)',
+      bgColor: 'var(--md-sys-color-error-container)',
+      desc: 'Reportaste un problema. El vendedor fue notificado. Si no se resuelve, se abrirá una disputa.',
+    },
+    DISPUTE: {
+      label: 'En Disputa',
+      icon: 'gavel',
+      color: 'var(--md-sys-color-on-error-container)',
+      bgColor: 'var(--md-sys-color-error-container)',
+      desc: 'El caso está siendo revisado por nuestro equipo de soporte.',
+    },
+    SELLER_TIMEOUT: {
+      label: 'Tiempo Agotado',
+      icon: 'timer_off',
+      color: 'var(--md-sys-color-on-error-container)',
+      bgColor: 'var(--md-sys-color-error-container)',
+      desc: 'El vendedor no respondió a tiempo. El pedido fue cerrado automáticamente.',
+    },
+    CANCELLED: {
+      label: 'Pedido Cancelado',
+      icon: 'cancel',
+      color: 'var(--md-sys-color-on-surface-variant)',
+      bgColor: 'var(--md-sys-color-surface-variant)',
+      desc: 'Este pedido fue cancelado.',
     },
   };
 
@@ -514,6 +612,78 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                   </div>
                 ))}
               </div>
+
+              {/* ── V2: Seller note ── */}
+              {env.orderFlowV2 && order.sellerNote && (
+                <div
+                  style={{
+                    width: '100%',
+                    maxWidth: '500px',
+                    background: 'var(--md-sys-color-surface-container-high)',
+                    borderRadius: '16px',
+                    padding: '1rem 1.25rem',
+                    display: 'flex',
+                    gap: '0.75rem',
+                    alignItems: 'flex-start',
+                    textAlign: 'left',
+                  }}
+                >
+                  <Icon size={20}>notes</Icon>
+                  <div>
+                    <p style={{ margin: 0, fontWeight: 700, fontSize: '0.75rem', opacity: 0.6 }}>
+                      NOTA DEL VENDEDOR
+                    </p>
+                    <p style={{ margin: '4px 0 0', fontSize: '0.9rem' }}>{order.sellerNote}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* ── V2: Timeline events ── */}
+              {env.orderFlowV2 && <OrderV2Timeline orderId={order.id} />}
+
+              {/* ── V2: Issue report button (for reportable V2 statuses) ── */}
+              {env.orderFlowV2 &&
+                ['WAITING_CUSTOMER_CONFIRMATION', 'READY_TO_SHIP', 'IN_TRANSIT', 'DELIVERED'].includes(
+                  order.status,
+                ) && (
+                  <div
+                    style={{
+                      width: '100%',
+                      maxWidth: '500px',
+                      background: 'var(--md-sys-color-error-container)',
+                      borderRadius: '24px',
+                      padding: '1.5rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.75rem',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                      <Icon size={24}>report_problem</Icon>
+                      <div>
+                        <p style={{ margin: 0, fontWeight: 950, fontSize: '0.9rem' }}>
+                          ¿Tenés un problema con tu pedido?
+                        </p>
+                        <p style={{ margin: '4px 0 0', fontSize: '0.8rem', opacity: 0.7 }}>
+                          Reportalo y nos pondremos en contacto para resolverlo.
+                        </p>
+                      </div>
+                    </div>
+                    <a
+                      href="#report-v2"
+                      className="btn-hub btn-hub-s"
+                      style={{
+                        justifyContent: 'center',
+                        background: 'var(--md-sys-color-error)',
+                        color: 'white',
+                      }}
+                    >
+                      <Icon>flag</Icon>
+                      REPORTAR PROBLEMA
+                    </a>
+                  </div>
+                )}
 
               {/* COMPLETED: Order dates receipt */}
               {order.status === 'completed' && (
@@ -1080,6 +1250,29 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                         <span className="detail-value">{order.shippingReference}</span>
                       </div>
                     )}
+                    {/* ── V2: Courier / Tracking / Pickup (when available) ── */}
+                    {env.orderFlowV2 && order.courierName && (
+                      <div>
+                        <span className="detail-sub">Courier</span>
+                        <span className="detail-value">{order.courierName}</span>
+                      </div>
+                    )}
+                    {env.orderFlowV2 && order.trackingNumber && (
+                      <div>
+                        <span className="detail-sub">N° Tracking</span>
+                        <span className="detail-value" style={{ fontSize: '0.8rem' }}>
+                          {order.trackingNumber}
+                        </span>
+                      </div>
+                    )}
+                    {env.orderFlowV2 && order.pickupCode && (
+                      <div>
+                        <span className="detail-sub">Código Recojo</span>
+                        <span className="detail-value" style={{ fontWeight: 950 }}>
+                          {order.pickupCode}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1235,6 +1428,11 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
 
         {/* MODAL: Report Problem — with spinner & success screen */}
         <ReportFlow paymentId={order.id} trackingToken={token} />
+
+        {/* MODAL: V2 Issue Report — warning + typed reasons + OrderService submit */}
+        {env.orderFlowV2 && (
+          <ReportV2Flow paymentId={order.id} trackingToken={token} />
+        )}
       </div>
     </OrderAuthGate>
   );

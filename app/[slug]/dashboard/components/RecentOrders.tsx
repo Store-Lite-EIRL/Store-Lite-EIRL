@@ -41,7 +41,7 @@ import {
   notifyDelivery,
   uploadTicketAndUpdatePayment,
   type UploadTicketResult,
-} from '../actions/ticketActions';
+} from '@/features/dashboard/actions/ticketActions';
 import styles from './RecentOrders.module.css';
 
 interface ConfirmAction {
@@ -94,6 +94,10 @@ interface OrderItem {
   ticketImageUrl: string | null;
   finalizationDeadline: string | null;
   completedAt: string | null;
+  courierName?: string | null;
+  trackingNumber?: string | null;
+  pickupCode?: string | null;
+  sellerNote?: string | null;
   metadata: any;
   createdAt: string;
   businessId: string;
@@ -1526,13 +1530,26 @@ export function RecentOrders({
                       }).format(Number(order.amount))}
                     </td>
                     <td className={styles.trackingCell}>
-                      <button
-                        className={styles.viewMoreButton}
-                        onClick={() => setSelectedOrder(order)}
-                      >
-                        <MapPin size={14} />
-                        Ver más
-                      </button>
+                      {order.courierName || order.trackingNumber ? (
+                        <div style={{ fontSize: '0.75rem', lineHeight: 1.4 }}>
+                          {order.courierName && (
+                            <div style={{ fontWeight: 700 }}>{order.courierName}</div>
+                          )}
+                          {order.trackingNumber && (
+                            <div style={{ opacity: 0.6, fontSize: '0.7rem' }}>
+                              #{order.trackingNumber}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <button
+                          className={styles.viewMoreButton}
+                          onClick={() => setSelectedOrder(order)}
+                        >
+                          <MapPin size={14} />
+                          Ver más
+                        </button>
+                      )}
                     </td>
                     <td className={styles.statusCell}>
                       <span className={`${styles.statusBadge} ${styles[statusInfo.className]}`}>

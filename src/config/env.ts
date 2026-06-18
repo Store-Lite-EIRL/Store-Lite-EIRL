@@ -5,6 +5,8 @@ export const env = {
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
   nextPublicAppUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   // Feature flags
+  // Order Flow V2 — nuevo ciclo de vida de 12 estados con state machine, timeline, attachments
+  orderFlowV2: process.env.ORDER_FLOW_V2 === 'true',
   // Habilita el rewrite de subdominios en proxy.ts (Fase 2 de la migración a subdominios)
   featureSubdomainRewrite: process.env.FEATURE_SUBDOMAIN_REWRITE === 'true',
   // Dominio compartido para cookies cross-subdominio (Fase 4).

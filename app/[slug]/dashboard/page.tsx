@@ -456,6 +456,10 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
     metadata: sanitizeMetadata(order.metadata),
     createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : order.createdAt,
     businessId: order.businessId,
+    courierName: order.courierName,
+    trackingNumber: order.trackingNumber,
+    pickupCode: order.pickupCode,
+    sellerNote: order.sellerNote,
   }));
 
   // Helper functions for security sanitization

@@ -20,7 +20,9 @@ import {
 
 import { businesses } from './businesses';
 import {
+  orderAttachmentTypeEnum,
   orderStatusEnum,
+  orderTimelineEventTypeEnum,
   paymentMethodEnum,
   planPaymentStatusEnum,
   shippingTypeEnum,
@@ -88,6 +90,12 @@ export const payments = pgTable(
     shippingReference: text('shipping_reference'),
     shippingPhone: text('shipping_phone'),
     shippingCost: decimal('shipping_cost', { precision: 10, scale: 2 }),
+    // ── New courier/shipping fields (additive, nullable) ──
+    courierName: text('courier_name'),
+    trackingNumber: text('tracking_number'),
+    pickupCode: text('pickup_code'),
+    sellerNote: text('seller_note'),
+    shippingPaidAt: timestamp('shipping_paid_at', { withTimezone: true }),
     ticketUrl: text('ticket_url'),
     ticketImageUrl: text('ticket_image_url'),
     rejectionReason: text('rejection_reason'),
@@ -133,6 +141,50 @@ export const orderEvents = pgTable(
   (table) => ({
     paymentIdIdx: index('idx_order_events_payment_id').on(table.paymentId),
     createdAtIdx: index('idx_order_events_created_at').on(table.createdAt.desc()),
+  }),
+);
+
+// =====================================================
+// TABLE: order_attachments — typed attachments per order (max 3)
+// =====================================================
+
+export const orderAttachments = pgTable(
+  'order_attachments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    orderId: uuid('order_id')
+      .notNull()
+      .references(() => payments.id, { onDelete: 'cascade' }),
+    fileUrl: text('file_url').notNull(),
+    fileName: text('file_name').notNull(),
+    attachmentType: orderAttachmentTypeEnum('attachment_type').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    orderIdIdx: index('idx_order_attachments_order_id').on(table.orderId),
+  }),
+);
+
+// =====================================================
+// TABLE: order_timeline_events — typed audit trail
+// =====================================================
+
+export const orderTimelineEvents = pgTable(
+  'order_timeline_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    orderId: uuid('order_id')
+      .notNull()
+      .references(() => payments.id, { onDelete: 'cascade' }),
+    eventType: orderTimelineEventTypeEnum('event_type').notNull(),
+    actorType: text('actor_type', { enum: ['customer', 'seller', 'system'] }).notNull(),
+    actorId: uuid('actor_id').references(() => profiles.id),
+    metadata: jsonb('metadata').notNull().default({}),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    orderIdIdx: index('idx_timeline_events_order_id').on(table.orderId),
+    createdAtIdx: index('idx_timeline_events_created_at').on(table.createdAt.desc()),
   }),
 );
 
@@ -305,6 +357,12 @@ export type NewPaymentIdempotencyKey = typeof paymentIdempotencyKeys.$inferInser
 
 export type Payment = typeof payments.$inferSelect;
 export type NewPayment = typeof payments.$inferInsert;
+
+export type OrderAttachment = typeof orderAttachments.$inferSelect;
+export type NewOrderAttachment = typeof orderAttachments.$inferInsert;
+
+export type OrderTimelineEvent = typeof orderTimelineEvents.$inferSelect;
+export type NewOrderTimelineEvent = typeof orderTimelineEvents.$inferInsert;
 
 export type SellerPayoutAccount = typeof sellerPayoutAccounts.$inferSelect;
 export type NewSellerPayoutAccount = typeof sellerPayoutAccounts.$inferInsert;

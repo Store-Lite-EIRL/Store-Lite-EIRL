@@ -3,8 +3,10 @@
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { payments } from '@/core/database/schema';
+import { ORDER_STATUS, ORDER_STATUS_V2 } from '@/core/orders/order-status';
+import { transition } from '@/core/orders/order-service';
 import { createClient } from '@supabase/supabase-js';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 const BUCKET_NAME = 'tickets';
 
@@ -40,6 +42,7 @@ export async function uploadTicketAndUpdatePayment(
       .select({
         trackingToken: payments.trackingToken,
         businessId: payments.businessId,
+        version: payments.version,
       })
       .from(payments)
       .where(eq(payments.id, paymentId))
@@ -64,6 +67,8 @@ export async function uploadTicketAndUpdatePayment(
       console.error('[uploadTicket] No trackingToken for payment:', paymentId);
       return { success: false, error: 'El pedido no tiene un token de seguimiento' };
     }
+
+    const expectedVersion = existingPayment.version ?? 0;
 
     // 2. Convert base64 to Uint8Array (compatible with Edge runtime)
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
@@ -96,15 +101,37 @@ export async function uploadTicketAndUpdatePayment(
     const { data: urlData } = adminClient.storage.from(BUCKET_NAME).getPublicUrl(filePath);
     const ticketImageUrl = urlData.publicUrl;
 
-    // 6. Update payment: cambiar estado a 'validando' (ticket subido, esperando validación del cliente)
-    await db
-      .update(payments)
-      .set({
-        ticketImageUrl,
-        status: 'validando', // Estado: Ticket subido, cliente debe validar
-        updatedAt: new Date(),
-      })
-      .where(eq(payments.id, paymentId));
+    // 6. Update payment — V2 path uses OrderService, legacy uses inline
+    if (env.orderFlowV2) {
+      const result = await transition({
+        paymentId,
+        toStatus: ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION,
+        actor: { type: 'seller', id: businessId },
+        expectedVersion,
+        extraFields: { ticketImageUrl },
+      });
+
+      if (!result.success) {
+        console.error('[uploadTicket] OrderService error:', result.error);
+        return { success: false, error: result.error };
+      }
+    } else {
+      const [updated] = await db
+        .update(payments)
+        .set({
+          ticketImageUrl,
+          status: ORDER_STATUS.VALIDANDO,
+          version: expectedVersion + 1,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(payments.id, paymentId), eq(payments.version, expectedVersion)))
+        .returning({ id: payments.id });
+
+      if (!updated) {
+        console.error('[uploadTicket] Version conflict for payment:', paymentId);
+        return { success: false, error: 'El pedido fue modificado por otra operación. Recargá e intentá de nuevo.' };
+      }
+    }
 
     console.log('[uploadTicket] Success — ticket uploaded for payment:', paymentId);
     return { success: true, ticketImageUrl, trackingToken: existingPayment.trackingToken };
@@ -133,6 +160,7 @@ export async function notifyDelivery(
       .select({
         status: payments.status,
         businessId: payments.businessId,
+        version: payments.version,
       })
       .from(payments)
       .where(eq(payments.id, paymentId))
@@ -147,41 +175,45 @@ export async function notifyDelivery(
     }
 
     // Solo se puede notificar entrega si el ticket ya fue validado (status = delivered)
-    if (existingPayment.status !== 'delivered') {
+    if (existingPayment.status !== ORDER_STATUS.DELIVERED) {
       return { success: false, error: 'El ticket aún no fue validado por el cliente' };
     }
 
-    // P5: Transaction with re-check for race condition guard
-    await db.transaction(async (tx) => {
-      const [currentPayment] = await tx
-        .select({ status: payments.status })
-        .from(payments)
-        .where(eq(payments.id, paymentId))
-        .limit(1);
+    // Version-locked update
+    const expectedVersion = existingPayment.version ?? 0;
 
-      if (currentPayment?.status !== 'delivered') {
-        throw new Error('Estado del pedido fue modificado.');
+    if (env.orderFlowV2) {
+      const result = await transition({
+        paymentId,
+        toStatus: ORDER_STATUS_V2.IN_TRANSIT,
+        actor: { type: 'seller', id: businessId },
+        expectedVersion,
+      });
+
+      if (!result.success) {
+        console.error('[notifyDelivery] OrderService error:', result.error);
+        return { success: false, error: result.error };
       }
-
-      await tx
+    } else {
+      const [updated] = await db
         .update(payments)
         .set({
-          status: 'en_reparto',
+          status: ORDER_STATUS.EN_REPARTO,
+          version: expectedVersion + 1,
           updatedAt: new Date(),
         })
-        .where(eq(payments.id, paymentId));
-    });
+        .where(and(eq(payments.id, paymentId), eq(payments.version, expectedVersion)))
+        .returning({ id: payments.id });
+
+      if (!updated) {
+        console.error('[notifyDelivery] Version conflict for payment:', paymentId);
+        return { success: false, error: 'El estado del pedido fue modificado. Recargá e intentá de nuevo.' };
+      }
+    }
 
     console.log('[notifyDelivery] Success — delivery notified for payment:', paymentId);
     return { success: true };
   } catch (error) {
-    const message = error instanceof Error ? error.message : '';
-    if (message.includes('modificado')) {
-      return {
-        success: false,
-        error: 'El estado del pedido fue modificado. Recargá e intentá de nuevo.',
-      };
-    }
     console.error(
       '[notifyDelivery] Error:',
       error instanceof Error ? error.message : String(error),
