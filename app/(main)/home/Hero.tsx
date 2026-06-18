@@ -48,6 +48,7 @@ export default function Hero({
     handleTouchEnd,
     handleUploadClick,
     heroRef,
+    images,
     imagesCount,
     activeSlide,
     isEditing,
@@ -78,11 +79,26 @@ export default function Hero({
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         style={{
-          backgroundImage: backgroundImage ? `url('${backgroundImage}')` : undefined,
-          backgroundPosition: backgroundPositionStyle,
           cursor: cursorStyle,
         }}
       >
+        {/* ─── Slide layers con fade transition ────────────── */}
+        {images.length > 0 && (
+          <div className={styles.slidesLayer}>
+            {images.map((img, i) => (
+              <div
+                key={i}
+                className={styles.slide}
+                style={{
+                  backgroundImage: `url('${img}')`,
+                  backgroundPosition: backgroundPositionStyle,
+                  opacity: i === activeSlide ? 1 : 0,
+                }}
+              />
+            ))}
+          </div>
+        )}
+
         {isSaving && <md-linear-progress indeterminate className={styles.progressBar} />}
 
         {/* ─── Carrusel: Flechas ────────────────────────────── */}

@@ -12,7 +12,6 @@
   margin-bottom: 2rem;
   position: relative;
   user-select: none;
-  transition: background-position 0.1s ease-out; /* Smooth drag */
   overflow: hidden; /* Ensure gradient doesn't overflow */
 }
 
@@ -32,6 +31,24 @@
   );
   pointer-events: none;
   z-index: 1;
+}
+
+/* ── Slide layers for fade transition ───────────────── */
+.slidesLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity 0.4s ease;
 }
 
 /* ── Public light/dark toggle (top-left over Hero) ── */
