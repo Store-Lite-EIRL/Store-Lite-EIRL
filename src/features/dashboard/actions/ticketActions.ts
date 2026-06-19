@@ -37,12 +37,13 @@ export async function uploadTicketAndUpdatePayment(
   console.log('[uploadTicket] Starting — paymentId:', paymentId, 'businessId:', businessId);
 
   try {
-    // 1. Obtener el trackingToken y validar que el pago pertenezca al negocio
+    // 1. Obtener datos del pago para validar y pasar preconditions
     const [existingPayment] = await db
       .select({
         trackingToken: payments.trackingToken,
         businessId: payments.businessId,
         version: payments.version,
+        shippingCost: payments.shippingCost,
       })
       .from(payments)
       .where(eq(payments.id, paymentId))
@@ -109,6 +110,7 @@ export async function uploadTicketAndUpdatePayment(
         actor: { type: 'seller', id: businessId },
         expectedVersion,
         extraFields: { ticketImageUrl },
+        preconditions: { shippingCost: existingPayment.shippingCost },
       });
 
       if (!result.success) {

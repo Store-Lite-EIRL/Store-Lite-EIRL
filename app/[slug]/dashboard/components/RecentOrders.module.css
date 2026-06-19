@@ -1369,6 +1369,18 @@
   border-color: var(--md-sys-color-primary, #6750a4);
 }
 
+.ticketError {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: var(--md-sys-color-error-container, #fce4ec);
+  color: var(--md-sys-color-on-error-container, #8c1d18);
+  font-size: 0.875rem;
+  width: 100%;
+}
+
 .ticketUploadIcon {
   width: 64px;
   height: 64px;

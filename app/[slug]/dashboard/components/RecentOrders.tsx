@@ -303,6 +303,7 @@ export function RecentOrders({
   }, [currentSearch]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const selectedOrderIdRef = useRef<string | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -319,13 +320,18 @@ export function RecentOrders({
   }, [selectedOrder]);
 
   useEffect(() => {
-    setTicketFile(null);
-    setTicketPreview(null);
-    setUploadResult(null);
-    setUploading(false);
-    setIsEditingTicket(false);
-    setNotifyingDelivery(false);
-    setActiveTab('detalles');
+    // Solo resetear state cuando se ABRE una orden DISTINTA, no cuando se actualiza la misma
+    const isNewOrder = selectedOrder && selectedOrder.id !== selectedOrderIdRef.current;
+    if (isNewOrder) {
+      setTicketFile(null);
+      setTicketPreview(null);
+      setUploadResult(null);
+      setUploading(false);
+      setIsEditingTicket(false);
+      setNotifyingDelivery(false);
+      setActiveTab('detalles');
+    }
+    selectedOrderIdRef.current = selectedOrder?.id ?? null;
   }, [selectedOrder]);
 
   const updateFilters = (updates: Record<string, string | null>) => {
@@ -768,6 +774,12 @@ export function RecentOrders({
               </div>
             )}
           </>
+        )}
+        {uploadResult && !uploadResult.success && (
+          <div className={styles.ticketError}>
+            <AlertTriangle size={16} />
+            <span>{uploadResult.error || 'Error al subir el comprobante'}</span>
+          </div>
         )}
       </div>
     );
