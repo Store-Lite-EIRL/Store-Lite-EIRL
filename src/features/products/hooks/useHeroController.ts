@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { Business } from '@/types/business';
 
-import { removeBusinessCover, updateBusinessCover } from '@app/actions/business';
+import { addHeroImage, deleteHeroImage, removeBusinessCover } from '@app/actions/business';
 
 interface HeroControllerParams {
   business: Business | null;
@@ -29,6 +29,9 @@ const DEFAULT_SNACKBAR: SnackbarState = {
   description: '',
   color: 'primary',
 };
+
+const AUTOPLAY_INTERVAL = 6000; // 6s entre slides
+const SWIPE_THRESHOLD = 50;
 
 function getCursorStyle(isEditing: boolean, isDragging: boolean) {
   if (!isEditing) return 'default';
@@ -84,9 +87,10 @@ async function processHeroImage(
 }
 
 export function useHeroController({ business }: HeroControllerParams) {
-  const [backgroundImage, setBackgroundImage] = useState<string | null>(
-    business?.coverImageUrl || null,
-  );
+  const initialImages = (business?.heroImages || []).filter(Boolean);
+
+  const [images, setImages] = useState<string[]>(initialImages);
+  const [activeSlide, setActiveSlide] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -94,27 +98,105 @@ export function useHeroController({ business }: HeroControllerParams) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [snackbar, setSnackbar] = useState<SnackbarState>(DEFAULT_SNACKBAR);
+  const [isPaused, setIsPaused] = useState(false);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const autoplayRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isManuallyUpdating = useRef(false);
 
-  useEffect(() => {
-    // Only update from props if we are not in the middle of a manual update
-    if (!isManuallyUpdating.current) {
-      if (business?.coverImageUrl !== backgroundImage) {
-        console.warn('[Hero] Syncing state from props:', business?.coverImageUrl);
-        const frameId = window.requestAnimationFrame(() => {
-          setBackgroundImage(business?.coverImageUrl || null);
-        });
-        return () => window.cancelAnimationFrame(frameId);
-      }
-    } else {
-      console.warn('[Hero] Skipping sync: Manual update in progress');
-    }
-  }, [business?.coverImageUrl]);
+  // Derived values
+  const backgroundImage = images[activeSlide] || null;
+  const imagesCount = images.length;
+  const hasMultipleImages = images.length > 1;
+  const maxImagesReached = images.length >= 3;
 
+  // ─── Sync images from business prop ──────────────────────
+  useEffect(() => {
+    if (isManuallyUpdating.current) return;
+
+    const synced = (business?.heroImages || []).filter(Boolean);
+    setImages((prev) => {
+      // Sólo actualizar si cambió realmente (evita loops)
+      if (JSON.stringify(prev) === JSON.stringify(synced)) return prev;
+      return synced;
+    });
+  }, [business?.heroImages]);
+
+  // Ajustar activeSlide si se sale del rango
+  useEffect(() => {
+    if (activeSlide >= images.length && images.length > 0) {
+      setActiveSlide(0);
+    }
+  }, [images.length, activeSlide]);
+
+  // ─── Autoplay ────────────────────────────────────────────
+  const stopAutoplay = useCallback(() => {
+    if (autoplayRef.current) {
+      clearInterval(autoplayRef.current);
+      autoplayRef.current = null;
+    }
+  }, []);
+
+  const startAutoplay = useCallback(() => {
+    if (autoplayRef.current) clearInterval(autoplayRef.current);
+    if (images.length <= 1) return;
+
+    autoplayRef.current = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % images.length);
+    }, AUTOPLAY_INTERVAL);
+  }, [images.length]);
+
+  useEffect(() => {
+    if (!isPaused && images.length > 1 && !isEditing) {
+      startAutoplay();
+    } else {
+      stopAutoplay();
+    }
+    return stopAutoplay;
+  }, [isPaused, images.length, isEditing, startAutoplay, stopAutoplay]);
+
+  const handleMouseEnter = () => setIsPaused(true);
+  const handleMouseLeave = () => setIsPaused(false);
+
+  const goToSlide = (index: number) => {
+    if (index === activeSlide) return;
+    setActiveSlide(index);
+    stopAutoplay();
+  };
+
+  const goNext = () => {
+    setActiveSlide((prev) => (prev + 1) % images.length);
+    stopAutoplay();
+  };
+
+  const goPrev = () => {
+    setActiveSlide((prev) => (prev - 1 + images.length) % images.length);
+    stopAutoplay();
+  };
+
+  // ─── Swipe táctil ────────────────────────────────────────
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (isEditing) return;
+
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) * 1.5 > Math.abs(dy)) {
+      if (dx > 0) goPrev();
+      else goNext();
+    }
+  };
+
+  // ─── Upload / Add image ──────────────────────────────────
   const handleUploadClick = () => {
     if (menuRef.current) {
       (menuRef.current as unknown as MenuElement).open = false;
@@ -124,14 +206,16 @@ export function useHeroController({ business }: HeroControllerParams) {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setBackgroundImage(url);
-      setIsEditing(true);
-      setPosition({ x: 0, y: 0 });
-    }
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    setImages((prev) => [...prev, url]);
+    setActiveSlide(images.length); // va al nuevo slide
+    setIsEditing(true);
+    setPosition({ x: 0, y: 0 });
   };
 
+  // ─── Drag positioning ────────────────────────────────────
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!isEditing) return;
     setIsDragging(true);
@@ -153,21 +237,69 @@ export function useHeroController({ business }: HeroControllerParams) {
     setIsDragging(false);
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-    setBackgroundImage(business?.coverImageUrl || null);
-    setPosition({ x: 0, y: 0 });
-  };
-
-  const handleMenuClick = (event: React.MouseEvent) => {
-    event.stopPropagation();
+  // ─── Delete current slide ────────────────────────────────
+  const handleDeleteClick = (index?: number) => {
     if (menuRef.current) {
-      const menu = menuRef.current as unknown as MenuElement;
-      menu.open = !menu.open;
+      (menuRef.current as unknown as MenuElement).open = false;
     }
+
+    const targetIndex = index ?? activeSlide;
+    const url = images[targetIndex];
+
+    // Imagen local (blob, aún no subida) → solo del estado
+    if (url.startsWith('blob:')) {
+      URL.revokeObjectURL(url);
+      setImages((prev) => prev.filter((_, i) => i !== targetIndex));
+      if (targetIndex <= activeSlide && activeSlide > 0) {
+        setActiveSlide((prev) => prev - 1);
+      }
+      return;
+    }
+
+    // Imagen ya persistida → server action
+    if (!business) return;
+    isManuallyUpdating.current = true;
+
+    deleteHeroImage(business.id, business.slug, targetIndex)
+      .then((result) => {
+        if (result.success) {
+          setImages((prev) => prev.filter((_, i) => i !== targetIndex));
+          if (targetIndex <= activeSlide && activeSlide > 0) {
+            setActiveSlide((prev) => prev - 1);
+          }
+          setSnackbar({
+            open: true,
+            description: 'Imagen eliminada',
+            color: 'success',
+            icon: 'delete',
+          });
+          window.dispatchEvent(new CustomEvent('business-data-updated'));
+        } else {
+          setSnackbar({
+            open: true,
+            description: result.error || 'Error al eliminar',
+            color: 'error',
+            icon: 'error',
+          });
+        }
+      })
+      .catch(() => {
+        setSnackbar({
+          open: true,
+          description: 'Error al eliminar',
+          color: 'error',
+          icon: 'error',
+        });
+      })
+      .finally(() => {
+        setTimeout(() => {
+          isManuallyUpdating.current = false;
+        }, 2000);
+      });
   };
 
-  const handleDeleteClick = () => {
+  // ─── Delete all ──────────────────────────────────────────
+  const handleDeleteAllClick = () => {
     if (menuRef.current) {
       (menuRef.current as unknown as MenuElement).open = false;
     }
@@ -176,14 +308,14 @@ export function useHeroController({ business }: HeroControllerParams) {
 
   const confirmDeleteBackground = async () => {
     if (!business) return;
-
     setShowDeleteDialog(false);
     isManuallyUpdating.current = true;
 
     try {
       const result = await removeBusinessCover(business.id, business.slug);
       if (result.success) {
-        setBackgroundImage(null);
+        setImages([]);
+        setActiveSlide(0);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
@@ -193,94 +325,89 @@ export function useHeroController({ business }: HeroControllerParams) {
           color: 'success',
           icon: 'delete',
         });
-
         window.dispatchEvent(new CustomEvent('business-data-updated'));
-
-        setTimeout(() => {
-          isManuallyUpdating.current = false;
-        }, 1000);
-      } else {
-        isManuallyUpdating.current = false;
       }
-    } catch (error: unknown) {
-      console.error(error);
-      isManuallyUpdating.current = false;
+    } catch {
       setSnackbar({
         open: true,
         description: 'Error al eliminar',
         color: 'error',
         icon: 'error',
       });
+    } finally {
+      setTimeout(() => {
+        isManuallyUpdating.current = false;
+      }, 2000);
     }
   };
 
-  const uploadCover = async (blob: Blob, localUrl: string, originalImage: string | null) => {
+  // ─── Cancel editing ──────────────────────────────────────
+  const handleCancel = () => {
+    setIsEditing(false);
+    const synced = (business?.heroImages || []).filter(Boolean);
+    setImages(synced);
+    setPosition({ x: 0, y: 0 });
+    if (activeSlide >= synced.length) {
+      setActiveSlide(Math.max(0, synced.length - 1));
+    }
+  };
+
+  // ─── Save (process + upload) ─────────────────────────────
+  const uploadCover = async (blob: Blob, localUrl: string) => {
     if (!business) return;
 
     try {
-      console.warn('[Hero] Uploading Blob:', {
-        size: blob.size,
-        type: blob.type,
-        businessId: business.id,
-        slug: business.slug,
-      });
       const formData = new FormData();
       formData.append('file', blob, 'hero.jpg');
-      const result = await updateBusinessCover(business.id, business.slug, formData);
-      console.warn('[Hero] Upload result:', result);
+      const result = await addHeroImage(business.id, business.slug, formData);
 
       if (result.success && result.url) {
         const uploadedUrl = result.url;
-        const img = new Image();
-        img.src = uploadedUrl;
-        img.onload = () => {
-          console.warn('[Hero] New background image loaded successfully:', uploadedUrl);
-          setBackgroundImage(uploadedUrl);
-          window.dispatchEvent(new CustomEvent('business-data-updated'));
-          URL.revokeObjectURL(localUrl);
-          // Wait a bit longer to ensure Next.js revalidation completes before releasing the lock
-          setTimeout(() => {
-            isManuallyUpdating.current = false;
-            console.warn('[Hero] Manual update lock released');
-          }, 3000);
-        };
-        img.onerror = () => {
-          console.error('[Hero] Failed to load the uploaded image URL:', uploadedUrl);
-          img.onload?.(new Event('error'));
-        };
+        // Reemplazar la URL local (blob) por la real
+        setImages((prev) => prev.map((u) => (u === localUrl ? uploadedUrl : u)));
+        window.dispatchEvent(new CustomEvent('business-data-updated'));
       } else {
         throw new Error(result.error || 'Error al subir');
       }
     } catch (error: unknown) {
-      console.error('[Hero] Error:', error);
-      setBackgroundImage(originalImage);
-      setIsEditing(true);
+      // Revertir: sacar la imagen local del array
+      setImages((prev) => prev.filter((u) => u !== localUrl));
       setSnackbar({
         open: true,
         description: error instanceof Error ? error.message : 'Error al guardar.',
         color: 'error',
         icon: 'error',
       });
-      isManuallyUpdating.current = false;
+    } finally {
       URL.revokeObjectURL(localUrl);
+      setTimeout(() => {
+        isManuallyUpdating.current = false;
+      }, 3000);
     }
   };
 
   const handleSave = async () => {
-    if (!business || !backgroundImage || !heroRef.current) return;
+    if (!business || !heroRef.current) return;
+
+    // Buscar la imagen local (blob) activa para procesar
+    const editingImage = images[activeSlide];
+    if (!editingImage || !editingImage.startsWith('blob:')) return;
 
     setIsSaving(true);
     try {
-      const blob = await processHeroImage(backgroundImage, heroRef.current, position);
+      const blob = await processHeroImage(editingImage, heroRef.current, position);
       if (!blob) {
         setIsSaving(false);
         return;
       }
 
       const localUrl = URL.createObjectURL(blob);
-      const originalImage = backgroundImage;
-      setBackgroundImage(localUrl);
       setIsEditing(false);
+      isManuallyUpdating.current = true;
+
+      // Reemplazar blob original por el procesado
+      setImages((prev) => prev.map((u) => (u === editingImage ? localUrl : u)));
+
       setSnackbar({
         open: true,
         description: 'Publicidad guardada exitosamente.',
@@ -288,40 +415,66 @@ export function useHeroController({ business }: HeroControllerParams) {
         icon: 'check_circle',
       });
       setIsSaving(false);
-      isManuallyUpdating.current = true;
 
-      uploadCover(blob, localUrl, originalImage);
-    } catch (error: unknown) {
-      console.error(error);
+      uploadCover(blob, localUrl);
+    } catch {
       setIsSaving(false);
     }
   };
 
+  // ─── Menu ────────────────────────────────────────────────
+  const handleMenuClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (menuRef.current) {
+      const menu = menuRef.current as unknown as MenuElement;
+      menu.open = !menu.open;
+    }
+  };
+
   return {
+    // State
+    images,
+    activeSlide,
     backgroundImage,
     backgroundPositionStyle: isEditing
       ? `calc(50% + ${position.x}px) calc(50% + ${position.y}px)`
       : 'center',
-    confirmDeleteBackground,
     cursorStyle: getCursorStyle(isEditing, isDragging),
+    isEditing,
+    isSaving,
+    isPaused,
+    isDragging,
+    showDeleteDialog,
+    snackbar,
+    imagesCount,
+    maxImagesReached,
+    hasMultipleImages,
+
+    // Refs
+    heroRef,
     fileInputRef,
+    menuRef,
+
+    // Actions
+    confirmDeleteBackground,
+    goNext,
+    goPrev,
+    goToSlide,
+    handleTouchStart,
+    handleTouchEnd,
     handleCancel,
+    handleDeleteAllClick,
     handleDeleteClick,
     handleFileChange,
     handleMenuClick,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
+    handleMouseEnter,
+    handleMouseLeave,
     handleSave,
     handleUploadClick,
-    heroRef,
-    isDragging,
-    isEditing,
-    isSaving,
-    menuRef,
     setShowDeleteDialog,
     setSnackbar,
-    showDeleteDialog,
-    snackbar,
   };
 }

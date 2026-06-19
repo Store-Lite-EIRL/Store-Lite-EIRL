@@ -12,7 +12,6 @@
   margin-bottom: 2rem;
   position: relative;
   user-select: none;
-  transition: background-position 0.1s ease-out; /* Smooth drag */
   overflow: hidden; /* Ensure gradient doesn't overflow */
 }
 
@@ -32,6 +31,149 @@
   );
   pointer-events: none;
   z-index: 1;
+}
+
+/* ── Slide layers for fade transition ───────────────── */
+.slidesLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity 0.4s ease;
+}
+
+/* ── Carrusel: Flechas ──────────────────────────────── */
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.2s,
+    opacity 0.2s;
+  opacity: 0;
+  font-family: inherit;
+}
+
+.heroContainer:hover .arrow {
+  opacity: 1;
+}
+
+.arrow:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.arrowLeft {
+  left: 16px;
+}
+
+.arrowRight {
+  right: 16px;
+}
+
+/* ── Dots ────────────────────────────────────────────── */
+.dotsContainer {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition:
+    background 0.25s,
+    border-color 0.25s,
+    transform 0.2s;
+  font-family: inherit;
+}
+
+.dot:hover {
+  border-color: #ffffff;
+  transform: scale(1.25);
+}
+
+.dotActive {
+  background: #ffffff;
+  border-color: #ffffff;
+}
+
+/* ── Slide indicator (1/3) ──────────────────────────── */
+.slideIndicator {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.8rem;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Slide indicator: estado pausado ─────────────────── */
+.slidePaused {
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.slidePaused :global(md-icon) {
+  font-size: 14px;
+}
+
+@media (max-width: 600px) {
+  .arrow {
+    width: 36px;
+    height: 36px;
+  }
+
+  .arrowLeft {
+    left: 8px;
+  }
+
+  .arrowRight {
+    right: 8px;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+  }
 }
 
 /* ── Public light/dark toggle (top-left over Hero) ── */
