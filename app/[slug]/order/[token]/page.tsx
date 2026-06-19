@@ -696,7 +696,7 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                 )}
 
               {/* COMPLETED: Order dates receipt */}
-              {order.status === 'completed' && (
+              {['completed', 'COMPLETED'].includes(order.status) && (
                 <div
                   style={{
                     width: '100%',
@@ -813,79 +813,80 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                 </div>
               )}
 
-              {/* ACTION: Ticket Verification (when seller uploads, status = 'validando') */}
-              {order.status === 'validando' && order.ticketImageUrl && (
-                <div className="despacho-card pulse-active">
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      textAlign: 'left',
-                    }}
-                  >
+              {/* ACTION: Ticket Verification (when seller uploads, status = 'validando' or V2 WAITING_CUSTOMER_CONFIRMATION) */}
+              {['validando', 'WAITING_CUSTOMER_CONFIRMATION'].includes(order.status) &&
+                order.ticketImageUrl && (
+                  <div className="despacho-card pulse-active">
                     <div
                       style={{
-                        background: 'var(--md-sys-color-primary-container)',
-                        color: 'var(--md-sys-color-on-primary-container)',
-                        width: 44,
-                        height: 44,
-                        borderRadius: '12px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
+                        gap: '12px',
+                        textAlign: 'left',
                       }}
                     >
-                      <Icon>description</Icon>
-                    </div>
-                    <div>
-                      <p style={{ margin: 0, fontWeight: 950, fontSize: '0.9rem' }}>
-                        Comprobante de Envío
-                      </p>
-                      <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.6 }}>
-                        Subido por el vendedor — revisá y confirmá
-                      </p>
-                    </div>
-                  </div>
-                  <a href="#ticket-view" className="ticket-preview">
-                    <img src={order.ticketImageUrl} alt="Ticket" />
-                    <div className="ticket-overlay">
-                      <div style={{ textAlign: 'center' }}>
-                        <Icon size={32}>zoom_in</Icon>
-                        <p style={{ fontWeight: 900, fontSize: '0.8rem', marginTop: '4px' }}>
-                          AMPLIAR TICKET
+                      <div
+                        style={{
+                          background: 'var(--md-sys-color-primary-container)',
+                          color: 'var(--md-sys-color-on-primary-container)',
+                          width: 44,
+                          height: 44,
+                          borderRadius: '12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Icon>description</Icon>
+                      </div>
+                      <div>
+                        <p style={{ margin: 0, fontWeight: 950, fontSize: '0.9rem' }}>
+                          Comprobante de Envío
+                        </p>
+                        <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.6 }}>
+                          Subido por el vendedor — revisá y confirmá
                         </p>
                       </div>
                     </div>
-                  </a>
-                  <div style={{ display: 'flex', gap: '1rem' }}>
-                    <a
-                      href="#accept-confirm"
-                      className="btn-hub btn-hub-p"
-                      style={{ flex: 1, justifyContent: 'center' }}
-                    >
-                      <Icon>check_circle</Icon>
-                      CONFIRMAR ENVÍO
+                    <a href="#ticket-view" className="ticket-preview">
+                      <img src={order.ticketImageUrl} alt="Ticket" />
+                      <div className="ticket-overlay">
+                        <div style={{ textAlign: 'center' }}>
+                          <Icon size={32}>zoom_in</Icon>
+                          <p style={{ fontWeight: 900, fontSize: '0.8rem', marginTop: '4px' }}>
+                            AMPLIAR TICKET
+                          </p>
+                        </div>
+                      </div>
                     </a>
-                    <a
-                      href="#report-form"
-                      className="btn-hub btn-hub-s"
-                      style={{
-                        width: '60px',
-                        padding: '0',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Icon>flag</Icon>
-                    </a>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                      <a
+                        href="#accept-confirm"
+                        className="btn-hub btn-hub-p"
+                        style={{ flex: 1, justifyContent: 'center' }}
+                      >
+                        <Icon>check_circle</Icon>
+                        CONFIRMAR ENVÍO
+                      </a>
+                      <a
+                        href="#report-form"
+                        className="btn-hub btn-hub-s"
+                        style={{
+                          width: '60px',
+                          padding: '0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Icon>flag</Icon>
+                      </a>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* ACTION: Disputed - Ticket was rejected, waiting for seller to re-upload */}
-              {order.status === 'disputed' && (
+              {['disputed', 'DISPUTE'].includes(order.status) && (
                 <div
                   className="despacho-card"
                   style={{

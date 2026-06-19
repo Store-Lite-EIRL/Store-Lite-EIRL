@@ -76,24 +76,26 @@ export async function transition(
       };
     }
 
-    // 3. Validate transition via state machine
-    const validation = validateTransitionFull(fromStatus, input.toStatus, {
-      actor: input.actor,
-      preconditions: input.preconditions,
-    });
+    // 3. Validate transition via state machine (skip if same-status, e.g. re-uploading ticket)
+    if (fromStatus !== input.toStatus) {
+      const validation = validateTransitionFull(fromStatus, input.toStatus, {
+        actor: input.actor,
+        preconditions: input.preconditions,
+      });
 
-    if (!validation.valid) {
-      if (
-        validation.error?.includes('not permitted') ||
-        validation.error?.includes('not allowed')
-      ) {
-        throw new ForbiddenActorError(fromStatus, input.toStatus, input.actor.type);
+      if (!validation.valid) {
+        if (
+          validation.error?.includes('not permitted') ||
+          validation.error?.includes('not allowed')
+        ) {
+          throw new ForbiddenActorError(fromStatus, input.toStatus, input.actor.type);
+        }
+        throw new InvalidTransitionError(
+          fromStatus,
+          input.toStatus,
+          validation.error ?? 'Error de validación',
+        );
       }
-      throw new InvalidTransitionError(
-        fromStatus,
-        input.toStatus,
-        validation.error ?? 'Error de validación',
-      );
     }
 
     // 4. Pre-hooks

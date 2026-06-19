@@ -115,7 +115,9 @@ export async function uploadTicketAndUpdatePayment(
 
       if (!result.success) {
         console.error('[uploadTicket] OrderService error:', result.error);
-        return { success: false, error: result.error };
+        // Mapear errores técnicos a mensajes amigables para el usuario
+        const friendlyError = mapTransitionError(result.error);
+        return { success: false, error: friendlyError };
       }
     } else {
       const [updated] = await db
@@ -228,4 +230,28 @@ export async function notifyDelivery(
     );
     return { success: false, error: 'Error al notificar la entrega' };
   }
+}
+
+/**
+ * Mapea errores técnicos de la máquina de estados a mensajes amigables para el usuario.
+ */
+function mapTransitionError(error: string): string {
+  if (error.includes('Version conflict')) {
+    return 'El pedido fue modificado por otra operación. Recargá la página e intentá de nuevo.';
+  }
+  if (
+    error.includes('Invalid transition') ||
+    error.includes('not allowed') ||
+    error.includes('not permitted')
+  ) {
+    return 'No se puede cambiar el estado del pedido en este momento. Recargá la página e intentá de nuevo.';
+  }
+  if (error.includes('Seller must provide')) {
+    return 'Faltan datos del courier. Completá los campos de transporte y volvé a intentar.';
+  }
+  if (error.includes('Estado actual desconocido')) {
+    return 'El pedido tiene un estado desconocido. Contactá a soporte.';
+  }
+  // Si no hay un mapeo conocido, devolver el error original
+  return error;
 }
