@@ -1,5 +1,5 @@
+import { generatePickupCode } from '@/core/orders/orderPickup';
 import { describe, expect, test } from 'vitest';
-import { generatePickupCode } from '@/core/orders/order-pickup';
 
 // =====================================================
 // ORDER PICKUP CODE — Unit tests

@@ -155,7 +155,7 @@ export const ImportPreviewDialog = ({
       cancelled = true;
       window.cancelAnimationFrame(frameId);
     };
-  }, [open, file, slug]);
+  }, [open, file, slug, availableSlots]);
 
   /* ─── Reset on close ─── */
   useEffect(() => {

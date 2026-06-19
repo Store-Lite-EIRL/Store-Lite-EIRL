@@ -16,12 +16,12 @@ vi.mock('@/core/database/client', () => ({
 }));
 
 // transition mock — vi.fn() factory avoids TDZ, import gives us the mock handle
-vi.mock('@/core/orders/order-service', () => ({
+vi.mock('@/core/orders/orderService', () => ({
   transition: vi.fn(),
 }));
 
-import { processTimeouts } from '@/core/orders/order-timeouts';
-import { transition } from '@/core/orders/order-service';
+import { transition } from '@/core/orders/orderService';
+import { processTimeouts } from '@/core/orders/orderTimeouts';
 
 // ── Suite ──────────────────────────────────────────
 
@@ -45,7 +45,7 @@ describe('processTimeouts', () => {
   test('processes a seller-inactivity timeout (delivered → SELLER_TIMEOUT)', async () => {
     mockDb.selectWhere
       .mockResolvedValueOnce([{ id: 'pay_seller', version: 2 }]) // seller-inactivity rule
-      .mockResolvedValueOnce([])  // customer-auto-approve
+      .mockResolvedValueOnce([]) // customer-auto-approve
       .mockResolvedValueOnce([]); // auto-complete
 
     vi.mocked(transition).mockResolvedValue({
@@ -69,7 +69,7 @@ describe('processTimeouts', () => {
 
   test('processes customer-auto-approve timeout (validando → READY_TO_SHIP)', async () => {
     mockDb.selectWhere
-      .mockResolvedValueOnce([])  // seller-inactivity
+      .mockResolvedValueOnce([]) // seller-inactivity
       .mockResolvedValueOnce([{ id: 'pay_approve', version: 1 }]) // customer-auto-approve
       .mockResolvedValueOnce([]); // auto-complete
 
@@ -93,8 +93,8 @@ describe('processTimeouts', () => {
 
   test('processes auto-complete timeout (not_delivered → COMPLETED)', async () => {
     mockDb.selectWhere
-      .mockResolvedValueOnce([])  // seller-inactivity
-      .mockResolvedValueOnce([])  // customer-auto-approve
+      .mockResolvedValueOnce([]) // seller-inactivity
+      .mockResolvedValueOnce([]) // customer-auto-approve
       .mockResolvedValueOnce([{ id: 'pay_complete', version: 3 }]); // auto-complete
 
     vi.mocked(transition).mockResolvedValue({
@@ -121,7 +121,7 @@ describe('processTimeouts', () => {
         { id: 'pay_001', version: 1 },
         { id: 'pay_002', version: 1 },
       ]) // seller-inactivity: 2 orders
-      .mockResolvedValueOnce([])  // customer-auto-approve
+      .mockResolvedValueOnce([]) // customer-auto-approve
       .mockResolvedValueOnce([]); // auto-complete
 
     vi.mocked(transition).mockResolvedValue({

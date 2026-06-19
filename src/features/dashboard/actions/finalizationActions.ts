@@ -3,13 +3,13 @@
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { chatSessions, messages, payments } from '@/core/database/schema';
+import { transition } from '@/core/orders/orderService';
 import {
   CONFIRMABLE_STATUSES,
   ORDER_STATUS,
   ORDER_STATUS_LABELS,
   ORDER_STATUS_V2,
-} from '@/core/orders/order-status';
-import { transition } from '@/core/orders/order-service';
+} from '@/core/orders/orderStatus';
 import { createBusinessNotification } from '@/lib/notifications';
 import { and, desc, eq, lt } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';

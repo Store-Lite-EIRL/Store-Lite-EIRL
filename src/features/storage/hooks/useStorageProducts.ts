@@ -170,6 +170,7 @@ export const useStorageProducts = ({
       }
       fetchInitialData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [businessSlug, isOwner]);
 
   const statuses = useMemo(

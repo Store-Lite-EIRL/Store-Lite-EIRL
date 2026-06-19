@@ -3,7 +3,10 @@
 // Maps DB enum types to clean domain types
 // ──────────────────────────────────────────
 
-import type { orderAttachmentTypeEnum, orderTimelineEventTypeEnum } from '@/core/database/schema/enums';
+import type {
+  orderAttachmentTypeEnum,
+  orderTimelineEventTypeEnum,
+} from '@/core/database/schema/enums';
 
 /** Typed attachment type values */
 export type OrderAttachmentType = (typeof orderAttachmentTypeEnum.enumValues)[number];

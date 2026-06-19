@@ -8,17 +8,17 @@ import { db } from '@/core/database/client';
 import { payments } from '@/core/database/schema';
 import { and, eq } from 'drizzle-orm';
 
-import type { OrderStatusV2, TransitionInput } from './order-status';
-import { ORDER_STATUS_V2 } from './order-status';
+import { generatePickupCode } from './orderPickup';
 import {
-  InvalidTransitionError,
   ForbiddenActorError,
+  InvalidTransitionError,
   validateTransitionFull,
-} from './order-state-machine';
-import { recordEvent } from './order-timeline';
-import { generatePickupCode } from './order-pickup';
-import { mapToNewStatus } from './order-status-mapping';
-import type { OrderTimelineEventType } from './order-types';
+} from './orderStateMachine';
+import type { OrderStatusV2, TransitionInput } from './orderStatus';
+import { ORDER_STATUS_V2 } from './orderStatus';
+import { mapToNewStatus } from './orderStatusMapping';
+import { recordEvent } from './orderTimeline';
+import type { OrderTimelineEventType } from './orderTypes';
 
 // ─── Error types ───
 export class VersionConflictError extends Error {
@@ -77,17 +77,23 @@ export async function transition(
     }
 
     // 3. Validate transition via state machine
-    const validation = validateTransitionFull(
-      fromStatus,
-      input.toStatus,
-      { actor: input.actor, preconditions: input.preconditions },
-    );
+    const validation = validateTransitionFull(fromStatus, input.toStatus, {
+      actor: input.actor,
+      preconditions: input.preconditions,
+    });
 
     if (!validation.valid) {
-      if (validation.error?.includes('not permitted') || validation.error?.includes('not allowed')) {
+      if (
+        validation.error?.includes('not permitted') ||
+        validation.error?.includes('not allowed')
+      ) {
         throw new ForbiddenActorError(fromStatus, input.toStatus, input.actor.type);
       }
-      throw new InvalidTransitionError(fromStatus, input.toStatus, validation.error ?? 'Error de validación');
+      throw new InvalidTransitionError(
+        fromStatus,
+        input.toStatus,
+        validation.error ?? 'Error de validación',
+      );
     }
 
     // 4. Pre-hooks
@@ -119,9 +125,7 @@ export async function transition(
     const [updated] = await db
       .update(payments)
       .set(updateData)
-      .where(
-        and(eq(payments.id, input.paymentId), eq(payments.version, payment.version ?? 0)),
-      )
+      .where(and(eq(payments.id, input.paymentId), eq(payments.version, payment.version ?? 0)))
       .returning();
 
     if (!updated) {
@@ -139,7 +143,11 @@ export async function transition(
 
     return { success: true, payment: updated, eventId: event.id };
   } catch (error) {
-    if (error instanceof VersionConflictError || error instanceof InvalidTransitionError || error instanceof ForbiddenActorError) {
+    if (
+      error instanceof VersionConflictError ||
+      error instanceof InvalidTransitionError ||
+      error instanceof ForbiddenActorError
+    ) {
       return { success: false, error: error.message };
     }
     console.error('[OrderService.transition] Error:', error);

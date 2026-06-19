@@ -20,7 +20,7 @@ vi.mock('@/core/database/client', () => ({
   },
 }));
 
-import { getTimeline, recordEvent } from '@/core/orders/order-timeline';
+import { getTimeline, recordEvent } from '@/core/orders/orderTimeline';
 
 // ── Helpers ────────────────────────────────────────
 
@@ -86,9 +86,7 @@ describe('recordEvent', () => {
       actorType: 'system',
     });
 
-    expect(mockDb.insertValues).toHaveBeenCalledWith(
-      expect.objectContaining({ actorId: null }),
-    );
+    expect(mockDb.insertValues).toHaveBeenCalledWith(expect.objectContaining({ actorId: null }));
   });
 
   test('stores metadata as passed', async () => {
@@ -102,9 +100,7 @@ describe('recordEvent', () => {
       metadata: meta,
     });
 
-    expect(mockDb.insertValues).toHaveBeenCalledWith(
-      expect.objectContaining({ metadata: meta }),
-    );
+    expect(mockDb.insertValues).toHaveBeenCalledWith(expect.objectContaining({ metadata: meta }));
   });
 });
 

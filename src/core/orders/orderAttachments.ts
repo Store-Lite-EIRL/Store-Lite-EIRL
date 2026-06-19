@@ -6,7 +6,7 @@
 import { db } from '@/core/database/client';
 import { orderAttachments } from '@/core/database/schema/orders';
 import { and, count, eq } from 'drizzle-orm';
-import type { OrderAttachmentType } from './order-types';
+import type { OrderAttachmentType } from './orderTypes';
 
 export const MAX_ATTACHMENTS = 3;
 
@@ -81,9 +81,7 @@ export async function deleteAttachment(
 ): Promise<{ success: boolean }> {
   const [deleted] = await db
     .delete(orderAttachments)
-    .where(
-      and(eq(orderAttachments.id, attachmentId), eq(orderAttachments.orderId, orderId)),
-    )
+    .where(and(eq(orderAttachments.id, attachmentId), eq(orderAttachments.orderId, orderId)))
     .returning({ id: orderAttachments.id });
 
   return { success: !!deleted };

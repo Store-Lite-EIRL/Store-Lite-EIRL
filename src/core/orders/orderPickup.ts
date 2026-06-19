@@ -3,7 +3,7 @@
 // Generates codes in format SL-XXXX-XXXX
 // ──────────────────────────────────────────
 
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 
 const SEGMENT_LENGTH = 4;
 const PREFIX = 'SL';

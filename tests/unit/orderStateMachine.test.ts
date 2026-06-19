@@ -1,11 +1,11 @@
-import { describe, expect, test } from 'vitest';
-import { ORDER_STATUS_V2 } from '@/core/orders/order-status';
 import {
+  getAllowedTransitions,
   isValidTransition,
   validateTransition,
   validateTransitionFull,
-  getAllowedTransitions,
-} from '@/core/orders/order-state-machine';
+} from '@/core/orders/orderStateMachine';
+import { ORDER_STATUS_V2 } from '@/core/orders/orderStatus';
+import { describe, expect, test } from 'vitest';
 
 // =====================================================
 // ORDER STATE MACHINE — Unit tests
@@ -117,13 +117,14 @@ describe('isValidTransition', () => {
   });
 
   // ── Terminal states ──
-  test.each([
-    COMPLETED, DISPUTE, TIMEOUT, CANCELLED,
-  ])('%s has no outgoing transitions', (terminal) => {
-    for (const target of ALL_STATUSES) {
-      expect(isValidTransition(terminal as any, target as any)).toBe(false);
-    }
-  });
+  test.each([COMPLETED, DISPUTE, TIMEOUT, CANCELLED])(
+    '%s has no outgoing transitions',
+    (terminal) => {
+      for (const target of ALL_STATUSES) {
+        expect(isValidTransition(terminal as any, target as any)).toBe(false);
+      }
+    },
+  );
 
   // ── Invalid transitions ──
   test.each([
@@ -268,12 +269,12 @@ describe('validateTransitionFull (with preconditions)', () => {
 describe('getAllowedTransitions', () => {
   test('CREATED returns PAID and CANCELLED', () => {
     const result = getAllowedTransitions(CREATED);
-    expect(result.map(r => r.to)).toEqual([PAID, CANCELLED]);
+    expect(result.map((r) => r.to)).toEqual([PAID, CANCELLED]);
   });
 
   test('filter by actor: customer can only do CREATED transitions', () => {
     const result = getAllowedTransitions(CREATED, 'customer');
-    expect(result.map(r => r.to)).toEqual([PAID, CANCELLED]);
+    expect(result.map((r) => r.to)).toEqual([PAID, CANCELLED]);
   });
 
   test('filter by actor: seller not allowed for CREATED', () => {
@@ -283,22 +284,22 @@ describe('getAllowedTransitions', () => {
 
   test('PAID returns PREPARING_ORDER, WAITING_CUSTOMER_CONFIRMATION, CANCELLED', () => {
     const result = getAllowedTransitions(PAID);
-    expect(result.map(r => r.to)).toEqual([PREPARING, WAITING, CANCELLED]);
+    expect(result.map((r) => r.to)).toEqual([PREPARING, WAITING, CANCELLED]);
   });
 
   test('filter by actor: seller allowed for PAID (uploadTicket V2 path)', () => {
     const result = getAllowedTransitions(PAID, 'seller');
-    expect(result.map(r => r.to)).toEqual([PREPARING, WAITING, CANCELLED]);
+    expect(result.map((r) => r.to)).toEqual([PREPARING, WAITING, CANCELLED]);
   });
 
   test('PREPARING_ORDER returns WAITING, DELIVERED, SELLER_TIMEOUT, CANCELLED', () => {
     const result = getAllowedTransitions(PREPARING);
-    expect(result.map(r => r.to)).toEqual([WAITING, DELIVERED, TIMEOUT, CANCELLED]);
+    expect(result.map((r) => r.to)).toEqual([WAITING, DELIVERED, TIMEOUT, CANCELLED]);
   });
 
   test('READY_TO_SHIP returns IN_TRANSIT and ISSUE_REPORTED', () => {
     const result = getAllowedTransitions(READY);
-    expect(result.map(r => r.to)).toEqual([TRANSIT, ISSUE]);
+    expect(result.map((r) => r.to)).toEqual([TRANSIT, ISSUE]);
   });
 
   test('terminal states return empty', () => {

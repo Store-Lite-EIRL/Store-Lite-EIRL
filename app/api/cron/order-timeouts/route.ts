@@ -4,7 +4,7 @@
 // Processes expired orders (seller inactivity, customer auto-approve, auto-complete)
 // ──────────────────────────────────────────
 
-import { processTimeouts } from '@/core/orders/order-timeouts';
+import { processTimeouts } from '@/core/orders/orderTimeouts';
 import { NextResponse } from 'next/server';
 
 // Vercel Cron: */15 * * * *
@@ -20,9 +20,6 @@ export async function GET() {
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
     console.error('[Cron] order-timeouts: error —', error);
-    return NextResponse.json(
-      { success: false, error: String(error) },
-      { status: 500 },
-    );
+    return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }

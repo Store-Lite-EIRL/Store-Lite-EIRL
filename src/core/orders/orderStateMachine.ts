@@ -4,8 +4,8 @@
 // Validates: from → to, actor permissions, preconditions
 // ──────────────────────────────────────────
 
-import type { ActorType, OrderStatusV2, TransitionInput } from './order-status';
-import { ORDER_STATUS_V2 } from './order-status';
+import type { ActorType, OrderStatusV2, TransitionInput } from './orderStatus';
+import { ORDER_STATUS_V2 } from './orderStatus';
 
 // ─── Error types ───
 export class InvalidTransitionError extends Error {
@@ -55,18 +55,14 @@ const TRANSITION_MATRIX: Record<OrderStatusV2, TransitionConfig> = {
   [ORDER_STATUS_V2.PREPARING_ORDER]: {
     to: [
       ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION,
-      ORDER_STATUS_V2.DELIVERED,          // migration path: legacy 'aceptado' → finalization
+      ORDER_STATUS_V2.DELIVERED, // migration path: legacy 'aceptado' → finalization
       ORDER_STATUS_V2.SELLER_TIMEOUT,
       ORDER_STATUS_V2.CANCELLED,
     ],
     allowedActors: ['seller', 'system'],
   },
   [ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION]: {
-    to: [
-      ORDER_STATUS_V2.READY_TO_SHIP,
-      ORDER_STATUS_V2.ISSUE_REPORTED,
-      ORDER_STATUS_V2.CANCELLED,
-    ],
+    to: [ORDER_STATUS_V2.READY_TO_SHIP, ORDER_STATUS_V2.ISSUE_REPORTED, ORDER_STATUS_V2.CANCELLED],
     // READY_TO_SHIP can be customer (confirm) or system (auto-approve timeout)
     // ISSUE_REPORTED can be customer
     allowedActors: ['customer', 'system'],

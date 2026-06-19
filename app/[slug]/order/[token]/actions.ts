@@ -2,8 +2,8 @@
 
 import { db } from '@/core/database/client';
 import { businesses, chatSessions, messages, payments } from '@/core/database/schema';
-import { ORDER_STATUS_INTERNAL, ORDER_STATUS_V2 } from '@/core/orders/order-status';
-import { transition } from '@/core/orders/order-service';
+import { transition } from '@/core/orders/orderService';
+import { ORDER_STATUS_INTERNAL, ORDER_STATUS_V2 } from '@/core/orders/orderStatus';
 import { and, desc, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
@@ -89,7 +89,13 @@ export async function updateOrderStatus(
     const [updated] = await db
       .update(payments)
       .set(updatePayload)
-      .where(and(eq(payments.id, paymentId), eq(payments.trackingToken, trackingToken), eq(payments.version, expectedVersion)))
+      .where(
+        and(
+          eq(payments.id, paymentId),
+          eq(payments.trackingToken, trackingToken),
+          eq(payments.version, expectedVersion),
+        ),
+      )
       .returning({ id: payments.id });
 
     if (!updated) {
@@ -341,9 +347,7 @@ export async function reportIssueV2(
     const [payment] = await db
       .select({ version: payments.version })
       .from(payments)
-      .where(
-        and(eq(payments.id, paymentId), eq(payments.trackingToken, trackingToken)),
-      )
+      .where(and(eq(payments.id, paymentId), eq(payments.trackingToken, trackingToken)))
       .limit(1);
 
     if (!payment) {

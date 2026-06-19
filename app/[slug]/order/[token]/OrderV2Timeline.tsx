@@ -155,7 +155,10 @@ export default async function OrderV2Timeline({ orderId }: Props) {
                   margin: 0,
                   fontSize: '0.85rem',
                   fontWeight: 700,
-                  color: i === 0 ? 'var(--md-sys-color-on-surface)' : 'var(--md-sys-color-on-surface-variant)',
+                  color:
+                    i === 0
+                      ? 'var(--md-sys-color-on-surface)'
+                      : 'var(--md-sys-color-on-surface-variant)',
                 }}
               >
                 {eventLabel(ev.eventType)}

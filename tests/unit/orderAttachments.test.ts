@@ -28,13 +28,19 @@ import {
   deleteAttachment,
   listAttachments,
   uploadAttachment,
-} from '@/core/orders/order-attachments';
-import type { OrderAttachmentType } from '@/core/orders/order-types';
+} from '@/core/orders/orderAttachments';
+import type { OrderAttachmentType } from '@/core/orders/orderTypes';
 
 // ── Helpers ────────────────────────────────────────
 
 const VALID_TYPES: OrderAttachmentType[] = [
-  'tracking', 'cip', 'invoice', 'photo', 'video', 'document', 'other',
+  'tracking',
+  'cip',
+  'invoice',
+  'photo',
+  'video',
+  'document',
+  'other',
 ];
 
 function makeAttachment(overrides: Record<string, unknown> = {}) {

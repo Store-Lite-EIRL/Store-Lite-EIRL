@@ -8,9 +8,9 @@ import { db } from '@/core/database/client';
 import { payments } from '@/core/database/schema';
 import { and, lt, or, sql } from 'drizzle-orm';
 
-import type { OrderStatusV2 } from './order-status';
-import { ORDER_STATUS, ORDER_STATUS_V2 } from './order-status';
-import { transition } from './order-service';
+import { transition } from './orderService';
+import type { OrderStatusV2 } from './orderStatus';
+import { ORDER_STATUS, ORDER_STATUS_V2 } from './orderStatus';
 
 // ─── Timeout config ───
 
@@ -98,14 +98,10 @@ export async function processTimeouts(): Promise<{
 
           if (result.success) {
             processed++;
-            console.log(
-              `[Timeouts] ${rule.label}: ${order.id} → ${rule.toStatus}`,
-            );
+            console.log(`[Timeouts] ${rule.label}: ${order.id} → ${rule.toStatus}`);
           } else {
             errors++;
-            console.error(
-              `[Timeouts] ${rule.label}: ${order.id} failed — ${result.error}`,
-            );
+            console.error(`[Timeouts] ${rule.label}: ${order.id} failed — ${result.error}`);
           }
         } catch (err) {
           errors++;

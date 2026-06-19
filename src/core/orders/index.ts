@@ -2,25 +2,54 @@
 // Orders — barrel re-export
 // ──────────────────────────────────────────
 
-export { ORDER_STATUS, ORDER_STATUS_V2, ORDER_STATUS_INTERNAL, ORDER_STATUS_LABELS, CONFIRMABLE_STATUSES, TICKET_UPLOADABLE_STATUSES } from './order-status';
-export type { OrderStatusValue, OrderStatusV2, ActorType, TransitionInput } from './order-status';
+export {
+  CONFIRMABLE_STATUSES,
+  ORDER_STATUS,
+  ORDER_STATUS_INTERNAL,
+  ORDER_STATUS_LABELS,
+  ORDER_STATUS_V2,
+  TICKET_UPLOADABLE_STATUSES,
+} from './orderStatus';
+export type { ActorType, OrderStatusV2, OrderStatusValue, TransitionInput } from './orderStatus';
 
-export type { OrderAttachmentType, OrderTimelineEventType } from './order-types';
+export type { OrderAttachmentType, OrderTimelineEventType } from './orderTypes';
 
-export { isValidTransition, validateTransition, validateTransitionFull, getAllowedTransitions, InvalidTransitionError, ForbiddenActorError, PreconditionError } from './order-state-machine';
-export type { ValidationResult } from './order-state-machine';
+export {
+  ForbiddenActorError,
+  InvalidTransitionError,
+  PreconditionError,
+  getAllowedTransitions,
+  isValidTransition,
+  validateTransition,
+  validateTransitionFull,
+} from './orderStateMachine';
+export type { ValidationResult } from './orderStateMachine';
 
-export { mapToNewStatus, mapToLegacyStatus, isLegacyStatus, getLegacyStatuses } from './order-status-mapping';
+export {
+  getLegacyStatuses,
+  isLegacyStatus,
+  mapToLegacyStatus,
+  mapToNewStatus,
+} from './orderStatusMapping';
 
-export { recordEvent, getTimeline } from './order-timeline';
-export type { RecordEventParams } from './order-timeline';
+export { getTimeline, recordEvent } from './orderTimeline';
+export type { RecordEventParams } from './orderTimeline';
 
-export { uploadAttachment, listAttachments, deleteAttachment, MAX_ATTACHMENTS } from './order-attachments';
-export type { UploadAttachmentParams, UploadAttachmentResult, UploadAttachmentError } from './order-attachments';
+export {
+  MAX_ATTACHMENTS,
+  deleteAttachment,
+  listAttachments,
+  uploadAttachment,
+} from './orderAttachments';
+export type {
+  UploadAttachmentError,
+  UploadAttachmentParams,
+  UploadAttachmentResult,
+} from './orderAttachments';
 
-export { generatePickupCode } from './order-pickup';
+export { generatePickupCode } from './orderPickup';
 
-export { transition, VersionConflictError } from './order-service';
-export type { TransitionResult, TransitionError } from './order-service';
+export { VersionConflictError, transition } from './orderService';
+export type { TransitionError, TransitionResult } from './orderService';
 
-export { processTimeouts } from './order-timeouts';
+export { processTimeouts } from './orderTimeouts';

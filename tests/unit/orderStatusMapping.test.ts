@@ -1,11 +1,11 @@
-import { describe, expect, test } from 'vitest';
+import { ORDER_STATUS_V2 } from '@/core/orders/orderStatus';
 import {
-  mapToNewStatus,
-  mapToLegacyStatus,
-  isLegacyStatus,
   getLegacyStatuses,
-} from '@/core/orders/order-status-mapping';
-import { ORDER_STATUS_V2 } from '@/core/orders/order-status';
+  isLegacyStatus,
+  mapToLegacyStatus,
+  mapToNewStatus,
+} from '@/core/orders/orderStatusMapping';
+import { describe, expect, test } from 'vitest';
 
 // =====================================================
 // ORDER STATUS MAPPING — Unit tests
@@ -95,11 +95,12 @@ describe('mapToNewStatus (legacy → V2)', () => {
   });
 
   // ── Known gaps (not in LEGACY_TO_NEW): return undefined ──
-  test.each([
-    'processing', 'shipped', 'analizando',
-  ])('maps %s to undefined (known gap — no mapping defined)', (status) => {
-    expect(mapToNewStatus(status)).toBeUndefined();
-  });
+  test.each(['processing', 'shipped', 'analizando'])(
+    'maps %s to undefined (known gap — no mapping defined)',
+    (status) => {
+      expect(mapToNewStatus(status)).toBeUndefined();
+    },
+  );
 
   test('returns undefined for unknown legacy status', () => {
     expect(mapToNewStatus('nonexistent')).toBeUndefined();

@@ -5,8 +5,8 @@
 
 import { db } from '@/core/database/client';
 import { orderTimelineEvents } from '@/core/database/schema/orders';
-import type { ActorType } from './order-status';
-import type { OrderTimelineEventType } from './order-types';
+import type { ActorType } from './orderStatus';
+import type { OrderTimelineEventType } from './orderTypes';
 
 export interface RecordEventParams {
   orderId: string;

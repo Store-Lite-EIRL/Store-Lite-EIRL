@@ -3,9 +3,8 @@
 // Legacy (current DB) ↔ New (order_status_v2 enum) mapping
 // ──────────────────────────────────────────
 
-import { ORDER_STATUS, ORDER_STATUS_INTERNAL } from './order-status';
-import type { OrderStatusV2 } from './order-status';
-import { ORDER_STATUS_V2 } from './order-status';
+import type { OrderStatusV2 } from './orderStatus';
+import { ORDER_STATUS, ORDER_STATUS_INTERNAL, ORDER_STATUS_V2 } from './orderStatus';
 
 /**
  * Legacy Spanish / current status strings → new OrderStatusV2.
@@ -21,7 +20,7 @@ const LEGACY_TO_NEW: Record<string, OrderStatusV2> = {
   [ORDER_STATUS.PENDING]: ORDER_STATUS_V2.CREATED,
   [ORDER_STATUS.PAID]: ORDER_STATUS_V2.PAID,
   [ORDER_STATUS.VALIDANDO]: ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION,
-  'esperando_confirmacion': ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION,
+  esperando_confirmacion: ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION,
   // 'delivered' = customer confirmed ticket → READY_TO_SHIP
   [ORDER_STATUS.DELIVERED]: ORDER_STATUS_V2.READY_TO_SHIP,
   [ORDER_STATUS.EN_REPARTO]: ORDER_STATUS_V2.IN_TRANSIT,

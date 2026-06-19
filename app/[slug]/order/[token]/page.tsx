@@ -178,11 +178,18 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
   const getStep = () => {
     // V2 step mapping (compressed to 5-step display)
     const V2_STEP: Record<string, number> = {
-      CREATED: 0, PAID: 1, PREPARING_ORDER: 1,
-      WAITING_CUSTOMER_CONFIRMATION: 1, READY_TO_SHIP: 2,
-      IN_TRANSIT: 2, DELIVERED: 3, COMPLETED: 4,
-      ISSUE_REPORTED: 1, DISPUTE: 1,
-      SELLER_TIMEOUT: 4, CANCELLED: 0,
+      CREATED: 0,
+      PAID: 1,
+      PREPARING_ORDER: 1,
+      WAITING_CUSTOMER_CONFIRMATION: 1,
+      READY_TO_SHIP: 2,
+      IN_TRANSIT: 2,
+      DELIVERED: 3,
+      COMPLETED: 4,
+      ISSUE_REPORTED: 1,
+      DISPUTE: 1,
+      SELLER_TIMEOUT: 4,
+      CANCELLED: 0,
     };
     if (order.status in V2_STEP) return V2_STEP[order.status];
     // Legacy steps
@@ -643,9 +650,12 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
 
               {/* ── V2: Issue report button (for reportable V2 statuses) ── */}
               {env.orderFlowV2 &&
-                ['WAITING_CUSTOMER_CONFIRMATION', 'READY_TO_SHIP', 'IN_TRANSIT', 'DELIVERED'].includes(
-                  order.status,
-                ) && (
+                [
+                  'WAITING_CUSTOMER_CONFIRMATION',
+                  'READY_TO_SHIP',
+                  'IN_TRANSIT',
+                  'DELIVERED',
+                ].includes(order.status) && (
                   <div
                     style={{
                       width: '100%',
@@ -1430,9 +1440,7 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
         <ReportFlow paymentId={order.id} trackingToken={token} />
 
         {/* MODAL: V2 Issue Report — warning + typed reasons + OrderService submit */}
-        {env.orderFlowV2 && (
-          <ReportV2Flow paymentId={order.id} trackingToken={token} />
-        )}
+        {env.orderFlowV2 && <ReportV2Flow paymentId={order.id} trackingToken={token} />}
       </div>
     </OrderAuthGate>
   );

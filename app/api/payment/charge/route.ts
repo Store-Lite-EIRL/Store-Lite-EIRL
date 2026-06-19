@@ -375,18 +375,14 @@ export async function POST(request: Request) {
         notifyOutOfStock(businessId, {
           productId: updatedProduct.id,
           productName: updatedProduct.title,
-        })
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-          .catch(() => {});
+        }).catch(() => {});
       } else if (updatedProduct && updatedProduct.stock <= LOW_STOCK_THRESHOLD) {
         notifyLowStock(businessId, {
           productId: updatedProduct.id,
           productName: updatedProduct.title,
           currentStock: updatedProduct.stock,
           minStock: LOW_STOCK_THRESHOLD,
-        })
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-          .catch(() => {});
+        }).catch(() => {});
       }
     }
 

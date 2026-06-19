@@ -1,9 +1,9 @@
 'use client';
 
-import { reportIssueV2 } from './actions';
 import { Icon } from '@/shared/components/ui';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { reportIssueV2 } from './actions';
 import './FlowModals.css';
 
 interface ReportV2FlowProps {
@@ -22,10 +22,7 @@ const ISSUE_REASONS = [
   { value: 'OTHER', label: 'Otro motivo' },
 ];
 
-export default function ReportV2Flow({
-  paymentId,
-  trackingToken,
-}: ReportV2FlowProps) {
+export default function ReportV2Flow({ paymentId, trackingToken }: ReportV2FlowProps) {
   const router = useRouter();
   const [state, setState] = useState<FlowState>('warning');
   const [reason, setReason] = useState('');
@@ -73,8 +70,8 @@ export default function ReportV2Flow({
           <h2 className="cf-title">Reporte Enviado</h2>
 
           <p className="cf-body">
-            Tu reporte ha sido notificado al vendedor.{' '}
-            <strong>Revisaremos tu caso</strong> y te contactaremos pronto.
+            Tu reporte ha sido notificado al vendedor. <strong>Revisaremos tu caso</strong> y te
+            contactaremos pronto.
           </p>
 
           <div className="cf-card">
@@ -90,10 +87,7 @@ export default function ReportV2Flow({
             Soporte activo 24/7
           </div>
 
-          <button
-            className="cf-btn cf-btn--primary"
-            onClick={() => (window.location.hash = '')}
-          >
+          <button className="cf-btn cf-btn--primary" onClick={() => (window.location.hash = '')}>
             CERRAR
           </button>
         </div>
@@ -134,9 +128,7 @@ export default function ReportV2Flow({
               <Icon size={40}>warning</Icon>
             </div>
 
-            <h2 className="cf-title cf-title--danger">
-              ¿Estás seguro de reportar un problema?
-            </h2>
+            <h2 className="cf-title cf-title--danger">¿Estás seguro de reportar un problema?</h2>
 
             <div className="cf-card cf-card--warning">
               <p className="cf-card-text">
@@ -160,7 +152,11 @@ export default function ReportV2Flow({
                 <Icon size={20}>flag</Icon>
                 ABRIR REPORTE
               </a>
-              <a href="#" className="cf-btn cf-btn--secondary" onClick={() => (window.location.hash = '')}>
+              <a
+                href="#"
+                className="cf-btn cf-btn--secondary"
+                onClick={() => (window.location.hash = '')}
+              >
                 SEGUIR INTENTANDO RESOLVER
               </a>
             </div>
@@ -215,11 +211,7 @@ export default function ReportV2Flow({
               )}
 
               <div className="cf-actions">
-                <button
-                  type="submit"
-                  className="cf-btn cf-btn--secondary"
-                  disabled={!reason}
-                >
+                <button type="submit" className="cf-btn cf-btn--secondary" disabled={!reason}>
                   <Icon size={20}>send</Icon>
                   ENVIAR REPORTE
                 </button>

@@ -3,8 +3,8 @@
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { payments } from '@/core/database/schema';
-import { ORDER_STATUS, ORDER_STATUS_V2 } from '@/core/orders/order-status';
-import { transition } from '@/core/orders/order-service';
+import { transition } from '@/core/orders/orderService';
+import { ORDER_STATUS, ORDER_STATUS_V2 } from '@/core/orders/orderStatus';
 import { createClient } from '@supabase/supabase-js';
 import { and, eq } from 'drizzle-orm';
 
@@ -129,7 +129,10 @@ export async function uploadTicketAndUpdatePayment(
 
       if (!updated) {
         console.error('[uploadTicket] Version conflict for payment:', paymentId);
-        return { success: false, error: 'El pedido fue modificado por otra operación. Recargá e intentá de nuevo.' };
+        return {
+          success: false,
+          error: 'El pedido fue modificado por otra operación. Recargá e intentá de nuevo.',
+        };
       }
     }
 
@@ -207,7 +210,10 @@ export async function notifyDelivery(
 
       if (!updated) {
         console.error('[notifyDelivery] Version conflict for payment:', paymentId);
-        return { success: false, error: 'El estado del pedido fue modificado. Recargá e intentá de nuevo.' };
+        return {
+          success: false,
+          error: 'El estado del pedido fue modificado. Recargá e intentá de nuevo.',
+        };
       }
     }
 

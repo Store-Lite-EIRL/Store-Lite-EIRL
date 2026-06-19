@@ -38,7 +38,6 @@ export function generateBusinessSlug(name: string, storeType: string): string {
   }
 
   // Use simple robust randomness
-  // eslint-disable-next-line sonarjs/pseudo-random
   const randomPart = Math.random().toString(36).substring(2, 6);
   return `${finalBase}-${randomPart}`;
 }

@@ -1,5 +1,5 @@
+import { ORDER_STATUS_V2 } from '@/core/orders/orderStatus';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { ORDER_STATUS_V2 } from '@/core/orders/order-status';
 
 // ── Mocks ────────────────────────────────────────────
 
@@ -22,8 +22,8 @@ vi.mock('@/core/database/client', () => ({
   },
 }));
 
-import { transition } from '@/core/orders/order-service';
-import type { TransitionInput } from '@/core/orders/order-status';
+import { transition } from '@/core/orders/orderService';
+import type { TransitionInput } from '@/core/orders/orderStatus';
 
 // ── Helpers ──────────────────────────────────────────
 
@@ -172,9 +172,7 @@ describe('OrderService.transition', () => {
 
   test('sets courier/tracking fields when transitioning to WAITING_CUSTOMER_CONFIRMATION', async () => {
     // 'aceptado' maps to PREPARING_ORDER → WAITING_CUSTOMER_CONFIRMATION is valid for seller
-    mockDb._selectLimit.mockResolvedValue([
-      makePayment({ status: 'aceptado', version: 1 }),
-    ]);
+    mockDb._selectLimit.mockResolvedValue([makePayment({ status: 'aceptado', version: 1 })]);
 
     await transition(
       makeInput({
@@ -201,9 +199,7 @@ describe('OrderService.transition', () => {
   test('handles ForbiddenActorError', async () => {
     // 'delivered' maps to PREPARING_ORDER; PREPARING_ORDER → WAITING_CUSTOMER_CONFIRMATION
     // requires seller or system — customer is NOT permitted
-    mockDb._selectLimit.mockResolvedValue([
-      makePayment({ status: 'delivered', version: 1 }),
-    ]);
+    mockDb._selectLimit.mockResolvedValue([makePayment({ status: 'delivered', version: 1 })]);
 
     const result = await transition(
       makeInput({
@@ -235,7 +231,9 @@ describe('OrderService.transition', () => {
   test('returns error for unknown legacy status', async () => {
     mockDb._selectLimit.mockResolvedValue([makePayment({ status: 'nonexistent', version: 1 })]);
 
-    const result = await transition(makeInput({ toStatus: ORDER_STATUS_V2.PAID, actor: { type: 'system' } }));
+    const result = await transition(
+      makeInput({ toStatus: ORDER_STATUS_V2.PAID, actor: { type: 'system' } }),
+    );
 
     expect(result.success).toBe(false);
     if (!result.success) {
