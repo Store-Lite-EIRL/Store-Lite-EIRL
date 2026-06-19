@@ -813,78 +813,6 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                 </div>
               )}
 
-              {/* ACTION: Ticket Verification (when seller uploads, status = 'validando' or V2 WAITING_CUSTOMER_CONFIRMATION) */}
-              {['validando', 'WAITING_CUSTOMER_CONFIRMATION'].includes(order.status) &&
-                order.ticketImageUrl && (
-                  <div className="despacho-card pulse-active">
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        textAlign: 'left',
-                      }}
-                    >
-                      <div
-                        style={{
-                          background: 'var(--md-sys-color-primary-container)',
-                          color: 'var(--md-sys-color-on-primary-container)',
-                          width: 44,
-                          height: 44,
-                          borderRadius: '12px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Icon>description</Icon>
-                      </div>
-                      <div>
-                        <p style={{ margin: 0, fontWeight: 950, fontSize: '0.9rem' }}>
-                          Comprobante de Envío
-                        </p>
-                        <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.6 }}>
-                          Subido por el vendedor — revisá y confirmá
-                        </p>
-                      </div>
-                    </div>
-                    <a href="#ticket-view" className="ticket-preview">
-                      <img src={order.ticketImageUrl} alt="Ticket" />
-                      <div className="ticket-overlay">
-                        <div style={{ textAlign: 'center' }}>
-                          <Icon size={32}>zoom_in</Icon>
-                          <p style={{ fontWeight: 900, fontSize: '0.8rem', marginTop: '4px' }}>
-                            AMPLIAR TICKET
-                          </p>
-                        </div>
-                      </div>
-                    </a>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                      <a
-                        href="#accept-confirm"
-                        className="btn-hub btn-hub-p"
-                        style={{ flex: 1, justifyContent: 'center' }}
-                      >
-                        <Icon>check_circle</Icon>
-                        CONFIRMAR ENVÍO
-                      </a>
-                      <a
-                        href="#report-form"
-                        className="btn-hub btn-hub-s"
-                        style={{
-                          width: '60px',
-                          padding: '0',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Icon>flag</Icon>
-                      </a>
-                    </div>
-                  </div>
-                )}
-
               {/* ACTION: Disputed - Ticket was rejected, waiting for seller to re-upload */}
               {['disputed', 'DISPUTE'].includes(order.status) && (
                 <div
@@ -996,6 +924,78 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                     {currentStatus.actionLabel}
                     <Icon>arrow_forward</Icon>
                   </button>
+                )}
+
+              {/* Ticket de envío — al final del contenido principal */}
+              {['validando', 'WAITING_CUSTOMER_CONFIRMATION'].includes(order.status) &&
+                order.ticketImageUrl && (
+                  <div
+                    style={{
+                      width: '100%',
+                      maxWidth: '500px',
+                      marginTop: 'auto',
+                      borderRadius: '24px',
+                      overflow: 'hidden',
+                      border: '1px solid var(--md-sys-color-outline-variant)',
+                      background: 'var(--md-sys-color-surface-container-low)',
+                    }}
+                  >
+                    {/* Header */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '1rem 1.25rem',
+                      }}
+                    >
+                      <Icon size={20}>description</Icon>
+                      <span style={{ fontSize: '0.85rem', opacity: 0.7 }}>
+                        Comprobante de envío
+                      </span>
+                    </div>
+                    {/* Imagen */}
+                    <a
+                      href="#ticket-view"
+                      className="ticket-preview"
+                      style={{ height: 200, borderRadius: 0 }}
+                    >
+                      <img src={order.ticketImageUrl} alt="Comprobante de envío" />
+                      <div className="ticket-overlay">
+                        <Icon size={28}>zoom_in</Icon>
+                      </div>
+                    </a>
+                    {/* Acciones */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: '0.75rem',
+                        padding: '1rem 1.25rem',
+                      }}
+                    >
+                      <a
+                        href="#accept-confirm"
+                        className="btn-hub btn-hub-p"
+                        style={{ flex: 1, justifyContent: 'center', padding: '0.85rem 1.5rem' }}
+                      >
+                        <Icon size={18}>check_circle</Icon>
+                        CONFIRMAR ENVÍO
+                      </a>
+                      <a
+                        href="#report-form"
+                        className="btn-hub btn-hub-s"
+                        style={{
+                          width: '48px',
+                          padding: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Icon size={20}>flag</Icon>
+                      </a>
+                    </div>
+                  </div>
                 )}
             </div>
 
