@@ -384,7 +384,7 @@ const PAYMENT_METHOD_MAP: Record<string, string> = {
   plin: 'Plin',
 };
 
-type ModalTab = 'detalles' | 'ticket' | 'ayuda';
+type ModalTab = 'detalles' | 'ayuda';
 
 export function RecentOrders({
   orders,
@@ -1317,15 +1317,6 @@ export function RecentOrders({
             Detalles
           </button>
           <button
-            className={`${styles.tabButton} ${activeTab === 'ticket' ? styles.tabActive : ''}`}
-            onClick={() => setActiveTab('ticket')}
-          >
-            <Icon slot="icon" size={21}>
-              local_activity
-            </Icon>{' '}
-            Ticket
-          </button>
-          <button
             className={`${styles.tabButton} ${activeTab === 'ayuda' ? styles.tabActive : ''}`}
             onClick={() => setActiveTab('ayuda')}
           >
@@ -1612,11 +1603,6 @@ export function RecentOrders({
                 )}
               </section>
             )}
-          </div>
-        )}
-        {activeTab === 'ticket' && (
-          <div className={styles.modalBodyNew} key={selectedOrder?.ticketImageUrl || 'no-ticket'}>
-            {renderTicketSection(selectedOrder!)}
           </div>
         )}
         {activeTab === 'ayuda' && <div className={styles.modalBodyNew}>{renderHelpTab()}</div>}

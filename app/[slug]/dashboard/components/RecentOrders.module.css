@@ -2882,38 +2882,15 @@
 }
 
 /* ─── MODAL BODY NUEVO LAYOUT ─── */
-
-/* ─── MODAL BODY NUEVO LAYOUT ─── */
 .modalBodyNew {
-  padding: 2rem;
+  padding: 1.5rem;
   flex: 1;
   overflow-y: auto;
   background: var(--md-sys-color-surface);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-}
-
-/* ─── MODAL BODY LAYOUT ─── */
-.modalBodyNew {
-  padding: 2rem;
-  flex: 1;
-  overflow-y: auto;
-  background: var(--md-sys-color-surface);
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-/* ─── MODAL BODY NEW: 1 columna layout ─── */
-.modalBodyNew {
-  padding: 2rem;
-  flex: 1;
-  overflow-y: auto;
-  background: var(--md-sys-color-surface);
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
+  min-height: 340px;
 }
 
 /* ─── SECTION TITLES (fuente agrandada) ─── */
