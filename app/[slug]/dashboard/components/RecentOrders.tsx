@@ -1,5 +1,6 @@
 'use client';
 
+import { requestFinalization } from '@/features/dashboard/actions/finalizationActions';
 import {
   notifyDelivery,
   uploadTicketAndUpdatePayment,
@@ -19,6 +20,7 @@ import {
   Clock,
   CreditCard,
   ExternalLink,
+  Eye,
   FileText,
   HelpCircle,
   Home,
@@ -43,6 +45,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import styles from './RecentOrders.module.css';
+import SellerPhaseGuide, { getSellerPhase } from './SellerPhaseGuide';
 
 interface ConfirmAction {
   open: boolean;
@@ -250,6 +253,115 @@ const URBANO_STATUS_MAP: Record<
     icon: 'cancel',
     lucideIcon: X,
   },
+
+  /* ─── V2 statuses (order_status_v2) que pueden caer en payments.status ─── */
+  CREATED: {
+    label: 'Creado',
+    className: 'statusPending',
+    progress: 5,
+    icon: 'pending',
+    lucideIcon: Clock,
+  },
+  PAID: {
+    label: 'Pagado',
+    className: 'statusPaid',
+    progress: 10,
+    icon: 'payments',
+    lucideIcon: CreditCard,
+  },
+  PREPARING_ORDER: {
+    label: 'Preparando Pedido',
+    className: 'statusProcessing',
+    progress: 20,
+    icon: 'settings',
+    lucideIcon: RefreshCw,
+  },
+  WAITING_CUSTOMER_CONFIRMATION: {
+    label: 'Esperando Confirmación',
+    className: 'statusWaiting',
+    progress: 80,
+    icon: 'hourglass_empty',
+    lucideIcon: Clock,
+  },
+  READY_TO_SHIP: {
+    label: 'Listo para Enviar',
+    className: 'statusAccepted',
+    progress: 40,
+    icon: 'check_circle',
+    lucideIcon: CheckCircle,
+  },
+  IN_TRANSIT: {
+    label: 'En Tránsito',
+    className: 'statusEnReparto',
+    progress: 75,
+    icon: 'local_shipping',
+    lucideIcon: Truck,
+  },
+  DELIVERED: {
+    label: 'Entregado',
+    className: 'statusDelivered',
+    progress: 50,
+    icon: 'local_shipping',
+    lucideIcon: Truck,
+  },
+  COMPLETED: {
+    label: 'Finalizado',
+    className: 'statusCompleted',
+    progress: 100,
+    icon: 'verified',
+    lucideIcon: CheckCircle,
+  },
+  ISSUE_REPORTED: {
+    label: 'Problema Reportado',
+    className: 'statusReported',
+    progress: 0,
+    icon: 'report_problem',
+    lucideIcon: AlertTriangle,
+  },
+  DISPUTE: {
+    label: 'En Disputa',
+    className: 'statusDisputed',
+    progress: 0,
+    icon: 'gavel',
+    lucideIcon: AlertTriangle,
+  },
+  SELLER_TIMEOUT: {
+    label: 'Tiempo Agotado',
+    className: 'statusFailed',
+    progress: 0,
+    icon: 'timer_off',
+    lucideIcon: X,
+  },
+  CANCELLED: {
+    label: 'Cancelado',
+    className: 'statusRejected',
+    progress: 0,
+    icon: 'cancel',
+    lucideIcon: X,
+  },
+
+  /* ─── Otros posibles ─── */
+  expired: {
+    label: 'Expirado',
+    className: 'statusFailed',
+    progress: 0,
+    icon: 'timer_off',
+    lucideIcon: X,
+  },
+  cancelled: {
+    label: 'Cancelado',
+    className: 'statusRejected',
+    progress: 0,
+    icon: 'cancel',
+    lucideIcon: X,
+  },
+  reported: {
+    label: 'Reportado',
+    className: 'statusReported',
+    progress: 0,
+    icon: 'report_problem',
+    lucideIcon: AlertTriangle,
+  },
 };
 
 // Estados que REALMENTE existen en la Base de Datos (schema.ts)
@@ -285,6 +397,7 @@ export function RecentOrders({
 }: RecentOrdersProps) {
   const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
   const [activeTab, setActiveTab] = useState<ModalTab>('detalles');
+  const [selectedPhase, setSelectedPhase] = useState(0);
   const [helpOpen, setHelpOpen] = useState(false);
   const [ticketFile, setTicketFile] = useState<File | null>(null);
   const [ticketPreview, setTicketPreview] = useState<string | null>(null);
@@ -292,6 +405,7 @@ export function RecentOrders({
   const [uploadResult, setUploadResult] = useState<UploadTicketResult | null>(null);
   const [isEditingTicket, setIsEditingTicket] = useState(false);
   const [notifyingDelivery, setNotifyingDelivery] = useState(false);
+  const [finalizingOrder, setFinalizingOrder] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>({ open: false, action: null });
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
@@ -330,6 +444,7 @@ export function RecentOrders({
       setIsEditingTicket(false);
       setNotifyingDelivery(false);
       setActiveTab('detalles');
+      setSelectedPhase(getSellerPhase(selectedOrder!.status).currentPhase);
     }
     selectedOrderIdRef.current = selectedOrder?.id ?? null;
   }, [selectedOrder]);
@@ -446,6 +561,25 @@ export function RecentOrders({
     }
   };
 
+  const handleFinalizeOrder = async () => {
+    if (!selectedOrder) return;
+    setFinalizingOrder(true);
+    try {
+      const result = await requestFinalization(selectedOrder.id, selectedOrder.businessId);
+      if (result.success) {
+        // Actualizar estado local para evitar stale state (el server ya está en DELIVERED)
+        setSelectedOrder({ ...selectedOrder, status: 'DELIVERED' as any });
+        router.refresh();
+      } else {
+        alert(result.error || 'Error al solicitar la finalización');
+      }
+    } catch {
+      alert('Error inesperado al finalizar el pedido');
+    } finally {
+      setFinalizingOrder(false);
+    }
+  };
+
   const renderDots = (segmentProgress: number) => {
     const thresholds = [25, 50, 75, 100];
     return (
@@ -511,62 +645,6 @@ export function RecentOrders({
             </div>
           </>
         )}
-      </div>
-    );
-  };
-
-  const getTimelineSteps = (order: OrderItem) => {
-    const statusInfo = URBANO_STATUS_MAP[order.status] || { progress: 0 };
-    const progress = statusInfo.progress;
-    return [
-      {
-        label: 'PEDIDO',
-        state: progress >= 10 ? (progress >= 20 ? 'completed' : 'current') : 'pending',
-      },
-      {
-        label: 'VALIDANDO',
-        state: progress >= 30 ? (progress >= 40 ? 'completed' : 'current') : 'pending',
-      },
-      {
-        label: 'ENVÍO',
-        state: progress >= 60 ? (progress >= 80 ? 'completed' : 'current') : 'pending',
-      },
-      {
-        label: 'CERRADO',
-        state: progress >= 100 ? 'completed' : progress >= 80 ? 'current' : 'pending',
-      },
-    ];
-  };
-
-  const renderTimeline = (order: OrderItem) => {
-    const steps = getTimelineSteps(order);
-    return (
-      <div className={styles.timelineWrapper}>
-        <div className={styles.timeline}>
-          {steps.map((step, i) => {
-            const isLast = i === steps.length - 1;
-            return (
-              <div
-                key={i}
-                className={`${styles.timelineStep} ${step.state === 'completed' ? styles.stepCompleted : ''} ${step.state === 'current' ? styles.stepCurrent : ''}`}
-              >
-                {!isLast && (
-                  <div
-                    className={`${styles.timelineLine} ${step.state === 'completed' ? styles.lineCompleted : ''}`}
-                  />
-                )}
-                <div className={styles.timelineIndicator}>
-                  {step.state === 'completed' ? (
-                    <CheckCircle size={16} />
-                  ) : (
-                    <div className={styles.timelineDot} />
-                  )}
-                </div>
-                <span className={styles.timelineLabel}>{step.label}</span>
-              </div>
-            );
-          })}
-        </div>
       </div>
     );
   };
@@ -646,10 +724,20 @@ export function RecentOrders({
   const renderTicketSection = (order: OrderItem) => {
     const hasTicket = !!order.ticketImageUrl;
     const isInValidando = order.status === 'validando';
-    const isDelivered = order.status === 'delivered';
-    const isEnReparto = (order.status as any) === 'en_reparto';
+    const rawStatus = String(order.status);
+    const isDelivered = order.status === 'delivered' || rawStatus === 'READY_TO_SHIP';
+    const isEnReparto = rawStatus === 'en_reparto' || rawStatus === 'IN_TRANSIT';
+    const isInTransitV2 = rawStatus === 'IN_TRANSIT';
     const isDisputed = order.status === 'disputed';
     const canEditTicket = isInValidando || isDisputed;
+    console.log(
+      '[TicketSection] status:',
+      rawStatus,
+      'hasTicket:',
+      hasTicket,
+      'isDelivered:',
+      isDelivered,
+    );
 
     const renderStatusBadge = () => {
       const statusInfo = URBANO_STATUS_MAP[order.status] || {};
@@ -797,46 +885,39 @@ export function RecentOrders({
           renderUploadForm(true)
         ) : hasTicket ? (
           <div className={styles.ticketCard}>
-            {/* Imagen con Badge flotando en la esquina */}
+            {/* Imagen — sin overlay, sin badge flotante */}
             <div className={styles.ticketImageContainer}>
               <Image
                 src={order.ticketImageUrl || ''}
-                alt="Ticket"
+                alt="Comprobante de envío"
                 fill
                 className={`${styles.ticketImage} ${isInValidando ? styles.ticketBlurred : ''}`}
                 style={{ objectFit: 'contain' }}
               />
-              {/* Badge flotando en esquina superior derecha */}
-              <div className={styles.ticketBadgeFloating}>{renderStatusBadge()}</div>
-              <div className={styles.ticketImageOverlay}>
-                <span>
-                  {isDisputed
-                    ? 'Ticket rechazado'
-                    : isInValidando
-                      ? 'Esperando validación'
-                      : isEnReparto
-                        ? 'En reparto'
-                        : 'Ticket confirmado'}
-                </span>
-              </div>
             </div>
 
-            {/* Info text */}
+            {/* Info status — una sola línea, sin bold, sin repetir */}
             <div className={styles.ticketInfo}>
               {isDisputed ? (
-                <p className={styles.ticketInfoTextWarning}>
-                  ⚠️ El cliente rechazó este ticket. Subí uno nuevo.
-                </p>
+                <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                  El cliente rechazó este ticket — subí uno nuevo
+                </span>
               ) : isInValidando ? (
-                <p className={styles.ticketInfoTextWarning}>⏳ Esperando validación del cliente</p>
+                <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                  Esperando validación del cliente
+                </span>
               ) : isEnReparto ? (
-                <p className={styles.ticketInfoTextSuccess}>
-                  🚚 Pedido en reparto — el cliente confirmará recepción
-                </p>
+                <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                  Pedido en reparto — el cliente confirmará recepción
+                </span>
               ) : isDelivered ? (
-                <p className={styles.ticketInfoTextSuccess}>✓ Ticket confirmado por el cliente</p>
+                <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                  Cliente confirmó el ticket — pedido listo para enviar
+                </span>
               ) : (
-                <p className={styles.ticketInfoTextSuccess}>✓ Ticket subido correctamente</p>
+                <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                  Ticket subido correctamente
+                </span>
               )}
             </div>
 
@@ -873,6 +954,26 @@ export function RecentOrders({
                   <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {notifyingDelivery ? <RefreshCw size={18} /> : <Truck size={18} />}
                     {notifyingDelivery ? 'Notificando...' : 'Notificar Entrega'}
+                  </span>
+                </Button>
+              )}
+              {isInTransitV2 && (
+                <Button
+                  variant="filled"
+                  onClick={() =>
+                    setConfirmAction({
+                      open: true,
+                      action: handleFinalizeOrder,
+                      title: '¿Notificar llegada?',
+                      description:
+                        'Confirmá que el producto ya llegó a su destino. Esta acción no se puede deshacer.',
+                    })
+                  }
+                  disabled={finalizingOrder}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {finalizingOrder ? <RefreshCw size={18} /> : <CheckCircle size={18} />}
+                    {finalizingOrder ? 'Notificando...' : 'Notificar Llegada'}
                   </span>
                 </Button>
               )}
@@ -1200,7 +1301,11 @@ export function RecentOrders({
             })}
           </div>
         </div>
-        {renderTimeline(order)}
+        <SellerPhaseGuide
+          phases={getSellerPhase(String(order.status))}
+          selectedPhase={selectedPhase}
+          onSelect={setSelectedPhase}
+        />
         <div className={styles.modalTabs}>
           <button
             className={`${styles.tabButton} ${activeTab === 'detalles' ? styles.tabActive : ''}`}
@@ -1229,170 +1334,283 @@ export function RecentOrders({
         </div>
         {activeTab === 'detalles' && (
           <div className={styles.modalBodyNew}>
-            {/* SECCIÓN 1: Producto y Cliente UNIDOS en un solo card */}
-            <section className={styles.infoSection}>
-              <h3 className={styles.sectionTitle}>
-                <User size={18} /> Comprador y Producto
-              </h3>
-              <div className={`${styles.unifiedCard} ${styles.unifiedContent}`}>
-                {/* Cliente arriba */}
-                <div className={styles.customerSection}>
-                  <div className={styles.customerHeader}>
-                    <div className={styles.customerAvatar}>
-                      <User size={28} />
-                    </div>
-                    <div className={styles.customerBasicInfo}>
-                      <p className={styles.customerLabel}>Comprador</p>
-                      <div className={styles.customerDataRow}>
-                        <div className={styles.dataItemInline}>
-                          <IdCard size={18} />
-                          <span>DNI: {order.maskedDni || 'No registrado'}</span>
+            {selectedPhase === 0 && (
+              <>
+                {/* PEDIDO: Comprador y Producto + Pago */}
+                <section className={styles.infoSection}>
+                  <h3 className={styles.sectionTitle}>
+                    <User size={18} /> Comprador y Producto
+                  </h3>
+                  <div className={`${styles.unifiedCard} ${styles.unifiedContent}`}>
+                    <div className={styles.customerSection}>
+                      <div className={styles.customerHeader}>
+                        <div className={styles.customerAvatar}>
+                          <User size={28} />
                         </div>
-                        <div className={styles.dataItemInline}>
-                          <Phone size={18} />
-                          <span>Tel: {order.shippingPhone || 'Sin teléfono'}</span>
+                        <div className={styles.customerBasicInfo}>
+                          <p className={styles.customerLabel}>Comprador</p>
+                          <div className={styles.customerDataRow}>
+                            <div className={styles.dataItemInline}>
+                              <IdCard size={18} />
+                              <span>DNI: {order.maskedDni || 'No registrado'}</span>
+                            </div>
+                            <div className={styles.dataItemInline}>
+                              <Phone size={18} />
+                              <span>Tel: {order.shippingPhone || 'Sin teléfono'}</span>
+                            </div>
+                          </div>
+                          <p className={styles.customerEmail}>
+                            {order.buyerEmail || 'No registrado'}
+                          </p>
                         </div>
                       </div>
-                      <p className={styles.customerEmail}>{order.buyerEmail || 'No registrado'}</p>
                     </div>
-                  </div>
-                </div>
-
-                {/* Divider */}
-                <div className={styles.unifiedDivider} />
-
-                {/* Producto abajo */}
-                <div className={styles.productSection}>
-                  <div className={styles.productImageWrapper}>
-                    {order.productImage ? (
-                      <Image
-                        src={order.productImage}
-                        alt={order.productTitle}
-                        width={100}
-                        height={100}
-                        className={styles.productImg}
-                      />
-                    ) : (
-                      <div className={styles.productPlaceholder}>
-                        <ShoppingBag size={36} />
+                    <div className={styles.unifiedDivider} />
+                    <div className={styles.productSection}>
+                      <div className={styles.productImageWrapper}>
+                        {order.productImage ? (
+                          <Image
+                            src={order.productImage}
+                            alt={order.productTitle}
+                            width={100}
+                            height={100}
+                            className={styles.productImg}
+                          />
+                        ) : (
+                          <div className={styles.productPlaceholder}>
+                            <ShoppingBag size={36} />
+                          </div>
+                        )}
                       </div>
-                    )}
+                      <div className={styles.productInfo}>
+                        <Link
+                          href={getBusinessPath(
+                            businessSlug,
+                            `/product/${order.productId || order.productSlug}`,
+                          )}
+                          target="_blank"
+                          className={styles.productLink}
+                        >
+                          {order.productTitle} <ExternalLink size={14} />
+                        </Link>
+                        <div className={styles.productMetaRow}>
+                          <span className={styles.productMetaItem}>
+                            <span className={styles.metaLabel}>ID:</span>{' '}
+                            {order.productId?.slice(0, 10)}...
+                          </span>
+                        </div>
+                        <div className={styles.productMetaRow}>
+                          <span className={styles.productMetaItem}>
+                            <span className={styles.metaLabel}>Cant.:</span> 1 unid.
+                          </span>
+                          <span className={styles.productMetaItem}>
+                            <span className={styles.metaLabel}>Envío:</span>{' '}
+                            {new Intl.NumberFormat('es-PE', {
+                              style: 'currency',
+                              currency: order.currency,
+                            }).format(Number(order.shippingCost))}
+                          </span>
+                        </div>
+                        <p className={styles.itemPrice}>
+                          {new Intl.NumberFormat('es-PE', {
+                            style: 'currency',
+                            currency: order.currency,
+                          }).format(Number(order.amount) - Number(order.shippingCost))}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div className={styles.productInfo}>
-                    <Link
-                      href={getBusinessPath(
-                        businessSlug,
-                        `/product/${order.productId || order.productSlug}`,
-                      )}
-                      target="_blank"
-                      className={styles.productLink}
-                    >
-                      {order.productTitle} <ExternalLink size={14} />
-                    </Link>
-                    <div className={styles.productMetaRow}>
-                      <span className={styles.productMetaItem}>
-                        <span className={styles.metaLabel}>ID:</span>{' '}
-                        {order.productId?.slice(0, 10)}...
+                </section>
+
+                <section className={styles.infoSection}>
+                  <h3 className={styles.sectionTitle}>
+                    <CreditCard size={18} /> Pago
+                  </h3>
+                  <div className={styles.paymentDetails}>
+                    <div className={styles.detailRow}>
+                      <span className={styles.detailLabel}>Método:</span>
+                      <span className={styles.capitalizeText}>
+                        {PAYMENT_METHOD_MAP[order.paymentMethod] || order.paymentMethod}
                       </span>
                     </div>
-                    <div className={styles.productMetaRow}>
-                      <span className={styles.productMetaItem}>
-                        <span className={styles.metaLabel}>Cant.:</span> 1 unid.
+                    <div className={styles.divider} />
+                    <div className={styles.detailRow}>
+                      <span className={styles.detailLabel}>Subtotal:</span>
+                      <span>
+                        {new Intl.NumberFormat('es-PE', {
+                          style: 'currency',
+                          currency: order.currency,
+                        }).format(Number(order.amount) - Number(order.shippingCost))}
                       </span>
-                      <span className={styles.productMetaItem}>
-                        <span className={styles.metaLabel}>Envío:</span>{' '}
+                    </div>
+                    <div className={styles.detailRow}>
+                      <span className={styles.detailLabel}>Envío:</span>
+                      <span>
                         {new Intl.NumberFormat('es-PE', {
                           style: 'currency',
                           currency: order.currency,
                         }).format(Number(order.shippingCost))}
                       </span>
                     </div>
-                    <p className={styles.itemPrice}>
-                      {new Intl.NumberFormat('es-PE', {
-                        style: 'currency',
-                        currency: order.currency,
-                      }).format(Number(order.amount) - Number(order.shippingCost))}
-                    </p>
+                    <div className={`${styles.detailRow} ${styles.totalRow}`}>
+                      <span className={styles.detailLabel}>Total:</span>
+                      <span className={styles.totalValue}>
+                        {new Intl.NumberFormat('es-PE', {
+                          style: 'currency',
+                          currency: order.currency,
+                        }).format(Number(order.amount))}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </section>
-
-            {/* SECCIÓN 2: Pago - 100% width */}
-            <section className={styles.infoSection}>
-              <h3 className={styles.sectionTitle}>
-                <CreditCard size={18} /> Pago
-              </h3>
-              <div className={styles.paymentDetails}>
-                <div className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Método:</span>
-                  <span className={styles.capitalizeText}>
-                    {PAYMENT_METHOD_MAP[order.paymentMethod] || order.paymentMethod}
-                  </span>
-                </div>
-                <div className={styles.divider} />
-                <div className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Subtotal:</span>
-                  <span>
-                    {new Intl.NumberFormat('es-PE', {
-                      style: 'currency',
-                      currency: order.currency,
-                    }).format(Number(order.amount) - Number(order.shippingCost))}
-                  </span>
-                </div>
-                <div className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Envío:</span>
-                  <span>
-                    {new Intl.NumberFormat('es-PE', {
-                      style: 'currency',
-                      currency: order.currency,
-                    }).format(Number(order.shippingCost))}
-                  </span>
-                </div>
-                <div className={`${styles.detailRow} ${styles.totalRow}`}>
-                  <span className={styles.detailLabel}>Total:</span>
-                  <span className={styles.totalValue}>
-                    {new Intl.NumberFormat('es-PE', {
-                      style: 'currency',
-                      currency: order.currency,
-                    }).format(Number(order.amount))}
-                  </span>
-                </div>
-              </div>
-            </section>
-
-            {/* SECCIÓN 3: Ruta de Entrega - 100% width */}
-            {renderShippingPathModal(order)}
-            {order.status === 'esperando_confirmacion' && order.finalizationDeadline && (
-              <div className={styles.finalizationPending}>
-                <div className={styles.finalizationIcon}>
-                  <Clock size={20} />
-                </div>
-                <div className={styles.finalizationText}>
-                  <strong>Esperando confirmación del cliente</strong>
-                  <span>
-                    El vendedor ha solicitado la finalización. El cliente tiene un plazo para
-                    confirmar.
-                  </span>
-                  <div className={styles.finalizationDeadline}>
-                    Deadline:{' '}
-                    {new Date(order.finalizationDeadline).toLocaleDateString('es-PE', {
-                      dateStyle: 'long',
-                    })}
-                  </div>
-                </div>
-              </div>
+                </section>
+              </>
             )}
-            {(order.status === 'completed' || order.status === 'finalizado') && (
-              <div className={styles.permanentSeal}>
-                <div className={styles.sealIconWrapper}>
-                  <CheckCircle size={20} />
-                </div>
-                <div className={styles.sealText}>
-                  <strong>Pedido Finalizado</strong>
-                  <span>Esta operación ha sido completada exitosamente.</span>
-                </div>
-              </div>
+
+            {selectedPhase === 1 && (
+              <section className={styles.infoSection}>
+                <h3 className={styles.sectionTitle}>
+                  <Receipt size={18} /> Validación de Ticket
+                </h3>
+                {renderTicketSection(order)}
+              </section>
+            )}
+
+            {selectedPhase === 2 && (
+              <>
+                <section className={styles.infoSection}>
+                  <h3 className={styles.sectionTitle}>
+                    <Truck size={18} /> Seguimiento de Envío
+                  </h3>
+                  {renderShippingPathModal(order)}
+                  {(order.courierName || order.trackingNumber) && (
+                    <div style={{ padding: '0 1rem 1rem' }}>
+                      {order.courierName && (
+                        <div className={styles.detailRow}>
+                          <span className={styles.detailLabel}>Courier:</span>
+                          <span>{order.courierName}</span>
+                        </div>
+                      )}
+                      {order.trackingNumber && (
+                        <div className={styles.detailRow}>
+                          <span className={styles.detailLabel}>Tracking:</span>
+                          <span>{order.trackingNumber}</span>
+                        </div>
+                      )}
+                      {order.pickupCode && (
+                        <div className={styles.detailRow}>
+                          <span className={styles.detailLabel}>Código recojo:</span>
+                          <span>{order.pickupCode}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </section>
+
+                {(String(order.status) === 'READY_TO_SHIP' ||
+                  String(order.status) === 'delivered' ||
+                  String(order.status) === 'aceptado') && (
+                  <div className={styles.ticketActionsCentered} style={{ margin: '0 1rem 1rem' }}>
+                    <Button
+                      variant="filled"
+                      onClick={() =>
+                        setConfirmAction({
+                          open: true,
+                          action: handleNotifyDelivery,
+                          title: '¿Notificar entrega?',
+                          description:
+                            'Se enviará al cliente una notificación de que su pedido llegó. Esta acción no se puede deshacer.',
+                        })
+                      }
+                      disabled={notifyingDelivery}
+                    >
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {notifyingDelivery ? <RefreshCw size={18} /> : <Truck size={18} />}
+                        {notifyingDelivery ? 'Notificando...' : 'Notificar Entrega'}
+                      </span>
+                    </Button>
+                  </div>
+                )}
+
+                {(String(order.status) === 'IN_TRANSIT' ||
+                  String(order.status) === 'en_reparto') && (
+                  <div className={styles.ticketActionsCentered} style={{ margin: '0 1rem 1rem' }}>
+                    <Button
+                      variant="filled"
+                      onClick={() =>
+                        setConfirmAction({
+                          open: true,
+                          action: handleFinalizeOrder,
+                          title: '¿Notificar llegada?',
+                          description:
+                            'Confirmá que el producto ya llegó a su destino. Esta acción no se puede deshacer.',
+                        })
+                      }
+                      disabled={finalizingOrder}
+                    >
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {finalizingOrder ? <RefreshCw size={18} /> : <CheckCircle size={18} />}
+                        {finalizingOrder ? 'Notificando...' : 'Notificar Llegada'}
+                      </span>
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {selectedPhase === 3 && (
+              <section className={styles.infoSection}>
+                {(order.status === 'esperando_confirmacion' ||
+                  String(order.status) === 'DELIVERED') &&
+                order.finalizationDeadline ? (
+                  <div
+                    className={styles.finalizationPending}
+                    style={{ borderLeft: '4px solid var(--md-sys-color-tertiary)' }}
+                  >
+                    <div className={styles.finalizationIcon}>
+                      <Clock size={20} />
+                    </div>
+                    <div className={styles.finalizationText}>
+                      <strong>Esperando confirmación del cliente</strong>
+                      <span>
+                        El vendedor ha solicitado la finalización. El cliente tiene un plazo para
+                        confirmar.
+                      </span>
+                      <div className={styles.finalizationDeadline}>
+                        Deadline:{' '}
+                        {new Date(order.finalizationDeadline).toLocaleDateString('es-PE', {
+                          dateStyle: 'long',
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                ) : order.status === 'completed' ||
+                  order.status === 'finalizado' ||
+                  String(order.status) === 'COMPLETED' ? (
+                  <div className={styles.permanentSeal}>
+                    <div className={styles.sealIconWrapper}>
+                      <CheckCircle size={20} />
+                    </div>
+                    <div className={styles.sealText}>
+                      <strong>Pedido Finalizado</strong>
+                      <span>Esta operación ha sido completada exitosamente.</span>
+                      {order.completedAt && (
+                        <span style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '0.25rem' }}>
+                          {new Date(order.completedAt).toLocaleDateString('es-PE', {
+                            day: '2-digit',
+                            month: 'long',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ padding: '1rem', textAlign: 'center', opacity: 0.5 }}>
+                    <Icon size={24}>lock</Icon>
+                    <p>Esta sección estará disponible cuando el pedido esté finalizado.</p>
+                  </div>
+                )}
+              </section>
             )}
           </div>
         )}
@@ -1498,17 +1716,16 @@ export function RecentOrders({
             <tr>
               <th>NRO Orden</th>
               <th>Producto</th>
-              <th>Precio</th>
-              <th>Ruta de Envío</th>
+              <th className={styles.hideOnMobile}>Precio</th>
               <th>Estado</th>
               <th>Fecha</th>
-              <th>Finalización</th>
+              <th className={styles.viewMoreCol}>Ver</th>
             </tr>
           </thead>
           <tbody>
             {orders.length === 0 && !isFilterLoading ? (
               <tr>
-                <td colSpan={7} className={styles.emptyRow}>
+                <td colSpan={6} className={styles.emptyRow}>
                   No se encontraron pedidos.
                 </td>
               </tr>
@@ -1520,7 +1737,7 @@ export function RecentOrders({
                   progress: 0,
                 };
                 return (
-                  <tr key={order.id}>
+                  <tr key={order.id} className={styles.tableRow}>
                     <td className={styles.orderNumberCell}>
                       <span className={styles.orderNumber}>
                         {order.orderNumber || order.id.slice(0, 8).toUpperCase()}
@@ -1535,33 +1752,11 @@ export function RecentOrders({
                         {order.productTitle}
                       </Link>
                     </td>
-                    <td className={styles.priceCell}>
+                    <td className={`${styles.priceCell} ${styles.hideOnMobile}`}>
                       {new Intl.NumberFormat('es-PE', {
                         style: 'currency',
                         currency: order.currency,
                       }).format(Number(order.amount))}
-                    </td>
-                    <td className={styles.trackingCell}>
-                      {order.courierName || order.trackingNumber ? (
-                        <div style={{ fontSize: '0.75rem', lineHeight: 1.4 }}>
-                          {order.courierName && (
-                            <div style={{ fontWeight: 700 }}>{order.courierName}</div>
-                          )}
-                          {order.trackingNumber && (
-                            <div style={{ opacity: 0.6, fontSize: '0.7rem' }}>
-                              #{order.trackingNumber}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <button
-                          className={styles.viewMoreButton}
-                          onClick={() => setSelectedOrder(order)}
-                        >
-                          <MapPin size={14} />
-                          Ver más
-                        </button>
-                      )}
                     </td>
                     <td className={styles.statusCell}>
                       <span className={`${styles.statusBadge} ${styles[statusInfo.className]}`}>
@@ -1581,14 +1776,15 @@ export function RecentOrders({
                         year: '2-digit',
                       })}
                     </td>
-                    <td className={styles.dateCell}>
-                      {order.completedAt
-                        ? new Date(order.completedAt).toLocaleDateString('es-PE', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: '2-digit',
-                          })
-                        : '-'}
+                    <td className={styles.viewMoreCell}>
+                      <button
+                        className={styles.viewMoreButton}
+                        onClick={() => setSelectedOrder(order)}
+                        title="Ver detalles del pedido"
+                      >
+                        <Eye size={16} />
+                        <span className={styles.viewMoreLabel}>Ver</span>
+                      </button>
                     </td>
                   </tr>
                 );
