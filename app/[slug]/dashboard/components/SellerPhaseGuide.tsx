@@ -97,7 +97,7 @@ export default function SellerPhaseGuide({
     <div
       style={{
         width: '100%',
-        padding: '0 10px',
+        padding: '0 2.3rem',
         margin: '0.75rem 0',
       }}
     >

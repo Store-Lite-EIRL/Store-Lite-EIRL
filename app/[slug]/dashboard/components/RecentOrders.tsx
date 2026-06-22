@@ -1304,7 +1304,10 @@ export function RecentOrders({
         <SellerPhaseGuide
           phases={getSellerPhase(String(order.status))}
           selectedPhase={selectedPhase}
-          onSelect={setSelectedPhase}
+          onSelect={(i) => {
+            setSelectedPhase(i);
+            if (activeTab === 'ayuda') setActiveTab('detalles');
+          }}
         />
         <div className={styles.modalTabs}>
           <button
