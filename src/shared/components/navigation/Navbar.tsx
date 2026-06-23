@@ -57,7 +57,7 @@ export default function Navbar({ isCollapsed, onToggle, planName = 'Básico' }: 
     if (error) {
       console.error('Error al cerrar sesión:', error);
     } else {
-      router.push('/login');
+      router.push('/auth');
     }
   };
 
