@@ -1,0 +1,111 @@
+.wrapper {
+  width: 100%;
+  padding: 0 2.3rem;
+  margin: 0.75rem 0;
+}
+
+.flexContainer {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+}
+
+.progressBg {
+  position: absolute;
+  top: 24px;
+  left: 34px;
+  right: 34px;
+  height: 4px;
+  background: var(--md-sys-color-outline-variant);
+  border-radius: 2px;
+}
+
+.progressFill {
+  position: absolute;
+  top: 24px;
+  left: 34px;
+  height: 4px;
+  background: var(--md-sys-color-primary);
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  width: var(--progress-width, 0%);
+}
+
+.phaseItem {
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  user-select: none;
+  transition: opacity 0.3s;
+}
+
+.phaseItemClickable {
+  cursor: pointer;
+}
+
+.phaseItemLocked {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.phaseItemUnlocked {
+  opacity: 1;
+}
+
+.iconBox {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.iconBoxPast {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  border: 2px solid var(--md-sys-color-outline-variant);
+}
+
+.iconBoxCurrent {
+  background: var(--md-sys-color-primary);
+  color: white;
+  border: 2px solid var(--md-sys-color-primary);
+  box-shadow: 0 10px 20px rgba(var(--md-sys-color-primary-rgb), 0.3);
+}
+
+.iconBoxFuture {
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface-variant);
+  border: 2px solid var(--md-sys-color-outline-variant);
+}
+
+.iconBoxSelectedFuture {
+  border: 2px solid var(--md-sys-color-outline);
+}
+
+.iconBoxSelected {
+  transform: scale(1.1);
+}
+
+.label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.labelActive {
+  font-weight: 950;
+  color: var(--md-sys-color-on-surface);
+}
+
+.labelInactive {
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface-variant);
+}
