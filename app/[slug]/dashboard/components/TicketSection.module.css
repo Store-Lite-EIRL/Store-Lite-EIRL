@@ -1,0 +1,284 @@
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--md-sys-color-outline);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 1rem;
+  font-family: var(--md-sys-typescale-label-large-font, system-ui);
+}
+
+/* ── Ticket Upload Card ── */
+.ticketUploadCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  border: 2px dashed var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.ticketUploadCard:hover {
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.ticketUploadIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ticketUploadTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.ticketUploadHint {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+  text-align: center;
+  margin: 0;
+  max-width: 300px;
+}
+
+.uploadLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.uploadLabel:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.fileInput {
+  display: none;
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-outline);
+  margin: 0;
+}
+
+.ticketPreview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.ticketImageWrapper {
+  position: relative;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ticketImageWrapper:hover .ticketOverlay {
+  opacity: 1;
+}
+
+.ticketImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ticketBlurred {
+  filter: blur(8px);
+  transition: filter 0.3s;
+}
+
+.ticketBlurred:hover {
+  filter: blur(4px);
+}
+
+.ticketImageFit {
+  object-fit: contain;
+}
+
+.ticketOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.ticketActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ticketButtonInner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Ticket Section ── */
+.ticketSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ticketHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ticketCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container);
+}
+
+.ticketImageContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  margin: 0 auto;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.ticketInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ticketStatusInfo {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.ticketActionsCentered {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  justify-content: center;
+  padding: 1rem 0;
+}
+
+.ticketStatusInfoBlock {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  text-align: center;
+  display: block;
+}
+
+.ticketError {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: var(--md-sys-color-error-container, #fce4ec);
+  color: var(--md-sys-color-on-error-container, #8c1d18);
+  font-size: 0.875rem;
+  width: 100%;
+}
+
+/* ── Status Color Variants ── */
+.statusPending {
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-error-container) 60%,
+    var(--md-sys-color-surface)
+  );
+  color: var(--md-sys-color-on-error-container);
+}
+
+.statusPaid {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.statusVerifying {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.statusAccepted {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.statusWaiting {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.statusCompleted {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.statusRejected {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.statusDisputed {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.statusReported {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}

@@ -13,8 +13,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import phaseStyles from './PhaseContent.module.css';
-import styles from './RecentOrders.module.css';
+import styles from './PhaseReadySection.module.css';
 
 interface PhaseReadySectionOrderItem {
   id: string;
@@ -63,17 +62,14 @@ function GuidanceBanner({ phase }: { phase: number }) {
   const text = PHASE_GUIDANCE[phase];
   if (!text) return null;
   return (
-    <div className={phaseStyles.guidanceBanner}>
-      <AlertCircle size={16} className={phaseStyles.guidanceIcon} />
-      <p className={phaseStyles.guidanceText}>{text}</p>
+    <div className={styles.guidanceBanner}>
+      <AlertCircle size={16} className={styles.guidanceIcon} />
+      <p className={styles.guidanceText}>{text}</p>
     </div>
   );
 }
 
-export default function PhaseReadySection({
-  order,
-  businessSlug,
-}: PhaseReadySectionProps) {
+export default function PhaseReadySection({ order, businessSlug }: PhaseReadySectionProps) {
   return (
     <>
       <GuidanceBanner phase={0} />
@@ -99,9 +95,7 @@ export default function PhaseReadySection({
                     <span>Tel: {order.shippingPhone || 'Sin teléfono'}</span>
                   </div>
                 </div>
-                <p className={styles.customerEmail}>
-                  {order.buyerEmail || 'No registrado'}
-                </p>
+                <p className={styles.customerEmail}>{order.buyerEmail || 'No registrado'}</p>
               </div>
             </div>
           </div>
@@ -135,8 +129,7 @@ export default function PhaseReadySection({
               </Link>
               <div className={styles.productMetaRow}>
                 <span className={styles.productMetaItem}>
-                  <span className={styles.metaLabel}>ID:</span>{' '}
-                  {order.productId?.slice(0, 10)}...
+                  <span className={styles.metaLabel}>ID:</span> {order.productId?.slice(0, 10)}...
                 </span>
               </div>
               <div className={styles.productMetaRow}>
@@ -208,12 +201,12 @@ export default function PhaseReadySection({
         <h3 className={styles.sectionTitle}>
           <MapPin size={18} /> Datos del Envío
         </h3>
-        <div className={`${styles.unifiedCard} ${phaseStyles.shippingCard}`}>
-          <div className={phaseStyles.shippingRow}>
-            <MapPin size={16} className={phaseStyles.shippingIcon} />
+        <div className={`${styles.unifiedCard} ${styles.shippingCard}`}>
+          <div className={styles.shippingRow}>
+            <MapPin size={16} className={styles.shippingIcon} />
             <div>
-              <span className={phaseStyles.shippingLabel}>Tipo de envío</span>
-              <span className={phaseStyles.shippingTypeBadge}>
+              <span className={styles.shippingLabel}>Tipo de envío</span>
+              <span className={styles.shippingTypeBadge}>
                 {SHIPPING_TYPE_MAP[order.shippingType?.toLowerCase() || ''] ||
                   order.shippingType ||
                   'No especificado'}
@@ -221,65 +214,49 @@ export default function PhaseReadySection({
             </div>
           </div>
           {order.shippingAddress && (
-            <div className={phaseStyles.shippingRow}>
-              <MapPin size={16} className={phaseStyles.shippingIcon} />
+            <div className={styles.shippingRow}>
+              <MapPin size={16} className={styles.shippingIcon} />
               <div>
-                <span className={phaseStyles.shippingLabel}>Dirección</span>
-                <span className={phaseStyles.shippingValue}>
-                  {order.shippingAddress}
-                </span>
+                <span className={styles.shippingLabel}>Dirección</span>
+                <span className={styles.shippingValue}>{order.shippingAddress}</span>
               </div>
             </div>
           )}
-          <div className={phaseStyles.shippingRow}>
-            <MapPin size={16} className={phaseStyles.shippingIcon} />
+          <div className={styles.shippingRow}>
+            <MapPin size={16} className={styles.shippingIcon} />
             <div>
-              <span className={phaseStyles.shippingLabel}>
-                Distrito / Provincia / Departamento
-              </span>
-              <span className={phaseStyles.shippingValue}>
-                {[order.shippingDistrict, order.shippingProvince]
-                  .filter(Boolean)
-                  .join(', ') || 'No especificado'}
-                {order.shippingDepartment
-                  ? `, ${order.shippingDepartment}`
-                  : ''}
+              <span className={styles.shippingLabel}>Distrito / Provincia / Departamento</span>
+              <span className={styles.shippingValue}>
+                {[order.shippingDistrict, order.shippingProvince].filter(Boolean).join(', ') ||
+                  'No especificado'}
+                {order.shippingDepartment ? `, ${order.shippingDepartment}` : ''}
               </span>
             </div>
           </div>
-          {order.shippingType?.toLowerCase() === 'agencia' &&
-            order.shippingAgency && (
-              <div className={phaseStyles.shippingRow}>
-                <MapPin size={16} className={phaseStyles.shippingIcon} />
-                <div>
-                  <span className={phaseStyles.shippingLabel}>Agencia</span>
-                  <span className={phaseStyles.shippingValue}>
-                    {order.shippingAgency}
-                  </span>
-                </div>
-              </div>
-            )}
-          {order.shippingPhone && (
-            <div className={phaseStyles.shippingRow}>
-              <Phone size={16} className={phaseStyles.shippingIcon} />
+          {order.shippingType?.toLowerCase() === 'agencia' && order.shippingAgency && (
+            <div className={styles.shippingRow}>
+              <MapPin size={16} className={styles.shippingIcon} />
               <div>
-                <span className={phaseStyles.shippingLabel}>
-                  Teléfono de contacto
-                </span>
-                <span className={phaseStyles.shippingValue}>
-                  {order.shippingPhone}
-                </span>
+                <span className={styles.shippingLabel}>Agencia</span>
+                <span className={styles.shippingValue}>{order.shippingAgency}</span>
+              </div>
+            </div>
+          )}
+          {order.shippingPhone && (
+            <div className={styles.shippingRow}>
+              <Phone size={16} className={styles.shippingIcon} />
+              <div>
+                <span className={styles.shippingLabel}>Teléfono de contacto</span>
+                <span className={styles.shippingValue}>{order.shippingPhone}</span>
               </div>
             </div>
           )}
           {order.shippingReference && (
-            <div className={phaseStyles.shippingRow}>
-              <MapPin size={16} className={phaseStyles.shippingIcon} />
+            <div className={styles.shippingRow}>
+              <MapPin size={16} className={styles.shippingIcon} />
               <div>
-                <span className={phaseStyles.shippingLabel}>Referencia</span>
-                <span className={phaseStyles.shippingValue}>
-                  {order.shippingReference}
-                </span>
+                <span className={styles.shippingLabel}>Referencia</span>
+                <span className={styles.shippingValue}>{order.shippingReference}</span>
               </div>
             </div>
           )}

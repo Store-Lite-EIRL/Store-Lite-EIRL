@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRef } from 'react';
-import styles from './RecentOrders.module.css';
+import styles from './TicketSection.module.css';
 
 type TicketOrderItem = Pick<OrderItem, 'id' | 'status' | 'ticketImageUrl'>;
 

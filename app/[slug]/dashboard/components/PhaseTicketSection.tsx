@@ -1,8 +1,7 @@
 'use client';
 
 import { AlertCircle, Receipt } from 'lucide-react';
-import phaseStyles from './PhaseContent.module.css';
-import styles from './RecentOrders.module.css';
+import styles from './PhaseTicketSection.module.css';
 import TicketSection from './TicketSection';
 
 const PHASE_GUIDANCE: Record<number, string> = {
@@ -13,9 +12,9 @@ function GuidanceBanner({ phase }: { phase: number }) {
   const text = PHASE_GUIDANCE[phase];
   if (!text) return null;
   return (
-    <div className={phaseStyles.guidanceBanner}>
-      <AlertCircle size={16} className={phaseStyles.guidanceIcon} />
-      <p className={phaseStyles.guidanceText}>{text}</p>
+    <div className={styles.guidanceBanner}>
+      <AlertCircle size={16} className={styles.guidanceIcon} />
+      <p className={styles.guidanceText}>{text}</p>
     </div>
   );
 }

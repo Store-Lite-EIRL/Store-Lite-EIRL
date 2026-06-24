@@ -1,14 +1,9 @@
 'use client';
 
 import { Icon } from '@/shared';
-import {
-  AlertCircle,
-  CheckCircle,
-  Clock,
-} from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { useMemo } from 'react';
-import phaseStyles from './PhaseContent.module.css';
-import styles from './RecentOrders.module.css';
+import styles from './PhaseCompletionSection.module.css';
 
 export function formatDate(iso: string): string {
   try {
@@ -36,9 +31,7 @@ function getRemainingTimeMessage(deadline: string): {
     };
   }
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor(
-    (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-  );
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   return {
     message: `Tiempo restante: ${days} día${days !== 1 ? 's' : ''}, ${hours} hora${hours !== 1 ? 's' : ''}`,
     isPast: false,
@@ -53,39 +46,31 @@ function GuidanceBanner({ phase }: { phase: number }) {
   const text = PHASE_GUIDANCE[phase];
   if (!text) return null;
   return (
-    <div className={phaseStyles.guidanceBanner}>
-      <AlertCircle size={16} className={phaseStyles.guidanceIcon} />
-      <p className={phaseStyles.guidanceText}>{text}</p>
+    <div className={styles.guidanceBanner}>
+      <AlertCircle size={16} className={styles.guidanceIcon} />
+      <p className={styles.guidanceText}>{text}</p>
     </div>
   );
 }
 
 function Phase3Countdown({ deadline }: { deadline: string }) {
-  const { message, isPast } = useMemo(
-    () => getRemainingTimeMessage(deadline),
-    [deadline],
-  );
+  const { message, isPast } = useMemo(() => getRemainingTimeMessage(deadline), [deadline]);
 
   if (isPast) {
     return (
-      <div className={phaseStyles.countdownExpired}>
-        <AlertCircle
-          size={18}
-          className={phaseStyles.countdownExpiredIcon}
-        />
+      <div className={styles.countdownExpired}>
+        <AlertCircle size={18} className={styles.countdownExpiredIcon} />
         {message}
       </div>
     );
   }
 
   return (
-    <div className={phaseStyles.countdownCard}>
-      <Clock size={28} className={phaseStyles.countdownIcon} />
-      <div className={phaseStyles.countdownContent}>
-        <p className={phaseStyles.countdownTimer}>{message}</p>
-        <p className={phaseStyles.countdownDeadline}>
-          Fecha límite: {formatDate(deadline)}
-        </p>
+    <div className={styles.countdownCard}>
+      <Clock size={28} className={styles.countdownIcon} />
+      <div className={styles.countdownContent}>
+        <p className={styles.countdownTimer}>{message}</p>
+        <p className={styles.countdownDeadline}>Fecha límite: {formatDate(deadline)}</p>
       </div>
     </div>
   );
@@ -121,35 +106,21 @@ function Phase3Completed({
         </div>
         <div className={styles.sealText}>
           <strong>Pedido Finalizado</strong>
-          <span>
-            Esta operación ha sido completada exitosamente.
-          </span>
-          {completedAt && (
-            <span className={phaseStyles.sealDate}>
-              {formatDate(completedAt)}
-            </span>
-          )}
+          <span>Esta operación ha sido completada exitosamente.</span>
+          {completedAt && <span className={styles.sealDate}>{formatDate(completedAt)}</span>}
         </div>
       </div>
-      <div className={phaseStyles.timelineContainer}>
+      <div className={styles.timelineContainer}>
         {timelineItems.map((item, i) => (
-          <div key={i} className={phaseStyles.timelineItem}>
+          <div key={i} className={styles.timelineItem}>
             <div
-              className={`${phaseStyles.timelineDot} ${
-                item.done
-                  ? phaseStyles.timelineDotCompleted
-                  : phaseStyles.timelineDotMuted
+              className={`${styles.timelineDot} ${
+                item.done ? styles.timelineDotCompleted : styles.timelineDotMuted
               }`}
             />
-            <div className={phaseStyles.timelineContent}>
-              <span className={phaseStyles.timelineLabel}>
-                {item.label}
-              </span>
-              {item.date && (
-                <span className={phaseStyles.timelineDate}>
-                  {formatDate(item.date)}
-                </span>
-              )}
+            <div className={styles.timelineContent}>
+              <span className={styles.timelineLabel}>{item.label}</span>
+              {item.date && <span className={styles.timelineDate}>{formatDate(item.date)}</span>}
             </div>
           </div>
         ))}
@@ -169,33 +140,22 @@ interface PhaseCompletionSectionProps {
   order: PhaseCompletionSectionOrderItem;
 }
 
-export default function PhaseCompletionSection({
-  order,
-}: PhaseCompletionSectionProps) {
+export default function PhaseCompletionSection({ order }: PhaseCompletionSectionProps) {
   const status = String(order.status);
 
   return (
     <>
       <GuidanceBanner phase={3} />
       <section className={styles.infoSection}>
-        {(status === 'esperando_confirmacion' ||
-          status === 'DELIVERED') &&
+        {(status === 'esperando_confirmacion' || status === 'DELIVERED') &&
         order.finalizationDeadline ? (
           <Phase3Countdown deadline={order.finalizationDeadline} />
-        ) : status === 'completed' ||
-          status === 'finalizado' ||
-          status === 'COMPLETED' ? (
-          <Phase3Completed
-            completedAt={order.completedAt}
-            createdAt={order.createdAt}
-          />
+        ) : status === 'completed' || status === 'finalizado' || status === 'COMPLETED' ? (
+          <Phase3Completed completedAt={order.completedAt} createdAt={order.createdAt} />
         ) : (
-          <div className={phaseStyles.fallbackContainer}>
+          <div className={styles.fallbackContainer}>
             <Icon size={24}>lock</Icon>
-            <p>
-              Esta sección estará disponible cuando el pedido esté
-              finalizado.
-            </p>
+            <p>Esta sección estará disponible cuando el pedido esté finalizado.</p>
           </div>
         )}
       </section>

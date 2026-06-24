@@ -1,14 +1,8 @@
 'use client';
 
 import { Button } from '@/shared/components/ui/buttons/Button';
-import {
-  AlertCircle,
-  CheckCircle,
-  RefreshCw,
-  Truck,
-} from 'lucide-react';
-import phaseStyles from './PhaseContent.module.css';
-import styles from './RecentOrders.module.css';
+import { AlertCircle, CheckCircle, RefreshCw, Truck } from 'lucide-react';
+import styles from './PhaseShippingSection.module.css';
 import ShippingSection from './ShippingSection';
 
 const PHASE_GUIDANCE: Record<number, string> = {
@@ -19,9 +13,9 @@ function GuidanceBanner({ phase }: { phase: number }) {
   const text = PHASE_GUIDANCE[phase];
   if (!text) return null;
   return (
-    <div className={phaseStyles.guidanceBanner}>
-      <AlertCircle size={16} className={phaseStyles.guidanceIcon} />
-      <p className={phaseStyles.guidanceText}>{text}</p>
+    <div className={styles.guidanceBanner}>
+      <AlertCircle size={16} className={styles.guidanceIcon} />
+      <p className={styles.guidanceText}>{text}</p>
     </div>
   );
 }
@@ -57,11 +51,8 @@ export default function PhaseShippingSection({
 }: PhaseShippingSectionProps) {
   const status = String(order.status);
   const showNotifyDelivery =
-    status === 'READY_TO_SHIP' ||
-    status === 'delivered' ||
-    status === 'aceptado';
-  const showNotifyArrival =
-    status === 'IN_TRANSIT' || status === 'en_reparto';
+    status === 'READY_TO_SHIP' || status === 'delivered' || status === 'aceptado';
+  const showNotifyArrival = status === 'IN_TRANSIT' || status === 'en_reparto';
 
   return (
     <>
@@ -72,7 +63,7 @@ export default function PhaseShippingSection({
         </h3>
         <ShippingSection order={order} />
         {(order.courierName || order.trackingNumber) && (
-          <div className={phaseStyles.courierInfoWrapper}>
+          <div className={styles.courierInfoWrapper}>
             {order.courierName && (
               <div className={styles.detailRow}>
                 <span className={styles.detailLabel}>Courier:</span>
@@ -96,9 +87,9 @@ export default function PhaseShippingSection({
       </section>
 
       {showNotifyDelivery && (
-        <div className={`${styles.ticketActionsCentered} ${phaseStyles.notifyButtonWrapper}`}>
+        <div className={`${styles.ticketActionsCentered} ${styles.notifyButtonWrapper}`}>
           <Button variant="filled" onClick={onNotifyDelivery} disabled={notifyingDelivery}>
-            <span className={phaseStyles.notifyButtonInner}>
+            <span className={styles.notifyButtonInner}>
               {notifyingDelivery ? <RefreshCw size={18} /> : <Truck size={18} />}
               {notifyingDelivery ? 'Notificando...' : 'Notificar Entrega'}
             </span>
@@ -107,9 +98,9 @@ export default function PhaseShippingSection({
       )}
 
       {showNotifyArrival && (
-        <div className={`${styles.ticketActionsCentered} ${phaseStyles.notifyButtonWrapper}`}>
+        <div className={`${styles.ticketActionsCentered} ${styles.notifyButtonWrapper}`}>
           <Button variant="filled" onClick={onFinalizeOrder} disabled={finalizingOrder}>
-            <span className={phaseStyles.notifyButtonInner}>
+            <span className={styles.notifyButtonInner}>
               {finalizingOrder ? <RefreshCw size={18} /> : <CheckCircle size={18} />}
               {finalizingOrder ? 'Notificando...' : 'Notificar Llegada'}
             </span>

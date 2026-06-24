@@ -14,8 +14,8 @@ import { IconButton } from '@/shared/components/ui/buttons/IconButton';
 import { Calendar, HelpCircle, RefreshCw, ShoppingBag, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import HelpPanel from './HelpPanel';
+import styles from './OrderModal.module.css';
 import PhaseContent from './PhaseContent';
-import styles from './RecentOrders.module.css';
 import SellerPhaseGuide, { getSellerPhase } from './SellerPhaseGuide';
 
 interface ConfirmAction {

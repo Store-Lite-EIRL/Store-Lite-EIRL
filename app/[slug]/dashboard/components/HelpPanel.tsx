@@ -1,15 +1,6 @@
 'use client';
 
-import {
-  AlertTriangle,
-  CheckCircle,
-  HelpCircle,
-  Lightbulb,
-  MapPin,
-  Package,
-  RefreshCw,
-  Truck,
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle, Lightbulb, Package, RefreshCw, Truck } from 'lucide-react';
 import helpStyles from './HelpPanel.module.css';
 import styles from './RecentOrders.module.css';
 
@@ -17,10 +8,7 @@ interface HelpPanelProps {
   selectedPhase: number;
 }
 
-const PHASE_HELP: Record<
-  number,
-  { icon: React.ReactNode; title: string; text: string }
-> = {
+const PHASE_HELP: Record<number, { icon: React.ReactNode; title: string; text: string }> = {
   0: {
     icon: <Package size={20} />,
     title: 'Preparar el Pedido',
@@ -75,15 +63,15 @@ export default function HelpPanel({ selectedPhase }: HelpPanelProps) {
           <div className={styles.tipItem}>
             <div className={styles.tipIcon}>⏰</div>
             <p className={styles.tipText}>
-              <strong>Subí el ticket rápido:</strong> Entre más rápido subas el ticket, más rápido el
-              cliente validará y saldrá el producto. ¡La velocidad es clave!
+              <strong>Subí el ticket rápido:</strong> Entre más rápido subas el ticket, más rápido
+              el cliente validará y saldrá el producto. ¡La velocidad es clave!
             </p>
           </div>
           <div className={styles.tipItem}>
             <div className={styles.tipIcon}>📦</div>
             <p className={styles.tipText}>
-              <strong>Empaquetado seguro:</strong> Asegurate de que el producto esté bien empaquetado.
-              Vos sos responsable hasta que el cliente lo reciba.
+              <strong>Empaquetado seguro:</strong> Asegurate de que el producto esté bien
+              empaquetado. Vos sos responsable hasta que el cliente lo reciba.
             </p>
           </div>
         </div>
@@ -107,8 +95,8 @@ export default function HelpPanel({ selectedPhase }: HelpPanelProps) {
               <div className={styles.warningContent}>
                 <h4 className={styles.warningTitle}>Pedidos sin terminar</h4>
                 <p className={styles.warningText}>
-                  Mantener pedidos pendientes afecta directamente la reputación de tu negocio y puede
-                  disminuir tus ventas futuras. ¡Completalos a tiempo!
+                  Mantener pedidos pendientes afecta directamente la reputación de tu negocio y
+                  puede disminuir tus ventas futuras. ¡Completalos a tiempo!
                 </p>
               </div>
             </div>
@@ -131,8 +119,8 @@ export default function HelpPanel({ selectedPhase }: HelpPanelProps) {
                 <h4 className={styles.warningTitle}>Límite de Quejas</h4>
                 <p className={styles.warningText}>
                   Si acumulás{' '}
-                  <span className={styles.warningHighlight}>3 órdenes con quejas o reportes</span>, tu
-                  cuenta sufrirá desactivación de funciones o ban temporal/permanente de tu RUC.
+                  <span className={styles.warningHighlight}>3 órdenes con quejas o reportes</span>,
+                  tu cuenta sufrirá desactivación de funciones o ban temporal/permanente de tu RUC.
                   ¡Cuidá tu historial!
                 </p>
               </div>
@@ -146,8 +134,8 @@ export default function HelpPanel({ selectedPhase }: HelpPanelProps) {
                   <span className={styles.warningHighlight}>
                     3 días para subir el ticket de envío
                   </span>{' '}
-                  tras recibir el pedido. Si no lo hacés, se considerará reporte automático. Lo mismo
-                  aplica para la finalización del producto. ¡La puntualidad es clave!
+                  tras recibir el pedido. Si no lo hacés, se considerará reporte automático. Lo
+                  mismo aplica para la finalización del producto. ¡La puntualidad es clave!
                 </p>
               </div>
             </div>

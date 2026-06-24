@@ -3,7 +3,7 @@
 import type { OrderItem } from '@/lib/types/orderStatus';
 import { URBANO_STATUS_MAP } from '@/lib/types/orderStatus';
 import { Home, MapPin, Store, Truck } from 'lucide-react';
-import styles from './RecentOrders.module.css';
+import styles from './ShippingSection.module.css';
 
 type ShippingSectionOrderItem = Pick<
   OrderItem,
