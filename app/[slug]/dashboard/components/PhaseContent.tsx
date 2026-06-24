@@ -384,7 +384,9 @@ export default function PhaseContent({
               <div className={phaseStyles.shippingRow}>
                 <MapPin size={16} className={phaseStyles.shippingIcon} />
                 <div>
-                  <span className={phaseStyles.shippingLabel}>Ubicación</span>
+                  <span className={phaseStyles.shippingLabel}>
+                    Distrito / Provincia / Departamento
+                  </span>
                   <span className={phaseStyles.shippingValue}>
                     {[order.shippingDistrict, order.shippingProvince].filter(Boolean).join(', ') ||
                       'No especificado'}
@@ -442,10 +444,6 @@ export default function PhaseContent({
               onUpload={onUploadTicket}
               onCancel={onCancelUpload}
               onEdit={onEditTicket}
-              onNotifyDelivery={onNotifyDelivery}
-              onFinalizeOrder={onFinalizeOrder}
-              notifyingDelivery={notifyingDelivery}
-              finalizingOrder={finalizingOrder}
             />
           </section>
         </>

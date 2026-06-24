@@ -280,8 +280,8 @@ export default function OrderModal({
                 {confirmAction.description || 'Esta acción no se puede deshacer.'}
               </p>
               <div className={styles.confirmActions}>
-                <button
-                  className={styles.confirmBtnText}
+                <Button
+                  variant="outlined"
                   onClick={() =>
                     setConfirmAction({
                       open: false,
@@ -292,9 +292,9 @@ export default function OrderModal({
                   }
                 >
                   Cancelar
-                </button>
-                <button
-                  className={styles.confirmBtnFilled}
+                </Button>
+                <Button
+                  variant="filled"
                   onClick={() => {
                     confirmAction.action?.();
                     setConfirmAction({
@@ -306,7 +306,7 @@ export default function OrderModal({
                   }}
                 >
                   Confirmar
-                </button>
+                </Button>
               </div>
             </div>
           </div>

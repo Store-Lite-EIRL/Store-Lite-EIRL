@@ -101,8 +101,6 @@ const defaultCallbacks = {
   onUpload: vi.fn(),
   onCancel: vi.fn(),
   onEdit: vi.fn(),
-  onNotifyDelivery: vi.fn(),
-  onFinalizeOrder: vi.fn(),
 };
 
 // ── Tests ────────────────────────────────────────────
@@ -118,8 +116,6 @@ describe('TicketSection', () => {
           uploading={false}
           uploadResult={null}
           isEditingTicket={false}
-          notifyingDelivery={false}
-          finalizingOrder={false}
           {...defaultCallbacks}
         />,
       );
@@ -137,8 +133,6 @@ describe('TicketSection', () => {
           uploading={false}
           uploadResult={null}
           isEditingTicket={false}
-          notifyingDelivery={false}
-          finalizingOrder={false}
           {...defaultCallbacks}
         />,
       );
@@ -156,8 +150,6 @@ describe('TicketSection', () => {
           uploading={true}
           uploadResult={null}
           isEditingTicket={false}
-          notifyingDelivery={false}
-          finalizingOrder={false}
           {...defaultCallbacks}
         />,
       );
@@ -176,8 +168,6 @@ describe('TicketSection', () => {
           uploading={false}
           uploadResult={null}
           isEditingTicket={false}
-          notifyingDelivery={false}
-          finalizingOrder={false}
           {...defaultCallbacks}
         />,
       );
@@ -196,8 +186,6 @@ describe('TicketSection', () => {
           uploading={false}
           uploadResult={null}
           isEditingTicket={false}
-          notifyingDelivery={false}
-          finalizingOrder={false}
           {...defaultCallbacks}
         />,
       );
@@ -214,8 +202,6 @@ describe('TicketSection', () => {
           uploading={false}
           uploadResult={null}
           isEditingTicket={false}
-          notifyingDelivery={false}
-          finalizingOrder={false}
           {...defaultCallbacks}
         />,
       );
@@ -232,8 +218,6 @@ describe('TicketSection', () => {
           uploading={false}
           uploadResult={null}
           isEditingTicket={false}
-          notifyingDelivery={false}
-          finalizingOrder={false}
           {...defaultCallbacks}
         />,
       );
@@ -250,8 +234,6 @@ describe('TicketSection', () => {
           uploading={false}
           uploadResult={null}
           isEditingTicket={false}
-          notifyingDelivery={false}
-          finalizingOrder={false}
           {...defaultCallbacks}
         />,
       );
@@ -268,8 +250,6 @@ describe('TicketSection', () => {
           uploading={false}
           uploadResult={null}
           isEditingTicket={false}
-          notifyingDelivery={false}
-          finalizingOrder={false}
           {...defaultCallbacks}
         />,
       );
@@ -288,8 +268,6 @@ describe('TicketSection', () => {
           uploading={false}
           uploadResult={null}
           isEditingTicket={true}
-          notifyingDelivery={false}
-          finalizingOrder={false}
           {...defaultCallbacks}
         />,
       );
@@ -307,8 +285,6 @@ describe('TicketSection', () => {
           uploading={false}
           uploadResult={null}
           isEditingTicket={true}
-          notifyingDelivery={false}
-          finalizingOrder={false}
           {...defaultCallbacks}
         />,
       );
@@ -328,8 +304,6 @@ describe('TicketSection', () => {
           uploading={false}
           uploadResult={{ success: false, error: 'Error de prueba' }}
           isEditingTicket={false}
-          notifyingDelivery={false}
-          finalizingOrder={false}
           {...defaultCallbacks}
         />,
       );

@@ -31,10 +31,6 @@ interface TicketSectionProps {
   onUpload: () => void;
   onCancel: () => void;
   onEdit: () => void;
-  onNotifyDelivery: () => void;
-  onFinalizeOrder: () => void;
-  notifyingDelivery: boolean;
-  finalizingOrder: boolean;
 }
 
 export default function TicketSection({
@@ -48,10 +44,6 @@ export default function TicketSection({
   onUpload,
   onCancel,
   onEdit,
-  onNotifyDelivery,
-  onFinalizeOrder,
-  notifyingDelivery,
-  finalizingOrder,
 }: TicketSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const hasTicket = !!order.ticketImageUrl;
@@ -128,20 +120,19 @@ export default function TicketSection({
               src={ticketPreview}
               alt="Preview"
               fill
-              className={`${styles.ticketImage} ${styles.ticketBlurred}`}
-              style={{ objectFit: 'contain' }}
+              className={`${styles.ticketImage} ${styles.ticketBlurred} ${styles.ticketImageFit}`}
             />
             <div className={styles.ticketOverlay}>Click para confirmar</div>
           </div>
           <div className={styles.ticketActions}>
             <Button variant="filled" onClick={onUpload} disabled={uploading}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className={styles.ticketButtonInner}>
                 {uploading ? <RefreshCw size={18} /> : <Send size={18} />}
                 {uploading ? 'Subiendo...' : isEditing ? 'Actualizar Ticket' : 'Enviar Ticket'}
               </span>
             </Button>
             <Button variant="outlined" onClick={handleLocalCancel}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className={styles.ticketButtonInner}>
                 <X size={18} /> Cancelar
               </span>
             </Button>
@@ -169,30 +160,27 @@ export default function TicketSection({
               src={order.ticketImageUrl || ''}
               alt="Comprobante de envío"
               fill
-              className={`${styles.ticketImage} ${isInValidando ? styles.ticketBlurred : ''}`}
-              style={{ objectFit: 'contain' }}
+              className={`${styles.ticketImage} ${styles.ticketImageFit} ${isInValidando ? styles.ticketBlurred : ''}`}
             />
           </div>
 
           <div className={styles.ticketInfo}>
             {isDisputed ? (
-              <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+              <span className={styles.ticketStatusInfo}>
                 El cliente rechazó este ticket — subí uno nuevo
               </span>
             ) : isInValidando ? (
-              <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>
-                Esperando validación del cliente
-              </span>
+              <span className={styles.ticketStatusInfo}>Esperando validación del cliente</span>
             ) : isEnReparto ? (
-              <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+              <span className={styles.ticketStatusInfo}>
                 Pedido en reparto — el cliente confirmará recepción
               </span>
             ) : isDelivered ? (
-              <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+              <span className={styles.ticketStatusInfo}>
                 Cliente confirmó el ticket — pedido listo para enviar
               </span>
             ) : (
-              <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>Ticket subido correctamente</span>
+              <span className={styles.ticketStatusInfo}>Ticket subido correctamente</span>
             )}
           </div>
 
@@ -208,9 +196,7 @@ export default function TicketSection({
               </Button>
             )}
             {(isDelivered || isInTransitV2) && (
-              <span
-                style={{ fontSize: '0.8rem', opacity: 0.7, textAlign: 'center', display: 'block' }}
-              >
+              <span className={styles.ticketStatusInfoBlock}>
                 ¿Querés notificar la entrega? Andá a la fase Envío.
               </span>
             )}
