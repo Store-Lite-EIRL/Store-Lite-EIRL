@@ -283,7 +283,10 @@ export function useCulqiCallback({
 
   function handleCulqiError(): void {
     const culqiError = window.Culqi?.error;
-    console.error('[Culqi] Error:', culqiError);
+    console.error(
+      '[Culqi] Error:',
+      culqiError ? JSON.stringify(culqiError) : '(no error object on window.Culqi)',
+    );
 
     if (culqiError?.code === 'invalid_number' && culqiError?.param === 'amount') {
       const exceedAmount = finalTotal > YAPE_LIMITS.max;

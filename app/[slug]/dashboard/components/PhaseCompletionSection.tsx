@@ -17,6 +17,32 @@ export function formatDate(iso: string): string {
   }
 }
 
+export function formatDateShort(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString('es-PE', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  } catch {
+    return iso;
+  }
+}
+
+export function formatDateTime(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString('es-PE', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return iso;
+  }
+}
+
 function getRemainingTimeMessage(deadline: string): {
   message: string;
   isPast: boolean;
@@ -36,21 +62,6 @@ function getRemainingTimeMessage(deadline: string): {
     message: `Tiempo restante: ${days} día${days !== 1 ? 's' : ''}, ${hours} hora${hours !== 1 ? 's' : ''}`,
     isPast: false,
   };
-}
-
-const PHASE_GUIDANCE: Record<number, string> = {
-  3: 'El pedido está en su fase final. Revisá los detalles de finalización y el resumen del timeline.',
-};
-
-function GuidanceBanner({ phase }: { phase: number }) {
-  const text = PHASE_GUIDANCE[phase];
-  if (!text) return null;
-  return (
-    <div className={styles.guidanceBanner}>
-      <AlertCircle size={16} className={styles.guidanceIcon} />
-      <p className={styles.guidanceText}>{text}</p>
-    </div>
-  );
 }
 
 function Phase3Countdown({ deadline }: { deadline: string }) {
@@ -82,48 +93,139 @@ interface TimelineItem {
   done: boolean;
 }
 
-function Phase3Completed({
+const PAYMENT_METHOD_MAP: Record<string, string> = {
+  card: 'Tarjeta de Crédito/Débito',
+  yape: 'Yape',
+  plin: 'Plin',
+};
+
+function getDurationDays(from: string, to: string): number {
+  const fromMs = new Date(from).getTime();
+  const toMs = new Date(to).getTime();
+  const diffMs = toMs - fromMs;
+  const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
+  return Math.max(days, 0);
+}
+
+function getTimelineItems(
+  shippingType: string | null,
+  createdAt: string,
+  completedAt: string | null,
+): TimelineItem[] {
+  const isDelivery = shippingType !== 'recojo';
+
+  if (isDelivery) {
+    return [
+      { label: 'Creado', date: createdAt, done: true },
+      { label: 'Pagado', date: null, done: true },
+      { label: 'Validado', date: null, done: true },
+      { label: 'En Reparto', date: null, done: true },
+      { label: 'Entregado', date: null, done: true },
+      { label: 'Completado', date: completedAt, done: !!completedAt },
+    ];
+  }
+
+  return [
+    { label: 'Creado', date: createdAt, done: true },
+    { label: 'Pagado', date: null, done: true },
+    { label: 'Recojo', date: null, done: true },
+    { label: 'Completado', date: completedAt, done: !!completedAt },
+  ];
+}
+
+function CompletedOrderSummary({
   completedAt,
   createdAt,
+  orderNumber,
+  productTitle,
+  amount,
+  currency,
+  paymentMethod,
+  shippingType,
+  maskedDni,
 }: {
   completedAt: string | null;
   createdAt: string;
+  orderNumber: string | null;
+  productTitle: string;
+  amount: string;
+  currency: string;
+  paymentMethod: string;
+  shippingType: string | null;
+  maskedDni: string;
 }) {
-  const timelineItems: TimelineItem[] = [
-    { label: 'Creado', date: createdAt, done: true },
-    { label: 'Pagado', date: null, done: true },
-    { label: 'Validado', date: null, done: true },
-    { label: 'En Reparto', date: null, done: true },
-    { label: 'Entregado', date: null, done: true },
-    { label: 'Completado', date: completedAt, done: !!completedAt },
-  ];
+  const duration = completedAt ? getDurationDays(createdAt, completedAt) : 0;
+  const timelineItems = getTimelineItems(shippingType, createdAt, completedAt);
 
   return (
     <>
-      <div className={styles.permanentSeal}>
-        <div className={styles.sealIconWrapper}>
-          <CheckCircle size={20} />
-        </div>
-        <div className={styles.sealText}>
-          <strong>Pedido Finalizado</strong>
-          <span>Esta operación ha sido completada exitosamente.</span>
-          {completedAt && <span className={styles.sealDate}>{formatDate(completedAt)}</span>}
-        </div>
-      </div>
-      <div className={styles.timelineContainer}>
-        {timelineItems.map((item, i) => (
-          <div key={i} className={styles.timelineItem}>
-            <div
-              className={`${styles.timelineDot} ${
-                item.done ? styles.timelineDotCompleted : styles.timelineDotMuted
-              }`}
-            />
-            <div className={styles.timelineContent}>
-              <span className={styles.timelineLabel}>{item.label}</span>
-              {item.date && <span className={styles.timelineDate}>{formatDate(item.date)}</span>}
-            </div>
+      <div className={styles.completedCard}>
+        {/* Header */}
+        <div className={styles.completedHeader}>
+          <div className={styles.completedSeal}>
+            <CheckCircle size={22} />
           </div>
-        ))}
+          <div className={styles.completedHeaderText}>
+            <span className={styles.completedTitle}>¡Pedido Finalizado!</span>
+            {orderNumber && <span className={styles.completedOrderNo}>N° {orderNumber}</span>}
+          </div>
+          {completedAt && (
+            <span className={styles.completedDuration}>
+              {duration} día{duration !== 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+
+        {/* Timeline — hero section */}
+        <div className={styles.heroTimeline}>
+          {timelineItems.map((item, i) => (
+            <div key={i} className={styles.heroTimelineRow}>
+              <div
+                className={`${styles.heroTimelineDot} ${
+                  item.done ? styles.heroTimelineDotDone : styles.heroTimelineDotMuted
+                }`}
+              >
+                {item.done && <CheckCircle size={14} />}
+              </div>
+              <span className={styles.heroTimelineLabel}>{item.label}</span>
+              <span className={styles.heroTimelineSpacer} />
+              <span className={styles.heroTimelineDate}>
+                {item.date
+                  ? item.label === 'Creado' || item.label === 'Completado'
+                    ? formatDateTime(item.date)
+                    : formatDateShort(item.date)
+                  : '✓'}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Order summary — compact */}
+        <div className={styles.summaryGrid}>
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>Producto</span>
+            <span className={styles.summaryValue}>{productTitle}</span>
+          </div>
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>Monto</span>
+            <span className={styles.summaryValue}>
+              {new Intl.NumberFormat('es-PE', {
+                style: 'currency',
+                currency,
+              }).format(Number(amount))}
+            </span>
+          </div>
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>Pago</span>
+            <span className={styles.summaryValue}>
+              {PAYMENT_METHOD_MAP[paymentMethod] || paymentMethod}
+            </span>
+          </div>
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>Comprador</span>
+            <span className={styles.summaryValue}>{maskedDni}</span>
+          </div>
+        </div>
       </div>
     </>
   );
@@ -134,6 +236,13 @@ interface PhaseCompletionSectionOrderItem {
   finalizationDeadline: string | null;
   completedAt: string | null;
   createdAt: string;
+  orderNumber: string | null;
+  productTitle: string;
+  amount: string;
+  currency: string;
+  paymentMethod: string;
+  shippingType: string | null;
+  maskedDni: string;
 }
 
 interface PhaseCompletionSectionProps {
@@ -145,13 +254,22 @@ export default function PhaseCompletionSection({ order }: PhaseCompletionSection
 
   return (
     <>
-      <GuidanceBanner phase={3} />
       <section className={styles.infoSection}>
         {(status === 'esperando_confirmacion' || status === 'DELIVERED') &&
         order.finalizationDeadline ? (
           <Phase3Countdown deadline={order.finalizationDeadline} />
         ) : status === 'completed' || status === 'finalizado' || status === 'COMPLETED' ? (
-          <Phase3Completed completedAt={order.completedAt} createdAt={order.createdAt} />
+          <CompletedOrderSummary
+            completedAt={order.completedAt}
+            createdAt={order.createdAt}
+            orderNumber={order.orderNumber}
+            productTitle={order.productTitle}
+            amount={order.amount}
+            currency={order.currency}
+            paymentMethod={order.paymentMethod}
+            shippingType={order.shippingType}
+            maskedDni={order.maskedDni}
+          />
         ) : (
           <div className={styles.fallbackContainer}>
             <Icon size={24}>lock</Icon>

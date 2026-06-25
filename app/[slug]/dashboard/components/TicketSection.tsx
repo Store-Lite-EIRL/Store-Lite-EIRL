@@ -7,12 +7,14 @@ import { Button } from '@/shared/components/ui/buttons/Button';
 import {
   AlertTriangle,
   CheckCircle,
+  Clock,
   FileText,
   RefreshCw,
   Send,
   Truck,
   Upload,
   X,
+  XCircle,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRef } from 'react';
@@ -164,23 +166,24 @@ export default function TicketSection({
             />
           </div>
 
-          <div className={styles.ticketInfo}>
+          <div
+            className={`${styles.confirmStatus} ${isDisputed ? styles.confirmRejected : isInValidando ? styles.confirmPending : styles.confirmDone}`}
+          >
             {isDisputed ? (
-              <span className={styles.ticketStatusInfo}>
-                El cliente rechazó este ticket — subí uno nuevo
-              </span>
+              <>
+                <XCircle size={20} />
+                <span>Rechazado por el comprador</span>
+              </>
             ) : isInValidando ? (
-              <span className={styles.ticketStatusInfo}>Esperando validación del cliente</span>
-            ) : isEnReparto ? (
-              <span className={styles.ticketStatusInfo}>
-                Pedido en reparto — el cliente confirmará recepción
-              </span>
-            ) : isDelivered ? (
-              <span className={styles.ticketStatusInfo}>
-                Cliente confirmó el ticket — pedido listo para enviar
-              </span>
+              <>
+                <Clock size={20} />
+                <span>Pendiente de confirmación del comprador</span>
+              </>
             ) : (
-              <span className={styles.ticketStatusInfo}>Ticket subido correctamente</span>
+              <>
+                <CheckCircle size={20} />
+                <span>Confirmado por el comprador</span>
+              </>
             )}
           </div>
 

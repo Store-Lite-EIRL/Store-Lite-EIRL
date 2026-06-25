@@ -78,9 +78,13 @@ export async function transition(
 
     // 3. Validate transition via state machine (skip if same-status, e.g. re-uploading ticket)
     if (fromStatus !== input.toStatus) {
+      // Inject DB-level shippingType into validation — caller cannot fake it
       const validation = validateTransitionFull(fromStatus, input.toStatus, {
         actor: input.actor,
-        preconditions: input.preconditions,
+        preconditions: {
+          ...input.preconditions,
+          shippingType: payment.shippingType,
+        },
       });
 
       if (!validation.valid) {
@@ -107,11 +111,23 @@ export async function transition(
       ...input.extraFields, // merge caller-provided extra fields (e.g. ticketImageUrl)
     };
 
-    // Pre-hook: generate pickup code when transitioning to IN_TRANSIT
-    if (input.toStatus === ORDER_STATUS_V2.IN_TRANSIT) {
+    // Pre-hook: generate pickup code for pickup orders on READY_FOR_PICKUP
+    if (input.toStatus === ORDER_STATUS_V2.READY_FOR_PICKUP) {
       const code = generatePickupCode();
       updateData.pickupCode = code;
       metadata.pickupCode = code;
+    }
+
+    // Pre-hook: generate pickup code for delivery orders on IN_TRANSIT (unchanged for non-pickup)
+    if (input.toStatus === ORDER_STATUS_V2.IN_TRANSIT && payment.shippingType !== 'recojo') {
+      const code = generatePickupCode();
+      updateData.pickupCode = code;
+      metadata.pickupCode = code;
+    }
+
+    // Pre-hook: set completedAt when the order is finalized
+    if (input.toStatus === ORDER_STATUS_V2.COMPLETED) {
+      updateData.completedAt = new Date();
     }
 
     // Pre-hook: set courier/tracking info when transitioning to WAITING_CUSTOMER_CONFIRMATION
@@ -169,6 +185,8 @@ function mapTransitionToEvent(from: OrderStatusV2, to: OrderStatusV2): OrderTime
   if (to === ORDER_STATUS_V2.IN_TRANSIT) return 'ORDER_IN_TRANSIT';
   if (to === ORDER_STATUS_V2.DELIVERED) return 'ORDER_DELIVERED';
   if (to === ORDER_STATUS_V2.COMPLETED) return 'ORDER_COMPLETED';
+  if (to === ORDER_STATUS_V2.READY_FOR_PICKUP) return 'ORDER_READY_FOR_PICKUP';
+  if (to === ORDER_STATUS_V2.PICKED_UP) return 'ORDER_PICKED_UP';
 
   // Issue flow
   if (to === ORDER_STATUS_V2.ISSUE_REPORTED) return 'CUSTOMER_REPORTED_ISSUE';

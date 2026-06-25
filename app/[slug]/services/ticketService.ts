@@ -28,7 +28,17 @@ export async function generateTicketBlob(ref: RefObject<HTMLDivElement | null>):
     skipFonts: true,
     quality: 0.95,
   });
-  return fetch(dataUrl).then((r) => r.blob());
+  // Convert data URL to Blob without fetch() to avoid CSP connect-src violations.
+  // fetch() on a data: URL is blocked by restrictive CSPs; atob + Uint8Array is purely in-memory.
+  const [header, base64] = dataUrl.split(',');
+  const mimeMatch = header.match(/:(.*?);/);
+  const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new Blob([bytes], { type: mime });
 }
 
 /**

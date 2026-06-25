@@ -48,6 +48,7 @@ const TRANSITION_MATRIX: Record<OrderStatusV2, TransitionConfig> = {
     to: [
       ORDER_STATUS_V2.PREPARING_ORDER,
       ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION,
+      ORDER_STATUS_V2.READY_FOR_PICKUP,
       ORDER_STATUS_V2.CANCELLED,
     ],
     allowedActors: ['system', 'customer', 'seller'],
@@ -56,6 +57,7 @@ const TRANSITION_MATRIX: Record<OrderStatusV2, TransitionConfig> = {
     to: [
       ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION,
       ORDER_STATUS_V2.DELIVERED, // migration path: legacy 'aceptado' → finalization
+      ORDER_STATUS_V2.READY_FOR_PICKUP, // T15 — seller marks as ready for pickup
       ORDER_STATUS_V2.SELLER_TIMEOUT,
       ORDER_STATUS_V2.CANCELLED,
     ],
@@ -78,6 +80,22 @@ const TRANSITION_MATRIX: Record<OrderStatusV2, TransitionConfig> = {
   [ORDER_STATUS_V2.DELIVERED]: {
     to: [ORDER_STATUS_V2.COMPLETED, ORDER_STATUS_V2.ISSUE_REPORTED],
     allowedActors: ['system', 'customer'],
+  },
+  [ORDER_STATUS_V2.READY_FOR_PICKUP]: {
+    to: [
+      ORDER_STATUS_V2.PICKED_UP, // T16 — seller confirms customer picked up
+      ORDER_STATUS_V2.CANCELLED,
+      ORDER_STATUS_V2.ISSUE_REPORTED,
+    ],
+    allowedActors: ['seller', 'customer', 'system'],
+  },
+  [ORDER_STATUS_V2.PICKED_UP]: {
+    to: [
+      ORDER_STATUS_V2.COMPLETED, // T17 — system auto-completes after 72h
+      ORDER_STATUS_V2.CANCELLED,
+      ORDER_STATUS_V2.ISSUE_REPORTED,
+    ],
+    allowedActors: ['system', 'seller'],
   },
   [ORDER_STATUS_V2.COMPLETED]: {
     to: [],
@@ -160,6 +178,17 @@ export function validateTransitionFull(
 ): ValidationResult {
   const base = validateTransition(from, to, input.actor.type);
   if (!base.valid) return base;
+
+  // Shipping type gate: pickup statuses only valid for recojo orders
+  if (
+    (to === ORDER_STATUS_V2.READY_FOR_PICKUP || to === ORDER_STATUS_V2.PICKED_UP) &&
+    input.preconditions?.shippingType !== 'recojo'
+  ) {
+    return {
+      valid: false,
+      error: 'Pickup statuses require shippingType = "recojo"',
+    };
+  }
 
   // Actor-specific preconditions
   if (to === ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION && input.actor.type === 'seller') {

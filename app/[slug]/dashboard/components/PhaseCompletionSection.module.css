@@ -1,27 +1,3 @@
-/* ── Guidance Banner ── */
-.guidanceBanner {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  margin: 0 1rem 1rem;
-  border-radius: 12px;
-  background: var(--md-sys-color-surface-container-low);
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: var(--md-sys-color-on-surface-variant);
-}
-
-.guidanceIcon {
-  flex-shrink: 0;
-  margin-top: 2px;
-  opacity: 0.7;
-}
-
-.guidanceText {
-  margin: 0;
-}
-
 /* ── Section Layout ── */
 .infoSection {
   margin-bottom: 0;
@@ -74,98 +50,145 @@
   vertical-align: middle;
 }
 
-/* ── Permanent Seal (completed) ── */
-.permanentSeal {
+/* ── Completed Card (unified container) ── */
+.completedCard {
+  background: var(--md-sys-color-surface-container-lowest);
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+  overflow: hidden;
+}
+
+/* ── Header ── */
+.completedHeader {
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1.25rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
   background: var(--md-sys-color-primary-container);
-  border-radius: 16px;
   color: var(--md-sys-color-on-primary-container);
 }
 
-.sealIconWrapper {
+.completedSeal {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 15%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.sealIconWrapper svg {
+.completedHeaderText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.completedTitle {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.completedOrderNo {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.completedDuration {
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+/* ── Hero Timeline ── */
+.heroTimeline {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.heroTimelineRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 12px;
+  transition: background 0.15s;
+}
+
+.heroTimelineRow:hover {
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.heroTimelineDot {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heroTimelineDotDone {
+  background: var(--md-sys-color-primary-container);
   color: var(--md-sys-color-on-primary-container);
 }
 
-.sealText {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  font-size: 0.85rem;
+.heroTimelineDotMuted {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
-.sealText strong {
+.heroTimelineLabel {
+  font-size: 0.9375rem;
   font-weight: 700;
+  color: var(--md-sys-color-on-surface);
 }
 
-.sealText span {
-  opacity: 0.85;
-}
-
-.sealDate {
-  font-size: 0.75rem;
-  opacity: 0.6;
-  margin-top: 0.25rem;
-}
-
-/* ── Timeline ── */
-.timelineContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem;
-}
-
-.timelineItem {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-}
-
-.timelineDot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-top: 5px;
-  flex-shrink: 0;
-}
-
-.timelineDotCompleted {
-  background: var(--md-sys-color-primary);
-}
-
-.timelineDotMuted {
-  background: var(--md-sys-color-outline-variant);
-}
-
-.timelineContent {
+.heroTimelineSpacer {
   flex: 1;
+  min-width: 0.5rem;
 }
 
-.timelineLabel {
+.heroTimelineDate {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+  white-space: nowrap;
+}
+
+/* ── Summary Grid ── */
+.summaryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 50%, transparent);
+  padding: 1rem 1.5rem;
+}
+
+.summaryItem {
+  padding: 0.5rem 0;
+}
+
+.summaryLabel {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--md-sys-color-outline);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.15rem;
+}
+
+.summaryValue {
+  display: block;
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--md-sys-color-on-surface);
-  display: block;
-}
-
-.timelineDate {
-  font-size: 0.75rem;
-  color: var(--md-sys-color-on-surface-variant);
-  display: block;
 }
 
 /* ── Fallback ── */

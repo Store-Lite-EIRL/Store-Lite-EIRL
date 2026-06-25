@@ -9,7 +9,11 @@ import PhaseCompletionSection from '../../app/[slug]/dashboard/components/PhaseC
 // ── Mocks ────────────────────────────────────────────
 
 vi.mock('@/shared', () => ({
-  Icon: ({ children, ...props }: any) => <span data-testid="shared-icon" {...props}>{children}</span>,
+  Icon: ({ children, ...props }: any) => (
+    <span data-testid="shared-icon" {...props}>
+      {children}
+    </span>
+  ),
 }));
 
 vi.mock('lucide-react', () => ({
@@ -26,6 +30,13 @@ function createMockOrder(overrides: Record<string, any> = {}) {
     finalizationDeadline: null,
     completedAt: null,
     createdAt: new Date('2026-06-01').toISOString(),
+    orderNumber: 'ORD-001',
+    productTitle: 'Producto de prueba',
+    amount: '150.00',
+    currency: 'PEN',
+    paymentMethod: 'yape',
+    shippingType: 'domicilio',
+    maskedDni: '***1234',
     ...overrides,
   };
 }
@@ -33,12 +44,10 @@ function createMockOrder(overrides: Record<string, any> = {}) {
 // ── Tests ────────────────────────────────────────────
 
 describe('PhaseCompletionSection', () => {
-  test('renders guidance banner for phase 3', () => {
+  test('does not render guidance banner after removal', () => {
     render(<PhaseCompletionSection order={createMockOrder()} />);
 
-    expect(
-      screen.getByText(/El pedido está en su fase final/)
-    ).toBeInTheDocument();
+    expect(screen.queryByText(/El pedido está en su fase final/)).not.toBeInTheDocument();
   });
 
   test('shows countdown when pending with finalizationDeadline', () => {
@@ -48,7 +57,7 @@ describe('PhaseCompletionSection', () => {
           status: 'esperando_confirmacion',
           finalizationDeadline: new Date('2026-07-01T12:00:00Z').toISOString(),
         })}
-      />
+      />,
     );
 
     expect(screen.getByText(/Tiempo restante/)).toBeInTheDocument();
@@ -61,7 +70,7 @@ describe('PhaseCompletionSection', () => {
           status: 'DELIVERED',
           finalizationDeadline: new Date('2026-07-01T12:00:00Z').toISOString(),
         })}
-      />
+      />,
     );
 
     expect(screen.getByText(/Tiempo restante/)).toBeInTheDocument();
@@ -74,11 +83,24 @@ describe('PhaseCompletionSection', () => {
           status: 'completed',
           completedAt: new Date('2026-06-15').toISOString(),
         })}
-      />
+      />,
     );
 
-    expect(screen.getByText('Pedido Finalizado')).toBeInTheDocument();
+    // Header
+    expect(screen.getByText('¡Pedido Finalizado!')).toBeInTheDocument();
+    expect(screen.getByText('14 días')).toBeInTheDocument();
+
+    // Summary grid
+    expect(screen.getByText('Producto de prueba')).toBeInTheDocument();
+    expect(screen.getByText('Yape')).toBeInTheDocument();
+    expect(screen.getByText('***1234')).toBeInTheDocument();
+
+    // Timeline
     expect(screen.getByText('Creado')).toBeInTheDocument();
+    expect(screen.getByText('Pagado')).toBeInTheDocument();
+    expect(screen.getByText('Validado')).toBeInTheDocument();
+    expect(screen.getByText('En Reparto')).toBeInTheDocument();
+    expect(screen.getByText('Entregado')).toBeInTheDocument();
     expect(screen.getByText('Completado')).toBeInTheDocument();
   });
 
@@ -89,18 +111,14 @@ describe('PhaseCompletionSection', () => {
           status: 'COMPLETED',
           completedAt: new Date('2026-06-15').toISOString(),
         })}
-      />
+      />,
     );
 
-    expect(screen.getByText('Pedido Finalizado')).toBeInTheDocument();
+    expect(screen.getByText('¡Pedido Finalizado!')).toBeInTheDocument();
   });
 
   test('shows locked message for inactive phase 3', () => {
-    render(
-      <PhaseCompletionSection
-        order={createMockOrder({ status: 'paid' })}
-      />
-    );
+    render(<PhaseCompletionSection order={createMockOrder({ status: 'paid' })} />);
 
     expect(screen.getByText(/estará disponible/)).toBeInTheDocument();
   });
@@ -113,7 +131,7 @@ describe('PhaseCompletionSection', () => {
           completedAt: new Date('2026-06-15').toISOString(),
           createdAt: new Date('2026-06-01').toISOString(),
         })}
-      />
+      />,
     );
 
     expect(screen.getByText('Creado')).toBeInTheDocument();
@@ -122,5 +140,28 @@ describe('PhaseCompletionSection', () => {
     expect(screen.getByText('En Reparto')).toBeInTheDocument();
     expect(screen.getByText('Entregado')).toBeInTheDocument();
     expect(screen.getByText('Completado')).toBeInTheDocument();
+  });
+
+  test('shows pickup-specific timeline for recojo orders', () => {
+    render(
+      <PhaseCompletionSection
+        order={createMockOrder({
+          status: 'completed',
+          completedAt: new Date('2026-06-15').toISOString(),
+          shippingType: 'recojo',
+        })}
+      />,
+    );
+
+    // Pickup timeline (4 items — no delivery-specific ones)
+    expect(screen.getByText('Recojo')).toBeInTheDocument();
+    expect(screen.getByText('Creado')).toBeInTheDocument();
+    expect(screen.getByText('Pagado')).toBeInTheDocument();
+    expect(screen.getByText('Completado')).toBeInTheDocument();
+
+    // MUST NOT have delivery-specific items
+    expect(screen.queryByText('En Reparto')).not.toBeInTheDocument();
+    expect(screen.queryByText('Entregado')).not.toBeInTheDocument();
+    expect(screen.queryByText('Validado')).not.toBeInTheDocument();
   });
 });

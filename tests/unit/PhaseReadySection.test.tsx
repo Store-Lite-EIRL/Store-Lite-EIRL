@@ -14,7 +14,9 @@ vi.mock('next/image', () => ({
 
 vi.mock('next/link', () => ({
   default: ({ children, href, ...props }: any) => (
-    <a href={href} {...props}>{children}</a>
+    <a href={href} {...props}>
+      {children}
+    </a>
   ),
 }));
 
@@ -89,14 +91,6 @@ const defaultProps = {
 // ── Tests ────────────────────────────────────────────
 
 describe('PhaseReadySection', () => {
-  test('renders guidance banner for phase 0', () => {
-    render(<PhaseReadySection order={createMockOrder()} {...defaultProps} />);
-
-    expect(
-      screen.getByText(/Revisá los datos del pedido y prepará el producto/)
-    ).toBeInTheDocument();
-  });
-
   test('renders buyer and product section', () => {
     render(<PhaseReadySection order={createMockOrder()} {...defaultProps} />);
 
@@ -116,10 +110,7 @@ describe('PhaseReadySection', () => {
 
   test('renders card payment method', () => {
     render(
-      <PhaseReadySection
-        order={createMockOrder({ paymentMethod: 'card' })}
-        {...defaultProps}
-      />
+      <PhaseReadySection order={createMockOrder({ paymentMethod: 'card' })} {...defaultProps} />,
     );
 
     expect(screen.getByText('Tarjeta de Crédito/Débito')).toBeInTheDocument();
@@ -139,7 +130,7 @@ describe('PhaseReadySection', () => {
           shippingReference: 'Cerca al parque',
         })}
         {...defaultProps}
-      />
+      />,
     );
 
     expect(screen.getByText('Datos del Envío')).toBeInTheDocument();
@@ -159,7 +150,7 @@ describe('PhaseReadySection', () => {
           shippingProvince: null,
         })}
         {...defaultProps}
-      />
+      />,
     );
 
     expect(screen.getByText('Recojo en tienda')).toBeInTheDocument();

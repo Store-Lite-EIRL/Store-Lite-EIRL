@@ -2,7 +2,7 @@
 
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
-import { chatSessions, messages, payments } from '@/core/database/schema';
+import { chatSessions, messages, payments, profiles } from '@/core/database/schema';
 import { transition } from '@/core/orders/orderService';
 import {
   CONFIRMABLE_STATUSES,
@@ -11,8 +11,42 @@ import {
   ORDER_STATUS_V2,
 } from '@/core/orders/orderStatus';
 import { createBusinessNotification } from '@/lib/notifications';
+import { createClient as createServerClient } from '@/lib/supabase/server';
 import { and, desc, eq, lt } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+
+async function getAuthenticatedUserId(): Promise<string | null> {
+  try {
+    const supabase = await createServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    // Ensure profile exists to satisfy FK constraints on order_timeline_events
+    const existingProfile = await db.query.profiles.findFirst({
+      where: eq(profiles.id, user.id),
+    });
+
+    if (!existingProfile) {
+      console.warn('[getAuthenticatedUserId] Profile missing, auto-creating for user:', user.id);
+      await db.insert(profiles).values({
+        id: user.id,
+        email: user.email ?? '',
+        fullName:
+          user.user_metadata?.full_name ??
+          user.user_metadata?.name ??
+          user.email?.split('@')[0] ??
+          'Unknown User',
+        avatarUrl: user.user_metadata?.avatar_url ?? null,
+      });
+    }
+
+    return user.id;
+  } catch {
+    return null;
+  }
+}
 
 // =====================================================
 // TYPES
@@ -113,12 +147,13 @@ export async function requestFinalization(
     const expectedVersion = (payment as { version?: number }).version ?? 0;
 
     if (env.orderFlowV2) {
+      const actorId = await getAuthenticatedUserId();
       const result = await transition({
         paymentId,
         // In legacy flow, requestFinalization moves to 'not_delivered' which maps to DELIVERED.
         // In V2, this means the seller confirms the order was delivered to the customer.
         toStatus: ORDER_STATUS_V2.DELIVERED,
-        actor: { type: 'seller', id: businessId },
+        actor: { type: 'seller', id: actorId ?? undefined },
         expectedVersion,
         extraFields: { finalizationRequestedAt: now, finalizationDeadline: deadline },
       });

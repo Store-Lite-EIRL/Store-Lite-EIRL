@@ -29,7 +29,13 @@ vi.mock('@/shared/components/ui/buttons/Button', () => ({
 }));
 
 vi.mock('../../app/[slug]/dashboard/components/ShippingSection', () => ({
-  default: () => <div data-testid="shipping-section">ShippingSection Mock</div>,
+  default: ({ order }: any) => (
+    <div data-testid="shipping-section">
+      {order?.courierName && <span>{order.courierName}</span>}
+      {order?.trackingNumber && <span>{order.trackingNumber}</span>}
+      {order?.pickupCode && <span>{order.pickupCode}</span>}
+    </div>
+  ),
 }));
 
 // ── Fixtures ─────────────────────────────────────────
@@ -41,6 +47,12 @@ function createMockOrder(overrides: Record<string, any> = {}) {
     courierName: 'Shalom',
     trackingNumber: 'TRK-123',
     pickupCode: 'PC-456',
+    shippingType: null,
+    shippingAgency: null,
+    shippingDistrict: null,
+    shippingProvince: null,
+    shippingAddress: null,
+    shippingReference: null,
     ...overrides,
   };
 }
@@ -55,28 +67,9 @@ const defaultProps = {
 // ── Tests ────────────────────────────────────────────
 
 describe('PhaseShippingSection', () => {
-  test('renders guidance banner for phase 2', () => {
-    render(
-      <PhaseShippingSection
-        order={createMockOrder()}
-        {...defaultProps}
-      />
-    );
+  test('renders shipping section with courier info', () => {
+    render(<PhaseShippingSection order={createMockOrder()} {...defaultProps} />);
 
-    expect(
-      screen.getByText(/Seguí el estado del envío/)
-    ).toBeInTheDocument();
-  });
-
-  test('renders shipping section and courier info', () => {
-    render(
-      <PhaseShippingSection
-        order={createMockOrder()}
-        {...defaultProps}
-      />
-    );
-
-    expect(screen.getByText('Seguimiento de Envío')).toBeInTheDocument();
     expect(screen.getByTestId('shipping-section')).toBeInTheDocument();
     expect(screen.getByText('Shalom')).toBeInTheDocument();
     expect(screen.getByText('TRK-123')).toBeInTheDocument();
@@ -85,10 +78,7 @@ describe('PhaseShippingSection', () => {
 
   test('shows Notificar Llegada for IN_TRANSIT status', () => {
     render(
-      <PhaseShippingSection
-        order={createMockOrder({ status: 'IN_TRANSIT' })}
-        {...defaultProps}
-      />
+      <PhaseShippingSection order={createMockOrder({ status: 'IN_TRANSIT' })} {...defaultProps} />,
     );
 
     expect(screen.getByText('Notificar Llegada')).toBeInTheDocument();
@@ -99,19 +89,14 @@ describe('PhaseShippingSection', () => {
       <PhaseShippingSection
         order={createMockOrder({ status: 'READY_TO_SHIP' })}
         {...defaultProps}
-      />
+      />,
     );
 
     expect(screen.getByText('Notificar Entrega')).toBeInTheDocument();
   });
 
   test('does not show any notify button for unrelated status', () => {
-    render(
-      <PhaseShippingSection
-        order={createMockOrder({ status: 'paid' })}
-        {...defaultProps}
-      />
-    );
+    render(<PhaseShippingSection order={createMockOrder({ status: 'paid' })} {...defaultProps} />);
 
     expect(screen.queryByText('Notificar Entrega')).not.toBeInTheDocument();
     expect(screen.queryByText('Notificar Llegada')).not.toBeInTheDocument();

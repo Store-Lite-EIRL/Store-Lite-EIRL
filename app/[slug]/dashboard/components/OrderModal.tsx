@@ -2,21 +2,26 @@
 
 import { requestFinalization } from '@/features/dashboard/actions/finalizationActions';
 import {
+  confirmPickedUp,
+  markReadyForPickup,
   notifyDelivery,
   uploadTicketAndUpdatePayment,
   type UploadTicketResult,
 } from '@/features/dashboard/actions/ticketActions';
 import type { OrderItem } from '@/lib/types/orderStatus';
 import { URBANO_STATUS_MAP } from '@/lib/types/orderStatus';
-import { Icon } from '@/shared';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { IconButton } from '@/shared/components/ui/buttons/IconButton';
-import { Calendar, HelpCircle, RefreshCw, ShoppingBag, X } from 'lucide-react';
+import { Calendar, HelpCircle, Info, RefreshCw, ShoppingBag, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import HelpPanel from './HelpPanel';
 import styles from './OrderModal.module.css';
 import PhaseContent from './PhaseContent';
-import SellerPhaseGuide, { getSellerPhase } from './SellerPhaseGuide';
+import SellerPhaseGuide, {
+  getSellerPhase,
+  PICKUP_SELLER_PHASES,
+  SELLER_PHASES,
+} from './SellerPhaseGuide';
 
 interface ConfirmAction {
   open: boolean;
@@ -50,6 +55,10 @@ export default function OrderModal({
   const [isEditingTicket, setIsEditingTicket] = useState(false);
   const [notifyingDelivery, setNotifyingDelivery] = useState(false);
   const [finalizingOrder, setFinalizingOrder] = useState(false);
+  const [markingReady, setMarkingReady] = useState(false);
+  const [confirmingPickup, setConfirmingPickup] = useState(false);
+  const [pickupCodeInput, setPickupCodeInput] = useState('');
+  const [codeError, setCodeError] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>({ open: false, action: null });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,6 +67,9 @@ export default function OrderModal({
     className: '',
     lucideIcon: RefreshCw,
   };
+
+  const isStorePickup = order.shippingType?.toLowerCase() === 'recojo';
+  const phaseConfig = isStorePickup ? PICKUP_SELLER_PHASES : SELLER_PHASES;
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -73,8 +85,12 @@ export default function OrderModal({
     setUploading(false);
     setIsEditingTicket(false);
     setNotifyingDelivery(false);
+    setMarkingReady(false);
+    setConfirmingPickup(false);
+    setPickupCodeInput('');
+    setCodeError(null);
     setActiveTab('detalles');
-    setSelectedPhase(getSellerPhase(order.status).currentPhase);
+    setSelectedPhase(getSellerPhase(order.status, order.shippingType).currentPhase);
   }, [order.id, order.status]);
 
   const handleTicketFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,6 +167,48 @@ export default function OrderModal({
     }
   };
 
+  const handleMarkReadyForPickup = async () => {
+    setMarkingReady(true);
+    try {
+      const result = await markReadyForPickup(order.id, order.businessId);
+      if (result.success) {
+        onOrderUpdate({ ...order, status: 'READY_FOR_PICKUP' as any });
+      } else {
+        alert(result.error || 'Error al marcar como listo para recojo');
+      }
+    } catch {
+      alert('Error inesperado');
+    } finally {
+      setMarkingReady(false);
+    }
+  };
+
+  const handleConfirmPickedUp = async () => {
+    if (!pickupCodeInput.trim()) return;
+    setConfirmingPickup(true);
+    setCodeError(null);
+    try {
+      const result = await confirmPickedUp(order.id, order.businessId, pickupCodeInput);
+      if (result.success) {
+        // If auto-complete succeeded, show COMPLETED; otherwise show PICKED_UP (auto-complete pending via cron)
+        const newStatus = result.autoCompletePending ? 'PICKED_UP' : 'COMPLETED';
+        onOrderUpdate({ ...order, status: newStatus as any });
+        setPickupCodeInput('');
+        if (result.autoCompletePending) {
+          setCodeError(
+            'El pedido pasó a Recogido. La finalización automática está pendiente (se completa en segundo plano).',
+          );
+        }
+      } else {
+        setCodeError(result.error || 'Error al confirmar el recojo');
+      }
+    } catch {
+      setCodeError('Error inesperado');
+    } finally {
+      setConfirmingPickup(false);
+    }
+  };
+
   const wrappedNotifyDelivery = () => {
     setConfirmAction({
       open: true,
@@ -206,57 +264,69 @@ export default function OrderModal({
           </div>
         </div>
         <SellerPhaseGuide
-          phases={getSellerPhase(String(order.status))}
+          phases={getSellerPhase(String(order.status), order.shippingType)}
           selectedPhase={selectedPhase}
           onSelect={(i) => {
             setSelectedPhase(i);
             if (activeTab === 'ayuda') setActiveTab('detalles');
           }}
+          phasesConfig={phaseConfig}
         />
         <div className={styles.modalTabs}>
           <button
             className={`${styles.tabButton} ${activeTab === 'detalles' ? styles.tabActive : ''}`}
             onClick={() => setActiveTab('detalles')}
           >
-            <Icon slot="icon" size={21}>
-              box_edit
-            </Icon>
+            <Info size={16} />
             Detalles
           </button>
           <button
             className={`${styles.tabButton} ${activeTab === 'ayuda' ? styles.tabActive : ''}`}
             onClick={() => setActiveTab('ayuda')}
           >
-            <HelpCircle size={16} /> Ayuda
+            <HelpCircle size={16} />
+            Ayuda
           </button>
         </div>
-        {activeTab === 'detalles' && (
-          <PhaseContent
-            order={order}
-            selectedPhase={selectedPhase}
-            businessSlug={businessSlug}
-            onNotifyDelivery={wrappedNotifyDelivery}
-            onFinalizeOrder={wrappedFinalizeOrder}
-            notifyingDelivery={notifyingDelivery}
-            finalizingOrder={finalizingOrder}
-            ticketFile={ticketFile}
-            ticketPreview={ticketPreview}
-            uploading={uploading}
-            uploadResult={uploadResult}
-            isEditingTicket={isEditingTicket}
-            onTicketFileSelect={handleTicketFileSelect}
-            onUploadTicket={handleUploadTicket}
-            onCancelUpload={handleCancelUpload}
-            onEditTicket={() => {
-              setIsEditingTicket(true);
-              setTicketPreview(null);
-              setTicketFile(null);
-              setUploadResult(null);
-              if (fileInputRef.current) fileInputRef.current.value = '';
-            }}
-          />
-        )}
-        {activeTab === 'ayuda' && <HelpPanel selectedPhase={selectedPhase} />}
+        <div className={styles.modalBody}>
+          {activeTab === 'detalles' && (
+            <PhaseContent
+              order={order}
+              selectedPhase={selectedPhase}
+              businessSlug={businessSlug}
+              shippingType={order.shippingType}
+              onNotifyDelivery={wrappedNotifyDelivery}
+              onFinalizeOrder={wrappedFinalizeOrder}
+              notifyingDelivery={notifyingDelivery}
+              finalizingOrder={finalizingOrder}
+              onMarkReadyForPickup={handleMarkReadyForPickup}
+              onConfirmPickedUp={handleConfirmPickedUp}
+              markingReady={markingReady}
+              confirmingPickup={confirmingPickup}
+              pickupCodeInput={pickupCodeInput}
+              onPickupCodeChange={setPickupCodeInput}
+              ticketFile={ticketFile}
+              codeError={codeError}
+              ticketPreview={ticketPreview}
+              uploading={uploading}
+              uploadResult={uploadResult}
+              isEditingTicket={isEditingTicket}
+              onTicketFileSelect={handleTicketFileSelect}
+              onUploadTicket={handleUploadTicket}
+              onCancelUpload={handleCancelUpload}
+              onEditTicket={() => {
+                setIsEditingTicket(true);
+                setTicketPreview(null);
+                setTicketFile(null);
+                setUploadResult(null);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+              }}
+            />
+          )}
+          {activeTab === 'ayuda' && (
+            <HelpPanel selectedPhase={selectedPhase} shippingType={order.shippingType} />
+          )}
+        </div>
         <footer className={styles.modalFooter}>
           <Button variant="filled" onClick={onClose}>
             Cerrar

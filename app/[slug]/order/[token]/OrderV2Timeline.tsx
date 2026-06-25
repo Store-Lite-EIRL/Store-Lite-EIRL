@@ -1,5 +1,7 @@
 import { db } from '@/core/database/client';
+import { orderEvents } from '@/core/database/schema';
 import { Icon } from '@/shared/components/ui';
+import { desc, eq } from 'drizzle-orm';
 
 interface Props {
   orderId: string;
@@ -36,6 +38,59 @@ function eventIcon(eventType: string): string {
   return 'circle';
 }
 
+// ─── Legacy status → display mappings ───
+const LEGACY_STATUS_LABELS: Record<string, string> = {
+  pending: 'Pedido registrado',
+  paid: 'Pago confirmado',
+  processing: 'Procesando pedido',
+  analizando: 'Pedido en análisis',
+  validando: 'Esperando confirmación de envío',
+  not_delivered: 'Pedido en espera de despacho',
+  aceptado: 'Vendedor aceptó el pedido',
+  delivered: 'Cliente confirmó el envío',
+  en_reparto: 'Pedido en reparto',
+  esperando_confirmacion: 'Esperando confirmación',
+  completed: 'Pedido finalizado',
+  finalizado: 'Pedido finalizado',
+  disputed: 'En disputa',
+  failed: 'Pedido fallido',
+  refund_requested: 'Reembolso solicitado',
+  refunded: 'Reembolsado',
+  cancelled: 'Pedido cancelado',
+  expired: 'Pedido expirado',
+  reported: 'Problema reportado',
+};
+
+const LEGACY_STATUS_ICONS: Record<string, string> = {
+  pending: 'shopping_cart',
+  paid: 'payments',
+  processing: 'inventory_2',
+  analizando: 'search',
+  validando: 'fact_check',
+  not_delivered: 'hourglass_top',
+  aceptado: 'check_circle',
+  delivered: 'check_circle',
+  en_reparto: 'local_shipping',
+  esperando_confirmacion: 'hourglass_empty',
+  completed: 'verified',
+  finalizado: 'verified',
+  disputed: 'gavel',
+  failed: 'error',
+  refund_requested: 'currency_exchange',
+  refunded: 'currency_exchange',
+  cancelled: 'cancel',
+  expired: 'timer_off',
+  reported: 'report_problem',
+};
+
+function legacyLabel(toStatus: string): string {
+  return LEGACY_STATUS_LABELS[toStatus] || `Estado: ${toStatus}`;
+}
+
+function legacyIcon(toStatus: string): string {
+  return LEGACY_STATUS_ICONS[toStatus] || 'circle';
+}
+
 /** Timeline event label in Spanish */
 function eventLabel(eventType: string): string {
   const labels: Record<string, string> = {
@@ -60,11 +115,42 @@ function eventLabel(eventType: string): string {
 }
 
 export default async function OrderV2Timeline({ orderId }: Props) {
-  const events = await db.query.orderTimelineEvents.findMany({
+  // Try V2 timeline events first
+  let events: { id: string; eventType: string; createdAt: Date; actor?: string }[] = [];
+  let useLegacy = false;
+
+  const v2Events = await db.query.orderTimelineEvents.findMany({
     where: (ev, { eq }) => eq(ev.orderId, orderId),
     orderBy: (ev, { desc }) => [desc(ev.createdAt)],
     limit: 20,
   });
+
+  if (v2Events.length > 0) {
+    events = v2Events.map((ev) => ({
+      id: ev.id,
+      eventType: ev.eventType,
+      createdAt: ev.createdAt,
+      actor: ev.actorType,
+    }));
+  } else {
+    // Fallback: try legacy order_events table
+    useLegacy = true;
+    const legacyEvents = await db
+      .select()
+      .from(orderEvents)
+      .where(eq(orderEvents.paymentId, orderId))
+      .orderBy(desc(orderEvents.createdAt))
+      .limit(20);
+
+    if (legacyEvents.length > 0) {
+      events = legacyEvents.map((ev) => ({
+        id: ev.id,
+        eventType: ev.toStatus,
+        createdAt: ev.createdAt,
+        actor: ev.triggeredBy ?? undefined,
+      }));
+    }
+  }
 
   if (events.length === 0) return null;
 
@@ -110,7 +196,7 @@ export default async function OrderV2Timeline({ orderId }: Props) {
               display: 'flex',
               gap: '12px',
               alignItems: 'flex-start',
-              opacity: i === 0 ? 1 : 0.6,
+              opacity: i === 0 ? 1 : 0.85,
             }}
           >
             {/* Icon + line */}
@@ -123,18 +209,20 @@ export default async function OrderV2Timeline({ orderId }: Props) {
                   background:
                     i === 0
                       ? 'var(--md-sys-color-primary-container)'
-                      : 'var(--md-sys-color-surface-container-high)',
+                      : 'var(--md-sys-color-secondary-container)',
                   color:
                     i === 0
                       ? 'var(--md-sys-color-on-primary-container)'
-                      : 'var(--md-sys-color-on-surface-variant)',
+                      : 'var(--md-sys-color-on-secondary-container)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <Icon size={16}>{eventIcon(ev.eventType)}</Icon>
+                <Icon size={16}>
+                  {useLegacy ? legacyIcon(ev.eventType) : eventIcon(ev.eventType)}
+                </Icon>
               </div>
               {i < events.length - 1 && (
                 <div
@@ -161,7 +249,7 @@ export default async function OrderV2Timeline({ orderId }: Props) {
                       : 'var(--md-sys-color-on-surface-variant)',
                 }}
               >
-                {eventLabel(ev.eventType)}
+                {useLegacy ? legacyLabel(ev.eventType) : eventLabel(ev.eventType)}
               </p>
               <p
                 style={{
@@ -172,6 +260,8 @@ export default async function OrderV2Timeline({ orderId }: Props) {
                 }}
               >
                 {fmt(ev.createdAt)}
+                {ev.actor &&
+                  ` · ${ev.actor === 'customer' ? 'Cliente' : ev.actor === 'seller' ? 'Vendedor' : 'Sistema'}`}
               </p>
             </div>
           </div>

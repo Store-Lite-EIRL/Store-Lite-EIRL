@@ -69,6 +69,11 @@ vi.mock('lucide-react', () => ({
     </span>
   ),
   HelpCircle: () => <span>HelpCircle</span>,
+  XCircle: ({ size }: any) => (
+    <span data-testid="icon-xcircle" data-size={size}>
+      XCircle
+    </span>
+  ),
 }));
 
 vi.mock('@/shared/components/ui/buttons/Button', () => ({

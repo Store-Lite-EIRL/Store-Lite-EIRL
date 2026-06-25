@@ -49,6 +49,20 @@ const TIMEOUT_RULES: TimeoutRule[] = [
     toStatus: ORDER_STATUS_V2.COMPLETED,
     hours: 72,
   },
+  {
+    label: 'pickup-auto-complete',
+    legacyStatus: ORDER_STATUS.EN_REPARTO,
+    v2Status: ORDER_STATUS_V2.READY_FOR_PICKUP,
+    toStatus: ORDER_STATUS_V2.COMPLETED,
+    hours: 168, // 7 days — unclaimed pickup auto-completes
+  },
+  {
+    label: 'picked-up-auto-complete',
+    legacyStatus: ORDER_STATUS.EN_REPARTO,
+    v2Status: ORDER_STATUS_V2.PICKED_UP,
+    toStatus: ORDER_STATUS_V2.COMPLETED,
+    hours: 72, // 3 days — after customer picked up, auto-complete
+  },
 ];
 
 // ─── Processor ───

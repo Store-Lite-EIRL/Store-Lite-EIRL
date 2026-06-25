@@ -175,7 +175,49 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
     }
   }
 
+  const isPickup = order.shippingType?.toLowerCase() === 'recojo';
+
   const getStep = () => {
+    if (isPickup) {
+      const V2_STEP_PICKUP: Record<string, number> = {
+        CREATED: 0,
+        PAID: 0,
+        PREPARING_ORDER: 0,
+        READY_FOR_PICKUP: 1,
+        PICKED_UP: 1,
+        COMPLETED: 2,
+        ISSUE_REPORTED: 0,
+        DISPUTE: 0,
+        SELLER_TIMEOUT: 2,
+        CANCELLED: 0,
+      };
+      if (order.status in V2_STEP_PICKUP) return V2_STEP_PICKUP[order.status];
+
+      const V1_STEP_PICKUP: Record<string, number> = {
+        pending: 0,
+        paid: 0,
+        processing: 0,
+        analizando: 0,
+        validando: 1,
+        aceptado: 1,
+        delivered: 1,
+        en_reparto: 1,
+        esperando_confirmacion: 1,
+        completed: 2,
+        finalizado: 2,
+        failed: 0,
+        disputed: 0,
+        refund_requested: 0,
+        refunded: 0,
+        rechazado: 0,
+        reported: 0,
+        expired: 0,
+        cancelled: 0,
+      };
+      if (order.status in V1_STEP_PICKUP) return V1_STEP_PICKUP[order.status];
+      return 0;
+    }
+
     // V2 step mapping (compressed to 5-step display)
     const V2_STEP: Record<string, number> = {
       CREATED: 0,
@@ -350,6 +392,21 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
       bgColor: 'var(--md-sys-color-surface-variant)',
       desc: 'Este pedido fue cancelado.',
     },
+    // ── Pickup statuses ──
+    READY_FOR_PICKUP: {
+      label: 'Listo para Recojo',
+      icon: 'storefront',
+      color: 'var(--md-sys-color-on-secondary-container)',
+      bgColor: 'var(--md-sys-color-secondary-container)',
+      desc: 'Tu pedido está listo para ser recogido. Presentá el código de recojo en la tienda.',
+    },
+    PICKED_UP: {
+      label: 'Recogido',
+      icon: 'check_circle',
+      color: 'var(--md-sys-color-on-secondary-container)',
+      bgColor: 'var(--md-sys-color-secondary-container)',
+      desc: 'El pedido fue recogido exitosamente. ¡Gracias por tu compra!',
+    },
   };
 
   const currentStatus = statusMap[order.status] || {
@@ -360,17 +417,27 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
     desc: 'Estado en actualización.',
   };
 
-  const steps = [
-    { label: 'Recibido', icon: 'payments' },
-    { label: 'Validación', icon: 'fact_check' },
-    { label: 'Envío', icon: 'local_shipping' },
-    { label: 'Confirmación', icon: 'package_2' },
-    { label: 'Finalizado', icon: 'verified' },
-  ];
+  const steps = isPickup
+    ? [
+        { label: 'Pedido', icon: 'payments' },
+        { label: 'Recojo', icon: 'store' },
+        { label: 'Finalizado', icon: 'verified' },
+      ]
+    : [
+        { label: 'Recibido', icon: 'payments' },
+        { label: 'Validación', icon: 'fact_check' },
+        { label: 'Envío', icon: 'local_shipping' },
+        { label: 'Confirmación', icon: 'package_2' },
+        { label: 'Finalizado', icon: 'verified' },
+      ];
 
   console.log('[OrderTrackingPage:RENDER_UI]', {
     status: order.status,
     step: currentStep,
+    isPickup,
+    hasPickupCode: !!order.pickupCode,
+    pickupCode: order.pickupCode,
+    orderFlowV2: env.orderFlowV2,
     timestamp: new Date().toISOString(),
   });
 
@@ -447,7 +514,8 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
             margin-bottom: 4rem; position: relative; padding: 0 10px;
           }
           .pro-line { position: absolute; top: 24px; left: 40px; right: 40px; height: 4px; background: var(--md-sys-color-outline-variant); border-radius: 2px; }
-          .pro-line-fill { position: absolute; top: 24px; left: 40px; height: 4px; background: var(--md-sys-color-primary); border-radius: 2px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+          .pro-line-track { position: absolute; top: 24px; left: 40px; right: 40px; height: 4px; overflow: hidden; border-radius: 2px; pointer-events: none; }
+          .pro-line-fill { height: 100%; background: var(--md-sys-color-primary); border-radius: 2px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
           .pro-step { z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 12px; }
           .pro-icon-box { 
             width: 48px; height: 48px; border-radius: 16px; 
@@ -461,6 +529,9 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
             box-shadow: 0 10px 20px rgba(var(--md-sys-color-primary-rgb), 0.3);
             transform: scale(1.1) translateY(-4px);
           }
+          .pro-step { z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+          .pro-icon-link { text-decoration: none; color: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+          .pro-icon-link:hover .pro-icon-box { transform: scale(1.08); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
           .pro-label { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; color: var(--md-sys-color-on-surface-variant); }
           .pro-step.active .pro-label { color: var(--md-sys-color-on-surface); font-weight: 950; }
 
@@ -606,15 +677,25 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
 
               <div className="pro-timeline">
                 <div className="pro-line" />
-                <div
-                  className="pro-line-fill"
-                  style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
-                />
+                <div className="pro-line-track">
+                  <div
+                    className="pro-line-fill"
+                    style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+                  />
+                </div>
                 {steps.map((s, i) => (
                   <div key={i} className={`pro-step ${i <= currentStep ? 'active' : ''}`}>
-                    <div className="pro-icon-box">
-                      <Icon size={24}>{s.icon}</Icon>
-                    </div>
+                    {i < currentStep ? (
+                      <a href={`#step-view-${i}`} className="pro-icon-link">
+                        <div className="pro-icon-box">
+                          <Icon size={24}>{s.icon}</Icon>
+                        </div>
+                      </a>
+                    ) : (
+                      <div className="pro-icon-box">
+                        <Icon size={24}>{s.icon}</Icon>
+                      </div>
+                    )}
                     <span className="pro-label">{s.label}</span>
                   </div>
                 ))}
@@ -645,8 +726,90 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                 </div>
               )}
 
-              {/* ── V2: Timeline events ── */}
-              {env.orderFlowV2 && <OrderV2Timeline orderId={order.id} />}
+              {/* ── Order timeline history ── */}
+              <OrderV2Timeline orderId={order.id} />
+
+              {/* ── V2: Pickup code — clean ticket card, only while ready for pickup ── */}
+              {env.orderFlowV2 &&
+                String(order.status) === 'READY_FOR_PICKUP' &&
+                order.pickupCode && (
+                  <div
+                    style={{
+                      width: '100%',
+                      maxWidth: '500px',
+                      marginTop: '2rem',
+                      background: 'var(--md-sys-color-surface)',
+                      borderRadius: '20px',
+                      padding: '1.5rem',
+                      border: '1px solid var(--md-sys-color-outline-variant)',
+                      position: 'relative',
+                    }}
+                  >
+                    {/* Dashed top border to emulate a ticket stub */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '-1px',
+                        left: '2rem',
+                        right: '2rem',
+                        height: '2px',
+                        borderTop: '2px dashed var(--md-sys-color-outline-variant)',
+                      }}
+                    />
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        marginBottom: '1rem',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: '10px',
+                          background: 'var(--md-sys-color-primary-container)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'var(--md-sys-color-primary)',
+                        }}
+                      >
+                        <Icon size={20}>storefront</Icon>
+                      </div>
+                      <div>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: '0.7rem',
+                            fontWeight: 900,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.08em',
+                            opacity: 0.5,
+                          }}
+                        >
+                          Código de Recojo
+                        </p>
+                        <p
+                          style={{
+                            margin: '2px 0 0',
+                            fontSize: '1.5rem',
+                            fontWeight: 950,
+                            letterSpacing: '0.12em',
+                            fontFamily: 'monospace',
+                            color: 'var(--md-sys-color-primary)',
+                          }}
+                        >
+                          {order.pickupCode}
+                        </p>
+                      </div>
+                    </div>
+                    <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.6, lineHeight: 1.5 }}>
+                      Mostrá este código al vendedor para que confirme el recojo de tu pedido.
+                    </p>
+                  </div>
+                )}
 
               {/* ── V2: Issue report button (for reportable V2 statuses) ── */}
               {env.orderFlowV2 &&
@@ -999,7 +1162,7 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                 )}
             </div>
 
-            <OrderGuide />
+            <OrderGuide shippingType={order.shippingType} />
           </div>
 
           <div className="sticky-chat">
@@ -1442,6 +1605,214 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
 
         {/* MODAL: V2 Issue Report — warning + typed reasons + OrderService submit */}
         {env.orderFlowV2 && <ReportV2Flow paymentId={order.id} trackingToken={token} />}
+
+        {/* ── Step history modals — click past steps to see their content ── */}
+        {steps.map((s, stepIdx) => {
+          if (stepIdx >= currentStep) return null;
+
+          const snapshotKey = isPickup
+            ? stepIdx === 0
+              ? 'PREPARING_ORDER'
+              : stepIdx === 1
+                ? 'READY_FOR_PICKUP'
+                : 'COMPLETED'
+            : stepIdx === 0
+              ? 'pending'
+              : stepIdx === 1
+                ? 'validando'
+                : stepIdx === 2
+                  ? 'delivered'
+                  : stepIdx === 3
+                    ? 'en_reparto'
+                    : 'completed';
+
+          const ss = statusMap[snapshotKey];
+
+          return (
+            <div key={`sv-${stepIdx}`} id={`step-view-${stepIdx}`} className="modal-overlay">
+              <div className="modal-box" style={{ textAlign: 'center' }}>
+                <a
+                  href="#"
+                  style={{
+                    position: 'absolute',
+                    top: '1.25rem',
+                    right: '1.25rem',
+                    color: 'inherit',
+                    zIndex: 10,
+                  }}
+                >
+                  <Icon>close</Icon>
+                </a>
+
+                <div
+                  className="status-badge"
+                  style={{
+                    background: ss.bgColor,
+                    color: ss.color,
+                    margin: '0 auto 1.5rem',
+                    display: 'inline-flex',
+                  }}
+                >
+                  <Icon size={18}>{ss.icon}</Icon>
+                  {ss.label}
+                </div>
+
+                <h3
+                  style={{
+                    fontSize: '1.5rem',
+                    fontWeight: 950,
+                    margin: '0 0 0.75rem',
+                    letterSpacing: '-0.03em',
+                  }}
+                >
+                  {ss.label}
+                </h3>
+                <p
+                  style={{
+                    fontSize: '0.9rem',
+                    opacity: 0.7,
+                    lineHeight: 1.5,
+                    margin: '0 0 1.5rem',
+                  }}
+                >
+                  {ss.desc}
+                </p>
+
+                {/* Step 0: Order info snapshot */}
+                {stepIdx === 0 && (
+                  <div
+                    style={{
+                      textAlign: 'left',
+                      background: 'var(--md-sys-color-surface)',
+                      borderRadius: '16px',
+                      padding: '1.25rem',
+                      border: '1px solid var(--md-sys-color-outline-variant)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        gap: '1rem',
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p
+                          style={{
+                            margin: '0 0 2px',
+                            fontSize: '0.65rem',
+                            fontWeight: 900,
+                            textTransform: 'uppercase',
+                            opacity: 0.5,
+                          }}
+                        >
+                          Producto
+                        </p>
+                        <p style={{ margin: 0, fontWeight: 800, fontSize: '0.9rem' }}>
+                          {order.product.title}
+                        </p>
+                      </div>
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <p
+                          style={{
+                            margin: '0 0 2px',
+                            fontSize: '0.65rem',
+                            fontWeight: 900,
+                            textTransform: 'uppercase',
+                            opacity: 0.5,
+                          }}
+                        >
+                          Total
+                        </p>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontWeight: 950,
+                            color: 'var(--md-sys-color-primary)',
+                          }}
+                        >
+                          {order.currency} {order.amount}
+                        </p>
+                      </div>
+                    </div>
+                    <p
+                      style={{
+                        margin: '0.75rem 0 0',
+                        fontSize: '0.7rem',
+                        opacity: 0.4,
+                        textAlign: 'center',
+                        paddingTop: '0.75rem',
+                        borderTop: '1px dashed var(--md-sys-color-outline-variant)',
+                      }}
+                    >
+                      N° Orden: {order.orderNumber || '—'} ·{' '}
+                      {order.createdAt ? formatDate(order.createdAt) : ''}
+                    </p>
+                  </div>
+                )}
+
+                {/* Step 1 Pickup: Pickup code snapshot */}
+                {isPickup && stepIdx === 1 && order.pickupCode && (
+                  <div
+                    style={{
+                      background: 'var(--md-sys-color-surface)',
+                      borderRadius: '16px',
+                      padding: '1.25rem',
+                      border: '1px solid var(--md-sys-color-outline-variant)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        marginBottom: '0.75rem',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: '10px',
+                          background: 'var(--md-sys-color-primary-container)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'var(--md-sys-color-primary)',
+                        }}
+                      >
+                        <Icon size={20}>storefront</Icon>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '0.7rem',
+                          fontWeight: 900,
+                          textTransform: 'uppercase',
+                          opacity: 0.5,
+                        }}
+                      >
+                        Código de Recojo
+                      </span>
+                    </div>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: '1.75rem',
+                        fontWeight: 950,
+                        letterSpacing: '0.12em',
+                        fontFamily: 'monospace',
+                        color: 'var(--md-sys-color-primary)',
+                      }}
+                    >
+                      {order.pickupCode}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </OrderAuthGate>
   );

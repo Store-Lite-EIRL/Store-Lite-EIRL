@@ -31,14 +31,14 @@ describe('processTimeouts', () => {
   });
 
   test('processes no orders when none are expired', async () => {
-    // Each of the 3 rules gets a query — all return empty
+    // Each of the 5 rules gets a query — all return empty
     mockDb.selectWhere.mockResolvedValue([]);
 
     const result = await processTimeouts();
 
     expect(result.processed).toBe(0);
     expect(result.errors).toBe(0);
-    expect(mockDb.selectWhere).toHaveBeenCalledTimes(3); // one query per rule
+    expect(mockDb.selectWhere).toHaveBeenCalledTimes(5); // one query per rule
     expect(transition).not.toHaveBeenCalled();
   });
 
@@ -46,7 +46,9 @@ describe('processTimeouts', () => {
     mockDb.selectWhere
       .mockResolvedValueOnce([{ id: 'pay_seller', version: 2 }]) // seller-inactivity rule
       .mockResolvedValueOnce([]) // customer-auto-approve
-      .mockResolvedValueOnce([]); // auto-complete
+      .mockResolvedValueOnce([]) // auto-complete
+      .mockResolvedValueOnce([]) // pickup-auto-complete
+      .mockResolvedValueOnce([]); // picked-up-auto-complete
 
     vi.mocked(transition).mockResolvedValue({
       success: true,
@@ -71,7 +73,9 @@ describe('processTimeouts', () => {
     mockDb.selectWhere
       .mockResolvedValueOnce([]) // seller-inactivity
       .mockResolvedValueOnce([{ id: 'pay_approve', version: 1 }]) // customer-auto-approve
-      .mockResolvedValueOnce([]); // auto-complete
+      .mockResolvedValueOnce([]) // auto-complete
+      .mockResolvedValueOnce([]) // pickup-auto-complete
+      .mockResolvedValueOnce([]); // picked-up-auto-complete
 
     vi.mocked(transition).mockResolvedValue({
       success: true,
@@ -95,7 +99,9 @@ describe('processTimeouts', () => {
     mockDb.selectWhere
       .mockResolvedValueOnce([]) // seller-inactivity
       .mockResolvedValueOnce([]) // customer-auto-approve
-      .mockResolvedValueOnce([{ id: 'pay_complete', version: 3 }]); // auto-complete
+      .mockResolvedValueOnce([{ id: 'pay_complete', version: 3 }]) // auto-complete
+      .mockResolvedValueOnce([]) // pickup-auto-complete
+      .mockResolvedValueOnce([]); // picked-up-auto-complete
 
     vi.mocked(transition).mockResolvedValue({
       success: true,
@@ -122,7 +128,9 @@ describe('processTimeouts', () => {
         { id: 'pay_002', version: 1 },
       ]) // seller-inactivity: 2 orders
       .mockResolvedValueOnce([]) // customer-auto-approve
-      .mockResolvedValueOnce([]); // auto-complete
+      .mockResolvedValueOnce([]) // auto-complete
+      .mockResolvedValueOnce([]) // pickup-auto-complete
+      .mockResolvedValueOnce([]); // picked-up-auto-complete
 
     vi.mocked(transition).mockResolvedValue({
       success: true,
@@ -139,6 +147,8 @@ describe('processTimeouts', () => {
   test('counts errors when transition fails', async () => {
     mockDb.selectWhere
       .mockResolvedValueOnce([{ id: 'pay_fail', version: 1 }]) // seller-inactivity
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([]);
 
@@ -157,11 +167,69 @@ describe('processTimeouts', () => {
     mockDb.selectWhere
       .mockRejectedValueOnce(new Error('DB connection timeout'))
       .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([]);
 
     const result = await processTimeouts();
 
     expect(result.processed).toBe(0);
     expect(result.errors).toBe(1);
+  });
+
+  // ── Pickup timeout rules ──
+
+  test('processes pickup-auto-complete timeout (READY_FOR_PICKUP → COMPLETED)', async () => {
+    mockDb.selectWhere
+      .mockResolvedValueOnce([]) // seller-inactivity
+      .mockResolvedValueOnce([]) // customer-auto-approve
+      .mockResolvedValueOnce([]) // auto-complete
+      .mockResolvedValueOnce([{ id: 'pay_pickup', version: 4 }]) // pickup-auto-complete
+      .mockResolvedValueOnce([]); // picked-up-auto-complete
+
+    vi.mocked(transition).mockResolvedValue({
+      success: true,
+      payment: { id: 'pay_pickup', status: 'COMPLETED' },
+      eventId: 'evt_004',
+    } as never);
+
+    const result = await processTimeouts();
+
+    expect(result.processed).toBe(1);
+    expect(result.errors).toBe(0);
+    expect(transition).toHaveBeenCalledWith(
+      expect.objectContaining({
+        paymentId: 'pay_pickup',
+        toStatus: 'COMPLETED',
+        actor: { type: 'system' },
+      }),
+    );
+  });
+
+  test('processes picked-up-auto-complete timeout (PICKED_UP → COMPLETED)', async () => {
+    mockDb.selectWhere
+      .mockResolvedValueOnce([]) // seller-inactivity
+      .mockResolvedValueOnce([]) // customer-auto-approve
+      .mockResolvedValueOnce([]) // auto-complete
+      .mockResolvedValueOnce([]) // pickup-auto-complete
+      .mockResolvedValueOnce([{ id: 'pay_picked', version: 5 }]); // picked-up-auto-complete
+
+    vi.mocked(transition).mockResolvedValue({
+      success: true,
+      payment: { id: 'pay_picked', status: 'COMPLETED' },
+      eventId: 'evt_005',
+    } as never);
+
+    const result = await processTimeouts();
+
+    expect(result.processed).toBe(1);
+    expect(result.errors).toBe(0);
+    expect(transition).toHaveBeenCalledWith(
+      expect.objectContaining({
+        paymentId: 'pay_picked',
+        toStatus: 'COMPLETED',
+        actor: { type: 'system' },
+      }),
+    );
   });
 });

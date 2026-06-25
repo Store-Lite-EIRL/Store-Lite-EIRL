@@ -1,16 +1,7 @@
 'use client';
 
 import { getBusinessPath } from '@/shared/utils/url';
-import {
-  AlertCircle,
-  CreditCard,
-  ExternalLink,
-  IdCard,
-  MapPin,
-  Phone,
-  ShoppingBag,
-  User,
-} from 'lucide-react';
+import { CreditCard, ExternalLink, IdCard, MapPin, Phone, ShoppingBag, User } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import styles from './PhaseReadySection.module.css';
@@ -54,25 +45,11 @@ const SHIPPING_TYPE_MAP: Record<string, string> = {
   recojo: 'Recojo en tienda',
 };
 
-const PHASE_GUIDANCE: Record<number, string> = {
-  0: 'Revisá los datos del pedido y prepará el producto para el envío. Recordá que el comprador ya pagó el costo de envío que configuraste.',
-};
-
-function GuidanceBanner({ phase }: { phase: number }) {
-  const text = PHASE_GUIDANCE[phase];
-  if (!text) return null;
-  return (
-    <div className={styles.guidanceBanner}>
-      <AlertCircle size={16} className={styles.guidanceIcon} />
-      <p className={styles.guidanceText}>{text}</p>
-    </div>
-  );
-}
-
 export default function PhaseReadySection({ order, businessSlug }: PhaseReadySectionProps) {
+  const isStorePickup = order.shippingType?.toLowerCase() === 'recojo';
+
   return (
     <>
-      <GuidanceBanner phase={0} />
       <section className={styles.infoSection}>
         <h3 className={styles.sectionTitle}>
           <User size={18} /> Comprador y Producto
@@ -213,7 +190,7 @@ export default function PhaseReadySection({ order, businessSlug }: PhaseReadySec
               </span>
             </div>
           </div>
-          {order.shippingAddress && (
+          {!isStorePickup && order.shippingAddress && (
             <div className={styles.shippingRow}>
               <MapPin size={16} className={styles.shippingIcon} />
               <div>
@@ -222,17 +199,19 @@ export default function PhaseReadySection({ order, businessSlug }: PhaseReadySec
               </div>
             </div>
           )}
-          <div className={styles.shippingRow}>
-            <MapPin size={16} className={styles.shippingIcon} />
-            <div>
-              <span className={styles.shippingLabel}>Distrito / Provincia / Departamento</span>
-              <span className={styles.shippingValue}>
-                {[order.shippingDistrict, order.shippingProvince].filter(Boolean).join(', ') ||
-                  'No especificado'}
-                {order.shippingDepartment ? `, ${order.shippingDepartment}` : ''}
-              </span>
+          {!isStorePickup && (
+            <div className={styles.shippingRow}>
+              <MapPin size={16} className={styles.shippingIcon} />
+              <div>
+                <span className={styles.shippingLabel}>Distrito / Provincia / Departamento</span>
+                <span className={styles.shippingValue}>
+                  {[order.shippingDistrict, order.shippingProvince].filter(Boolean).join(', ') ||
+                    'No especificado'}
+                  {order.shippingDepartment ? `, ${order.shippingDepartment}` : ''}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
           {order.shippingType?.toLowerCase() === 'agencia' && order.shippingAgency && (
             <div className={styles.shippingRow}>
               <MapPin size={16} className={styles.shippingIcon} />
@@ -251,7 +230,7 @@ export default function PhaseReadySection({ order, businessSlug }: PhaseReadySec
               </div>
             </div>
           )}
-          {order.shippingReference && (
+          {!isStorePickup && order.shippingReference && (
             <div className={styles.shippingRow}>
               <MapPin size={16} className={styles.shippingIcon} />
               <div>

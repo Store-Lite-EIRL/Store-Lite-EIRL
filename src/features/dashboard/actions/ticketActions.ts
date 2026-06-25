@@ -2,13 +2,48 @@
 
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
-import { payments } from '@/core/database/schema';
+import { businesses, payments, profiles } from '@/core/database/schema';
 import { transition } from '@/core/orders/orderService';
 import { ORDER_STATUS, ORDER_STATUS_V2 } from '@/core/orders/orderStatus';
+import { createClient as createServerClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { and, eq } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
 
 const BUCKET_NAME = 'tickets';
+
+async function getAuthenticatedUserId(): Promise<string | null> {
+  try {
+    const supabase = await createServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    // Ensure profile exists to satisfy FK constraints on order_timeline_events
+    const existingProfile = await db.query.profiles.findFirst({
+      where: eq(profiles.id, user.id),
+    });
+
+    if (!existingProfile) {
+      console.warn('[getAuthenticatedUserId] Profile missing, auto-creating for user:', user.id);
+      await db.insert(profiles).values({
+        id: user.id,
+        email: user.email ?? '',
+        fullName:
+          user.user_metadata?.full_name ??
+          user.user_metadata?.name ??
+          user.email?.split('@')[0] ??
+          'Unknown User',
+        avatarUrl: user.user_metadata?.avatar_url ?? null,
+      });
+    }
+
+    return user.id;
+  } catch {
+    return null;
+  }
+}
 
 function createAdminClient() {
   return createClient(env.supabaseUrl, env.supabaseServiceRoleKey, {
@@ -104,10 +139,11 @@ export async function uploadTicketAndUpdatePayment(
 
     // 6. Update payment — V2 path uses OrderService, legacy uses inline
     if (env.orderFlowV2) {
+      const actorId = await getAuthenticatedUserId();
       const result = await transition({
         paymentId,
         toStatus: ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION,
-        actor: { type: 'seller', id: businessId },
+        actor: { type: 'seller', id: actorId ?? undefined },
         expectedVersion,
         extraFields: { ticketImageUrl },
         preconditions: { shippingCost: existingPayment.shippingCost },
@@ -151,6 +187,7 @@ export async function uploadTicketAndUpdatePayment(
 export interface NotifyDeliveryResult {
   success: boolean;
   error?: string;
+  autoCompletePending?: boolean;
 }
 
 /**
@@ -190,10 +227,11 @@ export async function notifyDelivery(
     const expectedVersion = existingPayment.version ?? 0;
 
     if (env.orderFlowV2) {
+      const actorId = await getAuthenticatedUserId();
       const result = await transition({
         paymentId,
         toStatus: ORDER_STATUS_V2.IN_TRANSIT,
-        actor: { type: 'seller', id: businessId },
+        actor: { type: 'seller', id: actorId ?? undefined },
         expectedVersion,
       });
 
@@ -232,6 +270,150 @@ export async function notifyDelivery(
   }
 }
 
+// ── markReadyForPickup ──────────────────────────────────────────
+
+export async function markReadyForPickup(
+  paymentId: string,
+  businessId: string,
+): Promise<NotifyDeliveryResult> {
+  try {
+    const [existingPayment] = await db
+      .select({
+        status: payments.status,
+        businessId: payments.businessId,
+        version: payments.version,
+      })
+      .from(payments)
+      .where(and(eq(payments.id, paymentId), eq(payments.businessId, businessId)))
+      .limit(1);
+
+    if (!existingPayment) return { success: false, error: 'Pedido no encontrado' };
+    if (existingPayment.businessId !== businessId)
+      return { success: false, error: 'No tienes permisos para este pedido' };
+
+    const expectedVersion = existingPayment.version ?? 0;
+
+    if (env.orderFlowV2) {
+      const actorId = await getAuthenticatedUserId();
+      const result = await transition({
+        paymentId,
+        toStatus: ORDER_STATUS_V2.READY_FOR_PICKUP,
+        actor: { type: 'seller', id: actorId ?? undefined },
+        expectedVersion,
+      });
+      if (!result.success) return { success: false, error: mapTransitionError(result.error) };
+    } else {
+      return { success: false, error: 'El flujo de recojo requiere orderFlowV2' };
+    }
+
+    revalidatePath(`/${businessId}/dashboard`, 'page');
+    return { success: true };
+  } catch (error) {
+    console.error(
+      '[markReadyForPickup] Error:',
+      error instanceof Error ? error.message : String(error),
+    );
+    return { success: false, error: 'Error al marcar como listo para recojo' };
+  }
+}
+
+// ── confirmPickedUp ────────────────────────────────────────────
+
+export async function confirmPickedUp(
+  paymentId: string,
+  businessId: string,
+  customerCode: string,
+): Promise<NotifyDeliveryResult> {
+  try {
+    const [existingPayment] = await db
+      .select({
+        status: payments.status,
+        businessId: payments.businessId,
+        version: payments.version,
+        pickupCode: payments.pickupCode,
+        trackingToken: payments.trackingToken,
+        businessSlug: businesses.slug,
+      })
+      .from(payments)
+      .innerJoin(businesses, eq(businesses.id, payments.businessId))
+      .where(and(eq(payments.id, paymentId), eq(payments.businessId, businessId)))
+      .limit(1);
+
+    if (!existingPayment) return { success: false, error: 'Pedido no encontrado' };
+    if (existingPayment.businessId !== businessId)
+      return { success: false, error: 'No tienes permisos para este pedido' };
+
+    // Validar que el código ingresado coincida con el código generado
+    if (!existingPayment.pickupCode) {
+      return { success: false, error: 'El pedido aún no tiene un código de recojo generado' };
+    }
+
+    const normalizedCode = customerCode.trim().toUpperCase();
+    if (normalizedCode !== existingPayment.pickupCode.toUpperCase()) {
+      return { success: false, error: 'El código de recojo no coincide. Verificá con el cliente.' };
+    }
+
+    const expectedVersion = existingPayment.version ?? 0;
+
+    if (env.orderFlowV2) {
+      const actorId = await getAuthenticatedUserId();
+
+      // 1. First transition: READY_FOR_PICKUP → PICKED_UP (records pickup event)
+      const pickupResult = await transition({
+        paymentId,
+        toStatus: ORDER_STATUS_V2.PICKED_UP,
+        actor: { type: 'seller', id: actorId ?? undefined },
+        expectedVersion,
+      });
+      if (!pickupResult.success)
+        return { success: false, error: mapTransitionError(pickupResult.error) };
+
+      // 2. Immediately auto-complete: PICKED_UP → COMPLETED
+      //    The seller verified the code, so the order is effectively done.
+      const completeResult = await transition({
+        paymentId,
+        toStatus: ORDER_STATUS_V2.COMPLETED,
+        actor: { type: 'system' },
+        expectedVersion: pickupResult.payment.version ?? 0,
+        metadata: { autoCompletedAfterPickup: true },
+      });
+      if (!completeResult.success) {
+        console.error(
+          '[confirmPickedUp] Auto-complete failed (order stays PICKED_UP):',
+          completeResult.error,
+        );
+        // Non-fatal — the order is already PICKED_UP, auto-complete will retry via cron.
+        // Return success with a flag so the client knows to show PICKED_UP status (not COMPLETED)
+        revalidatePath(`/${businessId}/dashboard`, 'page');
+        if (existingPayment.trackingToken && existingPayment.businessSlug) {
+          revalidatePath(
+            `/${existingPayment.businessSlug}/order/${existingPayment.trackingToken}`,
+            'page',
+          );
+        }
+        return { success: true, autoCompletePending: true };
+      }
+    } else {
+      return { success: false, error: 'El flujo de recojo requiere orderFlowV2' };
+    }
+
+    revalidatePath(`/${businessId}/dashboard`, 'page');
+    if (existingPayment.trackingToken && existingPayment.businessSlug) {
+      revalidatePath(
+        `/${existingPayment.businessSlug}/order/${existingPayment.trackingToken}`,
+        'page',
+      );
+    }
+    return { success: true };
+  } catch (error) {
+    console.error(
+      '[confirmPickedUp] Error:',
+      error instanceof Error ? error.message : String(error),
+    );
+    return { success: false, error: 'Error al confirmar el recojo' };
+  }
+}
+
 /**
  * Mapea errores técnicos de la máquina de estados a mensajes amigables para el usuario.
  */
@@ -248,6 +430,15 @@ function mapTransitionError(error: string): string {
   }
   if (error.includes('Seller must provide')) {
     return 'Faltan datos del courier. Completá los campos de transporte y volvé a intentar.';
+  }
+  if (error.includes('Pickup statuses require')) {
+    return 'Este pedido no es de tipo recojo. No se puede usar el flujo de recojo.';
+  }
+  if (error.includes('El código de recojo no coincide')) {
+    return error; // ya es un mensaje amigable
+  }
+  if (error.includes('El pedido aún no tiene un código')) {
+    return error; // ya es un mensaje amigable
   }
   if (error.includes('Estado actual desconocido')) {
     return 'El pedido tiene un estado desconocido. Contactá a soporte.';

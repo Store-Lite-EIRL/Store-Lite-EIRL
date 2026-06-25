@@ -187,16 +187,185 @@ function runCases(label: string, cases: TestCase[]) {
   });
 }
 
+function runPickupCases(label: string, cases: TestCase[]) {
+  describe(label, () => {
+    for (const { status, expectedPhase, expectedStates } of cases) {
+      test(`${status} → phase ${expectedPhase}`, () => {
+        const result = getSellerPhase(status, 'recojo');
+        expect(result.currentPhase).toBe(expectedPhase);
+        expect(result.phaseStates).toEqual(expectedStates);
+      });
+    }
+  });
+}
+
+/* ── Pickup (recojo) test cases ── */
+
+const V2_PICKUP_CASES: TestCase[] = [
+  {
+    status: 'CREATED',
+    expectedPhase: 0,
+    expectedStates: ['current', 'locked', 'locked'],
+  },
+  { status: 'PAID', expectedPhase: 0, expectedStates: ['current', 'locked', 'locked'] },
+  {
+    status: 'PREPARING_ORDER',
+    expectedPhase: 0,
+    expectedStates: ['current', 'locked', 'locked'],
+  },
+  {
+    status: 'READY_FOR_PICKUP',
+    expectedPhase: 1,
+    expectedStates: ['completed', 'current', 'locked'],
+  },
+  {
+    status: 'PICKED_UP',
+    expectedPhase: 1,
+    expectedStates: ['completed', 'current', 'locked'],
+  },
+  {
+    status: 'COMPLETED',
+    expectedPhase: 2,
+    expectedStates: ['completed', 'completed', 'current'],
+  },
+];
+
+const V1_PICKUP_CASES: TestCase[] = [
+  {
+    status: 'pending',
+    expectedPhase: 0,
+    expectedStates: ['current', 'locked', 'locked'],
+  },
+  { status: 'paid', expectedPhase: 0, expectedStates: ['current', 'locked', 'locked'] },
+  {
+    status: 'processing',
+    expectedPhase: 0,
+    expectedStates: ['current', 'locked', 'locked'],
+  },
+  {
+    status: 'analizando',
+    expectedPhase: 0,
+    expectedStates: ['current', 'locked', 'locked'],
+  },
+  {
+    status: 'validando',
+    expectedPhase: 1,
+    expectedStates: ['completed', 'current', 'locked'],
+  },
+  {
+    status: 'aceptado',
+    expectedPhase: 1,
+    expectedStates: ['completed', 'current', 'locked'],
+  },
+  {
+    status: 'delivered',
+    expectedPhase: 1,
+    expectedStates: ['completed', 'current', 'locked'],
+  },
+  {
+    status: 'en_reparto',
+    expectedPhase: 1,
+    expectedStates: ['completed', 'current', 'locked'],
+  },
+  {
+    status: 'esperando_confirmacion',
+    expectedPhase: 1,
+    expectedStates: ['completed', 'current', 'locked'],
+  },
+  {
+    status: 'completed',
+    expectedPhase: 2,
+    expectedStates: ['completed', 'completed', 'current'],
+  },
+  {
+    status: 'finalizado',
+    expectedPhase: 2,
+    expectedStates: ['completed', 'completed', 'current'],
+  },
+];
+
+const TERMINAL_PICKUP_CASES: TestCase[] = [
+  {
+    status: 'CANCELLED',
+    expectedPhase: 0,
+    expectedStates: ['current', 'locked', 'locked'],
+  },
+  {
+    status: 'DISPUTE',
+    expectedPhase: 0,
+    expectedStates: ['current', 'locked', 'locked'],
+  },
+  {
+    status: 'ISSUE_REPORTED',
+    expectedPhase: 0,
+    expectedStates: ['current', 'locked', 'locked'],
+  },
+  {
+    status: 'SELLER_TIMEOUT',
+    expectedPhase: 0,
+    expectedStates: ['current', 'locked', 'locked'],
+  },
+  { status: 'failed', expectedPhase: 0, expectedStates: ['current', 'locked', 'locked'] },
+  {
+    status: 'disputed',
+    expectedPhase: 0,
+    expectedStates: ['current', 'locked', 'locked'],
+  },
+  {
+    status: 'refunded',
+    expectedPhase: 0,
+    expectedStates: ['current', 'locked', 'locked'],
+  },
+  {
+    status: 'cancelled',
+    expectedPhase: 0,
+    expectedStates: ['current', 'locked', 'locked'],
+  },
+  {
+    status: 'rechazado',
+    expectedPhase: 0,
+    expectedStates: ['current', 'locked', 'locked'],
+  },
+  {
+    status: 'refund_requested',
+    expectedPhase: 0,
+    expectedStates: ['current', 'locked', 'locked'],
+  },
+  {
+    status: 'expired',
+    expectedPhase: 0,
+    expectedStates: ['current', 'locked', 'locked'],
+  },
+  {
+    status: 'reported',
+    expectedPhase: 0,
+    expectedStates: ['current', 'locked', 'locked'],
+  },
+];
+
 describe('getSellerPhase', () => {
   runCases('V2 statuses', V2_CASES);
   runCases('V1 legacy statuses', V1_CASES);
   runCases('Terminal statuses', TERMINAL_CASES);
   runCases('Edge cases', EDGE_CASES);
 
-  test('phaseStates always has exactly 4 entries', () => {
+  test('phaseStates always has exactly 4 entries (delivery default)', () => {
     const allStatuses = [...V2_CASES, ...V1_CASES, ...TERMINAL_CASES, ...EDGE_CASES];
     for (const { status } of allStatuses) {
       expect(getSellerPhase(status).phaseStates).toHaveLength(4);
     }
+  });
+
+  describe('Pickup (recojo) phases', () => {
+    runPickupCases('V2 pickup statuses', V2_PICKUP_CASES);
+    runPickupCases('V1 pickup statuses', V1_PICKUP_CASES);
+    runPickupCases('Terminal pickup statuses', TERMINAL_PICKUP_CASES);
+
+    test('pickup phaseStates always has exactly 3 entries', () => {
+      const allStatuses = [...V2_CASES, ...V1_CASES, ...TERMINAL_CASES, ...EDGE_CASES];
+      for (const { status } of allStatuses) {
+        expect(getSellerPhase(status, 'recojo').phaseStates).toHaveLength(3);
+      }
+    });
   });
 });

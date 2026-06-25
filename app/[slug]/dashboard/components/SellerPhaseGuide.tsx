@@ -3,10 +3,16 @@
 import { Icon } from '@/shared';
 
 /* ── Phase mapping ── */
-const SELLER_PHASES = [
+export const SELLER_PHASES = [
   { label: 'Pedido', icon: 'payments', description: 'Pedido recibido y pagado' },
   { label: 'Validación', icon: 'fact_check', description: 'Ticket de envío' },
   { label: 'Envío', icon: 'local_shipping', description: 'Paquete en tránsito' },
+  { label: 'Cerrado', icon: 'verified', description: 'Pedido finalizado' },
+] as const;
+
+export const PICKUP_SELLER_PHASES = [
+  { label: 'Pedido', icon: 'payments', description: 'Pedido recibido y pagado' },
+  { label: 'Recojo', icon: 'store', description: 'Cliente recoge en tienda' },
   { label: 'Cerrado', icon: 'verified', description: 'Pedido finalizado' },
 ] as const;
 
@@ -52,8 +58,47 @@ const V1_PHASE: Record<string, number> = {
   cancelled: 0,
 };
 
-export function getSellerPhase(status: string): SellerPhaseInfo {
-  const idx = V2_PHASE[status] ?? V1_PHASE[status] ?? 0;
+const V2_PHASE_PICKUP: Record<string, number> = {
+  CREATED: 0,
+  PAID: 0,
+  PREPARING_ORDER: 0,
+  READY_FOR_PICKUP: 1, // Phase 1 — actionable (seller marks ready)
+  PICKED_UP: 1, // Phase 1 — waiting auto-complete (72h)
+  COMPLETED: 2, // Phase 2 — done
+  ISSUE_REPORTED: 0,
+  DISPUTE: 0,
+  SELLER_TIMEOUT: 0,
+  CANCELLED: 0,
+};
+
+const V1_PHASE_PICKUP: Record<string, number> = {
+  pending: 0,
+  paid: 0,
+  processing: 0,
+  analizando: 0,
+  validando: 1,
+  aceptado: 1,
+  delivered: 1,
+  en_reparto: 1,
+  esperando_confirmacion: 1,
+  completed: 2,
+  finalizado: 2,
+  failed: 0,
+  disputed: 0,
+  refund_requested: 0,
+  refunded: 0,
+  rechazado: 0,
+  reported: 0,
+  expired: 0,
+  cancelled: 0,
+};
+
+export function getSellerPhase(status: string, shippingType?: string | null): SellerPhaseInfo {
+  const isPickup = shippingType?.toLowerCase() === 'recojo';
+  const phases = isPickup ? PICKUP_SELLER_PHASES : SELLER_PHASES;
+  const phaseMap = isPickup ? V2_PHASE_PICKUP : V2_PHASE;
+  const phaseMapV1 = isPickup ? V1_PHASE_PICKUP : V1_PHASE;
+  const idx = phaseMap[status] ?? phaseMapV1[status] ?? 0;
   const isTerminal = [
     'CANCELLED',
     'DISPUTE',
@@ -70,7 +115,7 @@ export function getSellerPhase(status: string): SellerPhaseInfo {
   ].includes(status);
   return {
     currentPhase: isTerminal ? 0 : idx,
-    phaseStates: SELLER_PHASES.map((_, i) => {
+    phaseStates: phases.map((_, i) => {
       if (isTerminal) return i === 0 ? 'current' : 'locked';
       if (i < idx) return 'completed';
       if (i === idx) return 'current';
@@ -84,14 +129,16 @@ interface SellerPhaseGuideProps {
   phases: SellerPhaseInfo;
   selectedPhase: number;
   onSelect: (index: number) => void;
+  phasesConfig?: readonly { label: string; icon: string; description: string }[];
 }
 
 export default function SellerPhaseGuide({
   phases,
   selectedPhase,
   onSelect,
+  phasesConfig = SELLER_PHASES,
 }: SellerPhaseGuideProps) {
-  const totalPhases = SELLER_PHASES.length;
+  const totalPhases = phasesConfig.length;
 
   return (
     <div
@@ -133,7 +180,7 @@ export default function SellerPhaseGuide({
           }}
         />
 
-        {SELLER_PHASES.map((phase, i) => {
+        {phasesConfig.map((phase, i) => {
           const state = phases.phaseStates[i];
           const isPast = state === 'completed';
           const isCurrent = state === 'current';

@@ -51,6 +51,17 @@ vi.mock('../../app/[slug]/dashboard/components/SellerPhaseGuide', () => ({
   getSellerPhase: (status: string) => {
     return { currentPhase: 0, phaseStates: ['current', 'locked', 'locked', 'locked'] };
   },
+  SELLER_PHASES: [
+    { label: 'Pedido', icon: 'payments', description: 'Pedido recibido y pagado' },
+    { label: 'Validación', icon: 'fact_check', description: 'Ticket de envío' },
+    { label: 'Envío', icon: 'local_shipping', description: 'Paquete en tránsito' },
+    { label: 'Cerrado', icon: 'verified', description: 'Pedido finalizado' },
+  ],
+  PICKUP_SELLER_PHASES: [
+    { label: 'Pedido', icon: 'payments', description: 'Pedido recibido y pagado' },
+    { label: 'Recojo', icon: 'store', description: 'Cliente recoge en tienda' },
+    { label: 'Cerrado', icon: 'verified', description: 'Pedido finalizado' },
+  ],
 }));
 
 // Mock @/shared
@@ -96,6 +107,7 @@ vi.mock('lucide-react', () => ({
   Clock: () => <span>Clock</span>,
   CreditCard: () => <span>CreditCard</span>,
   HelpCircle: () => <span>HelpCircle</span>,
+  Info: () => <span>Info</span>,
   RefreshCw: () => <span>RefreshCw</span>,
   Search: () => <span>Search</span>,
   ShoppingBag: () => <span>ShoppingBag</span>,

@@ -1,44 +1,314 @@
-/* ── Phase-contextual help section ── */
-.perPhaseHelp {
-  padding: 1rem;
+/* ── Help Panel Container ── */
+.helpPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-.phaseHelpHeader {
+/* ── Phase Help Card ── */
+.phaseCard {
+  background: var(--md-sys-color-surface-container-lowest);
+  border-radius: 20px;
+  padding: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+}
+
+.phaseCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.phaseIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.phaseTitle {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.phaseDescription {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0.75rem 0 0 0;
+}
+
+/* ── Section Title (reusable) ── */
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--md-sys-color-outline);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.75rem 0;
+  font-family: var(--md-sys-typescale-label-large-font, system-ui);
+}
+
+.sectionTitle svg {
+  width: 18px;
+  height: 18px;
+  color: var(--md-sys-color-primary);
+}
+
+/* ── Do / Don't Grid ── */
+.doDontGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.doColumn {
+  background: color-mix(in srgb, var(--md-sys-color-tertiary-container) 25%, transparent);
+  border-radius: 16px;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-tertiary) 15%, transparent);
+}
+
+.dontColumn {
+  background: color-mix(in srgb, var(--md-sys-color-error-container) 25%, transparent);
+  border-radius: 16px;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 15%, transparent);
+}
+
+.columnHeader {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
 }
 
-.phaseHelpIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
+.columnHeaderIcon {
+  flex-shrink: 0;
 }
 
-.phaseHelpTitle {
-  font-size: 1rem;
-  font-weight: 600;
+.doColumn .columnHeaderIcon {
+  color: var(--md-sys-color-tertiary);
+}
+
+.dontColumn .columnHeaderIcon {
+  color: var(--md-sys-color-error);
+}
+
+.columnTitle {
+  font-size: 0.8125rem;
+  font-weight: 700;
   color: var(--md-sys-color-on-surface);
   margin: 0;
 }
 
-.phaseHelpText {
-  font-size: 0.875rem;
-  line-height: 1.6;
-  color: var(--md-sys-color-on-surface-variant);
-  margin: 0 0 1.25rem 2.75rem;
-  padding: 0;
+.columnList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
 }
 
-/* ── Persistent sections wrapper ── */
-.persistentFooter {
-  border-top: 1px solid var(--md-sys-color-outline-variant);
-  padding-top: 1rem;
-  margin-top: 0.5rem;
+.columnItem {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.columnItemIcon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.doColumn .columnItemIcon {
+  color: var(--md-sys-color-tertiary);
+}
+
+.dontColumn .columnItemIcon {
+  color: var(--md-sys-color-error);
+}
+
+.columnItemText {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+/* ── Security Card ── */
+.securityCard {
+  background: color-mix(in srgb, var(--md-sys-color-secondary-container) 30%, transparent);
+  border-radius: 20px;
+  padding: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-secondary) 20%, transparent);
+}
+
+.securityIntro {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 0.75rem 0;
+}
+
+.securityContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.securityItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.securityItemIcon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.securityGood {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--md-sys-color-tertiary);
+}
+
+.securityBad {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--md-sys-color-error);
+}
+
+.securityWarning {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--md-sys-color-secondary);
+}
+
+/* ── Responsibilities Card ── */
+.responsibilitiesCard {
+  background: var(--md-sys-color-surface-container-lowest);
+  border-radius: 20px;
+  padding: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+}
+
+.responsibilityIntro {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 0.875rem 0;
+}
+
+/* ── Timing Sub-section ── */
+.timingSection {
+  margin-bottom: 0.875rem;
+}
+
+.timingTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--md-sys-color-outline);
+  margin: 0 0 0.5rem 0;
+}
+
+.timingList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.timingItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.timingDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary);
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.timingText {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.timingBadge {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  margin-left: 0.15rem;
+  white-space: nowrap;
+}
+
+/* ── Consequences ── */
+.consequences {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+}
+
+.consequenceItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.consequenceIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.consequenceText {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.consequenceGood {
+  color: var(--md-sys-color-tertiary);
+}
+
+.consequenceBad {
+  color: var(--md-sys-color-error);
+}
+
+.consequenceWarning {
+  color: var(--md-sys-color-secondary);
+}
+
+/* ── Mobile: collapse do/dont grid ── */
+@media (max-width: 768px) {
+  .doDontGrid {
+    grid-template-columns: 1fr;
+  }
 }

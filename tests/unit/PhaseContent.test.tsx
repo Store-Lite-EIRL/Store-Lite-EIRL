@@ -14,7 +14,9 @@ vi.mock('next/image', () => ({
 
 vi.mock('next/link', () => ({
   default: ({ children, href, ...props }: any) => (
-    <a href={href} {...props}>{children}</a>
+    <a href={href} {...props}>
+      {children}
+    </a>
   ),
 }));
 
@@ -36,7 +38,11 @@ vi.mock('lucide-react', () => ({
 }));
 
 vi.mock('@/shared', () => ({
-  Icon: ({ children, ...props }: any) => <span data-testid="shared-icon" {...props}>{children}</span>,
+  Icon: ({ children, ...props }: any) => (
+    <span data-testid="shared-icon" {...props}>
+      {children}
+    </span>
+  ),
 }));
 
 vi.mock('@/shared/components/ui/buttons/Button', () => ({
@@ -57,11 +63,21 @@ vi.mock('@/shared/utils/url', () => ({
 }));
 
 vi.mock('../../app/[slug]/dashboard/components/ShippingSection', () => ({
-  default: () => <div data-testid="shipping-section">ShippingSection Mock</div>,
+  default: ({ order }: any) => (
+    <div data-testid="shipping-section">
+      {order?.courierName && <span>{order.courierName}</span>}
+      {order?.trackingNumber && <span>{order.trackingNumber}</span>}
+      {order?.pickupCode && <span>{order.pickupCode}</span>}
+    </div>
+  ),
 }));
 
 vi.mock('../../app/[slug]/dashboard/components/TicketSection', () => ({
-  default: () => <div data-testid="ticket-section">TicketSection Mock</div>,
+  default: () => (
+    <div data-testid="ticket-section">
+      <span>Validación de Ticket</span>
+    </div>
+  ),
 }));
 
 // ── Fixtures ─────────────────────────────────────────
@@ -144,7 +160,7 @@ describe('PhaseContent', () => {
           order={createMockOrder({ paymentMethod: 'card' })}
           selectedPhase={0}
           {...defaultProps}
-        />
+        />,
       );
 
       expect(screen.getByText('Tarjeta de Crédito/Débito')).toBeInTheDocument();
@@ -165,7 +181,7 @@ describe('PhaseContent', () => {
           })}
           selectedPhase={0}
           {...defaultProps}
-        />
+        />,
       );
 
       expect(screen.getByText('Datos del Envío')).toBeInTheDocument();
@@ -187,18 +203,10 @@ describe('PhaseContent', () => {
           })}
           selectedPhase={0}
           {...defaultProps}
-        />
+        />,
       );
 
       expect(screen.getByText('Recojo en tienda')).toBeInTheDocument();
-    });
-
-    test('renders guidance banner for phase 0', () => {
-      render(<PhaseContent order={createMockOrder()} selectedPhase={0} {...defaultProps} />);
-
-      expect(
-        screen.getByText(/Revisá los datos del pedido y prepará el producto/)
-      ).toBeInTheDocument();
     });
   });
 
@@ -209,18 +217,10 @@ describe('PhaseContent', () => {
       expect(screen.getByText('Validación de Ticket')).toBeInTheDocument();
       expect(screen.getByTestId('ticket-section')).toBeInTheDocument();
     });
-
-    test('renders guidance banner for phase 1', () => {
-      render(<PhaseContent order={createMockOrder()} selectedPhase={1} {...defaultProps} />);
-
-      expect(
-        screen.getByText(/Subí una foto clara del comprobante/)
-      ).toBeInTheDocument();
-    });
   });
 
   describe('Phase 2 — ENVÍO', () => {
-    test('renders shipping section and courier info', () => {
+    test('renders shipping section with courier info', () => {
       render(
         <PhaseContent
           order={createMockOrder({
@@ -230,10 +230,9 @@ describe('PhaseContent', () => {
           })}
           selectedPhase={2}
           {...defaultProps}
-        />
+        />,
       );
 
-      expect(screen.getByText('Seguimiento de Envío')).toBeInTheDocument();
       expect(screen.getByTestId('shipping-section')).toBeInTheDocument();
       expect(screen.getByText('Shalom')).toBeInTheDocument();
       expect(screen.getByText('TRK-123')).toBeInTheDocument();
@@ -246,7 +245,7 @@ describe('PhaseContent', () => {
           order={createMockOrder({ status: 'READY_TO_SHIP' })}
           selectedPhase={2}
           {...defaultProps}
-        />
+        />,
       );
 
       expect(screen.getByText('Notificar Entrega')).toBeInTheDocument();
@@ -258,24 +257,10 @@ describe('PhaseContent', () => {
           order={createMockOrder({ status: 'IN_TRANSIT' })}
           selectedPhase={2}
           {...defaultProps}
-        />
+        />,
       );
 
       expect(screen.getByText('Notificar Llegada')).toBeInTheDocument();
-    });
-
-    test('renders guidance banner for phase 2', () => {
-      render(
-        <PhaseContent
-          order={createMockOrder({ status: 'IN_TRANSIT' })}
-          selectedPhase={2}
-          {...defaultProps}
-        />
-      );
-
-      expect(
-        screen.getByText(/Seguí el estado del envío/)
-      ).toBeInTheDocument();
     });
   });
 
@@ -289,7 +274,7 @@ describe('PhaseContent', () => {
           })}
           selectedPhase={3}
           {...defaultProps}
-        />
+        />,
       );
 
       expect(screen.getByText(/Tiempo restante/)).toBeInTheDocument();
@@ -305,10 +290,10 @@ describe('PhaseContent', () => {
           })}
           selectedPhase={3}
           {...defaultProps}
-        />
+        />,
       );
 
-      expect(screen.getByText('Pedido Finalizado')).toBeInTheDocument();
+      expect(screen.getByText('¡Pedido Finalizado!')).toBeInTheDocument();
     });
 
     test('shows locked message for inactive phase 3', () => {
@@ -317,24 +302,10 @@ describe('PhaseContent', () => {
           order={createMockOrder({ status: 'paid' })}
           selectedPhase={3}
           {...defaultProps}
-        />
+        />,
       );
 
       expect(screen.getByText(/estará disponible/)).toBeInTheDocument();
-    });
-
-    test('renders guidance banner for phase 3', () => {
-      render(
-        <PhaseContent
-          order={createMockOrder({ status: 'COMPLETED' })}
-          selectedPhase={3}
-          {...defaultProps}
-        />
-      );
-
-      expect(
-        screen.getByText(/El pedido está en su fase final/)
-      ).toBeInTheDocument();
     });
 
     test('shows countdown when pending with finalizationDeadline', () => {
@@ -346,7 +317,7 @@ describe('PhaseContent', () => {
           })}
           selectedPhase={3}
           {...defaultProps}
-        />
+        />,
       );
 
       expect(screen.getByText(/Tiempo restante/)).toBeInTheDocument();
@@ -363,12 +334,41 @@ describe('PhaseContent', () => {
           })}
           selectedPhase={3}
           {...defaultProps}
-        />
+        />,
       );
 
-      expect(screen.getByText('Pedido Finalizado')).toBeInTheDocument();
+      expect(screen.getByText('¡Pedido Finalizado!')).toBeInTheDocument();
       expect(screen.getByText('Creado')).toBeInTheDocument();
       expect(screen.getByText('Completado')).toBeInTheDocument();
+    });
+  });
+
+  describe('Pickup (recojo) phase mapping', () => {
+    test('renders shipping section at phase 1 for pickup', () => {
+      render(
+        <PhaseContent
+          order={createMockOrder({ shippingType: 'recojo', status: 'READY_TO_SHIP' })}
+          selectedPhase={1}
+          {...defaultProps}
+          shippingType="recojo"
+        />,
+      );
+
+      expect(screen.getByTestId('shipping-section')).toBeInTheDocument();
+      expect(screen.queryByTestId('ticket-section')).not.toBeInTheDocument();
+    });
+
+    test('renders completion section at phase 2 for pickup', () => {
+      render(
+        <PhaseContent
+          order={createMockOrder({ shippingType: 'recojo', status: 'COMPLETED' })}
+          selectedPhase={2}
+          {...defaultProps}
+          shippingType="recojo"
+        />,
+      );
+
+      expect(screen.getByText('¡Pedido Finalizado!')).toBeInTheDocument();
     });
   });
 });

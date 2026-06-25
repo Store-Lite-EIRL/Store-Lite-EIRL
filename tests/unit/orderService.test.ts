@@ -271,4 +271,73 @@ describe('OrderService.transition', () => {
       }),
     );
   });
+
+  // ── Pickup flow — pickup code generation ──
+
+  test('generates pickup code on PREPARING_ORDER → READY_FOR_PICKUP for recojo orders', async () => {
+    mockDb._selectLimit.mockResolvedValue([
+      makePayment({ status: ORDER_STATUS_V2.PREPARING_ORDER, version: 1, shippingType: 'recojo' }),
+    ]);
+    mockDb._updateReturning.mockResolvedValue([
+      makePayment({ status: ORDER_STATUS_V2.READY_FOR_PICKUP, version: 2, pickupCode: 'SL-TEST' }),
+    ]);
+
+    await transition(
+      makeInput({
+        toStatus: ORDER_STATUS_V2.READY_FOR_PICKUP,
+        actor: { type: 'seller' },
+      }),
+    );
+
+    expect(mockDb._updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: ORDER_STATUS_V2.READY_FOR_PICKUP,
+        pickupCode: expect.stringMatching(/^SL-/),
+      }),
+    );
+  });
+
+  test('does NOT generate pickup code on IN_TRANSIT for recojo orders', async () => {
+    mockDb._selectLimit.mockResolvedValue([
+      makePayment({ status: ORDER_STATUS_V2.READY_TO_SHIP, version: 1, shippingType: 'recojo' }),
+    ]);
+    mockDb._updateReturning.mockResolvedValue([
+      makePayment({ status: ORDER_STATUS_V2.IN_TRANSIT, version: 2 }),
+    ]);
+
+    await transition(
+      makeInput({
+        toStatus: ORDER_STATUS_V2.IN_TRANSIT,
+        actor: { type: 'seller' },
+      }),
+    );
+
+    // For recojo orders, pickupCode should NOT be set on IN_TRANSIT
+    const callArg = mockDb._updateSet.mock.calls[0][0];
+    expect(callArg.status).toBe(ORDER_STATUS_V2.IN_TRANSIT);
+    expect(callArg.pickupCode).toBeUndefined();
+  });
+
+  test('still generates pickup code on IN_TRANSIT for delivery orders', async () => {
+    mockDb._selectLimit.mockResolvedValue([
+      makePayment({ status: ORDER_STATUS_V2.READY_TO_SHIP, version: 1, shippingType: 'domicilio' }),
+    ]);
+    mockDb._updateReturning.mockResolvedValue([
+      makePayment({ status: ORDER_STATUS_V2.IN_TRANSIT, version: 2, pickupCode: 'SL-DLV' }),
+    ]);
+
+    await transition(
+      makeInput({
+        toStatus: ORDER_STATUS_V2.IN_TRANSIT,
+        actor: { type: 'seller' },
+      }),
+    );
+
+    expect(mockDb._updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: ORDER_STATUS_V2.IN_TRANSIT,
+        pickupCode: expect.stringMatching(/^SL-/),
+      }),
+    );
+  });
 });

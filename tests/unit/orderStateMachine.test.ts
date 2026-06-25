@@ -17,6 +17,8 @@ const CANCELLED = ORDER_STATUS_V2.CANCELLED;
 const CREATED = ORDER_STATUS_V2.CREATED;
 const PAID = ORDER_STATUS_V2.PAID;
 const PREPARING = ORDER_STATUS_V2.PREPARING_ORDER;
+const READY_FOR_PICKUP = ORDER_STATUS_V2.READY_FOR_PICKUP;
+const PICKED_UP = ORDER_STATUS_V2.PICKED_UP;
 const WAITING = ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION;
 const READY = ORDER_STATUS_V2.READY_TO_SHIP;
 const TRANSIT = ORDER_STATUS_V2.IN_TRANSIT;
@@ -116,6 +118,19 @@ describe('isValidTransition', () => {
     expect(isValidTransition(ISSUE, CANCELLED)).toBe(true);
   });
 
+  // ── Pickup transitions (T15–T17) ──
+  test('PREPARING_ORDER → READY_FOR_PICKUP is valid (T15)', () => {
+    expect(isValidTransition(PREPARING, READY_FOR_PICKUP)).toBe(true);
+  });
+
+  test('READY_FOR_PICKUP → PICKED_UP is valid (T16)', () => {
+    expect(isValidTransition(READY_FOR_PICKUP, PICKED_UP)).toBe(true);
+  });
+
+  test('PICKED_UP → COMPLETED is valid (T17)', () => {
+    expect(isValidTransition(PICKED_UP, COMPLETED)).toBe(true);
+  });
+
   // ── Terminal states ──
   test.each([COMPLETED, DISPUTE, TIMEOUT, CANCELLED])(
     '%s has no outgoing transitions',
@@ -212,6 +227,29 @@ describe('validateTransition (with actor)', () => {
     expect(result.valid).toBe(false);
     expect(result.error).toContain('Unknown source status');
   });
+
+  // ── Pickup actor tests ──
+
+  test('allows seller for PREPARING_ORDER → READY_FOR_PICKUP (T15)', () => {
+    const result = validateTransition(PREPARING, READY_FOR_PICKUP, 'seller');
+    expect(result.valid).toBe(true);
+  });
+
+  test('allows seller for READY_FOR_PICKUP → PICKED_UP (T16)', () => {
+    const result = validateTransition(READY_FOR_PICKUP, PICKED_UP, 'seller');
+    expect(result.valid).toBe(true);
+  });
+
+  test('allows system for PICKED_UP → COMPLETED (T17)', () => {
+    const result = validateTransition(PICKED_UP, COMPLETED, 'system');
+    expect(result.valid).toBe(true);
+  });
+
+  test('rejects customer for PICKED_UP → COMPLETED', () => {
+    const result = validateTransition(PICKED_UP, COMPLETED, 'customer');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('not permitted');
+  });
 });
 
 describe('validateTransitionFull (with preconditions)', () => {
@@ -264,6 +302,34 @@ describe('validateTransitionFull (with preconditions)', () => {
     expect(result.valid).toBe(false);
     expect(result.error).toContain('not allowed');
   });
+
+  // ── Pickup shipping gate ──
+
+  test('delivery order REJECTED for READY_FOR_PICKUP', () => {
+    const result = validateTransitionFull(PREPARING, READY_FOR_PICKUP, {
+      actor: { type: 'seller' },
+      preconditions: { shippingType: 'domicilio' },
+    });
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('Pickup statuses require');
+  });
+
+  test('recojo order ACCEPTED for READY_FOR_PICKUP', () => {
+    const result = validateTransitionFull(PREPARING, READY_FOR_PICKUP, {
+      actor: { type: 'seller' },
+      preconditions: { shippingType: 'recojo' },
+    });
+    expect(result.valid).toBe(true);
+  });
+
+  test('delivery order REJECTED for PICKED_UP', () => {
+    const result = validateTransitionFull(READY_FOR_PICKUP, PICKED_UP, {
+      actor: { type: 'seller' },
+      preconditions: { shippingType: 'domicilio' },
+    });
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('Pickup statuses require');
+  });
 });
 
 describe('getAllowedTransitions', () => {
@@ -282,24 +348,40 @@ describe('getAllowedTransitions', () => {
     expect(result).toEqual([]);
   });
 
-  test('PAID returns PREPARING_ORDER, WAITING_CUSTOMER_CONFIRMATION, CANCELLED', () => {
+  test('PAID returns PREPARING_ORDER, WAITING_CUSTOMER_CONFIRMATION, READY_FOR_PICKUP, CANCELLED', () => {
     const result = getAllowedTransitions(PAID);
-    expect(result.map((r) => r.to)).toEqual([PREPARING, WAITING, CANCELLED]);
+    expect(result.map((r) => r.to)).toEqual([PREPARING, WAITING, READY_FOR_PICKUP, CANCELLED]);
   });
 
   test('filter by actor: seller allowed for PAID (uploadTicket V2 path)', () => {
     const result = getAllowedTransitions(PAID, 'seller');
-    expect(result.map((r) => r.to)).toEqual([PREPARING, WAITING, CANCELLED]);
+    expect(result.map((r) => r.to)).toEqual([PREPARING, WAITING, READY_FOR_PICKUP, CANCELLED]);
   });
 
-  test('PREPARING_ORDER returns WAITING, DELIVERED, SELLER_TIMEOUT, CANCELLED', () => {
+  test('PREPARING_ORDER returns WAITING, DELIVERED, READY_FOR_PICKUP, SELLER_TIMEOUT, CANCELLED', () => {
     const result = getAllowedTransitions(PREPARING);
-    expect(result.map((r) => r.to)).toEqual([WAITING, DELIVERED, TIMEOUT, CANCELLED]);
+    expect(result.map((r) => r.to)).toEqual([
+      WAITING,
+      DELIVERED,
+      READY_FOR_PICKUP,
+      TIMEOUT,
+      CANCELLED,
+    ]);
   });
 
   test('READY_TO_SHIP returns IN_TRANSIT and ISSUE_REPORTED', () => {
     const result = getAllowedTransitions(READY);
     expect(result.map((r) => r.to)).toEqual([TRANSIT, ISSUE]);
+  });
+
+  test('READY_FOR_PICKUP returns PICKED_UP, CANCELLED, ISSUE_REPORTED', () => {
+    const result = getAllowedTransitions(READY_FOR_PICKUP);
+    expect(result.map((r) => r.to)).toEqual([PICKED_UP, CANCELLED, ISSUE]);
+  });
+
+  test('PICKED_UP returns COMPLETED, CANCELLED, ISSUE_REPORTED', () => {
+    const result = getAllowedTransitions(PICKED_UP);
+    expect(result.map((r) => r.to)).toEqual([COMPLETED, CANCELLED, ISSUE]);
   });
 
   test('terminal states return empty', () => {

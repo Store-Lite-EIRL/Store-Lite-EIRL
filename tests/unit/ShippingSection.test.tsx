@@ -19,6 +19,7 @@ vi.mock('lucide-react', () => ({
   CreditCard: () => <span data-testid="icon-creditcard">CreditCard</span>,
   Home: () => <span data-testid="icon-home">Home</span>,
   MapPin: () => <span data-testid="icon-map-pin">MapPin</span>,
+  Package: () => <span data-testid="icon-package">Package</span>,
   RefreshCw: () => <span data-testid="icon-refresh">RefreshCw</span>,
   Search: () => <span data-testid="icon-search">Search</span>,
   Store: () => <span data-testid="icon-store">Store</span>,
@@ -45,14 +46,14 @@ function createMockOrder(overrides: Record<string, any> = {}) {
 
 describe('ShippingSection', () => {
   describe('domicilio type', () => {
-    test('renders route from Inicio to Destino through Agencia', () => {
+    test('renders delivery card with address info', () => {
       const order = createMockOrder({ status: 'paid', shippingType: 'domicilio' });
       render(<ShippingSection order={order} />);
 
-      expect(screen.getByText('Ruta de Entrega')).toBeInTheDocument();
-      expect(screen.getByText('Inicio')).toBeInTheDocument();
-      expect(screen.getByText('Agencia')).toBeInTheDocument();
-      expect(screen.getByText('Destino')).toBeInTheDocument();
+      expect(screen.getByText('Envío a Domicilio')).toBeInTheDocument();
+      expect(
+        screen.getByText('El paquete va directo al domicilio del comprador.'),
+      ).toBeInTheDocument();
       expect(screen.getByText('Miraflores, Lima')).toBeInTheDocument();
       expect(screen.getByText('Av. Principal 123')).toBeInTheDocument();
     });
@@ -64,40 +65,43 @@ describe('ShippingSection', () => {
       expect(screen.getByText(/Ref: Cerca al parque/)).toBeInTheDocument();
     });
 
-    test('does not render Destino when shipping type is not domicilio', () => {
+    test('does not show agency-style Destino for domicilio', () => {
+      const order = createMockOrder({ shippingType: 'domicilio' });
+      render(<ShippingSection order={order} />);
+
+      expect(screen.getByText('Envío a Domicilio')).toBeInTheDocument();
+      expect(screen.queryByText('Envío por Agencia')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('agencia type', () => {
+    test('renders agency card with Destino label', () => {
       const order = createMockOrder({ shippingType: 'agencia' });
       render(<ShippingSection order={order} />);
 
-      expect(screen.getByText('Inicio')).toBeInTheDocument();
-      expect(screen.getByText('Agencia')).toBeInTheDocument();
-      expect(screen.queryByText('Destino')).not.toBeInTheDocument();
+      expect(screen.getByText('Envío por Agencia')).toBeInTheDocument();
+      expect(screen.getByText('Olva')).toBeInTheDocument();
+      expect(screen.getByText('Destino')).toBeInTheDocument();
+      expect(screen.getByText('Miraflores, Lima')).toBeInTheDocument();
     });
   });
 
   describe('recojo type', () => {
-    test('renders only Inicio without Agencia/Destino', () => {
+    test('renders pickup card without delivery/agency labels', () => {
       const order = createMockOrder({ shippingType: 'recojo' });
       render(<ShippingSection order={order} />);
 
-      expect(screen.getByText('Inicio')).toBeInTheDocument();
-      expect(screen.queryByText('Agencia')).not.toBeInTheDocument();
-      expect(screen.queryByText('Destino')).not.toBeInTheDocument();
+      expect(screen.getByText('Recojo en Tienda')).toBeInTheDocument();
+      expect(screen.queryByText('Envío a Domicilio')).not.toBeInTheDocument();
+      expect(screen.queryByText('Envío por Agencia')).not.toBeInTheDocument();
     });
   });
 
-  describe('progress bar', () => {
-    test('renders progress bar with percentage', () => {
-      const order = createMockOrder({ status: 'paid' });
-      render(<ShippingSection order={order} />);
+  describe('status tags', () => {
+    test('renders status tag for paid status', () => {
+      render(<ShippingSection order={createMockOrder({ status: 'paid' })} />);
 
-      expect(screen.getByText(/10%/)).toBeInTheDocument();
-    });
-
-    test('shows 100% for completed status', () => {
-      const order = createMockOrder({ status: 'completed' });
-      render(<ShippingSection order={order} />);
-
-      expect(screen.getByText(/100%/)).toBeInTheDocument();
+      expect(screen.getByText('paid')).toBeInTheDocument();
     });
   });
 });
