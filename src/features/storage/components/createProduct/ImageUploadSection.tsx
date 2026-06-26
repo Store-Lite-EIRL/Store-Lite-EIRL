@@ -11,6 +11,7 @@ import { MAX_IMAGES } from './types';
 interface ImageUploadSectionProps {
   images: string[];
   error?: string;
+  sizeError?: string;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   onRemove: (index: number) => void;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -19,6 +20,7 @@ interface ImageUploadSectionProps {
 export const ImageUploadSection = ({
   images,
   error,
+  sizeError,
   fileInputRef,
   onRemove,
   onChange,
@@ -63,6 +65,7 @@ export const ImageUploadSection = ({
     <p className="image-hint">
       {PRODUCT_IMAGE_FORMATS_LABEL} · Máx. 5MB · Hasta {MAX_IMAGES} imágenes
     </p>
+    {sizeError && <p className="field-error">{sizeError}</p>}
     {error && <p className="field-error">{error}</p>}
 
     <input

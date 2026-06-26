@@ -1,3 +1,7 @@
+allowBuilds:
+  '@sentry/cli': true
+  esbuild: true
+  unrs-resolver: true
 auditConfig:
   ignoreGhsas:
     - GHSA-4r6h-8v6p-xvw6

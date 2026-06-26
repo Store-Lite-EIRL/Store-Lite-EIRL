@@ -56,8 +56,15 @@ export const useCreateProductForm = ({
   const [form, setForm] = useState<FormState>(
     initialProduct ? productToFormState(initialProduct) : EMPTY_FORM,
   );
-  const { media, setMedia, mediaError, handleImageChange, handleRemoveImage } =
-    useProductFormMedia();
+  const {
+    media,
+    setMedia,
+    mediaError,
+    mediaBodyError,
+    setMediaBodyError,
+    handleImageChange,
+    handleRemoveImage,
+  } = useProductFormMedia();
   const { errors, setErrors, validate, clearError } = useProductFormValidation();
   const [isSaving, setIsSaving] = useState(false);
   const [fileAlert, setFileAlert] = useState<string | null>(null);
@@ -75,6 +82,9 @@ export const useCreateProductForm = ({
     }
     lastSyncedProductIdRef.current = productId;
 
+    setErrors({});
+    setMediaBodyError(undefined);
+
     if (initialProduct) {
       setForm(productToFormState(initialProduct));
       let mediaItems: SaveProductMediaItem[] = [];
@@ -88,7 +98,7 @@ export const useCreateProductForm = ({
       setForm(EMPTY_FORM);
       setMedia([]);
     }
-  }, [initialProduct, setMedia]);
+  }, [initialProduct, setMedia, setErrors]);
 
   useEffect(() => {
     if (!mediaError) {
@@ -145,6 +155,11 @@ export const useCreateProductForm = ({
       setMedia([]);
       onClose();
     } catch (error) {
+      if (error instanceof Error && error.message.includes('Body exceeded')) {
+        setFileAlert(
+          'El tamaño total de las imágenes supera el límite del servidor. Reducí el peso o usá menos imágenes.',
+        );
+      }
       console.error('Error in handleSave catch block:', error);
     } finally {
       setIsSaving(false);
@@ -157,6 +172,7 @@ export const useCreateProductForm = ({
     images: media.map((m) => (m.type === 'url' ? m.url : m.preview)),
     fileAlert,
     clearFileAlert: () => setFileAlert(null),
+    mediaBodyError,
     isSaving,
     fileInputRef,
     setField: <K extends keyof FormState>(k: K, v: FormState[K]) => {
