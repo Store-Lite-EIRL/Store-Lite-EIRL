@@ -123,7 +123,12 @@ export const ProductTable = ({
     if (menuProduct) {
       const businessPath = getBusinessPath(businessSlug, `/product/${menuProduct.id}`);
       const url = window.location.origin + businessPath;
-      navigator.clipboard.writeText(url).then(() => setCopiedAlert(true));
+      navigator.clipboard
+        .writeText(url)
+        .then(() => setCopiedAlert(true))
+        .catch(() => {
+          console.error('Failed to copy to clipboard');
+        });
     }
   };
 

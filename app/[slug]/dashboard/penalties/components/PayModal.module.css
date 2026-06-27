@@ -1,0 +1,322 @@
+/* ========================================================
+   PayModal — Culqi Payment Modal Styles
+   ======================================================== */
+
+/* ── Overlay ── */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1.5rem;
+  animation: fadeIn 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Content ── */
+.content {
+  background: var(--md-sys-color-surface);
+  border-radius: 28px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 1.5rem 0;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.closeButton:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+/* ── Body ── */
+.body {
+  padding: 1.25rem 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.description {
+  font-size: 0.9rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── Penalty List ── */
+.penaltyList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.penaltyItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.penaltyItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--md-sys-color-error);
+}
+
+.penaltyItemLeft svg {
+  flex-shrink: 0;
+}
+
+.penaltyItemLeft div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.penaltyItemType {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+}
+
+.penaltyItemOrder {
+  font-size: 0.7rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.penaltyItemAmount {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface);
+  white-space: nowrap;
+}
+
+/* ── Total Row ── */
+.totalRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-high);
+  font-size: 0.9rem;
+  color: var(--md-sys-color-on-surface);
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+.totalRow strong {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--md-sys-color-error);
+}
+
+/* ── Status Container ── */
+.statusContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  gap: 1rem;
+  text-align: center;
+}
+
+.statusText {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.statusSubtext {
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── Success Icon ── */
+.successIcon {
+  color: #2e7d32;
+}
+
+/* ── Error Icon ── */
+.errorIcon {
+  color: var(--md-sys-color-error);
+}
+
+.errorMessageText {
+  font-size: 0.85rem;
+  color: var(--md-sys-color-error);
+  margin: 0;
+  font-weight: 600;
+}
+
+/* ── Footer ── */
+.footer {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem 1.5rem;
+  justify-content: flex-end;
+}
+
+/* ── Buttons ── */
+.cancelButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.625rem 1.5rem;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 100px;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cancelButton:hover {
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.cancelButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.payButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.5rem;
+  border: none;
+  border-radius: 100px;
+  background: var(--md-sys-color-error);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--md-sys-color-error) 30%, transparent);
+}
+
+.payButton:hover {
+  background: color-mix(in srgb, var(--md-sys-color-error) 85%, black);
+  transform: translateY(-1px);
+}
+
+.payButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.625rem 1.5rem;
+  border: none;
+  border-radius: 100px;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.primaryButton:hover {
+  filter: brightness(1.1);
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .content {
+    max-width: 100%;
+    border-radius: 28px 28px 0 0;
+    max-height: 90vh;
+  }
+
+  .footer {
+    flex-direction: column;
+  }
+
+  .footer button {
+    width: 100%;
+    justify-content: center;
+  }
+}

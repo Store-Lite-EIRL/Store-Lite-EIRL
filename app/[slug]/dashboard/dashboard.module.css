@@ -8,6 +8,33 @@
   padding: 1rem 0 3rem;
 }
 
+.bottomRow {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.bottomMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.bottomAside {
+  width: 220px;
+  flex-shrink: 0;
+  padding-top: 1rem;
+}
+
+@media (max-width: 1100px) {
+  .bottomRow {
+    flex-direction: column;
+  }
+
+  .bottomAside {
+    width: 100%;
+  }
+}
+
 .sectionHeader {
   margin-top: 1.5rem;
   padding-bottom: 0.5rem;

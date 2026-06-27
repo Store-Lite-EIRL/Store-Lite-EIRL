@@ -74,6 +74,13 @@ export const businesses = pgTable(
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+
+    // ── Penalty System ──
+    culqiBlocked: boolean('culqi_blocked').notNull().default(false),
+    penaltyDebt: decimal('penalty_debt', { precision: 10, scale: 2 }).notNull().default('0'),
+    penaltyCount: integer('penalty_count').notNull().default(0),
+    blacklisted: boolean('blacklisted').notNull().default(false),
+    blacklistedAt: timestamp('blacklisted_at', { withTimezone: true }),
   },
   (table) => ({
     // nameCheck: check(
@@ -333,8 +340,8 @@ export const saasIssuerConfig = pgTable(
     igvRate: decimal('igv_rate', { precision: 5, scale: 4 }).notNull().default('0.18'),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => ({
-    // singleton: check('saas_issuer_singleton', sql`${table.id} = 1`),
+  (_table) => ({
+    // singleton: check('saas_issuer_singleton', sql`${_table.id} = 1`),
   }),
 );
 

@@ -6,7 +6,7 @@
  */
 
 import { db } from '@/core/database/client';
-import { businessSettings, paymentOrders } from '@/core/database/schema';
+import { businesses, businessSettings, paymentOrders } from '@/core/database/schema';
 import { completeIdempotencyKey, reserveIdempotencyKey } from '@/core/payments/idempotency';
 import { decrypt } from '@/utils/crypto';
 import { eq } from 'drizzle-orm';
@@ -61,6 +61,23 @@ export async function POST(request: Request) {
       return idempotencyReservation.response;
     }
     reservedIdempotencyKey = idempotencyReservation?.key ?? null;
+
+    // 🚫 CULQI BLOCK: Verificar si el negocio tiene la pasarela bloqueada
+    const [business] = await db
+      .select({ culqiBlocked: businesses.culqiBlocked })
+      .from(businesses)
+      .where(eq(businesses.id, businessId))
+      .limit(1);
+
+    if (business?.culqiBlocked) {
+      return NextResponse.json(
+        {
+          error:
+            'Tu pasarela de pagos está bloqueada. Pagá tus multas pendientes en Dashboard > Mis Multas.',
+        },
+        { status: 403 },
+      );
+    }
 
     // 1. Obtener y descifrar la Secret Key
     const settings = await db.query.businessSettings.findFirst({

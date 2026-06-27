@@ -1,0 +1,297 @@
+/* ── Section Title ── */
+.infoSection {
+  margin-bottom: 0;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--md-sys-color-outline);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 1rem;
+  font-family: var(--md-sys-typescale-label-large-font, system-ui);
+}
+
+.sectionTitle svg {
+  width: 18px;
+  height: 18px;
+  color: var(--md-sys-color-primary);
+}
+
+/* ── Unified Card ── */
+.unifiedCard {
+  background: var(--md-sys-color-surface-container-lowest);
+  border-radius: 20px;
+  padding: 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.unifiedContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ── Customer Section ── */
+.customerSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.customerHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.customerAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--md-sys-color-secondary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-on-secondary-container);
+  flex-shrink: 0;
+}
+
+.customerBasicInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.customerLabel {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--md-sys-color-outline);
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
+.customerDataRow {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+.dataItemInline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.dataItemInline svg {
+  color: var(--md-sys-color-primary);
+  flex-shrink: 0;
+}
+
+.customerEmail {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  margin: 0.25rem 0 0 0;
+  word-break: break-all;
+}
+
+.unifiedDivider {
+  height: 1px;
+  background: var(--md-sys-color-outline-variant);
+  margin: 0.25rem 0;
+}
+
+/* ── Product Section ── */
+.productSection {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+
+.productImageWrapper {
+  width: 100px;
+  height: 100px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--md-sys-color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.productImg {
+  object-fit: contain;
+  width: 100%;
+  height: 100%;
+}
+
+.productPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--md-sys-color-outline);
+  font-size: 1.5rem;
+}
+
+.productInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.productLink {
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.productLink:hover {
+  text-decoration: underline;
+}
+
+.productMetaRow {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.productMetaItem {
+  font-size: 0.85rem;
+  color: var(--md-sys-color-on-surface);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.metaLabel {
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.itemPrice {
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface);
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+/* ── Payment Details ── */
+.paymentDetails {
+  background: var(--md-sys-color-surface-container-lowest);
+  padding: 0.75rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+  align-items: center;
+}
+
+.detailLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--md-sys-color-outline);
+}
+
+.totalRow {
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-top: 0.15rem;
+}
+
+.totalValue {
+  color: var(--md-sys-color-primary);
+  font-size: 0.95rem;
+}
+
+.divider {
+  height: 1px;
+  background: var(--md-sys-color-outline-variant);
+}
+
+.capitalizeText {
+  text-transform: capitalize;
+}
+
+/* ── Shipping Info (Phase 0) ── */
+.shippingCard {
+  padding: 1rem;
+}
+
+.shippingRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.375rem 0;
+}
+
+.shippingRow + .shippingRow {
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.shippingIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--md-sys-color-on-surface-variant);
+  opacity: 0.7;
+}
+
+.shippingLabel {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+  display: block;
+  line-height: 1.3;
+}
+
+.shippingValue {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface);
+  font-weight: 500;
+}
+
+.shippingTypeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 100px;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}

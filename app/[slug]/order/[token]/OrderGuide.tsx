@@ -3,10 +3,16 @@
 import { Icon } from '@/shared/components/ui';
 import { useState } from 'react';
 
-export default function OrderGuide() {
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
+interface OrderGuideProps {
+  shippingType?: string | null;
+  showDelayWarning?: boolean;
+}
 
-  const sections = [
+export default function OrderGuide({ shippingType, showDelayWarning }: OrderGuideProps) {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const isPickup = shippingType?.toLowerCase() === 'recojo';
+
+  const deliverySections = [
     {
       title: 'Tu Compra está Protegida',
       icon: 'shield_check',
@@ -40,6 +46,43 @@ export default function OrderGuide() {
       ),
     },
   ];
+
+  const pickupSections = [
+    {
+      title: 'Tu Compra está Protegida',
+      icon: 'shield_check',
+      content:
+        'En Store Lite, tu pago se mantiene en estado de validación hasta que el vendedor marque el pedido como listo para recojo y recibas el producto. Cuando pases por la tienda, revisá el producto antes de retirarte. No confirmes la recepción hasta tenerlo en tus manos y verificar que todo esté en orden.',
+    },
+    {
+      title: 'Cómo Recoger en Tienda',
+      icon: 'storefront',
+      content:
+        'Cuando el vendedor marque el pedido como listo, vas a ver un código de recojo en esta página. Andá a la tienda con tu DNI y mostrale el código al vendedor. Él va a verificar tus datos y entregarte el producto. Revisá que el producto esté en buen estado antes de retirarte.',
+    },
+    {
+      title: 'Garantía de Satisfacción',
+      icon: 'workspace_premium',
+      content: (
+        <div>
+          <p style={{ margin: '0 0 1rem 0' }}>
+            Si el producto está dañado o no coincide con lo comprado:
+          </p>
+          <ul style={{ paddingLeft: '1.25rem', margin: 0, listStyle: 'disc' }}>
+            <li>
+              <b>No confirmes la recepción</b> en esta página.
+            </li>
+            <li>
+              Usá el botón <b>&#39;Reportar Problema&#39;</b> inmediatamente.
+            </li>
+            <li>Chateá con el vendedor usando el panel lateral para resolverlo rápido.</li>
+          </ul>
+        </div>
+      ),
+    },
+  ];
+
+  const sections = isPickup ? pickupSections : deliverySections;
 
   return (
     <div className="guide-root">
@@ -80,6 +123,23 @@ export default function OrderGuide() {
           Guía de Seguridad
         </h3>
       </div>
+
+      {/* Delay warning: seller hasn't fulfilled within 5 days */}
+      {showDelayWarning && (
+        <div
+          style={{
+            background: '#dc2626',
+            color: 'white',
+            padding: '1rem 2rem',
+            borderRadius: '32px',
+            fontSize: '0.85rem',
+            lineHeight: 1.5,
+            fontWeight: 600,
+          }}
+        >
+          🔴 El vendedor no cumplió con el plazo. La plataforma ha tomado acciones.
+        </div>
+      )}
 
       {sections.map((s, i) => (
         <div key={i} className={`g-item ${openIndex === i ? 'open' : ''}`}>

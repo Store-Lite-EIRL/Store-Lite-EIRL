@@ -106,9 +106,13 @@ export function CulqiCheckout({
   };
 
   useEffect(() => {
-    loadCulqiScript(process.env.NEXT_PUBLIC_CULQI_PK || '').then(() => {
-      if (window.Culqi) setIsCulqiReady(true);
-    });
+    loadCulqiScript(process.env.NEXT_PUBLIC_CULQI_PK || '')
+      .then(() => {
+        if (window.Culqi) setIsCulqiReady(true);
+      })
+      .catch(() => {
+        console.error('Failed to load Culqi script');
+      });
   }, []);
 
   return (

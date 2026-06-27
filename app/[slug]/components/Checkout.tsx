@@ -110,6 +110,23 @@ export default function Checkout({
   // Payment State
   const [email, setEmail] = useState('');
 
+  // ─── Penalty status warning ───
+  const [penaltyStatus, setPenaltyStatus] = useState<{
+    canAcceptPayments: boolean;
+    culqiBlocked: boolean;
+    blacklisted: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!businessId) return;
+    fetch(`/api/business/penalty-status?businessId=${businessId}`)
+      .then((res) => res.json())
+      .then((data) => setPenaltyStatus(data))
+      .catch(() => {
+        /* don't show banner on fetch error */
+      });
+  }, [businessId]);
+
   // ─── Google Customer Auth ───
   const params = useParams();
   const slug = params?.slug as string;
@@ -490,6 +507,15 @@ export default function Checkout({
         </div>
       )}
       <div className={styles.checkoutModal} onClick={(e) => e.stopPropagation()}>
+        {/* Warning Banner for blocked/penalty businesses */}
+        {penaltyStatus && !penaltyStatus.canAcceptPayments && (
+          <div className={styles.warningBanner}>
+            {penaltyStatus.blacklisted
+              ? '🚫 Esta tienda ha sido cerrada permanentemente. No deberías realizar compras aquí.'
+              : '⚠️ Esta tienda tiene multas pendientes. Store Lite no se responsabiliza por transacciones entre usuarios. La responsabilidad legal recae en el negocio.'}
+          </div>
+        )}
+
         {/* Header with Back/Close Buttons */}
         <div className={styles.header}>
           <div className={styles.headerTitleGroup}>

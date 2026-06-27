@@ -117,7 +117,11 @@ export const StorageHeader = ({
   const handleProgressComplete = () => {
     setProgressOpen(false);
     setImportRows([]);
-    refreshProducts().then(() => router.refresh());
+    refreshProducts()
+      .then(() => router.refresh())
+      .catch(() => {
+        console.error('Failed to refresh products');
+      });
   };
 
   // Called when progress dialog is closed while importing (user cancels)

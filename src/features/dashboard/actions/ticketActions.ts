@@ -2,11 +2,48 @@
 
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
-import { payments } from '@/core/database/schema';
+import { businesses, payments, profiles } from '@/core/database/schema';
+import { transition } from '@/core/orders/orderService';
+import { ORDER_STATUS, ORDER_STATUS_V2 } from '@/core/orders/orderStatus';
+import { createClient as createServerClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
 
 const BUCKET_NAME = 'tickets';
+
+async function getAuthenticatedUserId(): Promise<string | null> {
+  try {
+    const supabase = await createServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    // Ensure profile exists to satisfy FK constraints on order_timeline_events
+    const existingProfile = await db.query.profiles.findFirst({
+      where: eq(profiles.id, user.id),
+    });
+
+    if (!existingProfile) {
+      console.warn('[getAuthenticatedUserId] Profile missing, auto-creating for user:', user.id);
+      await db.insert(profiles).values({
+        id: user.id,
+        email: user.email ?? '',
+        fullName:
+          user.user_metadata?.full_name ??
+          user.user_metadata?.name ??
+          user.email?.split('@')[0] ??
+          'Unknown User',
+        avatarUrl: user.user_metadata?.avatar_url ?? null,
+      });
+    }
+
+    return user.id;
+  } catch {
+    return null;
+  }
+}
 
 function createAdminClient() {
   return createClient(env.supabaseUrl, env.supabaseServiceRoleKey, {
@@ -35,11 +72,13 @@ export async function uploadTicketAndUpdatePayment(
   console.log('[uploadTicket] Starting — paymentId:', paymentId, 'businessId:', businessId);
 
   try {
-    // 1. Obtener el trackingToken y validar que el pago pertenezca al negocio
+    // 1. Obtener datos del pago para validar y pasar preconditions
     const [existingPayment] = await db
       .select({
         trackingToken: payments.trackingToken,
         businessId: payments.businessId,
+        version: payments.version,
+        shippingCost: payments.shippingCost,
       })
       .from(payments)
       .where(eq(payments.id, paymentId))
@@ -65,6 +104,8 @@ export async function uploadTicketAndUpdatePayment(
       return { success: false, error: 'El pedido no tiene un token de seguimiento' };
     }
 
+    const expectedVersion = existingPayment.version ?? 0;
+
     // 2. Convert base64 to Uint8Array (compatible with Edge runtime)
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
     const binaryString = atob(base64Data);
@@ -80,7 +121,7 @@ export async function uploadTicketAndUpdatePayment(
     // 4. Upload to Supabase Storage
     const adminClient = createAdminClient();
 
-    const { data: uploadData, error: uploadError } = await adminClient.storage
+    const { data: _uploadData, error: uploadError } = await adminClient.storage
       .from(BUCKET_NAME)
       .upload(filePath, bytes, {
         contentType: 'image/jpeg',
@@ -96,15 +137,44 @@ export async function uploadTicketAndUpdatePayment(
     const { data: urlData } = adminClient.storage.from(BUCKET_NAME).getPublicUrl(filePath);
     const ticketImageUrl = urlData.publicUrl;
 
-    // 6. Update payment: cambiar estado a 'validando' (ticket subido, esperando validación del cliente)
-    await db
-      .update(payments)
-      .set({
-        ticketImageUrl,
-        status: 'validando', // Estado: Ticket subido, cliente debe validar
-        updatedAt: new Date(),
-      })
-      .where(eq(payments.id, paymentId));
+    // 6. Update payment — V2 path uses OrderService, legacy uses inline
+    if (env.orderFlowV2) {
+      const actorId = await getAuthenticatedUserId();
+      const result = await transition({
+        paymentId,
+        toStatus: ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION,
+        actor: { type: 'seller', id: actorId ?? undefined },
+        expectedVersion,
+        extraFields: { ticketImageUrl },
+        preconditions: { shippingCost: existingPayment.shippingCost },
+      });
+
+      if (!result.success) {
+        console.error('[uploadTicket] OrderService error:', result.error);
+        // Mapear errores técnicos a mensajes amigables para el usuario
+        const friendlyError = mapTransitionError(result.error);
+        return { success: false, error: friendlyError };
+      }
+    } else {
+      const [updated] = await db
+        .update(payments)
+        .set({
+          ticketImageUrl,
+          status: ORDER_STATUS.VALIDANDO,
+          version: expectedVersion + 1,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(payments.id, paymentId), eq(payments.version, expectedVersion)))
+        .returning({ id: payments.id });
+
+      if (!updated) {
+        console.error('[uploadTicket] Version conflict for payment:', paymentId);
+        return {
+          success: false,
+          error: 'El pedido fue modificado por otra operación. Recargá e intentá de nuevo.',
+        };
+      }
+    }
 
     console.log('[uploadTicket] Success — ticket uploaded for payment:', paymentId);
     return { success: true, ticketImageUrl, trackingToken: existingPayment.trackingToken };
@@ -117,6 +187,7 @@ export async function uploadTicketAndUpdatePayment(
 export interface NotifyDeliveryResult {
   success: boolean;
   error?: string;
+  autoCompletePending?: boolean;
 }
 
 /**
@@ -133,6 +204,7 @@ export async function notifyDelivery(
       .select({
         status: payments.status,
         businessId: payments.businessId,
+        version: payments.version,
       })
       .from(payments)
       .where(eq(payments.id, paymentId))
@@ -147,45 +219,274 @@ export async function notifyDelivery(
     }
 
     // Solo se puede notificar entrega si el ticket ya fue validado (status = delivered)
-    if (existingPayment.status !== 'delivered') {
+    if (existingPayment.status !== ORDER_STATUS.DELIVERED) {
       return { success: false, error: 'El ticket aún no fue validado por el cliente' };
     }
 
-    // P5: Transaction with re-check for race condition guard
-    await db.transaction(async (tx) => {
-      const [currentPayment] = await tx
-        .select({ status: payments.status })
-        .from(payments)
-        .where(eq(payments.id, paymentId))
-        .limit(1);
+    // Version-locked update
+    const expectedVersion = existingPayment.version ?? 0;
 
-      if (currentPayment?.status !== 'delivered') {
-        throw new Error('Estado del pedido fue modificado.');
+    if (env.orderFlowV2) {
+      const actorId = await getAuthenticatedUserId();
+      const result = await transition({
+        paymentId,
+        toStatus: ORDER_STATUS_V2.IN_TRANSIT,
+        actor: { type: 'seller', id: actorId ?? undefined },
+        expectedVersion,
+      });
+
+      if (!result.success) {
+        console.error('[notifyDelivery] OrderService error:', result.error);
+        return { success: false, error: result.error };
       }
-
-      await tx
+    } else {
+      const [updated] = await db
         .update(payments)
         .set({
-          status: 'en_reparto',
+          status: ORDER_STATUS.EN_REPARTO,
+          version: expectedVersion + 1,
           updatedAt: new Date(),
         })
-        .where(eq(payments.id, paymentId));
-    });
+        .where(and(eq(payments.id, paymentId), eq(payments.version, expectedVersion)))
+        .returning({ id: payments.id });
+
+      if (!updated) {
+        console.error('[notifyDelivery] Version conflict for payment:', paymentId);
+        return {
+          success: false,
+          error: 'El estado del pedido fue modificado. Recargá e intentá de nuevo.',
+        };
+      }
+    }
 
     console.log('[notifyDelivery] Success — delivery notified for payment:', paymentId);
     return { success: true };
   } catch (error) {
-    const message = error instanceof Error ? error.message : '';
-    if (message.includes('modificado')) {
-      return {
-        success: false,
-        error: 'El estado del pedido fue modificado. Recargá e intentá de nuevo.',
-      };
-    }
     console.error(
       '[notifyDelivery] Error:',
       error instanceof Error ? error.message : String(error),
     );
     return { success: false, error: 'Error al notificar la entrega' };
   }
+}
+
+// ── prepareOrder ───────────────────────────────────────────────
+
+export async function prepareOrder(
+  paymentId: string,
+  businessId: string,
+): Promise<NotifyDeliveryResult> {
+  try {
+    const [existingPayment] = await db
+      .select({
+        status: payments.status,
+        businessId: payments.businessId,
+        version: payments.version,
+      })
+      .from(payments)
+      .where(and(eq(payments.id, paymentId), eq(payments.businessId, businessId)))
+      .limit(1);
+
+    if (!existingPayment) return { success: false, error: 'Pedido no encontrado' };
+    if (existingPayment.businessId !== businessId)
+      return { success: false, error: 'No tienes permisos para este pedido' };
+
+    const expectedVersion = existingPayment.version ?? 0;
+
+    if (env.orderFlowV2) {
+      const actorId = await getAuthenticatedUserId();
+      const result = await transition({
+        paymentId,
+        toStatus: ORDER_STATUS_V2.PREPARING_ORDER,
+        actor: { type: 'seller', id: actorId ?? undefined },
+        expectedVersion,
+      });
+      if (!result.success) return { success: false, error: mapTransitionError(result.error) };
+    } else {
+      return { success: false, error: 'El flujo de envío requiere orderFlowV2' };
+    }
+
+    revalidatePath(`/${businessId}/dashboard`, 'page');
+    return { success: true };
+  } catch (error) {
+    console.error('[prepareOrder] Error:', error instanceof Error ? error.message : String(error));
+    return { success: false, error: 'Error al preparar el pedido' };
+  }
+}
+
+// ── markReadyForPickup ──────────────────────────────────────────
+
+export async function markReadyForPickup(
+  paymentId: string,
+  businessId: string,
+): Promise<NotifyDeliveryResult> {
+  try {
+    const [existingPayment] = await db
+      .select({
+        status: payments.status,
+        businessId: payments.businessId,
+        version: payments.version,
+      })
+      .from(payments)
+      .where(and(eq(payments.id, paymentId), eq(payments.businessId, businessId)))
+      .limit(1);
+
+    if (!existingPayment) return { success: false, error: 'Pedido no encontrado' };
+    if (existingPayment.businessId !== businessId)
+      return { success: false, error: 'No tienes permisos para este pedido' };
+
+    const expectedVersion = existingPayment.version ?? 0;
+
+    if (env.orderFlowV2) {
+      const actorId = await getAuthenticatedUserId();
+      const result = await transition({
+        paymentId,
+        toStatus: ORDER_STATUS_V2.READY_FOR_PICKUP,
+        actor: { type: 'seller', id: actorId ?? undefined },
+        expectedVersion,
+      });
+      if (!result.success) return { success: false, error: mapTransitionError(result.error) };
+    } else {
+      return { success: false, error: 'El flujo de recojo requiere orderFlowV2' };
+    }
+
+    revalidatePath(`/${businessId}/dashboard`, 'page');
+    return { success: true };
+  } catch (error) {
+    console.error(
+      '[markReadyForPickup] Error:',
+      error instanceof Error ? error.message : String(error),
+    );
+    return { success: false, error: 'Error al marcar como listo para recojo' };
+  }
+}
+
+// ── confirmPickedUp ────────────────────────────────────────────
+
+export async function confirmPickedUp(
+  paymentId: string,
+  businessId: string,
+  customerCode: string,
+): Promise<NotifyDeliveryResult> {
+  try {
+    const [existingPayment] = await db
+      .select({
+        status: payments.status,
+        businessId: payments.businessId,
+        version: payments.version,
+        pickupCode: payments.pickupCode,
+        trackingToken: payments.trackingToken,
+        businessSlug: businesses.slug,
+      })
+      .from(payments)
+      .innerJoin(businesses, eq(businesses.id, payments.businessId))
+      .where(and(eq(payments.id, paymentId), eq(payments.businessId, businessId)))
+      .limit(1);
+
+    if (!existingPayment) return { success: false, error: 'Pedido no encontrado' };
+    if (existingPayment.businessId !== businessId)
+      return { success: false, error: 'No tienes permisos para este pedido' };
+
+    // Validar que el código ingresado coincida con el código generado
+    if (!existingPayment.pickupCode) {
+      return { success: false, error: 'El pedido aún no tiene un código de recojo generado' };
+    }
+
+    const normalizedCode = customerCode.trim().toUpperCase();
+    if (normalizedCode !== existingPayment.pickupCode.toUpperCase()) {
+      return { success: false, error: 'El código de recojo no coincide. Verificá con el cliente.' };
+    }
+
+    const expectedVersion = existingPayment.version ?? 0;
+
+    if (env.orderFlowV2) {
+      const actorId = await getAuthenticatedUserId();
+
+      // 1. First transition: READY_FOR_PICKUP → PICKED_UP (records pickup event)
+      const pickupResult = await transition({
+        paymentId,
+        toStatus: ORDER_STATUS_V2.PICKED_UP,
+        actor: { type: 'seller', id: actorId ?? undefined },
+        expectedVersion,
+      });
+      if (!pickupResult.success)
+        return { success: false, error: mapTransitionError(pickupResult.error) };
+
+      // 2. Immediately auto-complete: PICKED_UP → COMPLETED
+      //    The seller verified the code, so the order is effectively done.
+      const completeResult = await transition({
+        paymentId,
+        toStatus: ORDER_STATUS_V2.COMPLETED,
+        actor: { type: 'system' },
+        expectedVersion: pickupResult.payment.version ?? 0,
+        metadata: { autoCompletedAfterPickup: true },
+      });
+      if (!completeResult.success) {
+        console.error(
+          '[confirmPickedUp] Auto-complete failed (order stays PICKED_UP):',
+          completeResult.error,
+        );
+        // Non-fatal — the order is already PICKED_UP, auto-complete will retry via cron.
+        // Return success with a flag so the client knows to show PICKED_UP status (not COMPLETED)
+        revalidatePath(`/${businessId}/dashboard`, 'page');
+        if (existingPayment.trackingToken && existingPayment.businessSlug) {
+          revalidatePath(
+            `/${existingPayment.businessSlug}/order/${existingPayment.trackingToken}`,
+            'page',
+          );
+        }
+        return { success: true, autoCompletePending: true };
+      }
+    } else {
+      return { success: false, error: 'El flujo de recojo requiere orderFlowV2' };
+    }
+
+    revalidatePath(`/${businessId}/dashboard`, 'page');
+    if (existingPayment.trackingToken && existingPayment.businessSlug) {
+      revalidatePath(
+        `/${existingPayment.businessSlug}/order/${existingPayment.trackingToken}`,
+        'page',
+      );
+    }
+    return { success: true };
+  } catch (error) {
+    console.error(
+      '[confirmPickedUp] Error:',
+      error instanceof Error ? error.message : String(error),
+    );
+    return { success: false, error: 'Error al confirmar el recojo' };
+  }
+}
+
+/**
+ * Mapea errores técnicos de la máquina de estados a mensajes amigables para el usuario.
+ */
+function mapTransitionError(error: string): string {
+  if (error.includes('Version conflict')) {
+    return 'El pedido fue modificado por otra operación. Recargá la página e intentá de nuevo.';
+  }
+  if (
+    error.includes('Invalid transition') ||
+    error.includes('not allowed') ||
+    error.includes('not permitted')
+  ) {
+    return 'No se puede cambiar el estado del pedido en este momento. Recargá la página e intentá de nuevo.';
+  }
+  if (error.includes('Seller must provide')) {
+    return 'Faltan datos del courier. Completá los campos de transporte y volvé a intentar.';
+  }
+  if (error.includes('Pickup statuses require')) {
+    return 'Este pedido no es de tipo recojo. No se puede usar el flujo de recojo.';
+  }
+  if (error.includes('El código de recojo no coincide')) {
+    return error; // ya es un mensaje amigable
+  }
+  if (error.includes('El pedido aún no tiene un código')) {
+    return error; // ya es un mensaje amigable
+  }
+  if (error.includes('Estado actual desconocido')) {
+    return 'El pedido tiene un estado desconocido. Contactá a soporte.';
+  }
+  // Si no hay un mapeo conocido, devolver el error original
+  return error;
 }

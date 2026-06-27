@@ -32,11 +32,15 @@ export function loadCulqiScript(publicKey: string): Promise<void> {
 
   // Already loading — chain publicKey setter on the cached promise
   if (loadingPromise) {
-    return loadingPromise.then(() => {
-      if (window.Culqi) {
-        window.Culqi.publicKey = publicKey;
-      }
-    });
+    return loadingPromise
+      .then(() => {
+        if (window.Culqi) {
+          window.Culqi.publicKey = publicKey;
+        }
+      })
+      .catch(() => {
+        // Script already failed to load earlier — nothing to do
+      });
   }
 
   loadingPromise = new Promise<void>((resolve, reject) => {

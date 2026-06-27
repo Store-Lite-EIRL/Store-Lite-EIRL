@@ -71,8 +71,11 @@ export const trackOrderSchema = z.object({
 export type TrackOrderInput = z.infer<typeof trackOrderSchema>;
 
 export const lookupOrderSchema = z.object({
-  dni: z.string().min(1, 'DNI es requerido'),
-  orderNumber: z.string().min(1, 'Número de orden es requerido'),
-  businessSlug: z.string().min(1, 'Business slug es requerido'),
+  dni: z.string().regex(/^\d{8}$/, 'El DNI debe tener exactamente 8 dígitos numéricos'),
+  orderNumber: z
+    .string()
+    .min(1, 'El número de orden es requerido')
+    .transform((val) => (val.startsWith('#') ? val.slice(1) : val)),
+  businessSlug: z.string().min(1, 'El slug del negocio es requerido'),
 });
 export type LookupOrderInput = z.infer<typeof lookupOrderSchema>;

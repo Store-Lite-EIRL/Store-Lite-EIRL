@@ -1,0 +1,271 @@
+/* Minimal CSS for RecentOrders tests */
+.card {
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 24px;
+  overflow: hidden;
+  margin-top: 1.5rem;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.tableWrapperRelative {
+  position: relative;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table th {
+  padding: 1.25rem 1.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.table td {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  font-size: 0.875rem;
+}
+
+.orderNumber {
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
+  padding: 0.25rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+}
+
+.productTableLink {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  text-decoration: none;
+}
+
+.priceCell {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.dateCell {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.statusPending {
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-error-container) 60%,
+    var(--md-sys-color-surface)
+  );
+  color: var(--md-sys-color-on-error-container);
+}
+
+.statusPaid {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.statusCompleted {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.statusIcon {
+  margin-right: 0.3rem;
+  vertical-align: middle;
+}
+
+.searchInput {
+  flex: 1;
+}
+
+.filterSelect {
+  display: inline-flex;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+  gap: 1.5rem;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.pageButton {
+  padding: 0.6rem 1.5rem;
+  border-radius: 100px;
+  border: 1px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface);
+  cursor: pointer;
+}
+
+.pageInfo {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.viewMoreCol {
+  width: 60px;
+  text-align: center;
+}
+
+.viewMoreCell {
+  text-align: center;
+}
+
+.viewMoreButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 100px;
+  cursor: pointer;
+}
+
+.tableRow {
+  cursor: pointer;
+}
+
+.loaderOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loaderSpin {
+  animation: spin 1s linear infinite;
+}
+
+.emptyRow {
+  text-align: center;
+  padding: 3rem 1.5rem !important;
+  color: var(--md-sys-color-on-surface-variant);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.orderNumberCell {
+  white-space: nowrap;
+}
+
+.statusCell {
+  white-space: nowrap;
+}
+
+.productCell {
+  white-space: nowrap;
+}
+
+.filtersHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.searchWrapper {
+  flex: 1;
+  min-width: 250px;
+}
+
+.searchWithButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.searchContainer {
+  position: relative;
+  flex: 1;
+}
+
+.searchContainer .searchInputMD3 {
+  padding-right: 3rem;
+}
+
+.searchButtonInside {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: 12px;
+  border: none;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  cursor: pointer;
+}
+
+.filterGroup {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.searchInputMD3 {
+  width: 100%;
+}
+
+.hideOnMobile {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .hideOnTablet {
+    display: none;
+  }
+}
+
+.viewMoreLabel {
+  font-size: 0.75rem;
+}
+
+.dateSelectMD3 {
+  width: 100%;
+}
+
+.statusSelectMD3 {
+  width: 100%;
+}

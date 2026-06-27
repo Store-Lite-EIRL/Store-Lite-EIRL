@@ -1,3 +1,4 @@
+import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businesses, businessTeamMembers, payments } from '@/core/database/schema';
 import { createClient } from '@/lib/supabase/server';
@@ -13,7 +14,9 @@ import OrderAuthGate from './OrderAuthGate';
 import OrderChatSection from './OrderChatSection';
 import OrderGuide from './OrderGuide';
 import OrderRealtimeHandler from './OrderRealtimeHandler';
+import OrderV2Timeline from './OrderV2Timeline';
 import ReportFlow from './ReportFlow';
+import ReportV2Flow from './ReportV2Flow';
 
 interface OrderTrackingPageProps {
   params: Promise<{
@@ -66,7 +69,7 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
       where: eq(payments.trackingToken, token),
       with: { product: true, business: true },
     });
-  } catch (error) {
+  } catch (_error) {
     notFound();
   }
 
@@ -172,11 +175,78 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
     }
   }
 
+  const isPickup = order.shippingType?.toLowerCase() === 'recojo';
+
+  // Seller delay warning: order stuck in PREPARING_ORDER for more than 5 days
+  /* eslint-disable react-hooks/purity */
+  const hasSellerDelay =
+    order.status === ('PREPARING_ORDER' as string) &&
+    order.updatedAt &&
+    Date.now() - new Date(order.updatedAt).getTime() > 5 * 24 * 60 * 60 * 1000;
+  /* eslint-enable react-hooks/purity */
+
   const getStep = () => {
+    if (isPickup) {
+      const V2_STEP_PICKUP: Record<string, number> = {
+        CREATED: 0,
+        PAID: 0,
+        PREPARING_ORDER: 0,
+        READY_FOR_PICKUP: 1,
+        PICKED_UP: 1,
+        COMPLETED: 2,
+        ISSUE_REPORTED: 0,
+        DISPUTE: 0,
+        SELLER_TIMEOUT: 2,
+        CANCELLED: 0,
+      };
+      if (order.status in V2_STEP_PICKUP) return V2_STEP_PICKUP[order.status];
+
+      const V1_STEP_PICKUP: Record<string, number> = {
+        pending: 0,
+        paid: 0,
+        processing: 0,
+        analizando: 0,
+        validando: 1,
+        aceptado: 1,
+        delivered: 1,
+        en_reparto: 1,
+        esperando_confirmacion: 1,
+        completed: 2,
+        finalizado: 2,
+        failed: 0,
+        disputed: 0,
+        refund_requested: 0,
+        refunded: 0,
+        rechazado: 0,
+        reported: 0,
+        expired: 0,
+        cancelled: 0,
+      };
+      if (order.status in V1_STEP_PICKUP) return V1_STEP_PICKUP[order.status];
+      return 0;
+    }
+
+    // V2 step mapping (compressed to 5-step display)
+    const V2_STEP: Record<string, number> = {
+      CREATED: 0,
+      PAID: 1,
+      PREPARING_ORDER: 1,
+      WAITING_CUSTOMER_CONFIRMATION: 1,
+      READY_TO_SHIP: 2,
+      IN_TRANSIT: 2,
+      DELIVERED: 3,
+      COMPLETED: 4,
+      ISSUE_REPORTED: 1,
+      DISPUTE: 1,
+      SELLER_TIMEOUT: 4,
+      CANCELLED: 0,
+    };
+    if (order.status in V2_STEP) return V2_STEP[order.status];
+    // Legacy steps
     if (order.status === 'pending') return 0;
     if (order.status === 'validando') return 1;
     if (order.status === 'delivered') return 2;
-    if ((order.status as string) === 'en_reparto') return 3; // Pedido llegó, customer debe confirmar recepción
+    if ((order.status as string) === 'en_reparto') return 3;
     if (order.status === 'disputed') return order.ticketImageUrl ? 1 : 0;
     if (order.status === 'completed') return 4;
     if (order.status === 'not_delivered') return order.ticketImageUrl ? 1 : 0;
@@ -245,6 +315,106 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
       bgColor: 'var(--md-sys-color-error-container)',
       desc: 'Reportaste un inconveniente con el comprobante. El vendedor debe corregirlo y subir uno nuevo.',
     },
+    // ── V2 Statuses ──
+    CREATED: {
+      label: 'Pedido Creado',
+      icon: 'shopping_cart',
+      color: 'var(--md-sys-color-on-surface-variant)',
+      bgColor: 'var(--md-sys-color-surface-variant)',
+      desc: 'El pedido fue registrado y está pendiente de pago.',
+    },
+    PAID: {
+      label: 'Pago Confirmado',
+      icon: 'payments',
+      color: 'var(--md-sys-color-on-primary-container)',
+      bgColor: 'var(--md-sys-color-primary-container)',
+      desc: 'El pago fue procesado correctamente. El vendedor está preparando tu pedido.',
+    },
+    PREPARING_ORDER: {
+      label: 'Preparando Pedido',
+      icon: 'inventory_2',
+      color: 'var(--md-sys-color-on-tertiary-container)',
+      bgColor: 'var(--md-sys-color-tertiary-container)',
+      desc: 'El vendedor está alistando los productos para el despacho.',
+    },
+    WAITING_CUSTOMER_CONFIRMATION: {
+      label: 'Esperando Confirmación',
+      icon: 'fact_check',
+      color: 'var(--md-sys-color-on-primary-container)',
+      bgColor: 'var(--md-sys-color-primary-container)',
+      desc: 'El vendedor subió el comprobante de envío. Revisá los datos y confirmá si todo está correcto.',
+    },
+    READY_TO_SHIP: {
+      label: 'Listo para Envío',
+      icon: 'check_circle',
+      color: 'var(--md-sys-color-on-secondary-container)',
+      bgColor: 'var(--md-sys-color-secondary-container)',
+      desc: 'Todo listo. El paquete será entregado al courier próximamente.',
+    },
+    IN_TRANSIT: {
+      label: 'En Camino',
+      icon: 'local_shipping',
+      color: 'var(--md-sys-color-on-tertiary-container)',
+      bgColor: 'var(--md-sys-color-tertiary-container)',
+      desc: 'Tu paquete fue entregado al courier y está en ruta hacia tu destino.',
+    },
+    DELIVERED: {
+      label: 'Entregado',
+      icon: 'home',
+      color: 'var(--md-sys-color-on-secondary-container)',
+      bgColor: 'var(--md-sys-color-secondary-container)',
+      desc: 'El pedido llegó a su destino. Por favor confirmá que lo recibiste correctamente.',
+    },
+    COMPLETED: {
+      label: 'Compra Finalizada',
+      icon: 'verified',
+      color: 'var(--md-sys-color-on-secondary-container)',
+      bgColor: 'var(--md-sys-color-secondary-container)',
+      desc: '¡Excelente! La transacción se completó exitosamente.',
+    },
+    ISSUE_REPORTED: {
+      label: 'Problema Reportado',
+      icon: 'report_problem',
+      color: 'var(--md-sys-color-on-error-container)',
+      bgColor: 'var(--md-sys-color-error-container)',
+      desc: 'Reportaste un problema. El vendedor fue notificado. Si no se resuelve, se abrirá una disputa.',
+    },
+    DISPUTE: {
+      label: 'En Disputa',
+      icon: 'gavel',
+      color: 'var(--md-sys-color-on-error-container)',
+      bgColor: 'var(--md-sys-color-error-container)',
+      desc: 'El caso está siendo revisado por nuestro equipo de soporte.',
+    },
+    SELLER_TIMEOUT: {
+      label: 'Tiempo Agotado',
+      icon: 'timer_off',
+      color: 'var(--md-sys-color-on-error-container)',
+      bgColor: 'var(--md-sys-color-error-container)',
+      desc: 'El vendedor no respondió a tiempo. El pedido fue cerrado automáticamente.',
+    },
+    CANCELLED: {
+      label: 'Pedido Cancelado',
+      icon: 'cancel',
+      color: 'var(--md-sys-color-on-surface-variant)',
+      bgColor: 'var(--md-sys-color-surface-variant)',
+      desc: 'Este pedido fue cancelado.',
+    },
+    // ── Pickup statuses ──
+    READY_FOR_PICKUP: {
+      label: 'Listo para Recojo',
+      icon: 'storefront',
+      color: 'var(--md-sys-color-on-secondary-container)',
+      bgColor: 'var(--md-sys-color-secondary-container)',
+      desc: 'Tu pedido está listo para ser recogido. Presentá el código de recojo en la tienda.',
+    },
+    PICKED_UP: {
+      label: 'Recogido',
+      icon: 'check_circle',
+      color: 'var(--md-sys-color-on-secondary-container)',
+      bgColor: 'var(--md-sys-color-secondary-container)',
+      desc: 'El pedido fue recogido exitosamente. ¡Gracias por tu compra!',
+    },
   };
 
   const currentStatus = statusMap[order.status] || {
@@ -255,17 +425,27 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
     desc: 'Estado en actualización.',
   };
 
-  const steps = [
-    { label: 'Recibido', icon: 'payments' },
-    { label: 'Validación', icon: 'fact_check' },
-    { label: 'Envío', icon: 'local_shipping' },
-    { label: 'Confirmación', icon: 'package_2' },
-    { label: 'Finalizado', icon: 'verified' },
-  ];
+  const steps = isPickup
+    ? [
+        { label: 'Pedido', icon: 'payments' },
+        { label: 'Recojo', icon: 'store' },
+        { label: 'Finalizado', icon: 'verified' },
+      ]
+    : [
+        { label: 'Recibido', icon: 'payments' },
+        { label: 'Validación', icon: 'fact_check' },
+        { label: 'Envío', icon: 'local_shipping' },
+        { label: 'Confirmación', icon: 'package_2' },
+        { label: 'Finalizado', icon: 'verified' },
+      ];
 
   console.log('[OrderTrackingPage:RENDER_UI]', {
     status: order.status,
     step: currentStep,
+    isPickup,
+    hasPickupCode: !!order.pickupCode,
+    pickupCode: order.pickupCode,
+    orderFlowV2: env.orderFlowV2,
     timestamp: new Date().toISOString(),
   });
 
@@ -342,20 +522,24 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
             margin-bottom: 4rem; position: relative; padding: 0 10px;
           }
           .pro-line { position: absolute; top: 24px; left: 40px; right: 40px; height: 4px; background: var(--md-sys-color-outline-variant); border-radius: 2px; }
-          .pro-line-fill { position: absolute; top: 24px; left: 40px; height: 4px; background: var(--md-sys-color-primary); border-radius: 2px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
-          .pro-step { z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+          .pro-line-track { position: absolute; top: 24px; left: 40px; right: 40px; height: 4px; overflow: hidden; border-radius: 2px; pointer-events: none; }
+          .pro-line-fill { height: 100%; background: var(--md-sys-color-primary); border-radius: 2px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+          .pro-step { z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; }
           .pro-icon-box { 
             width: 48px; height: 48px; border-radius: 16px; 
-            background: var(--md-sys-color-surface-container-highest);
+            background: var(--md-sys-color-surface-container-highest, #dfe3e7);
             border: 2px solid var(--md-sys-color-outline-variant);
             display: flex; align-items: center; justify-content: center;
-            transition: all 0.4s ease;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
           }
           .pro-step.active .pro-icon-box { 
             background: var(--md-sys-color-primary); border-color: var(--md-sys-color-primary); color: white;
             box-shadow: 0 10px 20px rgba(var(--md-sys-color-primary-rgb), 0.3);
             transform: scale(1.1) translateY(-4px);
           }
+          .pro-step { z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; }
+          .pro-icon-link { text-decoration: none; color: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+          .pro-icon-link:hover .pro-icon-box { transform: scale(1.08); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
           .pro-label { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; color: var(--md-sys-color-on-surface-variant); }
           .pro-step.active .pro-label { color: var(--md-sys-color-on-surface); font-weight: 950; }
 
@@ -395,7 +579,6 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
           .btn-hub-p { background: var(--md-sys-color-primary); color: white; box-shadow: 0 10px 30px rgba(var(--md-sys-color-primary-rgb), 0.3); }
           .btn-hub-p:hover { transform: translateY(-2px); box-shadow: 0 15px 40px rgba(var(--md-sys-color-primary-rgb), 0.4); }
           .btn-hub-s { background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
-
           /* Pulse Animation for Critical States */
           @keyframes critical-pulse {
             0% { box-shadow: 0 0 0 0 rgba(var(--md-sys-color-primary-rgb), 0.4); }
@@ -418,6 +601,116 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
           .btn-action.btn-report:hover { transform: translateY(-2px); }
           .btn-action.btn-outline { background: var(--md-sys-color-surface-container); color: var(--md-sys-color-on-surface); border: 1px solid var(--md-sys-color-outline); }
           .btn-action.btn-outline:hover { background: var(--md-sys-color-surface-container-high); }
+
+          /* ── Confirmation Card ── */
+          .confirm-prominent {
+            background: var(--md-sys-color-secondary-container);
+            border: 2px solid var(--md-sys-color-secondary);
+            border-radius: 32px;
+            padding: 1.75rem 2rem;
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+            position: relative;
+            animation: confirm-up 0.5s ease;
+          }
+          @keyframes confirm-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .confirm-prominent-header {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+          }
+          .confirm-prominent-icon {
+            width: 52px; height: 52px; border-radius: 50%;
+            background: var(--md-sys-color-secondary);
+            color: white;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+          }
+          .confirm-prominent h3 {
+            margin: 0; font-weight: 600; font-size: 1.15rem;
+            color: var(--md-sys-color-on-secondary-container);
+          }
+          .confirm-prominent p {
+            margin: 6px 0 0; font-size: 0.9rem;
+            color: var(--md-sys-color-on-secondary-container);
+            opacity: 0.7; line-height: 1.45;
+          }
+          .confirm-prominent-actions {
+            display: flex; flex-direction: column; gap: 0.75rem;
+            margin-top: 0.25rem;
+          }
+          .confirm-prominent-actions .btn-row {
+            display: flex; gap: 0.75rem;
+          }
+          .btn-confirm-accept {
+            flex: 1; padding: 0.85rem 1.25rem; border-radius: 100px;
+            border: none; background: var(--md-sys-color-primary);
+            color: white; font-weight: 600; font-size: 0.9rem;
+            cursor: pointer; display: inline-flex; align-items: center;
+            justify-content: center; gap: 8px; text-decoration: none;
+            letter-spacing: 0.02em; text-transform: uppercase;
+            box-shadow: 0 4px 16px rgba(var(--md-sys-color-primary-rgb), 0.25);
+            transition: all 0.2s ease;
+          }
+          .btn-confirm-accept:hover {
+            filter: brightness(0.9);
+            box-shadow: 0 6px 20px rgba(var(--md-sys-color-primary-rgb), 0.35);
+          }
+          .btn-confirm-reject {
+            flex: 1; padding: 0.85rem 1.25rem; border-radius: 100px;
+            border: 2px solid var(--md-sys-color-error);
+            background: var(--md-sys-color-error-container);
+            color: var(--md-sys-color-on-error-container);
+            font-weight: 600; font-size: 0.9rem;
+            cursor: pointer; display: inline-flex; align-items: center;
+            justify-content: center; gap: 8px; text-decoration: none;
+            letter-spacing: 0.02em; text-transform: uppercase;
+            transition: all 0.2s ease;
+          }
+          .btn-confirm-reject:hover {
+            background: var(--md-sys-color-error);
+            color: white;
+            box-shadow: 0 4px 16px rgba(var(--md-sys-color-error-rgb), 0.25);
+          }
+
+          /* ── Standalone Report Section (comodín) ── */
+          .report-wildcard {
+            width: 100%;
+            text-align: center;
+            padding: 1.5rem 1rem;
+            border-top: 1px dashed var(--md-sys-color-outline-variant);
+            background: transparent;
+          }
+          .report-wildcard-label {
+            margin: 0 0 1rem;
+            font-size: 0.7rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            opacity: 0.3;
+          }
+          .report-wildcard-link {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 0.75rem 1.5rem; border-radius: 100px;
+            color: var(--md-sys-color-on-surface-variant);
+            font-size: 0.8rem; font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: 1px solid var(--md-sys-color-outline-variant);
+            background: var(--md-sys-color-surface-container-low);
+          }
+          .report-wildcard-link:hover {
+            background: var(--md-sys-color-error-container);
+            color: var(--md-sys-color-on-error-container);
+            border-color: var(--md-sys-color-error);
+          }
         `,
           }}
         />
@@ -501,22 +794,172 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
 
               <div className="pro-timeline">
                 <div className="pro-line" />
-                <div
-                  className="pro-line-fill"
-                  style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
-                />
+                <div className="pro-line-track">
+                  <div
+                    className="pro-line-fill"
+                    style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+                  />
+                </div>
                 {steps.map((s, i) => (
                   <div key={i} className={`pro-step ${i <= currentStep ? 'active' : ''}`}>
-                    <div className="pro-icon-box">
-                      <Icon size={24}>{s.icon}</Icon>
-                    </div>
+                    {i < currentStep ? (
+                      <a href={`#step-view-${i}`} className="pro-icon-link">
+                        <div className="pro-icon-box">
+                          <Icon size={24}>{s.icon}</Icon>
+                        </div>
+                      </a>
+                    ) : (
+                      <div className="pro-icon-box">
+                        <Icon size={24}>{s.icon}</Icon>
+                      </div>
+                    )}
                     <span className="pro-label">{s.label}</span>
                   </div>
                 ))}
               </div>
 
+              {/* ── V2: Seller note ── */}
+              {env.orderFlowV2 && order.sellerNote && (
+                <div
+                  style={{
+                    width: '100%',
+                    maxWidth: '500px',
+                    background: 'var(--md-sys-color-surface-container-high)',
+                    borderRadius: '16px',
+                    padding: '1rem 1.25rem',
+                    display: 'flex',
+                    gap: '0.75rem',
+                    alignItems: 'flex-start',
+                    textAlign: 'left',
+                  }}
+                >
+                  <Icon size={20}>notes</Icon>
+                  <div>
+                    <p style={{ margin: 0, fontWeight: 700, fontSize: '0.75rem', opacity: 0.6 }}>
+                      NOTA DEL VENDEDOR
+                    </p>
+                    <p style={{ margin: '4px 0 0', fontSize: '0.9rem' }}>{order.sellerNote}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* ── CONFIRMACIÓN: ¿Recibiste tu pedido? (arriba del timeline) ── */}
+              {(['en_reparto', 'DELIVERED'] as string[]).includes(order.status as string) && (
+                <div className="confirm-prominent">
+                  <div className="confirm-prominent-header">
+                    <div className="confirm-prominent-icon">
+                      <Icon size={24}>package_2</Icon>
+                    </div>
+                    <div>
+                      <h3>📦 ¿Recibiste tu pedido?</h3>
+                      <p>
+                        El vendedor marcó el pedido como entregado. Necesitamos tu respuesta para
+                        continuar.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="confirm-prominent-actions">
+                    <div className="btn-row">
+                      <a href="#confirm-finalize" className="btn-confirm-accept">
+                        <Icon size={20}>check_circle</Icon>
+                        Sí, lo recibí
+                      </a>
+                      <a href="#report-finalize" className="btn-confirm-reject">
+                        <Icon size={20}>flag</Icon>
+                        No, tengo un problema
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Order timeline history ── */}
+              <OrderV2Timeline orderId={order.id} />
+
+              {/* ── V2: Pickup code — clean ticket card, only while ready for pickup ── */}
+              {env.orderFlowV2 &&
+                String(order.status) === 'READY_FOR_PICKUP' &&
+                order.pickupCode && (
+                  <div
+                    style={{
+                      width: '100%',
+                      maxWidth: '500px',
+                      marginTop: '2rem',
+                      background: 'var(--md-sys-color-surface)',
+                      borderRadius: '20px',
+                      padding: '1.5rem',
+                      border: '1px solid var(--md-sys-color-outline-variant)',
+                      position: 'relative',
+                    }}
+                  >
+                    {/* Dashed top border to emulate a ticket stub */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '-1px',
+                        left: '2rem',
+                        right: '2rem',
+                        height: '2px',
+                        borderTop: '2px dashed var(--md-sys-color-outline-variant)',
+                      }}
+                    />
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        marginBottom: '1rem',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: '10px',
+                          background: 'var(--md-sys-color-primary-container)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'var(--md-sys-color-primary)',
+                        }}
+                      >
+                        <Icon size={20}>storefront</Icon>
+                      </div>
+                      <div>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: '0.7rem',
+                            fontWeight: 900,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.08em',
+                            opacity: 0.5,
+                          }}
+                        >
+                          Código de Recojo
+                        </p>
+                        <p
+                          style={{
+                            margin: '2px 0 0',
+                            fontSize: '1.5rem',
+                            fontWeight: 950,
+                            letterSpacing: '0.12em',
+                            fontFamily: 'monospace',
+                            color: 'var(--md-sys-color-primary)',
+                          }}
+                        >
+                          {order.pickupCode}
+                        </p>
+                      </div>
+                    </div>
+                    <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.6, lineHeight: 1.5 }}>
+                      Mostrá este código al vendedor para que confirme el recojo de tu pedido.
+                    </p>
+                  </div>
+                )}
+
               {/* COMPLETED: Order dates receipt */}
-              {order.status === 'completed' && (
+              {['completed', 'COMPLETED'].includes(order.status) && (
                 <div
                   style={{
                     width: '100%',
@@ -633,79 +1076,8 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                 </div>
               )}
 
-              {/* ACTION: Ticket Verification (when seller uploads, status = 'validando') */}
-              {order.status === 'validando' && order.ticketImageUrl && (
-                <div className="despacho-card pulse-active">
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      textAlign: 'left',
-                    }}
-                  >
-                    <div
-                      style={{
-                        background: 'var(--md-sys-color-primary-container)',
-                        color: 'var(--md-sys-color-on-primary-container)',
-                        width: 44,
-                        height: 44,
-                        borderRadius: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Icon>description</Icon>
-                    </div>
-                    <div>
-                      <p style={{ margin: 0, fontWeight: 950, fontSize: '0.9rem' }}>
-                        Comprobante de Envío
-                      </p>
-                      <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.6 }}>
-                        Subido por el vendedor — revisá y confirmá
-                      </p>
-                    </div>
-                  </div>
-                  <a href="#ticket-view" className="ticket-preview">
-                    <img src={order.ticketImageUrl} alt="Ticket" />
-                    <div className="ticket-overlay">
-                      <div style={{ textAlign: 'center' }}>
-                        <Icon size={32}>zoom_in</Icon>
-                        <p style={{ fontWeight: 900, fontSize: '0.8rem', marginTop: '4px' }}>
-                          AMPLIAR TICKET
-                        </p>
-                      </div>
-                    </div>
-                  </a>
-                  <div style={{ display: 'flex', gap: '1rem' }}>
-                    <a
-                      href="#accept-confirm"
-                      className="btn-hub btn-hub-p"
-                      style={{ flex: 1, justifyContent: 'center' }}
-                    >
-                      <Icon>check_circle</Icon>
-                      CONFIRMAR ENVÍO
-                    </a>
-                    <a
-                      href="#report-form"
-                      className="btn-hub btn-hub-s"
-                      style={{
-                        width: '60px',
-                        padding: '0',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Icon>flag</Icon>
-                    </a>
-                  </div>
-                </div>
-              )}
-
               {/* ACTION: Disputed - Ticket was rejected, waiting for seller to re-upload */}
-              {order.status === 'disputed' && (
+              {['disputed', 'DISPUTE'].includes(order.status) && (
                 <div
                   className="despacho-card"
                   style={{
@@ -759,55 +1131,6 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                 </div>
               )}
 
-              {/* ACTION: Finalization Confirm (delivery received) */}
-              {(order.status as string) === 'en_reparto' && (
-                <div
-                  className="despacho-card pulse-active"
-                  style={{
-                    borderStyle: 'solid',
-                    borderColor: 'var(--md-sys-color-secondary)',
-                    background: 'var(--md-sys-color-secondary-container)',
-                    color: 'var(--md-sys-color-on-secondary-container)',
-                  }}
-                >
-                  <div style={{ display: 'flex', gap: '1rem', textAlign: 'left' }}>
-                    <Icon size={32}>home</Icon>
-                    <div>
-                      <h3 style={{ margin: 0, fontWeight: 950, fontSize: '1.1rem' }}>
-                        ¿Recibiste tu pedido?
-                      </h3>
-                      <p style={{ margin: '4px 0 0', fontSize: '0.9rem', opacity: 0.8 }}>
-                        Confirmá que el producto llegó en buen estado. Si hay algún problema,
-                        reportalo ahora.
-                      </p>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                    <a
-                      href="#confirm-finalize"
-                      className="btn-hub btn-hub-p"
-                      style={{
-                        flex: 1,
-                        justifyContent: 'center',
-                        background: 'var(--md-sys-color-secondary)',
-                        color: 'white',
-                      }}
-                    >
-                      <Icon>check_circle</Icon>
-                      SÍ, LO RECIBÍ
-                    </a>
-                    <a
-                      href="#report-finalize"
-                      className="btn-hub btn-hub-s"
-                      style={{ flex: 1, justifyContent: 'center' }}
-                    >
-                      <Icon>flag</Icon>
-                      TENGO UN PROBLEMA
-                    </a>
-                  </div>
-                </div>
-              )}
-
               {/* Default Buttons if no specific card */}
               {!['validando', 'disputed', 'delivered', 'completed'].includes(order.status) &&
                 currentStatus.actionLabel && (
@@ -816,9 +1139,112 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                     <Icon>arrow_forward</Icon>
                   </button>
                 )}
+
+              {/* Ticket de envío — al final del contenido principal */}
+              {['validando', 'WAITING_CUSTOMER_CONFIRMATION'].includes(order.status) &&
+                order.ticketImageUrl && (
+                  <div
+                    style={{
+                      width: '100%',
+                      maxWidth: '500px',
+                      marginTop: 'auto',
+                      borderRadius: '24px',
+                      overflow: 'hidden',
+                      border: '1px solid var(--md-sys-color-outline-variant)',
+                      background: 'var(--md-sys-color-surface-container-low)',
+                    }}
+                  >
+                    {/* Header */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '1rem 1.25rem',
+                      }}
+                    >
+                      <Icon size={20}>description</Icon>
+                      <span style={{ fontSize: '0.85rem', opacity: 0.7 }}>
+                        Comprobante de envío
+                      </span>
+                    </div>
+                    {/* Imagen */}
+                    <a
+                      href="#ticket-view"
+                      className="ticket-preview"
+                      style={{ height: 200, borderRadius: 0 }}
+                    >
+                      <img src={order.ticketImageUrl} alt="Comprobante de envío" />
+                      <div className="ticket-overlay">
+                        <Icon size={28}>zoom_in</Icon>
+                      </div>
+                    </a>
+                    {/* Acciones */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: '0.75rem',
+                        padding: '1rem 1.25rem',
+                      }}
+                    >
+                      <a
+                        href="#accept-confirm"
+                        className="btn-hub btn-hub-p"
+                        style={{ flex: 1, justifyContent: 'center', padding: '0.85rem 1.5rem' }}
+                      >
+                        <Icon size={18}>check_circle</Icon>
+                        CONFIRMAR ENVÍO
+                      </a>
+                      <a
+                        href="#report-form"
+                        className="btn-hub btn-hub-s"
+                        style={{
+                          width: '48px',
+                          padding: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Icon size={20}>flag</Icon>
+                      </a>
+                    </div>
+                  </div>
+                )}
             </div>
 
-            <OrderGuide />
+            {/* ── SAFETY NET: Reportar problema (comodín, fuera del flujo) ── */}
+            {(env.orderFlowV2
+              ? ['WAITING_CUSTOMER_CONFIRMATION', 'READY_TO_SHIP', 'IN_TRANSIT', 'DELIVERED']
+              : ['validando', 'delivered', 'en_reparto']
+            ).includes(order.status) && (
+              <div className="report-wildcard">
+                <p className="report-wildcard-label">¿Necesitás ayuda?</p>
+                {env.orderFlowV2 ? (
+                  <a href="#report-v2" className="report-wildcard-link">
+                    <Icon size={16}>flag</Icon>
+                    Reportar problema
+                  </a>
+                ) : (
+                  <a href="#report-finalize" className="report-wildcard-link">
+                    <Icon size={16}>flag</Icon>
+                    Reportar problema
+                  </a>
+                )}
+                <p
+                  style={{
+                    margin: '0.75rem 0 0',
+                    fontSize: '0.7rem',
+                    opacity: 0.3,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  Usá esta opción si ninguna de las anteriores aplica
+                </p>
+              </div>
+            )}
+
+            <OrderGuide shippingType={order.shippingType} showDelayWarning={hasSellerDelay} />
           </div>
 
           <div className="sticky-chat">
@@ -1017,13 +1443,13 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                     <div>
                       <span className="detail-sub">Método</span>
                       <span className="detail-value" style={{ textTransform: 'capitalize' }}>
-                        {order.paymentMethod === 'card'
-                          ? 'Tarjeta'
-                          : order.paymentMethod === 'yape'
-                            ? 'Yape'
-                            : order.paymentMethod === 'plin'
-                              ? 'Plin'
-                              : order.paymentMethod || '—'}
+                        {(() => {
+                          const method = order.paymentMethod;
+                          if (method === 'card') return 'Tarjeta';
+                          if (method === 'yape') return 'Yape';
+                          if (method === 'plin') return 'Plin';
+                          return method || '—';
+                        })()}
                       </span>
                     </div>
                     <div>
@@ -1078,6 +1504,29 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                       <div>
                         <span className="detail-sub">Referencia</span>
                         <span className="detail-value">{order.shippingReference}</span>
+                      </div>
+                    )}
+                    {/* ── V2: Courier / Tracking / Pickup (when available) ── */}
+                    {env.orderFlowV2 && order.courierName && (
+                      <div>
+                        <span className="detail-sub">Courier</span>
+                        <span className="detail-value">{order.courierName}</span>
+                      </div>
+                    )}
+                    {env.orderFlowV2 && order.trackingNumber && (
+                      <div>
+                        <span className="detail-sub">N° Tracking</span>
+                        <span className="detail-value" style={{ fontSize: '0.8rem' }}>
+                          {order.trackingNumber}
+                        </span>
+                      </div>
+                    )}
+                    {env.orderFlowV2 && order.pickupCode && (
+                      <div>
+                        <span className="detail-sub">Código Recojo</span>
+                        <span className="detail-value" style={{ fontWeight: 950 }}>
+                          {order.pickupCode}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -1235,6 +1684,214 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
 
         {/* MODAL: Report Problem — with spinner & success screen */}
         <ReportFlow paymentId={order.id} trackingToken={token} />
+
+        {/* MODAL: V2 Issue Report — warning + typed reasons + OrderService submit */}
+        {env.orderFlowV2 && <ReportV2Flow paymentId={order.id} trackingToken={token} />}
+
+        {/* ── Step history modals — click past steps to see their content ── */}
+        {steps.map((s, stepIdx) => {
+          if (stepIdx >= currentStep) return null;
+
+          const snapshotKey = (() => {
+            if (isPickup) {
+              if (stepIdx === 0) return 'PREPARING_ORDER';
+              if (stepIdx === 1) return 'READY_FOR_PICKUP';
+              return 'COMPLETED';
+            }
+            if (stepIdx === 0) return 'pending';
+            if (stepIdx === 1) return 'validando';
+            if (stepIdx === 2) return 'delivered';
+            if (stepIdx === 3) return 'en_reparto';
+            return 'completed';
+          })();
+
+          const ss = statusMap[snapshotKey];
+
+          return (
+            <div key={`sv-${stepIdx}`} id={`step-view-${stepIdx}`} className="modal-overlay">
+              <div className="modal-box" style={{ textAlign: 'center' }}>
+                <a
+                  href="#"
+                  style={{
+                    position: 'absolute',
+                    top: '1.25rem',
+                    right: '1.25rem',
+                    color: 'inherit',
+                    zIndex: 10,
+                  }}
+                >
+                  <Icon>close</Icon>
+                </a>
+
+                <div
+                  className="status-badge"
+                  style={{
+                    background: ss.bgColor,
+                    color: ss.color,
+                    margin: '0 auto 1.5rem',
+                    display: 'inline-flex',
+                  }}
+                >
+                  <Icon size={18}>{ss.icon}</Icon>
+                  {ss.label}
+                </div>
+
+                <h3
+                  style={{
+                    fontSize: '1.5rem',
+                    fontWeight: 950,
+                    margin: '0 0 0.75rem',
+                    letterSpacing: '-0.03em',
+                  }}
+                >
+                  {ss.label}
+                </h3>
+                <p
+                  style={{
+                    fontSize: '0.9rem',
+                    opacity: 0.7,
+                    lineHeight: 1.5,
+                    margin: '0 0 1.5rem',
+                  }}
+                >
+                  {ss.desc}
+                </p>
+
+                {/* Step 0: Order info snapshot */}
+                {stepIdx === 0 && (
+                  <div
+                    style={{
+                      textAlign: 'left',
+                      background: 'var(--md-sys-color-surface)',
+                      borderRadius: '16px',
+                      padding: '1.25rem',
+                      border: '1px solid var(--md-sys-color-outline-variant)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        gap: '1rem',
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p
+                          style={{
+                            margin: '0 0 2px',
+                            fontSize: '0.65rem',
+                            fontWeight: 900,
+                            textTransform: 'uppercase',
+                            opacity: 0.5,
+                          }}
+                        >
+                          Producto
+                        </p>
+                        <p style={{ margin: 0, fontWeight: 800, fontSize: '0.9rem' }}>
+                          {order.product.title}
+                        </p>
+                      </div>
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <p
+                          style={{
+                            margin: '0 0 2px',
+                            fontSize: '0.65rem',
+                            fontWeight: 900,
+                            textTransform: 'uppercase',
+                            opacity: 0.5,
+                          }}
+                        >
+                          Total
+                        </p>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontWeight: 950,
+                            color: 'var(--md-sys-color-primary)',
+                          }}
+                        >
+                          {order.currency} {order.amount}
+                        </p>
+                      </div>
+                    </div>
+                    <p
+                      style={{
+                        margin: '0.75rem 0 0',
+                        fontSize: '0.7rem',
+                        opacity: 0.4,
+                        textAlign: 'center',
+                        paddingTop: '0.75rem',
+                        borderTop: '1px dashed var(--md-sys-color-outline-variant)',
+                      }}
+                    >
+                      N° Orden: {order.orderNumber || '—'} ·{' '}
+                      {order.createdAt ? formatDate(order.createdAt) : ''}
+                    </p>
+                  </div>
+                )}
+
+                {/* Step 1 Pickup: Pickup code snapshot */}
+                {isPickup && stepIdx === 1 && order.pickupCode && (
+                  <div
+                    style={{
+                      background: 'var(--md-sys-color-surface)',
+                      borderRadius: '16px',
+                      padding: '1.25rem',
+                      border: '1px solid var(--md-sys-color-outline-variant)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        marginBottom: '0.75rem',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: '10px',
+                          background: 'var(--md-sys-color-primary-container)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'var(--md-sys-color-primary)',
+                        }}
+                      >
+                        <Icon size={20}>storefront</Icon>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '0.7rem',
+                          fontWeight: 900,
+                          textTransform: 'uppercase',
+                          opacity: 0.5,
+                        }}
+                      >
+                        Código de Recojo
+                      </span>
+                    </div>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: '1.75rem',
+                        fontWeight: 950,
+                        letterSpacing: '0.12em',
+                        fontFamily: 'monospace',
+                        color: 'var(--md-sys-color-primary)',
+                      }}
+                    >
+                      {order.pickupCode}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </OrderAuthGate>
   );

@@ -7,6 +7,58 @@ import { pgEnum } from 'drizzle-orm/pg-core';
 export const themeModeEnum = pgEnum('theme_mode', ['light', 'dark']);
 export const contrastLevelEnum = pgEnum('contrast_level', ['standard', 'medium', 'high']);
 export const mediaTypeEnum = pgEnum('media_type', ['image', 'video']);
+// ─── New 12-state OrderStatus enum (aligned with flow-order.md) ───
+export const orderStatusEnumV2 = pgEnum('order_status_v2', [
+  'CREATED',
+  'PAID',
+  'PREPARING_ORDER',
+  'READY_FOR_PICKUP',
+  'PICKED_UP',
+  'WAITING_CUSTOMER_CONFIRMATION',
+  'READY_TO_SHIP',
+  'IN_TRANSIT',
+  'DELIVERED',
+  'COMPLETED',
+  'ISSUE_REPORTED',
+  'DISPUTE',
+  'SELLER_TIMEOUT',
+  'CANCELLED',
+]);
+
+// ─── Attachment type enum ───
+export const orderAttachmentTypeEnum = pgEnum('order_attachment_type', [
+  'tracking',
+  'cip',
+  'invoice',
+  'photo',
+  'video',
+  'document',
+  'other',
+]);
+
+// ─── Timeline event type enum (16+ typed events) ───
+export const orderTimelineEventTypeEnum = pgEnum('order_timeline_event_type', [
+  'ORDER_CREATED',
+  'ORDER_PAID',
+  'ORDER_PREPARING',
+  'ATTACHMENT_UPLOADED',
+  'CUSTOMER_CONFIRMED',
+  'CUSTOMER_REPORTED_ISSUE',
+  'DISPUTE_CREATED',
+  'SHIPPING_PAYMENT_PENDING',
+  'SHIPPING_PAYMENT_CONFIRMED',
+  'PICKUP_CODE_GENERATED',
+  'ORDER_READY_TO_SHIP',
+  'ORDER_IN_TRANSIT',
+  'ORDER_DELIVERED',
+  'ORDER_COMPLETED',
+  'ORDER_READY_FOR_PICKUP',
+  'ORDER_PICKED_UP',
+  'SELLER_TIMEOUT',
+  'AUTO_APPROVED',
+  'ORDER_CANCELLED',
+]);
+
 export const paymentStatusEnum = pgEnum('payment_status', [
   'pending',
   'paid',

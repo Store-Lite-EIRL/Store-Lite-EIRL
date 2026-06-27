@@ -177,8 +177,18 @@ export function LookupOrderModal({
   // ─── DNI + order number submit ───
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (dni.length < 8 || !orderNumber.trim()) {
-      setError('Completa todos los campos correctamente.');
+
+    // ── Validación frontal ──
+    const dniClean = dni.trim();
+    const orderClean = orderNumber.trim();
+
+    if (!dniClean || !orderClean) {
+      setError('Completá ambos campos para buscar tu pedido.');
+      return;
+    }
+
+    if (!/^\d{8}$/.test(dniClean)) {
+      setError('El DNI debe tener exactamente 8 dígitos numéricos (ej: 12345678).');
       return;
     }
 
@@ -189,35 +199,29 @@ export function LookupOrderModal({
       const res = await fetch(`/api/order/lookup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dni, orderNumber, businessSlug }),
+        body: JSON.stringify({ dni: dniClean, orderNumber: orderClean, businessSlug }),
       });
 
       const data = await res.json();
 
       if (data.success && data.token) {
-        console.log('[LookupOrderModal] API response:', { token: data.token, slug: businessSlug });
-        console.log(
-          '[LookupOrderModal] redirect URL:',
-          getBusinessPath(businessSlug, `/order/${data.token}`),
-        );
         const authTokenData = {
           token: data.token,
-          dni: dni,
+          dni: dniClean,
           expiresAt: Date.now() + SESSION_TTL,
         };
         localStorage.setItem(`order_session_${data.token}`, JSON.stringify(authTokenData));
-        console.log('[LookupOrderModal] localStorage set: order_session_' + data.token);
 
         const targetUrl = getBusinessPath(businessSlug, `/order/${data.token}`);
-        console.log('[LookupOrderModal] navigating to:', targetUrl);
         onClose();
-        // Force full navigation to bypass client-side routing issues
         window.location.href = targetUrl;
       } else {
-        setError(data.error || 'Orden no encontrada. Verifica tus datos.');
+        setError(
+          data.error || 'No encontramos un pedido con esos datos. Revisá DNI y número de orden.',
+        );
       }
     } catch {
-      setError('Error de conexión. Intenta de nuevo.');
+      setError('No pudimos conectar con el servidor. Revisá tu conexión e intentá de nuevo.');
     } finally {
       setLoading(false);
     }

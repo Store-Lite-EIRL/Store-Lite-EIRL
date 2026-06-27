@@ -16,7 +16,14 @@ import {
 import { chatSessions, messages } from './chat';
 import { importJobs, importRows } from './imports';
 import { notifications } from './notifications';
-import { paymentOrders, payments, planPayments, sellerPayoutAccounts } from './orders';
+import {
+  orderAttachments,
+  orderTimelineEvents,
+  paymentOrders,
+  payments,
+  planPayments,
+  sellerPayoutAccounts,
+} from './orders';
 import { productCategories, productLikes, productMedia, products } from './products';
 import { profiles } from './profiles';
 
@@ -138,6 +145,22 @@ export const paymentsRelations = relations(payments, ({ one, many }) => ({
     references: [profiles.id],
   }),
   chatSessions: many(chatSessions),
+  orderAttachments: many(orderAttachments),
+  orderTimelineEvents: many(orderTimelineEvents),
+}));
+
+export const orderAttachmentsRelations = relations(orderAttachments, ({ one }) => ({
+  order: one(payments, {
+    fields: [orderAttachments.orderId],
+    references: [payments.id],
+  }),
+}));
+
+export const orderTimelineEventsRelations = relations(orderTimelineEvents, ({ one }) => ({
+  order: one(payments, {
+    fields: [orderTimelineEvents.orderId],
+    references: [payments.id],
+  }),
 }));
 
 export const sellerPayoutAccountsRelations = relations(sellerPayoutAccounts, ({ one }) => ({

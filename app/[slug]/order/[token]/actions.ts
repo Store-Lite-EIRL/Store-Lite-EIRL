@@ -2,6 +2,8 @@
 
 import { db } from '@/core/database/client';
 import { businesses, chatSessions, messages, payments } from '@/core/database/schema';
+import { transition } from '@/core/orders/orderService';
+import { ORDER_STATUS_INTERNAL, ORDER_STATUS_V2 } from '@/core/orders/orderStatus';
 import { and, desc, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
@@ -59,22 +61,46 @@ export async function updateOrderStatus(
   additionalData: any = {},
 ) {
   try {
-    const updatePayload: any = {
+    // Read current version
+    const [current] = await db
+      .select({ version: payments.version })
+      .from(payments)
+      .where(and(eq(payments.id, paymentId), eq(payments.trackingToken, trackingToken)))
+      .limit(1);
+
+    if (!current) {
+      return { success: false, error: 'Pedido no encontrado' };
+    }
+
+    const expectedVersion = current.version ?? 0;
+    const updatePayload: Record<string, unknown> = {
       status,
+      version: expectedVersion + 1,
       updatedAt: new Date(),
       ...additionalData,
     };
 
-    if (status === 'aceptado') {
+    if (status === ORDER_STATUS_INTERNAL.ACEPTADO) {
       updatePayload.verifiedAt = new Date();
-    } else if (status === 'rechazado') {
+    } else if (status === ORDER_STATUS_INTERNAL.RECHAZADO) {
       updatePayload.rejectedAt = new Date();
     }
 
-    await db
+    const [updated] = await db
       .update(payments)
       .set(updatePayload)
-      .where(and(eq(payments.id, paymentId), eq(payments.trackingToken, trackingToken)));
+      .where(
+        and(
+          eq(payments.id, paymentId),
+          eq(payments.trackingToken, trackingToken),
+          eq(payments.version, expectedVersion),
+        ),
+      )
+      .returning({ id: payments.id });
+
+    if (!updated) {
+      return { success: false, error: 'El pedido fue modificado. Recargá e intentá de nuevo.' };
+    }
 
     revalidatePath('/[slug]/order/[token]', 'page');
     return { success: true };
@@ -295,5 +321,55 @@ export async function verifyOrderByGoogleIdentity(
   } catch (error) {
     console.error('[Action Error] verifyOrderByGoogleIdentity:', error);
     return { success: false, reason: 'error' };
+  }
+}
+
+// =====================================================
+// 5. V2: Report Issue (ISSUE_REPORTED flow)
+// =====================================================
+
+export interface ReportIssueV2Result {
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Report an issue on an order (V2 flow).
+ * Uses OrderService.transition() with ISSUE_REPORTED status.
+ * Works for WAITING_CUSTOMER_CONFIRMATION, READY_TO_SHIP, IN_TRANSIT, DELIVERED.
+ */
+export async function reportIssueV2(
+  paymentId: string,
+  trackingToken: string,
+  reason: string,
+): Promise<ReportIssueV2Result> {
+  try {
+    const [payment] = await db
+      .select({ version: payments.version })
+      .from(payments)
+      .where(and(eq(payments.id, paymentId), eq(payments.trackingToken, trackingToken)))
+      .limit(1);
+
+    if (!payment) {
+      return { success: false, error: 'Pedido no encontrado' };
+    }
+
+    const result = await transition({
+      paymentId,
+      toStatus: ORDER_STATUS_V2.ISSUE_REPORTED,
+      actor: { type: 'customer' },
+      expectedVersion: payment.version ?? 0,
+      extraFields: { rejectionReason: reason },
+    });
+
+    if (!result.success) {
+      return { success: false, error: result.error };
+    }
+
+    revalidatePath('/[slug]/order/[token]', 'page');
+    return { success: true };
+  } catch (error) {
+    console.error('[reportIssueV2] Error:', error);
+    return { success: false, error: 'Error al reportar el problema' };
   }
 }

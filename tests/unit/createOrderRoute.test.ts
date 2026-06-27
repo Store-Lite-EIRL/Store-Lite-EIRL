@@ -10,10 +10,18 @@ const mockBusinessSettingsFindFirst = vi.fn();
 const mockReturning = vi.fn();
 const mockValues = vi.fn(() => ({ returning: mockReturning }));
 const mockInsert = vi.fn(() => ({ values: mockValues }));
+const mockSelectCulqiBlocked = vi.fn();
 
 vi.mock('@/core/database/client', () => ({
   db: {
     insert: mockInsert,
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn(() => ({
+          limit: mockSelectCulqiBlocked,
+        })),
+      })),
+    })),
     query: {
       businessSettings: { findFirst: mockBusinessSettingsFindFirst },
     },
@@ -62,6 +70,9 @@ function createCulqiOrderResponse(overrides: Record<string, unknown> = {}) {
 describe('POST /api/payment/create-order', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Default mock: culqiBlocked check — business is NOT blocked
+    mockSelectCulqiBlocked.mockResolvedValue([{ culqiBlocked: false }]);
 
     // Default mock: business settings found
     mockBusinessSettingsFindFirst.mockResolvedValue({

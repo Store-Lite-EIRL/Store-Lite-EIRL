@@ -19,6 +19,7 @@ import { EarningsStats } from './components/EarningsStats';
 import { InventoryAlerts } from './components/InventoryAlerts';
 import { MarketInsights } from './components/MarketInsights';
 import { NotificationsPreview } from './components/NotificationsPreview';
+import { PenaltyInfoCard } from './components/PenaltyInfoCard';
 import { PlanStatusBar } from './components/PlanStatusBar';
 import { RecentOrders } from './components/RecentOrders';
 import { StatCards } from './components/StatCards';
@@ -339,9 +340,9 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
   const unreadMessagesCount = (counts[2][0]?.count || 0) + (counts[3][0]?.count || 0);
   const totalLikes = counts[4][0]?.count || 0;
   const totalSold = counts[5][0]?.count || 0;
-  const outOfStockCount = counts[6][0]?.count || 0;
-  const lowStockCount = counts[7][0]?.count || 0;
-  const addedThisWeekCount = counts[8][0]?.count || 0;
+  const _outOfStockCount = counts[6][0]?.count || 0;
+  const _lowStockCount = counts[7][0]?.count || 0;
+  const _addedThisWeekCount = counts[8][0]?.count || 0;
 
   const topLiked = inventoryData[0];
   const outOfStock = inventoryData[1];
@@ -350,7 +351,7 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
   const financialData = financialMetrics;
   const recentOrdersData = recentOrdersResult[0];
   const totalOrdersCount = recentOrdersResult[1][0]?.count || 0;
-  const totalPages = Math.ceil(totalOrdersCount / currentLimit);
+  const _totalPages = Math.ceil(totalOrdersCount / currentLimit);
   // ─── Formatting Helpers ───
   const getAmount = (res: any) => parseFloat(res[0]?.sum || '0');
   const calcChange = (current: number, previous: number) => {
@@ -417,46 +418,55 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
   // NOTE: trackingToken is NOT exposed to the seller dashboard.
   // It is only used internally by server actions (fetched directly from DB).
   // This prevents sellers from accessing the customer order portal.
-  const formattedOrders = recentOrdersData.map((order) => ({
-    id: order.id,
-    orderNumber: order.orderNumber,
-    productId: order.productId || '',
-    productTitle: order.product?.title || 'Producto desconocido',
-    productSlug: order.product?.slug || '',
-    productImage: order.product?.media?.[0]?.mediaUrl || null,
-    amount: order.amount.toString(),
-    shippingCost: order.shippingCost?.toString() || '0',
-    currency: order.currency,
-    paymentMethod: order.paymentMethod,
-    status: order.status as any,
-    shippingAddress: order.shippingAddress,
-    shippingDistrict: order.shippingDistrict,
-    shippingProvince: order.shippingProvince,
-    shippingDepartment: order.shippingDepartment,
-    shippingType: order.shippingType,
-    shippingAgency: order.shippingAgency,
-    shippingReference: order.shippingReference,
-    shippingPhone: order.shippingPhone,
-    buyerEmail: order.buyerEmail,
-    // ⚠️ trackingToken NO se envía al cliente — se obtiene directo de la DB en server actions
-    // ⚠️ buyerDni se enmascara para evitar que el seller acceda al portal del customer
-    maskedDni: maskDni(order.buyerDni),
-    ticketImageUrl: order.ticketImageUrl,
-    finalizationDeadline: order.finalizationDeadline
+  const formattedOrders = recentOrdersData.map((order) => {
+    const formatDeadline = order.finalizationDeadline
       ? order.finalizationDeadline instanceof Date
         ? order.finalizationDeadline.toISOString()
         : order.finalizationDeadline
-      : null,
-    completedAt: order.completedAt
+      : null;
+    const formatCompleted = order.completedAt
       ? order.completedAt instanceof Date
         ? order.completedAt.toISOString()
         : order.completedAt
-      : null,
-    // ⚠️ metadata NO incluye buyerDni — se sanitiza para seguridad
-    metadata: sanitizeMetadata(order.metadata),
-    createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : order.createdAt,
-    businessId: order.businessId,
-  }));
+      : null;
+
+    return {
+      id: order.id,
+      orderNumber: order.orderNumber,
+      productId: order.productId || '',
+      productTitle: order.product?.title || 'Producto desconocido',
+      productSlug: order.product?.slug || '',
+      productImage: order.product?.media?.[0]?.mediaUrl || null,
+      amount: order.amount.toString(),
+      shippingCost: order.shippingCost?.toString() || '0',
+      currency: order.currency,
+      paymentMethod: order.paymentMethod,
+      status: order.status as any,
+      shippingAddress: order.shippingAddress,
+      shippingDistrict: order.shippingDistrict,
+      shippingProvince: order.shippingProvince,
+      shippingDepartment: order.shippingDepartment,
+      shippingType: order.shippingType,
+      shippingAgency: order.shippingAgency,
+      shippingReference: order.shippingReference,
+      shippingPhone: order.shippingPhone,
+      buyerEmail: order.buyerEmail,
+      // ⚠️ trackingToken NO se envía al cliente — se obtiene directo de la DB en server actions
+      // ⚠️ buyerDni se enmascara para evitar que el seller acceda al portal del customer
+      maskedDni: maskDni(order.buyerDni),
+      ticketImageUrl: order.ticketImageUrl,
+      finalizationDeadline: formatDeadline,
+      completedAt: formatCompleted,
+      // ⚠️ metadata NO incluye buyerDni — se sanitiza para seguridad
+      metadata: sanitizeMetadata(order.metadata),
+      createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : order.createdAt,
+      businessId: order.businessId,
+      courierName: order.courierName,
+      trackingNumber: order.trackingNumber,
+      pickupCode: order.pickupCode,
+      sellerNote: order.sellerNote,
+    };
+  });
 
   // Helper functions for security sanitization
   function maskDni(dni: string | null): string {
@@ -537,14 +547,21 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
         businessSlug={slug}
       />
 
-      <PlanStatusBar
-        entitlements={entitlements}
-        currentProducts={productsCount}
-        currentCategories={categoriesCount}
-        planStartDate={planStartDate}
-        planEndDate={planEndDate}
-        lastUpdatedAt={lastUpdatedAt}
-      />
+      <div className={styles.bottomRow}>
+        <div className={styles.bottomMain}>
+          <PlanStatusBar
+            entitlements={entitlements}
+            currentProducts={productsCount}
+            currentCategories={categoriesCount}
+            planStartDate={planStartDate}
+            planEndDate={planEndDate}
+            lastUpdatedAt={lastUpdatedAt}
+          />
+        </div>
+        <aside className={styles.bottomAside}>
+          <PenaltyInfoCard businessSlug={slug} />
+        </aside>
+      </div>
     </main>
   );
 }

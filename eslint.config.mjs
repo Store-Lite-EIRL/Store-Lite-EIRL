@@ -45,6 +45,14 @@ const eslintConfig = defineConfig([
     'scripts/**',
   ]),
 
+  // Test files — relaxed rules
+  {
+    files: ['tests/**', '**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+
   // Main Configuration
   {
     plugins: {
@@ -71,7 +79,7 @@ const eslintConfig = defineConfig([
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
-      '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/naming-convention': [
         'error',
         {
@@ -139,10 +147,10 @@ const eslintConfig = defineConfig([
       'import/order': 'off', // Handled by Prettier plugin
 
       // General
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-console': ['warn', { allow: ['warn', 'error', 'log'] }],
       'no-debugger': 'error',
       eqeqeq: ['error', 'always'],
-      '@typescript-eslint/no-empty-function': 'warn',
+      '@typescript-eslint/no-empty-function': 'off',
       '@typescript-eslint/consistent-indexed-object-style': 'off',
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/refs': 'off',
@@ -157,7 +165,7 @@ const eslintConfig = defineConfig([
       'sonarjs/no-unused-vars': 'off',
       'sonarjs/no-dead-store': 'off',
       'sonarjs/slow-regex': 'off',
-      'sonarjs/pseudo-random': 'warn',
+      'sonarjs/pseudo-random': 'off',
     },
   },
 

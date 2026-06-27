@@ -80,13 +80,6 @@
       "breakpoints": true
     },
     {
-      "idx": 11,
-      "version": "7",
-      "when": 1777500000000,
-      "tag": "0021_add_buyer_dni_to_payments",
-      "breakpoints": true
-    },
-    {
       "idx": 12,
       "version": "7",
       "when": 1777064245243,
@@ -133,6 +126,27 @@
       "version": "7",
       "when": 1781794354000,
       "tag": "0018_add_hero_images",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1781804053376,
+      "tag": "0018_order_flow_v2_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1782506460094,
+      "tag": "0019_lazy_marrow",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1782506817563,
+      "tag": "0020_ancient_winter_soldier",
       "breakpoints": true
     }
   ]

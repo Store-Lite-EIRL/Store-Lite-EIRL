@@ -1,0 +1,389 @@
+/* ── Modal Overlay ── */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1.5rem;
+  animation: fadeIn 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Modal Content ── */
+.modalContent {
+  background: var(--md-sys-color-surface);
+  border-radius: 28px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.2);
+  animation: slideUpModal 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes slideUpModal {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modalHero {
+  padding: 2rem 2.5rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto auto;
+  gap: 0.75rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 50%, transparent);
+  background: linear-gradient(
+    180deg,
+    var(--md-sys-color-surface-container-lowest) 0%,
+    var(--md-sys-color-surface) 100%
+  );
+  border-radius: 28px 28px 0 0;
+  position: relative;
+}
+
+.modalHeroClose {
+  grid-row: 1;
+  grid-column: 2;
+  justify-self: end;
+}
+
+.modalHeroOrderNumber {
+  grid-row: 1;
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.modalHeroOrderNumber h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0;
+  font-family: var(--md-sys-typescale-title-large-font, system-ui);
+  color: var(--md-sys-color-on-surface);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.statusHeroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.statusIcon {
+  margin-right: 0.3rem;
+  vertical-align: middle;
+}
+
+.productNameInHeader {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.productNameInHeader svg {
+  color: var(--md-sys-color-primary);
+  flex-shrink: 0;
+}
+
+.modalHeroMeta {
+  grid-row: 3;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* ── Tabs ── */
+.modalTabs {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--md-sys-color-surface-container-lowest);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.tabButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 100px;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tabButton:hover:not(.tabActive) {
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface);
+}
+
+.tabActive {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
+}
+
+/* ── Confirm Action Overlay ── */
+.confirmOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(var(--md-sys-color-surface-rgb, 255, 255, 255), 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1.5rem;
+  border-radius: inherit;
+  backdrop-filter: blur(8px);
+  animation: confirm-fade-in 0.15s ease;
+}
+
+@keyframes confirm-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.confirmContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 320px;
+  background: var(--md-sys-color-surface-container-high, #f0f0f0);
+  border-radius: 28px;
+  padding: 2rem 1.5rem 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+}
+
+.confirmTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0;
+  text-align: center;
+}
+
+.confirmDesc {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  line-height: 1.5;
+  text-align: center;
+  margin: 0 0 0.5rem;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+}
+
+.confirmBtnText {
+  padding: 0.625rem 1.25rem;
+  background: transparent;
+  border: none;
+  border-radius: 100px;
+  color: var(--md-sys-color-primary, #6750a4);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.confirmBtnText:hover {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+}
+
+.confirmBtnFilled {
+  padding: 0.625rem 1.5rem;
+  background: var(--md-sys-color-primary, #6750a4);
+  color: white;
+  border: none;
+  border-radius: 100px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 2px 8px rgba(103, 80, 164, 0.2);
+}
+
+.confirmBtnFilled:hover {
+  box-shadow: 0 4px 16px rgba(103, 80, 164, 0.3);
+  transform: translateY(-1px);
+}
+
+/* ── Modal Footer ── */
+.modalFooter {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 40%, transparent);
+  display: flex;
+  justify-content: flex-end;
+  background: var(--md-sys-color-surface);
+  border-radius: 0 0 28px 28px;
+}
+
+.modalBody {
+  padding: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+  background: var(--md-sys-color-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-height: 400px;
+}
+
+/* ── Countdown / Penalty Indicators ── */
+.countdownIndicator {
+  background: color-mix(in srgb, var(--md-sys-color-tertiary-container) 70%, transparent);
+  color: var(--md-sys-color-on-tertiary-container);
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 1.5rem;
+}
+
+.overdueIndicator {
+  background: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error);
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 1.5rem;
+}
+
+/* ── Status Hero Badge Variants ── */
+.statusHeroBadge.statusPending {
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-error-container) 60%,
+    var(--md-sys-color-surface)
+  );
+  color: var(--md-sys-color-on-error-container);
+}
+
+.statusHeroBadge.statusPaid {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.statusHeroBadge.statusVerifying {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.statusHeroBadge.statusAccepted {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.statusHeroBadge.statusEnReparto {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.statusHeroBadge.statusWaiting {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.statusHeroBadge.statusCompleted {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.statusHeroBadge.statusRejected {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.statusHeroBadge.statusDisputed {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.statusHeroBadge.statusReported {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+/* ── Media Queries ── */
+@media (max-width: 768px) {
+  .modalContent {
+    max-width: 100%;
+    border-radius: 28px 28px 0 0;
+    max-height: 95vh;
+  }
+  .modalTabs {
+    padding: 0.5rem 1rem;
+    overflow-x: auto;
+  }
+  .tabButton {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+  .modalBody {
+    padding: 1rem;
+  }
+}

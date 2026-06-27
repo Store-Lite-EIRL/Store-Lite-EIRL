@@ -8,6 +8,7 @@ export * from './enums';
 export * from './imports';
 export * from './notifications';
 export * from './orders';
+export * from './penalties';
 export * from './products';
 export * from './profiles';
 export * from './relations';

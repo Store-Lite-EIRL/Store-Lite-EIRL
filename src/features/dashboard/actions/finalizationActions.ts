@@ -1,10 +1,52 @@
 'use server';
 
+import { env } from '@/config/env';
 import { db } from '@/core/database/client';
-import { chatSessions, messages, payments } from '@/core/database/schema';
+import { businesses, chatSessions, messages, payments, profiles } from '@/core/database/schema';
+import { transition } from '@/core/orders/orderService';
+import {
+  CONFIRMABLE_STATUSES,
+  ORDER_STATUS,
+  ORDER_STATUS_LABELS,
+  ORDER_STATUS_V2,
+} from '@/core/orders/orderStatus';
 import { createBusinessNotification } from '@/lib/notifications';
+import { createClient as createServerClient } from '@/lib/supabase/server';
 import { and, desc, eq, lt } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+
+async function getAuthenticatedUserId(): Promise<string | null> {
+  try {
+    const supabase = await createServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    // Ensure profile exists to satisfy FK constraints on order_timeline_events
+    const existingProfile = await db.query.profiles.findFirst({
+      where: eq(profiles.id, user.id),
+    });
+
+    if (!existingProfile) {
+      console.warn('[getAuthenticatedUserId] Profile missing, auto-creating for user:', user.id);
+      await db.insert(profiles).values({
+        id: user.id,
+        email: user.email ?? '',
+        fullName:
+          user.user_metadata?.full_name ??
+          user.user_metadata?.name ??
+          user.email?.split('@')[0] ??
+          'Unknown User',
+        avatarUrl: user.user_metadata?.avatar_url ?? null,
+      });
+    }
+
+    return user.id;
+  } catch {
+    return null;
+  }
+}
 
 // =====================================================
 // TYPES
@@ -23,7 +65,7 @@ export interface FinalizationActionResult {
 // CONSTANTS
 // =====================================================
 
-const HOURS_BEFORE_SELLER_CAN_REQUEST = 24; // 24h después de "aceptado"
+const _HOURS_BEFORE_SELLER_CAN_REQUEST = 24; // 24h después de "aceptado" (reservado para validación temporal)
 const DAYS_FOR_CUSTOMER_TO_CONFIRM = 3; // 3 días para que el customer confirme
 
 // =====================================================
@@ -54,33 +96,23 @@ export async function requestFinalization(
       return { success: false, error: 'Pago no encontrado o no tienes permisos.' };
     }
 
-    // 2. Check if status is 'delivered'
-    if (payment.status !== 'delivered') {
+    // 2. Check if status allows finalization
+    const currentStatus = String(payment.status);
+    const isValidForFinalization = env.orderFlowV2
+      ? currentStatus === ORDER_STATUS_V2.IN_TRANSIT || currentStatus === ORDER_STATUS.EN_REPARTO
+      : currentStatus === ORDER_STATUS.DELIVERED;
+
+    if (!isValidForFinalization) {
       console.error('[requestFinalization] Invalid status:', payment.status);
       return {
         success: false,
-        error: `El pago debe estar en estado "delivered". Estado actual: ${payment.status}`,
+        error: env.orderFlowV2
+          ? `El pedido debe estar "en tránsito" para solicitar finalización. Estado actual: ${payment.status}`
+          : `El pago debe estar en estado "delivered". Estado actual: ${payment.status}`,
       };
     }
 
-    // 3. Check if 24 hours have passed since "delivered" (REMOVED FOR FLEXIBILITY)
-    /*
-    const deliveredAt = payment.verifiedAt || payment.updatedAt;
-    if (!deliveredAt) {
-      console.error('[requestFinalization] No delivered timestamp found');
-      return { success: false, error: 'No se encontró la fecha de entrega del pedido.' };
-    }
-
-    const hoursSinceDelivered = (Date.now() - new Date(deliveredAt).getTime()) / (1000 * 60 * 60);
-    if (hoursSinceDelivered < HOURS_BEFORE_SELLER_CAN_REQUEST) {
-      const remainingHours = Math.ceil(HOURS_BEFORE_SELLER_CAN_REQUEST - hoursSinceDelivered);
-      console.warn('[requestFinalization] Too early to request. Hours since delivered:', hoursSinceDelivered);
-      return { 
-        success: false, 
-        error: `Debes esperar ${remainingHours} hora(s) más antes de solicitar la finalización.` 
-      };
-    }
-    */
+    // 3. Jump to finalization check (24h validation removed for flexibility)
 
     // 4. Check if already in finalization process
     if (payment.finalizationRequestedAt) {
@@ -101,16 +133,46 @@ export async function requestFinalization(
       deadline,
     );
 
-    // 6. Update payment
-    await db
-      .update(payments)
-      .set({
-        status: 'not_delivered', // Waiting for customer confirmation
-        finalizationRequestedAt: now,
-        finalizationDeadline: deadline,
-        updatedAt: now,
-      })
-      .where(eq(payments.id, paymentId));
+    // 6. Update payment — V2 path uses OrderService, legacy uses inline
+    const expectedVersion = (payment as { version?: number }).version ?? 0;
+
+    if (env.orderFlowV2) {
+      const actorId = await getAuthenticatedUserId();
+      const result = await transition({
+        paymentId,
+        // In legacy flow, requestFinalization moves to 'not_delivered' which maps to DELIVERED.
+        // In V2, this means the seller confirms the order was delivered to the customer.
+        toStatus: ORDER_STATUS_V2.DELIVERED,
+        actor: { type: 'seller', id: actorId ?? undefined },
+        expectedVersion,
+        extraFields: { finalizationRequestedAt: now, finalizationDeadline: deadline },
+      });
+
+      if (!result.success) {
+        console.error('[requestFinalization] OrderService error:', result.error);
+        return { success: false, error: result.error };
+      }
+    } else {
+      const [updated] = await db
+        .update(payments)
+        .set({
+          status: ORDER_STATUS.NOT_DELIVERED,
+          version: expectedVersion + 1,
+          finalizationRequestedAt: now,
+          finalizationDeadline: deadline,
+          updatedAt: now,
+        })
+        .where(and(eq(payments.id, paymentId), eq(payments.version, expectedVersion)))
+        .returning({ id: payments.id });
+
+      if (!updated) {
+        console.error('[requestFinalization] Version conflict for payment:', paymentId);
+        return {
+          success: false,
+          error: 'El pedido fue modificado por otra operación. Recargá e intentá de nuevo.',
+        };
+      }
+    }
 
     // 7. Create notification for the business (seller)
     await createBusinessNotification({
@@ -155,7 +217,7 @@ Recuerda que si no respondes en 3 días (${deadline.toLocaleDateString('es-PE')}
     if (payment.trackingToken) {
       // Find the business slug if possible, but businessId is often the slug in this project or we can use the business object
       const business = await db.query.businesses.findFirst({
-        where: eq(payments.businessId, businessId),
+        where: eq(businesses.id, businessId),
       });
       const slug = business?.slug || businessId;
       revalidatePath(`/${slug}/order/${payment.trackingToken}`, 'page');
@@ -166,7 +228,7 @@ Recuerda que si no respondes en 3 días (${deadline.toLocaleDateString('es-PE')}
     return {
       success: true,
       data: {
-        status: 'esperando_confirmacion',
+        status: ORDER_STATUS_LABELS.ESPERANDO_CONFIRMACION,
         finalizationDeadline: deadline.toISOString(),
       },
     };
@@ -206,10 +268,8 @@ export async function confirmFinalization(
       return { success: false, error: 'Pedido no encontrado o token inválido.' };
     }
 
-    if (
-      (payment.status as string) !== 'not_delivered' &&
-      (payment.status as string) !== 'en_reparto'
-    ) {
+    const confirmableStatuses: readonly string[] = CONFIRMABLE_STATUSES;
+    if (!confirmableStatuses.includes(payment.status)) {
       console.error('[confirmFinalization] Invalid status:', payment.status);
       return {
         success: false,
@@ -221,32 +281,41 @@ export async function confirmFinalization(
 
     console.log('[confirmFinalization] Confirming finalization...');
 
-    // 2. Update payment to 'completed' inside transaction with re-check (P5: race condition guard)
-    await db.transaction(async (tx) => {
-      // Re-read current status inside the transaction
-      const [currentPayment] = await tx
-        .select({ status: payments.status })
-        .from(payments)
-        .where(eq(payments.id, paymentId))
-        .limit(1);
+    // 2. Update payment — V2 path uses OrderService, legacy uses inline
+    const expectedVersion = (payment as { version?: number }).version ?? 0;
 
-      if (
-        currentPayment?.status !== 'not_delivered' &&
-        (currentPayment?.status as string) !== 'en_reparto'
-      ) {
-        throw new Error('Estado del pedido fue modificado por otra operación.');
+    if (env.orderFlowV2) {
+      const result = await transition({
+        paymentId,
+        toStatus: ORDER_STATUS_V2.COMPLETED,
+        actor: { type: 'customer' },
+        expectedVersion,
+        extraFields: { finalizationConfirmedAt: now, completedAt: now },
+      });
+
+      if (!result.success) {
+        return { success: false, error: result.error };
       }
-
-      await tx
+    } else {
+      const [updated] = await db
         .update(payments)
         .set({
-          status: 'completed',
+          status: ORDER_STATUS.COMPLETED,
+          version: expectedVersion + 1,
           finalizationConfirmedAt: now,
           completedAt: now,
           updatedAt: now,
         })
-        .where(eq(payments.id, paymentId));
-    });
+        .where(and(eq(payments.id, paymentId), eq(payments.version, expectedVersion)))
+        .returning({ id: payments.id });
+
+      if (!updated) {
+        return {
+          success: false,
+          error: 'El estado del pedido fue modificado. Recargá la página e intentá de nuevo.',
+        };
+      }
+    }
 
     // 3. Notify the business (seller)
     await createBusinessNotification({
@@ -284,7 +353,7 @@ export async function confirmFinalization(
     }
 
     const business = await db.query.businesses.findFirst({
-      where: eq(payments.businessId, payment.businessId),
+      where: eq(businesses.id, payment.businessId),
     });
     const slug = business?.slug || payment.businessId;
 
@@ -296,17 +365,10 @@ export async function confirmFinalization(
     return {
       success: true,
       data: {
-        status: 'finalizado',
+        status: ORDER_STATUS_LABELS.FINALIZADO,
       },
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : '';
-    if (message.includes('modificado por otra operación')) {
-      return {
-        success: false,
-        error: 'El estado del pedido fue modificado. Recargá la página e intentá de nuevo.',
-      };
-    }
     console.error('[confirmFinalization] Error:', error);
     return {
       success: false,
@@ -343,7 +405,7 @@ export async function rejectFinalization(
       return { success: false, error: 'Pedido no encontrado o token inválido.' };
     }
 
-    if (payment.status !== 'not_delivered' && (payment.status as string) !== 'en_reparto') {
+    if (!CONFIRMABLE_STATUSES.includes(payment.status as string)) {
       console.error('[rejectFinalization] Invalid status:', payment.status);
       return {
         success: false,
@@ -353,33 +415,43 @@ export async function rejectFinalization(
 
     console.log('[rejectFinalization] Rejecting with reason:', reason);
 
-    // 2. Update payment to 'disputed' inside transaction with re-check (P5: race condition guard)
-    // Also clear completedAt if it was previously set (P17)
+    // 2. Update payment — V2 path uses OrderService (→ ISSUE_REPORTED), legacy uses inline (→ disputed)
+    // Legacy also clears completedAt if it was previously set (P17)
     const now = new Date();
-    await db.transaction(async (tx) => {
-      const [currentPayment] = await tx
-        .select({ status: payments.status })
-        .from(payments)
-        .where(eq(payments.id, paymentId))
-        .limit(1);
+    const expectedVersion = (payment as { version?: number }).version ?? 0;
 
-      if (
-        currentPayment?.status !== 'not_delivered' &&
-        (currentPayment?.status as string) !== 'en_reparto'
-      ) {
-        throw new Error('Estado del pedido fue modificado por otra operación.');
+    if (env.orderFlowV2) {
+      const result = await transition({
+        paymentId,
+        toStatus: ORDER_STATUS_V2.ISSUE_REPORTED,
+        actor: { type: 'customer' },
+        expectedVersion,
+        extraFields: { rejectionReason: reason, completedAt: null },
+      });
+
+      if (!result.success) {
+        return { success: false, error: result.error };
       }
-
-      await tx
+    } else {
+      const [updated] = await db
         .update(payments)
         .set({
-          status: 'disputed',
+          status: ORDER_STATUS.DISPUTED,
+          version: expectedVersion + 1,
           rejectionReason: reason,
           completedAt: null, // P17: clear completion date on rejection
           updatedAt: now,
         })
-        .where(eq(payments.id, paymentId));
-    });
+        .where(and(eq(payments.id, paymentId), eq(payments.version, expectedVersion)))
+        .returning({ id: payments.id });
+
+      if (!updated) {
+        return {
+          success: false,
+          error: 'El estado del pedido fue modificado. Recargá la página e intentá de nuevo.',
+        };
+      }
+    }
 
     // 3. Notify the business (seller)
     await createBusinessNotification({
@@ -418,7 +490,7 @@ export async function rejectFinalization(
     }
 
     const business = await db.query.businesses.findFirst({
-      where: eq(payments.businessId, payment.businessId),
+      where: eq(businesses.id, payment.businessId),
     });
     const slug = business?.slug || payment.businessId;
 
@@ -430,17 +502,10 @@ export async function rejectFinalization(
     return {
       success: true,
       data: {
-        status: 'reporte',
+        status: ORDER_STATUS_LABELS.REPORTE,
       },
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : '';
-    if (message.includes('modificado por otra operación')) {
-      return {
-        success: false,
-        error: 'El estado del pedido fue modificado. Recargá la página e intentá de nuevo.',
-      };
-    }
     console.error('[rejectFinalization] Error:', error);
     return {
       success: false,
@@ -461,6 +526,12 @@ export async function autoFinalizeExpiredPayments(): Promise<{
   processedCount: number;
   error?: string;
 }> {
+  // V2: timeouts are handled by dedicated processor (T11/T16)
+  if (env.orderFlowV2) {
+    console.log('[autoFinalize] V2 active — skipping legacy auto-finalization');
+    return { success: true, processedCount: 0 };
+  }
+
   try {
     console.log('[autoFinalize] Starting auto-finalization check...');
 
@@ -478,7 +549,7 @@ export async function autoFinalizeExpiredPayments(): Promise<{
       .from(payments)
       .where(
         and(
-          eq(payments.status, 'not_delivered'),
+          eq(payments.status, ORDER_STATUS.NOT_DELIVERED),
           lt(payments.finalizationDeadline, now), // Deadline has passed
         ),
       );
@@ -496,7 +567,7 @@ export async function autoFinalizeExpiredPayments(): Promise<{
         await db
           .update(payments)
           .set({
-            status: 'completed',
+            status: ORDER_STATUS.COMPLETED,
             completedAt: now,
             updatedAt: now,
           })
