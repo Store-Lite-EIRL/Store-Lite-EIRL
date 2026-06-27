@@ -29,10 +29,12 @@ vi.mock('lucide-react', () => ({
   ExternalLink: () => <span>ExternalLink</span>,
   IdCard: () => <span>IdCard</span>,
   MapPin: () => <span>MapPin</span>,
+  Package: () => <span>Package</span>,
   Phone: () => <span>Phone</span>,
   Receipt: () => <span>Receipt</span>,
   RefreshCw: () => <span>RefreshCw</span>,
   ShoppingBag: () => <span>ShoppingBag</span>,
+  Store: () => <span>Store</span>,
   Truck: () => <span>Truck</span>,
   User: () => <span>User</span>,
 }));
@@ -131,6 +133,8 @@ const defaultProps = {
   onUploadTicket: vi.fn(),
   onCancelUpload: vi.fn(),
   onEditTicket: vi.fn(),
+  onPrepareOrder: vi.fn(),
+  preparing: false,
 };
 
 // ── Tests ────────────────────────────────────────────
@@ -207,6 +211,57 @@ describe('PhaseContent', () => {
       );
 
       expect(screen.getByText('Recojo en tienda')).toBeInTheDocument();
+    });
+
+    // ── Preparar Pedido button (delivery) ────────────
+
+    test('delivery PAID Phase 0 shows Preparar Pedido button', () => {
+      render(
+        <PhaseContent
+          order={createMockOrder({ status: 'PAID' })}
+          selectedPhase={0}
+          {...defaultProps}
+        />,
+      );
+
+      expect(screen.getByText('Preparar Pedido')).toBeInTheDocument();
+    });
+
+    test('delivery PREPARING_ORDER Phase 0 hides Preparar Pedido button', () => {
+      render(
+        <PhaseContent
+          order={createMockOrder({ status: 'PREPARING_ORDER' })}
+          selectedPhase={0}
+          {...defaultProps}
+        />,
+      );
+
+      expect(screen.queryByText('Preparar Pedido')).not.toBeInTheDocument();
+    });
+
+    test('pickup PAID Phase 0 hides Preparar Pedido button', () => {
+      render(
+        <PhaseContent
+          order={createMockOrder({ status: 'PAID' })}
+          selectedPhase={0}
+          {...defaultProps}
+          shippingType="recojo"
+        />,
+      );
+
+      expect(screen.queryByText('Preparar Pedido')).not.toBeInTheDocument();
+    });
+
+    test('delivery PAID Phase 1 hides Preparar Pedido button', () => {
+      render(
+        <PhaseContent
+          order={createMockOrder({ status: 'PAID' })}
+          selectedPhase={1}
+          {...defaultProps}
+        />,
+      );
+
+      expect(screen.queryByText('Preparar Pedido')).not.toBeInTheDocument();
     });
   });
 

@@ -58,8 +58,8 @@ describe('isValidTransition', () => {
     expect(isValidTransition(PREPARING, DELIVERED)).toBe(true);
   });
 
-  test('PREPARING_ORDER → SELLER_TIMEOUT is valid', () => {
-    expect(isValidTransition(PREPARING, TIMEOUT)).toBe(true);
+  test('PREPARING_ORDER → SELLER_TIMEOUT is not valid (penalty system handles seller timeout)', () => {
+    expect(isValidTransition(PREPARING, TIMEOUT)).toBe(false);
   });
 
   test('PREPARING_ORDER → CANCELLED is valid', () => {
@@ -164,9 +164,10 @@ describe('validateTransition (with actor)', () => {
     expect(result.valid).toBe(true);
   });
 
-  test('allows system for PREPARING_ORDER → SELLER_TIMEOUT', () => {
+  test('rejects system for PREPARING_ORDER → SELLER_TIMEOUT (handled by penalty system)', () => {
     const result = validateTransition(PREPARING, TIMEOUT, 'system');
-    expect(result.valid).toBe(true);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('not allowed');
   });
 
   test('rejects customer for PREPARING_ORDER → WAITING_CUSTOMER_CONFIRMATION', () => {
@@ -253,13 +254,13 @@ describe('validateTransition (with actor)', () => {
 });
 
 describe('validateTransitionFull (with preconditions)', () => {
-  test('seller must provide courier info for WAITING_CUSTOMER_CONFIRMATION', () => {
+  test('seller does not need courier info for WAITING_CUSTOMER_CONFIRMATION (optional in Phase 2)', () => {
     const result = validateTransitionFull(PREPARING, WAITING, {
       actor: { type: 'seller' },
       preconditions: {},
     });
-    expect(result.valid).toBe(false);
-    expect(result.error).toContain('must provide');
+    // Courier data is now optional at this stage; filled in at READY_TO_SHIP → IN_TRANSIT
+    expect(result.valid).toBe(true);
   });
 
   test('seller with courierName passes precondition check', () => {
@@ -358,15 +359,9 @@ describe('getAllowedTransitions', () => {
     expect(result.map((r) => r.to)).toEqual([PREPARING, WAITING, READY_FOR_PICKUP, CANCELLED]);
   });
 
-  test('PREPARING_ORDER returns WAITING, DELIVERED, READY_FOR_PICKUP, SELLER_TIMEOUT, CANCELLED', () => {
+  test('PREPARING_ORDER returns WAITING, DELIVERED, READY_FOR_PICKUP, CANCELLED', () => {
     const result = getAllowedTransitions(PREPARING);
-    expect(result.map((r) => r.to)).toEqual([
-      WAITING,
-      DELIVERED,
-      READY_FOR_PICKUP,
-      TIMEOUT,
-      CANCELLED,
-    ]);
+    expect(result.map((r) => r.to)).toEqual([WAITING, DELIVERED, READY_FOR_PICKUP, CANCELLED]);
   });
 
   test('READY_TO_SHIP returns IN_TRANSIT and ISSUE_REPORTED', () => {

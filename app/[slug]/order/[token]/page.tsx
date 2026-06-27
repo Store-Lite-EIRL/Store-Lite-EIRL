@@ -69,7 +69,7 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
       where: eq(payments.trackingToken, token),
       with: { product: true, business: true },
     });
-  } catch (error) {
+  } catch (_error) {
     notFound();
   }
 
@@ -176,6 +176,14 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
   }
 
   const isPickup = order.shippingType?.toLowerCase() === 'recojo';
+
+  // Seller delay warning: order stuck in PREPARING_ORDER for more than 5 days
+  /* eslint-disable react-hooks/purity */
+  const hasSellerDelay =
+    order.status === ('PREPARING_ORDER' as string) &&
+    order.updatedAt &&
+    Date.now() - new Date(order.updatedAt).getTime() > 5 * 24 * 60 * 60 * 1000;
+  /* eslint-enable react-hooks/purity */
 
   const getStep = () => {
     if (isPickup) {
@@ -516,20 +524,20 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
           .pro-line { position: absolute; top: 24px; left: 40px; right: 40px; height: 4px; background: var(--md-sys-color-outline-variant); border-radius: 2px; }
           .pro-line-track { position: absolute; top: 24px; left: 40px; right: 40px; height: 4px; overflow: hidden; border-radius: 2px; pointer-events: none; }
           .pro-line-fill { height: 100%; background: var(--md-sys-color-primary); border-radius: 2px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
-          .pro-step { z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+          .pro-step { z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; }
           .pro-icon-box { 
             width: 48px; height: 48px; border-radius: 16px; 
-            background: var(--md-sys-color-surface-container-highest);
+            background: var(--md-sys-color-surface-container-highest, #dfe3e7);
             border: 2px solid var(--md-sys-color-outline-variant);
             display: flex; align-items: center; justify-content: center;
-            transition: all 0.4s ease;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
           }
           .pro-step.active .pro-icon-box { 
             background: var(--md-sys-color-primary); border-color: var(--md-sys-color-primary); color: white;
             box-shadow: 0 10px 20px rgba(var(--md-sys-color-primary-rgb), 0.3);
             transform: scale(1.1) translateY(-4px);
           }
-          .pro-step { z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+          .pro-step { z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; }
           .pro-icon-link { text-decoration: none; color: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 12px; }
           .pro-icon-link:hover .pro-icon-box { transform: scale(1.08); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
           .pro-label { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; color: var(--md-sys-color-on-surface-variant); }
@@ -571,7 +579,6 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
           .btn-hub-p { background: var(--md-sys-color-primary); color: white; box-shadow: 0 10px 30px rgba(var(--md-sys-color-primary-rgb), 0.3); }
           .btn-hub-p:hover { transform: translateY(-2px); box-shadow: 0 15px 40px rgba(var(--md-sys-color-primary-rgb), 0.4); }
           .btn-hub-s { background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
-
           /* Pulse Animation for Critical States */
           @keyframes critical-pulse {
             0% { box-shadow: 0 0 0 0 rgba(var(--md-sys-color-primary-rgb), 0.4); }
@@ -594,6 +601,116 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
           .btn-action.btn-report:hover { transform: translateY(-2px); }
           .btn-action.btn-outline { background: var(--md-sys-color-surface-container); color: var(--md-sys-color-on-surface); border: 1px solid var(--md-sys-color-outline); }
           .btn-action.btn-outline:hover { background: var(--md-sys-color-surface-container-high); }
+
+          /* ── Confirmation Card ── */
+          .confirm-prominent {
+            background: var(--md-sys-color-secondary-container);
+            border: 2px solid var(--md-sys-color-secondary);
+            border-radius: 32px;
+            padding: 1.75rem 2rem;
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+            position: relative;
+            animation: confirm-up 0.5s ease;
+          }
+          @keyframes confirm-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .confirm-prominent-header {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+          }
+          .confirm-prominent-icon {
+            width: 52px; height: 52px; border-radius: 50%;
+            background: var(--md-sys-color-secondary);
+            color: white;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+          }
+          .confirm-prominent h3 {
+            margin: 0; font-weight: 600; font-size: 1.15rem;
+            color: var(--md-sys-color-on-secondary-container);
+          }
+          .confirm-prominent p {
+            margin: 6px 0 0; font-size: 0.9rem;
+            color: var(--md-sys-color-on-secondary-container);
+            opacity: 0.7; line-height: 1.45;
+          }
+          .confirm-prominent-actions {
+            display: flex; flex-direction: column; gap: 0.75rem;
+            margin-top: 0.25rem;
+          }
+          .confirm-prominent-actions .btn-row {
+            display: flex; gap: 0.75rem;
+          }
+          .btn-confirm-accept {
+            flex: 1; padding: 0.85rem 1.25rem; border-radius: 100px;
+            border: none; background: var(--md-sys-color-primary);
+            color: white; font-weight: 600; font-size: 0.9rem;
+            cursor: pointer; display: inline-flex; align-items: center;
+            justify-content: center; gap: 8px; text-decoration: none;
+            letter-spacing: 0.02em; text-transform: uppercase;
+            box-shadow: 0 4px 16px rgba(var(--md-sys-color-primary-rgb), 0.25);
+            transition: all 0.2s ease;
+          }
+          .btn-confirm-accept:hover {
+            filter: brightness(0.9);
+            box-shadow: 0 6px 20px rgba(var(--md-sys-color-primary-rgb), 0.35);
+          }
+          .btn-confirm-reject {
+            flex: 1; padding: 0.85rem 1.25rem; border-radius: 100px;
+            border: 2px solid var(--md-sys-color-error);
+            background: var(--md-sys-color-error-container);
+            color: var(--md-sys-color-on-error-container);
+            font-weight: 600; font-size: 0.9rem;
+            cursor: pointer; display: inline-flex; align-items: center;
+            justify-content: center; gap: 8px; text-decoration: none;
+            letter-spacing: 0.02em; text-transform: uppercase;
+            transition: all 0.2s ease;
+          }
+          .btn-confirm-reject:hover {
+            background: var(--md-sys-color-error);
+            color: white;
+            box-shadow: 0 4px 16px rgba(var(--md-sys-color-error-rgb), 0.25);
+          }
+
+          /* ── Standalone Report Section (comodín) ── */
+          .report-wildcard {
+            width: 100%;
+            text-align: center;
+            padding: 1.5rem 1rem;
+            border-top: 1px dashed var(--md-sys-color-outline-variant);
+            background: transparent;
+          }
+          .report-wildcard-label {
+            margin: 0 0 1rem;
+            font-size: 0.7rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            opacity: 0.3;
+          }
+          .report-wildcard-link {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 0.75rem 1.5rem; border-radius: 100px;
+            color: var(--md-sys-color-on-surface-variant);
+            font-size: 0.8rem; font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: 1px solid var(--md-sys-color-outline-variant);
+            background: var(--md-sys-color-surface-container-low);
+          }
+          .report-wildcard-link:hover {
+            background: var(--md-sys-color-error-container);
+            color: var(--md-sys-color-on-error-container);
+            border-color: var(--md-sys-color-error);
+          }
         `,
           }}
         />
@@ -726,6 +843,36 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                 </div>
               )}
 
+              {/* ── CONFIRMACIÓN: ¿Recibiste tu pedido? (arriba del timeline) ── */}
+              {(['en_reparto', 'DELIVERED'] as string[]).includes(order.status as string) && (
+                <div className="confirm-prominent">
+                  <div className="confirm-prominent-header">
+                    <div className="confirm-prominent-icon">
+                      <Icon size={24}>package_2</Icon>
+                    </div>
+                    <div>
+                      <h3>📦 ¿Recibiste tu pedido?</h3>
+                      <p>
+                        El vendedor marcó el pedido como entregado. Necesitamos tu respuesta para
+                        continuar.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="confirm-prominent-actions">
+                    <div className="btn-row">
+                      <a href="#confirm-finalize" className="btn-confirm-accept">
+                        <Icon size={20}>check_circle</Icon>
+                        Sí, lo recibí
+                      </a>
+                      <a href="#report-finalize" className="btn-confirm-reject">
+                        <Icon size={20}>flag</Icon>
+                        No, tengo un problema
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* ── Order timeline history ── */}
               <OrderV2Timeline orderId={order.id} />
 
@@ -808,53 +955,6 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                     <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.6, lineHeight: 1.5 }}>
                       Mostrá este código al vendedor para que confirme el recojo de tu pedido.
                     </p>
-                  </div>
-                )}
-
-              {/* ── V2: Issue report button (for reportable V2 statuses) ── */}
-              {env.orderFlowV2 &&
-                [
-                  'WAITING_CUSTOMER_CONFIRMATION',
-                  'READY_TO_SHIP',
-                  'IN_TRANSIT',
-                  'DELIVERED',
-                ].includes(order.status) && (
-                  <div
-                    style={{
-                      width: '100%',
-                      maxWidth: '500px',
-                      background: 'var(--md-sys-color-error-container)',
-                      borderRadius: '24px',
-                      padding: '1.5rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.75rem',
-                      textAlign: 'left',
-                    }}
-                  >
-                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-                      <Icon size={24}>report_problem</Icon>
-                      <div>
-                        <p style={{ margin: 0, fontWeight: 950, fontSize: '0.9rem' }}>
-                          ¿Tenés un problema con tu pedido?
-                        </p>
-                        <p style={{ margin: '4px 0 0', fontSize: '0.8rem', opacity: 0.7 }}>
-                          Reportalo y nos pondremos en contacto para resolverlo.
-                        </p>
-                      </div>
-                    </div>
-                    <a
-                      href="#report-v2"
-                      className="btn-hub btn-hub-s"
-                      style={{
-                        justifyContent: 'center',
-                        background: 'var(--md-sys-color-error)',
-                        color: 'white',
-                      }}
-                    >
-                      <Icon>flag</Icon>
-                      REPORTAR PROBLEMA
-                    </a>
                   </div>
                 )}
 
@@ -1031,55 +1131,6 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                 </div>
               )}
 
-              {/* ACTION: Finalization Confirm (delivery received) */}
-              {(order.status as string) === 'en_reparto' && (
-                <div
-                  className="despacho-card pulse-active"
-                  style={{
-                    borderStyle: 'solid',
-                    borderColor: 'var(--md-sys-color-secondary)',
-                    background: 'var(--md-sys-color-secondary-container)',
-                    color: 'var(--md-sys-color-on-secondary-container)',
-                  }}
-                >
-                  <div style={{ display: 'flex', gap: '1rem', textAlign: 'left' }}>
-                    <Icon size={32}>home</Icon>
-                    <div>
-                      <h3 style={{ margin: 0, fontWeight: 950, fontSize: '1.1rem' }}>
-                        ¿Recibiste tu pedido?
-                      </h3>
-                      <p style={{ margin: '4px 0 0', fontSize: '0.9rem', opacity: 0.8 }}>
-                        Confirmá que el producto llegó en buen estado. Si hay algún problema,
-                        reportalo ahora.
-                      </p>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                    <a
-                      href="#confirm-finalize"
-                      className="btn-hub btn-hub-p"
-                      style={{
-                        flex: 1,
-                        justifyContent: 'center',
-                        background: 'var(--md-sys-color-secondary)',
-                        color: 'white',
-                      }}
-                    >
-                      <Icon>check_circle</Icon>
-                      SÍ, LO RECIBÍ
-                    </a>
-                    <a
-                      href="#report-finalize"
-                      className="btn-hub btn-hub-s"
-                      style={{ flex: 1, justifyContent: 'center' }}
-                    >
-                      <Icon>flag</Icon>
-                      TENGO UN PROBLEMA
-                    </a>
-                  </div>
-                </div>
-              )}
-
               {/* Default Buttons if no specific card */}
               {!['validando', 'disputed', 'delivered', 'completed'].includes(order.status) &&
                 currentStatus.actionLabel && (
@@ -1162,7 +1213,38 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                 )}
             </div>
 
-            <OrderGuide shippingType={order.shippingType} />
+            {/* ── SAFETY NET: Reportar problema (comodín, fuera del flujo) ── */}
+            {(env.orderFlowV2
+              ? ['WAITING_CUSTOMER_CONFIRMATION', 'READY_TO_SHIP', 'IN_TRANSIT', 'DELIVERED']
+              : ['validando', 'delivered', 'en_reparto']
+            ).includes(order.status) && (
+              <div className="report-wildcard">
+                <p className="report-wildcard-label">¿Necesitás ayuda?</p>
+                {env.orderFlowV2 ? (
+                  <a href="#report-v2" className="report-wildcard-link">
+                    <Icon size={16}>flag</Icon>
+                    Reportar problema
+                  </a>
+                ) : (
+                  <a href="#report-finalize" className="report-wildcard-link">
+                    <Icon size={16}>flag</Icon>
+                    Reportar problema
+                  </a>
+                )}
+                <p
+                  style={{
+                    margin: '0.75rem 0 0',
+                    fontSize: '0.7rem',
+                    opacity: 0.3,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  Usá esta opción si ninguna de las anteriores aplica
+                </p>
+              </div>
+            )}
+
+            <OrderGuide shippingType={order.shippingType} showDelayWarning={hasSellerDelay} />
           </div>
 
           <div className="sticky-chat">
@@ -1361,13 +1443,13 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                     <div>
                       <span className="detail-sub">Método</span>
                       <span className="detail-value" style={{ textTransform: 'capitalize' }}>
-                        {order.paymentMethod === 'card'
-                          ? 'Tarjeta'
-                          : order.paymentMethod === 'yape'
-                            ? 'Yape'
-                            : order.paymentMethod === 'plin'
-                              ? 'Plin'
-                              : order.paymentMethod || '—'}
+                        {(() => {
+                          const method = order.paymentMethod;
+                          if (method === 'card') return 'Tarjeta';
+                          if (method === 'yape') return 'Yape';
+                          if (method === 'plin') return 'Plin';
+                          return method || '—';
+                        })()}
                       </span>
                     </div>
                     <div>
@@ -1610,21 +1692,18 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
         {steps.map((s, stepIdx) => {
           if (stepIdx >= currentStep) return null;
 
-          const snapshotKey = isPickup
-            ? stepIdx === 0
-              ? 'PREPARING_ORDER'
-              : stepIdx === 1
-                ? 'READY_FOR_PICKUP'
-                : 'COMPLETED'
-            : stepIdx === 0
-              ? 'pending'
-              : stepIdx === 1
-                ? 'validando'
-                : stepIdx === 2
-                  ? 'delivered'
-                  : stepIdx === 3
-                    ? 'en_reparto'
-                    : 'completed';
+          const snapshotKey = (() => {
+            if (isPickup) {
+              if (stepIdx === 0) return 'PREPARING_ORDER';
+              if (stepIdx === 1) return 'READY_FOR_PICKUP';
+              return 'COMPLETED';
+            }
+            if (stepIdx === 0) return 'pending';
+            if (stepIdx === 1) return 'validando';
+            if (stepIdx === 2) return 'delivered';
+            if (stepIdx === 3) return 'en_reparto';
+            return 'completed';
+          })();
 
           const ss = statusMap[snapshotKey];
 

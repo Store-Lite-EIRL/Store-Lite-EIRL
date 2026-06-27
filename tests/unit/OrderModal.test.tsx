@@ -108,9 +108,11 @@ vi.mock('lucide-react', () => ({
   CreditCard: () => <span>CreditCard</span>,
   HelpCircle: () => <span>HelpCircle</span>,
   Info: () => <span>Info</span>,
+  Package: () => <span>Package</span>,
   RefreshCw: () => <span>RefreshCw</span>,
   Search: () => <span>Search</span>,
   ShoppingBag: () => <span>ShoppingBag</span>,
+  Store: () => <span>Store</span>,
   Truck: () => <span>Truck</span>,
   X: () => <span>X</span>,
 }));

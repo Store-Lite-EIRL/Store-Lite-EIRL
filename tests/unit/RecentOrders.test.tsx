@@ -66,6 +66,7 @@ vi.mock('lucide-react', () => ({
       Loader2
     </span>
   ),
+  Package: () => <span>Package</span>,
   Phone: () => <span>Phone</span>,
   RefreshCw: () => <span>RefreshCw</span>,
   Search: ({ size }: any) => (
@@ -75,6 +76,7 @@ vi.mock('lucide-react', () => ({
   ),
   Send: () => <span>Send</span>,
   ShoppingBag: () => <span>ShoppingBag</span>,
+  Store: () => <span>Store</span>,
   Truck: () => <span>Truck</span>,
   Upload: () => <span>Upload</span>,
   User: () => <span>User</span>,

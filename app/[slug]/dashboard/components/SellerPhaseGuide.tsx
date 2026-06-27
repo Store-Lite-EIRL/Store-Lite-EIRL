@@ -24,9 +24,9 @@ export interface SellerPhaseInfo {
 const V2_PHASE: Record<string, number> = {
   CREATED: 0,
   PAID: 0,
-  PREPARING_ORDER: 0,
+  PREPARING_ORDER: 1,
   WAITING_CUSTOMER_CONFIRMATION: 1,
-  READY_TO_SHIP: 1,
+  READY_TO_SHIP: 2,
   IN_TRANSIT: 2,
   DELIVERED: 2,
   COMPLETED: 3,
@@ -43,7 +43,7 @@ const V1_PHASE: Record<string, number> = {
   analizando: 0,
   validando: 1,
   aceptado: 1,
-  delivered: 1,
+  delivered: 2,
   en_reparto: 2,
   esperando_confirmacion: 2,
   completed: 3,
@@ -187,6 +187,22 @@ export default function SellerPhaseGuide({
           const isLocked = state === 'locked';
           const isSelected = i === selectedPhase;
 
+          let bgColor = 'var(--md-sys-color-surface-container-highest)';
+          if (isPast) bgColor = 'var(--md-sys-color-tertiary-container)';
+          else if (isCurrent) bgColor = 'var(--md-sys-color-primary)';
+
+          let borderColor = '2px solid var(--md-sys-color-outline-variant)';
+          if (isCurrent) borderColor = '2px solid var(--md-sys-color-primary)';
+          else if (isSelected && !isCurrent) borderColor = '2px solid var(--md-sys-color-outline)';
+
+          let textColor = 'var(--md-sys-color-on-surface-variant)';
+          if (isPast) textColor = 'var(--md-sys-color-on-tertiary-container)';
+          else if (isCurrent) textColor = 'white';
+
+          let iconElement = <Icon size={22}>{phase.icon}</Icon>;
+          if (isPast) iconElement = <Icon size={20}>check_circle</Icon>;
+          else if (isLocked) iconElement = <Icon size={20}>lock</Icon>;
+
           return (
             <div
               key={i}
@@ -202,8 +218,6 @@ export default function SellerPhaseGuide({
                 cursor: isLocked ? 'not-allowed' : 'pointer',
                 position: 'relative',
                 userSelect: 'none',
-                opacity: isLocked ? 0.4 : 1,
-                transition: 'opacity 0.3s',
               }}
             >
               {/* Icon box */}
@@ -216,34 +230,16 @@ export default function SellerPhaseGuide({
                   alignItems: 'center',
                   justifyContent: 'center',
                   transition: 'all 0.3s ease',
-                  background: isPast
-                    ? 'var(--md-sys-color-tertiary-container)'
-                    : isCurrent
-                      ? 'var(--md-sys-color-primary)'
-                      : 'var(--md-sys-color-surface-container-highest)',
-                  border: isCurrent
-                    ? '2px solid var(--md-sys-color-primary)'
-                    : isSelected && !isCurrent
-                      ? '2px solid var(--md-sys-color-outline)'
-                      : '2px solid var(--md-sys-color-outline-variant)',
-                  color: isPast
-                    ? 'var(--md-sys-color-on-tertiary-container)'
-                    : isCurrent
-                      ? 'white'
-                      : 'var(--md-sys-color-on-surface-variant)',
+                  background: bgColor,
+                  border: borderColor,
+                  color: textColor,
                   boxShadow: isCurrent
                     ? '0 10px 20px rgba(var(--md-sys-color-primary-rgb), 0.3)'
                     : 'none',
                   transform: isSelected ? 'scale(1.1)' : 'none',
                 }}
               >
-                {isPast ? (
-                  <Icon size={20}>check_circle</Icon>
-                ) : isLocked ? (
-                  <Icon size={20}>lock</Icon>
-                ) : (
-                  <Icon size={22}>{phase.icon}</Icon>
-                )}
+                {iconElement}
               </div>
 
               {/* Label */}

@@ -1,5 +1,6 @@
 'use client';
 
+import type { UploadTicketResult } from '@/features/dashboard/actions/ticketActions';
 import type { OrderItem } from '@/lib/types/orderStatus';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { RefreshCw, Store } from 'lucide-react';
@@ -19,7 +20,7 @@ interface PhaseContentProps {
   ticketFile: File | null;
   ticketPreview: string | null;
   uploading: boolean;
-  uploadResult: any;
+  uploadResult: UploadTicketResult | null;
   isEditingTicket: boolean;
   onTicketFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onUploadTicket: () => void;
@@ -33,6 +34,8 @@ interface PhaseContentProps {
   pickupCodeInput?: string;
   onPickupCodeChange?: (value: string) => void;
   codeError?: string | null;
+  onPrepareOrder?: () => void;
+  preparing?: boolean;
 }
 
 export default function PhaseContent({
@@ -60,6 +63,8 @@ export default function PhaseContent({
   pickupCodeInput,
   onPickupCodeChange,
   codeError,
+  onPrepareOrder,
+  preparing,
 }: PhaseContentProps) {
   const isPickup = shippingType?.toLowerCase() === 'recojo';
   const orderStatus = String(order.status);
@@ -85,6 +90,44 @@ export default function PhaseContent({
                 </Button>
               </div>
             )}
+
+          {/* Preparar Pedido button for delivery in Phase 0 */}
+          {!isPickup && (orderStatus === 'PAID' || orderStatus === 'paid') && onPrepareOrder && (
+            <div
+              style={{
+                marginTop: '1.25rem',
+                padding: '0 1rem',
+                width: '100%',
+              }}
+            >
+              <Button
+                variant="filled"
+                onClick={onPrepareOrder}
+                disabled={preparing}
+                style={
+                  {
+                    width: '100%',
+                    '--md-filled-button-container-shape': '28px',
+                    '--md-filled-button-label-text-size': '1.05rem',
+                    '--md-filled-button-label-text-weight': '700',
+                  } as React.CSSProperties
+                }
+              >
+                <span
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    justifyContent: 'center',
+                    padding: '0.25rem 0',
+                  }}
+                >
+                  <RefreshCw size={22} />
+                  {preparing ? 'Preparando...' : 'Preparar Pedido'}
+                </span>
+              </Button>
+            </div>
+          )}
         </>
       )}
 

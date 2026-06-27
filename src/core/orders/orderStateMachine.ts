@@ -58,7 +58,6 @@ const TRANSITION_MATRIX: Record<OrderStatusV2, TransitionConfig> = {
       ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION,
       ORDER_STATUS_V2.DELIVERED, // migration path: legacy 'aceptado' → finalization
       ORDER_STATUS_V2.READY_FOR_PICKUP, // T15 — seller marks as ready for pickup
-      ORDER_STATUS_V2.SELLER_TIMEOUT,
       ORDER_STATUS_V2.CANCELLED,
     ],
     allowedActors: ['seller', 'system'],
@@ -192,13 +191,9 @@ export function validateTransitionFull(
 
   // Actor-specific preconditions
   if (to === ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION && input.actor.type === 'seller') {
-    const pre = input.preconditions ?? {};
-    if (!pre.courierName && !pre.trackingNumber && !pre.shippingCost) {
-      return {
-        valid: false,
-        error: 'Seller must provide courierName, trackingNumber, and shippingCost',
-      };
-    }
+    const _pre = input.preconditions ?? {};
+    // Courier data (shippingCost, courierName, trackingNumber) is optional at this stage;
+    // the seller fills it in Phase 2 (READY_TO_SHIP → IN_TRANSIT).
   }
 
   return { valid: true };
@@ -215,6 +210,6 @@ export function getAllowedTransitions(
   if (!config) return [];
 
   return config.to
-    .filter((to) => !actor || config.allowedActors.includes(actor))
+    .filter((_to) => !actor || config.allowedActors.includes(actor))
     .map((to) => ({ to, actor: actor ?? config.allowedActors[0] }));
 }

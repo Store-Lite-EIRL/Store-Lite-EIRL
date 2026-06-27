@@ -124,6 +124,18 @@
   animation: cf-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
+.cf-icon-circle--success-small {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  background: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
 .rf-icon-circle--shield {
   background: linear-gradient(
     135deg,
@@ -133,6 +145,36 @@
   color: white;
   box-shadow: 0 12px 32px rgba(103, 80, 164, 0.25);
   animation: cf-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* ─── Compact Dialog (for report flows) ─── */
+.rf-dialog--compact {
+  max-width: 380px;
+  padding: 1.75rem 1.5rem 1.25rem;
+}
+
+.rf-icon-circle--compact {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.75rem;
+  background: var(--md-sys-color-error-container, #fde8e8);
+  color: var(--md-sys-color-on-error-container, #b71c1c);
+}
+
+.rf-icon-circle--compact-shield {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.75rem;
+  background: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
 }
 
 @keyframes cf-pop {
@@ -154,15 +196,24 @@
 .rf-title {
   margin: 0 0 0.75rem;
   font-size: 1.5rem;
-  font-weight: 800;
+  font-weight: 500;
   letter-spacing: -0.02em;
   color: var(--md-sys-color-on-surface, #1c1b1f);
-  line-height: 1.2;
+  line-height: 1.25;
+}
+
+.cf-title--success {
+  font-size: 1.75rem;
+  font-weight: 450;
+  letter-spacing: -0.03em;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin-bottom: 0.5rem;
 }
 
 .cf-title--small,
 .rf-title--small {
   font-size: 1.125rem;
+  font-weight: 500;
   margin-bottom: 0.5rem;
 }
 
@@ -173,17 +224,33 @@
 .cf-question,
 .rf-question {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 450;
   margin: 0 0 1.25rem;
   color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.cf-question--compact {
+  font-size: 0.875rem;
+  font-weight: 400;
+  margin-bottom: 1rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
 .cf-body,
 .rf-body {
   font-size: 0.95rem;
+  font-weight: 400;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   line-height: 1.6;
   margin: 0 0 1.5rem;
+}
+
+.cf-body--compact {
+  font-size: 0.85rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin: 0 0 1rem;
 }
 
 .cf-subtitle,
@@ -197,6 +264,7 @@
 .cf-brand,
 .rf-brand {
   color: var(--md-sys-color-primary, #6750a4);
+  font-weight: 500;
 }
 
 /* ─── Card (shared) ─── */
@@ -216,8 +284,14 @@
 .rf-card-text {
   margin: 0;
   font-size: 0.875rem;
+  font-weight: 400;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   line-height: 1.5;
+}
+
+.cf-card-text strong,
+.rf-card-text strong {
+  font-weight: 500;
 }
 
 /* ─── Badge (shared) ─── */
@@ -244,12 +318,12 @@
 .cf-btn,
 .rf-btn {
   border: none;
-  padding: 1rem 2rem;
+  padding: 0.875rem 2rem;
   border-radius: 100px;
-  font-weight: 700;
-  font-size: 0.875rem;
+  font-weight: 500;
+  font-size: 0.8125rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -258,6 +332,13 @@
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
   text-decoration: none;
+}
+
+.cf-btn--compact {
+  padding: 0.625rem 1.25rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  width: auto;
 }
 
 .cf-btn--primary,
@@ -350,12 +431,12 @@
 
 .rf-label {
   display: block;
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.7rem;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: var(--md-sys-color-primary, #6750a4);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.375rem;
   padding-left: 0.25rem;
 }
 
@@ -394,7 +475,7 @@
   padding: 0.75rem 1rem;
   border-radius: 12px;
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 450;
   display: flex;
   align-items: center;
   gap: 6px;

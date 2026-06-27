@@ -121,7 +121,7 @@ export async function uploadTicketAndUpdatePayment(
     // 4. Upload to Supabase Storage
     const adminClient = createAdminClient();
 
-    const { data: uploadData, error: uploadError } = await adminClient.storage
+    const { data: _uploadData, error: uploadError } = await adminClient.storage
       .from(BUCKET_NAME)
       .upload(filePath, bytes, {
         contentType: 'image/jpeg',
@@ -267,6 +267,50 @@ export async function notifyDelivery(
       error instanceof Error ? error.message : String(error),
     );
     return { success: false, error: 'Error al notificar la entrega' };
+  }
+}
+
+// ── prepareOrder ───────────────────────────────────────────────
+
+export async function prepareOrder(
+  paymentId: string,
+  businessId: string,
+): Promise<NotifyDeliveryResult> {
+  try {
+    const [existingPayment] = await db
+      .select({
+        status: payments.status,
+        businessId: payments.businessId,
+        version: payments.version,
+      })
+      .from(payments)
+      .where(and(eq(payments.id, paymentId), eq(payments.businessId, businessId)))
+      .limit(1);
+
+    if (!existingPayment) return { success: false, error: 'Pedido no encontrado' };
+    if (existingPayment.businessId !== businessId)
+      return { success: false, error: 'No tienes permisos para este pedido' };
+
+    const expectedVersion = existingPayment.version ?? 0;
+
+    if (env.orderFlowV2) {
+      const actorId = await getAuthenticatedUserId();
+      const result = await transition({
+        paymentId,
+        toStatus: ORDER_STATUS_V2.PREPARING_ORDER,
+        actor: { type: 'seller', id: actorId ?? undefined },
+        expectedVersion,
+      });
+      if (!result.success) return { success: false, error: mapTransitionError(result.error) };
+    } else {
+      return { success: false, error: 'El flujo de envío requiere orderFlowV2' };
+    }
+
+    revalidatePath(`/${businessId}/dashboard`, 'page');
+    return { success: true };
+  } catch (error) {
+    console.error('[prepareOrder] Error:', error instanceof Error ? error.message : String(error));
+    return { success: false, error: 'Error al preparar el pedido' };
   }
 }
 

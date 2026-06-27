@@ -23,8 +23,8 @@ const V2_CASES: TestCase[] = [
   { status: 'PAID', expectedPhase: 0, expectedStates: ['current', 'locked', 'locked', 'locked'] },
   {
     status: 'PREPARING_ORDER',
-    expectedPhase: 0,
-    expectedStates: ['current', 'locked', 'locked', 'locked'],
+    expectedPhase: 1,
+    expectedStates: ['completed', 'current', 'locked', 'locked'],
   },
   {
     status: 'WAITING_CUSTOMER_CONFIRMATION',
@@ -33,8 +33,8 @@ const V2_CASES: TestCase[] = [
   },
   {
     status: 'READY_TO_SHIP',
-    expectedPhase: 1,
-    expectedStates: ['completed', 'current', 'locked', 'locked'],
+    expectedPhase: 2,
+    expectedStates: ['completed', 'completed', 'current', 'locked'],
   },
   {
     status: 'IN_TRANSIT',
@@ -82,8 +82,8 @@ const V1_CASES: TestCase[] = [
   },
   {
     status: 'delivered',
-    expectedPhase: 1,
-    expectedStates: ['completed', 'current', 'locked', 'locked'],
+    expectedPhase: 2,
+    expectedStates: ['completed', 'completed', 'current', 'locked'],
   },
   {
     status: 'en_reparto',

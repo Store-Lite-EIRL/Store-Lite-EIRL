@@ -77,6 +77,7 @@ export interface TransitionInput {
 export const CONFIRMABLE_STATUSES: readonly string[] = [
   ORDER_STATUS.NOT_DELIVERED,
   ORDER_STATUS.EN_REPARTO,
+  ORDER_STATUS_V2.DELIVERED,
 ];
 
 /** Statuses where the seller can upload a ticket */

@@ -9,8 +9,10 @@ import {
   CheckCircle,
   Clock,
   CreditCard,
+  Package,
   RefreshCw,
   Search,
+  Store,
   Truck,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
@@ -218,6 +220,20 @@ export const URBANO_STATUS_MAP: Record<string, UrbanoStatusInfo> = {
     progress: 5,
     icon: 'pending',
     lucideIcon: Clock,
+  },
+  READY_FOR_PICKUP: {
+    label: 'Listo para Recojo',
+    className: 'statusReadyPickup',
+    progress: 50,
+    icon: 'store',
+    lucideIcon: Store,
+  },
+  PICKED_UP: {
+    label: 'Recogido',
+    className: 'statusPickedUp',
+    progress: 75,
+    icon: 'inventory',
+    lucideIcon: Package,
   },
   PAID: {
     label: 'Pagado',

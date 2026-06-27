@@ -2,7 +2,7 @@
 
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
-import { chatSessions, messages, payments, profiles } from '@/core/database/schema';
+import { businesses, chatSessions, messages, payments, profiles } from '@/core/database/schema';
 import { transition } from '@/core/orders/orderService';
 import {
   CONFIRMABLE_STATUSES,
@@ -65,7 +65,7 @@ export interface FinalizationActionResult {
 // CONSTANTS
 // =====================================================
 
-const HOURS_BEFORE_SELLER_CAN_REQUEST = 24; // 24h después de "aceptado"
+const _HOURS_BEFORE_SELLER_CAN_REQUEST = 24; // 24h después de "aceptado" (reservado para validación temporal)
 const DAYS_FOR_CUSTOMER_TO_CONFIRM = 3; // 3 días para que el customer confirme
 
 // =====================================================
@@ -96,33 +96,23 @@ export async function requestFinalization(
       return { success: false, error: 'Pago no encontrado o no tienes permisos.' };
     }
 
-    // 2. Check if status is 'delivered'
-    if (payment.status !== ORDER_STATUS.DELIVERED) {
+    // 2. Check if status allows finalization
+    const currentStatus = String(payment.status);
+    const isValidForFinalization = env.orderFlowV2
+      ? currentStatus === ORDER_STATUS_V2.IN_TRANSIT || currentStatus === ORDER_STATUS.EN_REPARTO
+      : currentStatus === ORDER_STATUS.DELIVERED;
+
+    if (!isValidForFinalization) {
       console.error('[requestFinalization] Invalid status:', payment.status);
       return {
         success: false,
-        error: `El pago debe estar en estado "delivered". Estado actual: ${payment.status}`,
+        error: env.orderFlowV2
+          ? `El pedido debe estar "en tránsito" para solicitar finalización. Estado actual: ${payment.status}`
+          : `El pago debe estar en estado "delivered". Estado actual: ${payment.status}`,
       };
     }
 
-    // 3. Check if 24 hours have passed since "delivered" (REMOVED FOR FLEXIBILITY)
-    /*
-    const deliveredAt = payment.verifiedAt || payment.updatedAt;
-    if (!deliveredAt) {
-      console.error('[requestFinalization] No delivered timestamp found');
-      return { success: false, error: 'No se encontró la fecha de entrega del pedido.' };
-    }
-
-    const hoursSinceDelivered = (Date.now() - new Date(deliveredAt).getTime()) / (1000 * 60 * 60);
-    if (hoursSinceDelivered < HOURS_BEFORE_SELLER_CAN_REQUEST) {
-      const remainingHours = Math.ceil(HOURS_BEFORE_SELLER_CAN_REQUEST - hoursSinceDelivered);
-      console.warn('[requestFinalization] Too early to request. Hours since delivered:', hoursSinceDelivered);
-      return { 
-        success: false, 
-        error: `Debes esperar ${remainingHours} hora(s) más antes de solicitar la finalización.` 
-      };
-    }
-    */
+    // 3. Jump to finalization check (24h validation removed for flexibility)
 
     // 4. Check if already in finalization process
     if (payment.finalizationRequestedAt) {
@@ -227,7 +217,7 @@ Recuerda que si no respondes en 3 días (${deadline.toLocaleDateString('es-PE')}
     if (payment.trackingToken) {
       // Find the business slug if possible, but businessId is often the slug in this project or we can use the business object
       const business = await db.query.businesses.findFirst({
-        where: eq(payments.businessId, businessId),
+        where: eq(businesses.id, businessId),
       });
       const slug = business?.slug || businessId;
       revalidatePath(`/${slug}/order/${payment.trackingToken}`, 'page');
@@ -363,7 +353,7 @@ export async function confirmFinalization(
     }
 
     const business = await db.query.businesses.findFirst({
-      where: eq(payments.businessId, payment.businessId),
+      where: eq(businesses.id, payment.businessId),
     });
     const slug = business?.slug || payment.businessId;
 
@@ -500,7 +490,7 @@ export async function rejectFinalization(
     }
 
     const business = await db.query.businesses.findFirst({
-      where: eq(payments.businessId, payment.businessId),
+      where: eq(businesses.id, payment.businessId),
     });
     const slug = business?.slug || payment.businessId;
 

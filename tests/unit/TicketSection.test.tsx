@@ -38,6 +38,11 @@ vi.mock('lucide-react', () => ({
       FileText
     </span>
   ),
+  Package: ({ size }: any) => (
+    <span data-testid="icon-package" data-size={size}>
+      Package
+    </span>
+  ),
   RefreshCw: ({ size }: any) => (
     <span data-testid="icon-refresh" data-size={size}>
       RefreshCw
@@ -51,6 +56,11 @@ vi.mock('lucide-react', () => ({
   Send: ({ size }: any) => (
     <span data-testid="icon-send" data-size={size}>
       Send
+    </span>
+  ),
+  Store: ({ size }: any) => (
+    <span data-testid="icon-store" data-size={size}>
+      Store
     </span>
   ),
   Truck: ({ size }: any) => (

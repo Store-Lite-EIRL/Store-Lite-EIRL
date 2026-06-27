@@ -158,6 +158,29 @@
   color: var(--md-sys-color-on-secondary-container);
 }
 
+.statusProcessing {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.statusAnalyzing {
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-secondary-container) 70%,
+    var(--md-sys-color-surface)
+  );
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.statusFailed {
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-error-container) 60%,
+    var(--md-sys-color-surface)
+  );
+  color: var(--md-sys-color-on-error-container);
+}
+
 .statusVerifying {
   background: var(--md-sys-color-tertiary-container);
   color: var(--md-sys-color-on-tertiary-container);
@@ -196,6 +219,17 @@
 .statusDelivered {
   background: var(--md-sys-color-secondary-container);
   color: var(--md-sys-color-on-secondary-container);
+}
+
+.statusReadyPickup {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  animation: pulse 2s infinite;
+}
+
+.statusPickedUp {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
 }
 
 .statusEnReparto {

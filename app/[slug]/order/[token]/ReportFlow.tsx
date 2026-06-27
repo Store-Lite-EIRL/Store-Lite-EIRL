@@ -13,6 +13,14 @@ interface ReportFlowProps {
 
 type FlowState = 'idle' | 'loading' | 'success';
 
+const REPORT_REASONS = [
+  { value: 'NOT_RECEIVED', label: 'No recibí el producto' },
+  { value: 'WRONG_PRODUCT', label: 'El producto no coincide' },
+  { value: 'DAMAGED', label: 'Llegó dañado o incompleto' },
+  { value: 'SELLER_UNRESPONSIVE', label: 'El vendedor no responde' },
+  { value: 'OTHER', label: 'Otro motivo' },
+];
+
 export default function ReportFlow({ paymentId, trackingToken }: ReportFlowProps) {
   const router = useRouter();
   const [state, setState] = useState<FlowState>('idle');
@@ -21,14 +29,14 @@ export default function ReportFlow({ paymentId, trackingToken }: ReportFlowProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reason.trim()) {
-      setError('Por favor, describí el problema.');
+    if (!reason) {
+      setError('Seleccioná un motivo.');
       return;
     }
 
     setState('loading');
     try {
-      const result = await rejectFinalization(paymentId, trackingToken, reason.trim());
+      const result = await rejectFinalization(paymentId, trackingToken, reason);
       if (result.success) {
         setState('success');
         router.refresh();
@@ -45,8 +53,7 @@ export default function ReportFlow({ paymentId, trackingToken }: ReportFlowProps
   if (state === 'success') {
     return (
       <div id="report-finalize" className="rf-overlay rf-overlay--visible">
-        <div className="rf-dialog rf-dialog--success">
-          {/* Close button */}
+        <div className="rf-dialog rf-dialog--compact">
           <button
             className="rf-close"
             onClick={() => (window.location.hash = '')}
@@ -55,33 +62,42 @@ export default function ReportFlow({ paymentId, trackingToken }: ReportFlowProps
             <Icon>close</Icon>
           </button>
 
-          {/* Shield icon */}
-          <div className="rf-icon-circle rf-icon-circle--shield">
-            <Icon size={48}>shield</Icon>
+          <div className="rf-icon-circle rf-icon-circle--compact-shield">
+            <Icon size={22}>shield</Icon>
           </div>
 
-          <h2 className="rf-title">Reporte Enviado</h2>
+          <h2
+            className="rf-title"
+            style={{ fontSize: '1.15rem', fontWeight: 500, marginBottom: '0.5rem' }}
+          >
+            Reporte enviado
+          </h2>
 
-          <p className="rf-body">
-            Tu reporte ha sido notificado al vendedor. <strong>Revisaremos tu caso</strong> y te
-            contactaremos pronto.
+          <p className="cf-body cf-body--compact">
+            Notificamos al vendedor. Vamos a revisar tu caso y te contactamos pronto.
           </p>
 
-          <div className="rf-card">
-            <p className="rf-card-text">
-              Tu compra está protegida por <strong className="rf-brand">Store Lite</strong>.
-              <br />
-              El pago no se liberará hasta que el problema sea resuelto.
+          <div
+            className="cf-card"
+            style={{
+              background: 'var(--md-sys-color-secondary-container, #e8def8)',
+              marginBottom: '1rem',
+            }}
+          >
+            <p
+              className="cf-card-text"
+              style={{ color: 'var(--md-sys-color-on-secondary-container, #1d192b)' }}
+            >
+              Tu pago está protegido. No se liberará hasta resolver el problema.
             </p>
           </div>
 
-          <div className="rf-badge">
-            <Icon size={16}>support_agent</Icon>
-            Soporte activo 24/7
-          </div>
-
-          <button className="rf-btn rf-btn--secondary" onClick={() => (window.location.hash = '')}>
-            CERRAR
+          <button
+            className="cf-btn cf-btn--primary cf-btn--compact"
+            onClick={() => (window.location.hash = '')}
+            style={{ margin: '0 auto' }}
+          >
+            Cerrar
           </button>
         </div>
       </div>
@@ -90,8 +106,7 @@ export default function ReportFlow({ paymentId, trackingToken }: ReportFlowProps
 
   return (
     <div id="report-finalize" className="rf-overlay">
-      <div className="rf-dialog">
-        {/* Close button */}
+      <div className="rf-dialog rf-dialog--compact">
         <button
           className="rf-close"
           onClick={() => (window.location.hash = '')}
@@ -102,52 +117,77 @@ export default function ReportFlow({ paymentId, trackingToken }: ReportFlowProps
         </button>
 
         {state === 'loading' ? (
-          /* ─── LOADING STATE ─── */
-          <div className="rf-loading">
-            <div className="rf-spinner">
+          <div className="rf-loading" style={{ padding: '1rem 0' }}>
+            <div className="rf-spinner" style={{ width: 40, height: 40, marginBottom: '0.75rem' }}>
               <div className="rf-spinner__track" />
               <div className="rf-spinner__fill" />
             </div>
-            <h2 className="rf-title rf-title--small">Enviando reporte...</h2>
-            <p className="rf-subtitle">Notificando al vendedor sobre tu problema</p>
+            <h2 className="rf-title rf-title--small" style={{ fontWeight: 500 }}>
+              Enviando reporte...
+            </h2>
           </div>
         ) : (
-          /* ─── IDLE STATE ─── */
           <>
-            <div className="rf-icon-circle rf-icon-circle--warning">
-              <Icon size={40}>report_problem</Icon>
+            <div className="rf-icon-circle rf-icon-circle--compact">
+              <Icon size={22}>flag</Icon>
             </div>
 
-            <h2 className="rf-title">Reportar Problema</h2>
+            <h2
+              className="rf-title"
+              style={{ fontSize: '1.1rem', fontWeight: 500, marginBottom: '0.25rem' }}
+            >
+              Reportar problema
+            </h2>
 
-            <p className="rf-question">Describí el problema con tu pedido</p>
+            <p className="cf-question--compact">Decinos qué pasó con tu pedido</p>
 
-            <form onSubmit={handleSubmit} className="rf-form">
+            <form onSubmit={handleSubmit} className="rf-form" style={{ gap: '0.75rem' }}>
               <div className="rf-field">
-                <label htmlFor="report-reason" className="rf-label">
-                  Motivo del reporte
+                <label htmlFor="report-reason-compact" className="rf-label">
+                  Motivo
                 </label>
-                <textarea
-                  id="report-reason"
+                <select
+                  id="report-reason-compact"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder="Describí el problema con detalle..."
                   required
-                  className="rf-textarea"
-                  rows={5}
-                />
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 0.875rem',
+                    borderRadius: '14px',
+                    border: '1.5px solid var(--md-sys-color-outline-variant)',
+                    background: 'var(--md-sys-color-surface)',
+                    fontSize: '0.85rem',
+                    color: 'var(--md-sys-color-on-surface)',
+                    fontFamily: 'inherit',
+                    outline: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="">Seleccioná un motivo...</option>
+                  {REPORT_REASONS.map((r) => (
+                    <option key={r.value} value={r.value}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {error && (
-                <div className="rf-error">
-                  <Icon size={18}>error</Icon>
+                <div className="rf-error" style={{ fontSize: '0.75rem' }}>
+                  <Icon size={16}>error</Icon>
                   <span>{error}</span>
                 </div>
               )}
 
-              <button type="submit" className="rf-btn rf-btn--secondary" disabled={!reason.trim()}>
-                <Icon size={20}>send</Icon>
-                ENVIAR REPORTE
+              <button
+                type="submit"
+                className="cf-btn cf-btn--secondary cf-btn--compact"
+                disabled={!reason}
+                style={{ margin: '0 auto' }}
+              >
+                <Icon size={16}>send</Icon>
+                Enviar
               </button>
             </form>
           </>

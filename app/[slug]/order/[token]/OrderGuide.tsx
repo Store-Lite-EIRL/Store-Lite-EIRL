@@ -5,9 +5,10 @@ import { useState } from 'react';
 
 interface OrderGuideProps {
   shippingType?: string | null;
+  showDelayWarning?: boolean;
 }
 
-export default function OrderGuide({ shippingType }: OrderGuideProps) {
+export default function OrderGuide({ shippingType, showDelayWarning }: OrderGuideProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const isPickup = shippingType?.toLowerCase() === 'recojo';
 
@@ -122,6 +123,23 @@ export default function OrderGuide({ shippingType }: OrderGuideProps) {
           Guía de Seguridad
         </h3>
       </div>
+
+      {/* Delay warning: seller hasn't fulfilled within 5 days */}
+      {showDelayWarning && (
+        <div
+          style={{
+            background: '#dc2626',
+            color: 'white',
+            padding: '1rem 2rem',
+            borderRadius: '32px',
+            fontSize: '0.85rem',
+            lineHeight: 1.5,
+            fontWeight: 600,
+          }}
+        >
+          🔴 El vendedor no cumplió con el plazo. La plataforma ha tomado acciones.
+        </div>
+      )}
 
       {sections.map((s, i) => (
         <div key={i} className={`g-item ${openIndex === i ? 'open' : ''}`}>

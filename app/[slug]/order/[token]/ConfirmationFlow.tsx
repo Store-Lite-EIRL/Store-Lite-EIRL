@@ -23,6 +23,10 @@ export default function ConfirmationFlow({
   const [state, setState] = useState<FlowState>('idle');
   const [error, setError] = useState<string | null>(null);
 
+  const closeModal = () => {
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  };
+
   const handleConfirm = async () => {
     setState('loading');
     try {
@@ -43,42 +47,38 @@ export default function ConfirmationFlow({
   if (state === 'success') {
     return (
       <div id="confirm-finalize" className="cf-overlay cf-overlay--visible">
-        <div className="cf-dialog cf-dialog--success">
-          {/* Close button */}
-          <button
-            className="cf-close"
-            onClick={() => (window.location.hash = '')}
-            aria-label="Cerrar"
-          >
+        <div className="cf-dialog">
+          <button className="cf-close" onClick={closeModal} aria-label="Cerrar">
             <Icon>close</Icon>
           </button>
 
-          {/* Celebration icon */}
-          <div className="cf-icon-circle cf-icon-circle--success">
-            <Icon size={48}>celebration</Icon>
+          <div className="cf-icon-circle cf-icon-circle--success-small">
+            <Icon size={28}>check_circle</Icon>
           </div>
 
-          <h2 className="cf-title">¡Felicidades!</h2>
+          <h2 className="cf-title--success">Confirmado</h2>
 
-          <p className="cf-body">
-            Tu pedido ha sido confirmado como <strong>recibido correctamente</strong>.
+          <p className="cf-body cf-body--compact">
+            Tu pedido fue registrado como entregado. El pago ya fue liberado al vendedor.
           </p>
 
-          <div className="cf-card">
-            <p className="cf-card-text">
-              Gracias por confiar en <strong>{businessName}</strong> y en{' '}
-              <strong className="cf-brand">Store Lite</strong>.
-              <br />
-              ¡Tu pago ha sido liberado al vendedor!
+          <div
+            className="cf-card"
+            style={{ background: 'var(--md-sys-color-secondary-container, #e8def8)' }}
+          >
+            <p
+              className="cf-card-text"
+              style={{ color: 'var(--md-sys-color-on-secondary-container, #1d192b)' }}
+            >
+              Gracias por confiar en {businessName}. Tu compra está protegida de principio a fin.
             </p>
           </div>
 
-          <div className="cf-badge">
-            <Icon size={16}>verified</Icon>
-            Transacción segura y completada
-          </div>
-
-          <button className="cf-btn cf-btn--primary" onClick={() => (window.location.hash = '')}>
+          <button
+            className="cf-btn cf-btn--primary"
+            onClick={closeModal}
+            style={{ marginTop: '0.75rem' }}
+          >
             CERRAR
           </button>
         </div>
@@ -93,7 +93,7 @@ export default function ConfirmationFlow({
           {/* Close button */}
           <button
             className="cf-close"
-            onClick={() => (window.location.hash = '')}
+            onClick={closeModal}
             disabled={state === 'loading'}
             aria-label="Cerrar"
           >
@@ -113,31 +113,35 @@ export default function ConfirmationFlow({
           ) : (
             /* ─── IDLE STATE ─── */
             <>
-              <div className="cf-icon-circle cf-icon-circle--warning">
-                <Icon size={40}>warning</Icon>
-              </div>
+              <h2
+                className="cf-title"
+                style={{ fontSize: '1.35rem', marginBottom: '0.5rem', fontWeight: 500 }}
+              >
+                Confirmar recepción
+              </h2>
 
-              <h2 className="cf-title cf-title--danger">¡ATENCIÓN!</h2>
-
-              <p className="cf-question">
-                ¿Confirmás que ya tenés el producto y todo está correcto?
+              <p
+                className="cf-question"
+                style={{ fontWeight: 400, fontSize: '0.9rem', marginBottom: '1rem' }}
+              >
+                ¿Recibiste el producto y todo está en orden?
               </p>
 
-              <div className="cf-card cf-card--warning">
+              <div className="cf-card" style={{ textAlign: 'left' }}>
                 <p className="cf-card-text">
-                  Al confirmar, el pedido se marcará como <strong>Finalizado</strong> y el vendedor
-                  recibirá su pago. Esta acción no se puede revertir.
+                  Al confirmar, el pedido se marca como Finalizado y el vendedor recibe su pago.
+                  Esta acción no se puede revertir.
                 </p>
               </div>
 
-              <div className="cf-actions">
+              <div className="cf-actions" style={{ marginTop: '0.25rem' }}>
                 <button className="cf-btn cf-btn--primary" onClick={handleConfirm}>
                   <Icon size={20}>check_circle</Icon>
-                  SÍ, TODO CORRECTO
+                  Sí, todo correcto
                 </button>
                 <a href="#report-finalize" className="cf-btn cf-btn--secondary">
-                  <Icon size={20}>flag</Icon>
-                  NO, TENGO UN PROBLEMA
+                  <Icon size={18}>flag</Icon>
+                  No, tengo un problema
                 </a>
               </div>
             </>

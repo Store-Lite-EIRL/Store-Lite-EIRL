@@ -186,6 +186,40 @@ export async function POST(request: Request) {
       );
     }
 
+    // ─── COMMON: Business lookup + Security checks ────────
+    // 🔥 Must happen BEFORE any Culqi API call to prevent charging a blocked business
+    const business = await db.query.businesses.findFirst({
+      where: eq(businesses.id, businessId),
+      columns: { ownerId: true, culqiBlocked: true },
+    });
+
+    if (!business?.ownerId) {
+      return NextResponse.json(
+        { error: 'No se pudo obtener el propietario del negocio' },
+        { status: 400 },
+      );
+    }
+
+    // 🚫 CULQI BLOCK: Si el negocio tiene la pasarela bloqueada por multas impagas, rechazar
+    if (business.culqiBlocked) {
+      return NextResponse.json(
+        {
+          error:
+            'Tu pasarela de pagos está bloqueada. Pagá tus multas pendientes en Dashboard > Mis Multas.',
+        },
+        { status: 403 },
+      );
+    }
+
+    // 🛡️ SECURITY: El dueño del negocio NO puede comprar su propio producto
+    const supabase = await createClient();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+    if (authUser?.id && authUser.id === business.ownerId) {
+      return NextResponse.json({ error: 'No puedes comprar tu propio producto' }, { status: 403 });
+    }
+
     // ─── FLOW BRANCHING ─────────────────────────────────────────────
     let culqiData: CulqiChargeResponse | null = null;
     const isOrderFlow = !!culqiOrderId;
@@ -211,28 +245,6 @@ export async function POST(request: Request) {
       });
       if (chargeError) return chargeError;
       culqiData = chargeResult;
-    }
-
-    // ─── COMMON: Business lookup + Security checks ────────
-    const business = await db.query.businesses.findFirst({
-      where: eq(businesses.id, businessId),
-      columns: { ownerId: true },
-    });
-
-    if (!business?.ownerId) {
-      return NextResponse.json(
-        { error: 'No se pudo obtener el propietario del negocio' },
-        { status: 400 },
-      );
-    }
-
-    // 🛡️ SECURITY: El dueño del negocio NO puede comprar su propio producto
-    const supabase = await createClient();
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
-    if (authUser?.id && authUser.id === business.ownerId) {
-      return NextResponse.json({ error: 'No puedes comprar tu propio producto' }, { status: 403 });
     }
 
     const idempotencyReservation = await reserveIdempotencyKey(idempotencyKey);

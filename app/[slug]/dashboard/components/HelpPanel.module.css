@@ -307,6 +307,88 @@
 }
 
 /* ── Mobile: collapse do/dont grid ── */
+/* ── Penalty Card ── */
+.penaltyCard {
+  background: color-mix(in srgb, var(--md-sys-color-error-container) 20%, transparent);
+  border-radius: 20px;
+  padding: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 15%, transparent);
+}
+
+.penaltyIntro {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 1rem 0;
+}
+
+.penaltySteps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.penaltyStep {
+  display: flex;
+  gap: 0.875rem;
+  align-items: flex-start;
+}
+
+.penaltyStepIcon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--md-sys-color-error-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.penaltyStepNumber {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-error-container);
+}
+
+.penaltyStepContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.penaltyStepTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 0.25rem 0;
+  line-height: 1.3;
+}
+
+.penaltyStepDesc {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+.penaltyFooter {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 50%, transparent);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.penaltyFooter svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--md-sys-color-error);
+}
+
 @media (max-width: 768px) {
   .doDontGrid {
     grid-template-columns: 1fr;

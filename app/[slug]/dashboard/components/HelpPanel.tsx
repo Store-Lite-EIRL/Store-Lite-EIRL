@@ -1,6 +1,14 @@
 'use client';
 
 import {
+  ABANDONO_DAYS,
+  PENALTY_A_PERCENTAGE,
+  PENALTY_B_PERCENTAGE,
+  PENALTY_COUNT_WINDOW,
+  PENALTY_WINDOW_DAYS,
+  SELLER_TIMEOUT_DAYS,
+} from '@/core/penalties/penaltyTypes';
+import {
   AlertTriangle,
   CheckCircle,
   Package,
@@ -258,6 +266,75 @@ export default function HelpPanel({ selectedPhase, shippingType }: HelpPanelProp
               3 reportes o quejas pueden resultar en la desactivación temporal de tu cuenta
             </span>
           </div>
+        </div>
+      </div>
+
+      {/* ── Penalties ── */}
+      <h3 className={styles.sectionTitle}>
+        <AlertTriangle size={18} /> Multas por demora
+      </h3>
+      <div className={styles.penaltyCard}>
+        <p className={styles.penaltyIntro}>
+          <strong>Transparencia primero:</strong> Antes no te avisábamos de estas reglas de forma
+          clara. Ahora sí. Acá están las consecuencias si no preparás el pedido a tiempo:
+        </p>
+
+        <div className={styles.penaltySteps}>
+          <div className={styles.penaltyStep}>
+            <div className={styles.penaltyStepIcon}>
+              <span className={styles.penaltyStepNumber}>1</span>
+            </div>
+            <div className={styles.penaltyStepContent}>
+              <h4 className={styles.penaltyStepTitle}>
+                Penalidad A — {SELLER_TIMEOUT_DAYS} días sin preparar
+              </h4>
+              <p className={styles.penaltyStepDesc}>
+                Si pasan {SELLER_TIMEOUT_DAYS} días desde la compra y no preparaste el pedido, se
+                genera una <strong>multa del {PENALTY_A_PERCENTAGE}%</strong> del valor del producto
+                y se <strong>bloquea Cobra con Culqi</strong> hasta que pagues la multa.
+              </p>
+            </div>
+          </div>
+
+          <div className={styles.penaltyStep}>
+            <div className={styles.penaltyStepIcon}>
+              <span className={styles.penaltyStepNumber}>2</span>
+            </div>
+            <div className={styles.penaltyStepContent}>
+              <h4 className={styles.penaltyStepTitle}>
+                Penalidad B — {ABANDONO_DAYS} días sin preparar
+              </h4>
+              <p className={styles.penaltyStepDesc}>
+                Si llegás a {ABANDONO_DAYS} días sin preparar el pedido, se genera una{' '}
+                <strong>multa del {PENALTY_B_PERCENTAGE}%</strong> y tu{' '}
+                <strong>negocio se cierra permanentemente</strong> (blacklist + bloqueo de RUC).
+              </p>
+            </div>
+          </div>
+
+          <div className={styles.penaltyStep}>
+            <div className={styles.penaltyStepIcon}>
+              <span className={styles.penaltyStepNumber}>3</span>
+            </div>
+            <div className={styles.penaltyStepContent}>
+              <h4 className={styles.penaltyStepTitle}>
+                Bloqueo automático — {PENALTY_COUNT_WINDOW} penalidades en {PENALTY_WINDOW_DAYS}{' '}
+                días
+              </h4>
+              <p className={styles.penaltyStepDesc}>
+                Si acumulás {PENALTY_COUNT_WINDOW} penalidades en {PENALTY_WINDOW_DAYS} días, se
+                bloquea automáticamente Cobra con Culqi sin importar el monto.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.penaltyFooter}>
+          <AlertTriangle size={16} />
+          <span>
+            Podés ver el detalle de tus multas, pagarlas y reactivar tus cobros desde la sección{' '}
+            <strong>Multas</strong> del panel de control.
+          </span>
         </div>
       </div>
     </div>

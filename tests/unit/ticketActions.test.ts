@@ -50,7 +50,12 @@ function setupDbSelect(payment: Record<string, unknown>) {
   vi.clearAllMocks();
   mockLimit.mockResolvedValue([payment]);
   mockWhere.mockReturnValue({ limit: mockLimit });
-  mockFrom.mockReturnValue({ where: mockWhere });
+  // Both markReadyForPickup (no innerJoin) and confirmPickedUp (uses innerJoin) use this mock.
+  // provide innerJoin so confirmPickedUp can chain: .from().innerJoin().where().limit()
+  mockFrom.mockReturnValue({
+    where: mockWhere,
+    innerJoin: vi.fn(() => ({ where: mockWhere })),
+  });
 }
 
 describe('markReadyForPickup', () => {

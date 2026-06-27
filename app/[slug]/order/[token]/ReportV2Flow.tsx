@@ -54,41 +54,51 @@ export default function ReportV2Flow({ paymentId, trackingToken }: ReportV2FlowP
   if (state === 'success') {
     return (
       <div id="report-v2" className="cf-overlay cf-overlay--visible">
-        <div className="cf-dialog cf-dialog--success">
+        <div className="rf-dialog rf-dialog--compact">
           <button
-            className="cf-close"
+            className="rf-close"
             onClick={() => (window.location.hash = '')}
             aria-label="Cerrar"
           >
             <Icon>close</Icon>
           </button>
 
-          <div className="cf-icon-circle cf-icon-circle--success">
-            <Icon size={48}>shield</Icon>
+          <div className="rf-icon-circle rf-icon-circle--compact-shield">
+            <Icon size={22}>shield</Icon>
           </div>
 
-          <h2 className="cf-title">Reporte Enviado</h2>
+          <h2
+            className="rf-title"
+            style={{ fontSize: '1.15rem', fontWeight: 500, marginBottom: '0.5rem' }}
+          >
+            Reporte enviado
+          </h2>
 
-          <p className="cf-body">
-            Tu reporte ha sido notificado al vendedor. <strong>Revisaremos tu caso</strong> y te
-            contactaremos pronto.
+          <p className="cf-body cf-body--compact">
+            Notificamos al vendedor. Vamos a revisar tu caso y te contactamos pronto.
           </p>
 
-          <div className="cf-card">
-            <p className="cf-card-text">
-              Tu compra está protegida por <strong className="cf-brand">Store Lite</strong>.
-              <br />
-              El pago no se liberará hasta que el problema sea resuelto.
+          <div
+            className="cf-card"
+            style={{
+              background: 'var(--md-sys-color-secondary-container, #e8def8)',
+              marginBottom: '1rem',
+            }}
+          >
+            <p
+              className="cf-card-text"
+              style={{ color: 'var(--md-sys-color-on-secondary-container, #1d192b)' }}
+            >
+              Tu pago está protegido. No se liberará hasta resolver el problema.
             </p>
           </div>
 
-          <div className="cf-badge">
-            <Icon size={16}>support_agent</Icon>
-            Soporte activo 24/7
-          </div>
-
-          <button className="cf-btn cf-btn--primary" onClick={() => (window.location.hash = '')}>
-            CERRAR
+          <button
+            className="cf-btn cf-btn--primary cf-btn--compact"
+            onClick={() => (window.location.hash = '')}
+            style={{ margin: '0 auto' }}
+          >
+            Cerrar
           </button>
         </div>
       </div>
@@ -97,9 +107,9 @@ export default function ReportV2Flow({ paymentId, trackingToken }: ReportV2FlowP
 
   return (
     <div id="report-v2" className="cf-overlay">
-      <div className="cf-dialog">
+      <div className="rf-dialog rf-dialog--compact">
         <button
-          className="cf-close"
+          className="rf-close"
           onClick={() => {
             setState('warning');
             setError(null);
@@ -111,125 +121,162 @@ export default function ReportV2Flow({ paymentId, trackingToken }: ReportV2FlowP
           <Icon>close</Icon>
         </button>
 
-        {state === 'loading' ? (
-          /* ─── LOADING ─── */
-          <div className="cf-loading">
-            <div className="cf-spinner">
-              <div className="cf-spinner__track" />
-              <div className="cf-spinner__fill" />
-            </div>
-            <h2 className="cf-title cf-title--small">Enviando reporte...</h2>
-            <p className="cf-subtitle">Notificando al vendedor sobre tu problema</p>
-          </div>
-        ) : state === 'warning' ? (
-          /* ─── WARNING DIALOG ─── */
-          <>
-            <div className="cf-icon-circle cf-icon-circle--warning">
-              <Icon size={40}>warning</Icon>
-            </div>
-
-            <h2 className="cf-title cf-title--danger">¿Estás seguro de reportar un problema?</h2>
-
-            <div className="cf-card cf-card--warning">
-              <p className="cf-card-text">
-                Abrir un reporte puede retrasar el envío de tu pedido. Te recomendamos intentar
-                resolver el problema directamente con el negocio antes de continuar.
-              </p>
-              <p className="cf-card-text" style={{ marginTop: '0.75rem', fontWeight: 700 }}>
-                Si continuás, el pedido entrará en revisión.
-              </p>
-            </div>
-
-            <div className="cf-actions">
-              <a
-                href="#"
-                className="cf-btn cf-btn--primary"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setState('form');
-                }}
-              >
-                <Icon size={20}>flag</Icon>
-                ABRIR REPORTE
-              </a>
-              <a
-                href="#"
-                className="cf-btn cf-btn--secondary"
-                onClick={() => (window.location.hash = '')}
-              >
-                SEGUIR INTENTANDO RESOLVER
-              </a>
-            </div>
-          </>
-        ) : (
-          /* ─── FORM ─── */
-          <>
-            <div className="cf-icon-circle cf-icon-circle--warning">
-              <Icon size={40}>report_problem</Icon>
-            </div>
-
-            <h2 className="cf-title">Reportar Problema</h2>
-            <p className="cf-question">Seleccioná el motivo del reporte</p>
-
-            <form onSubmit={handleSubmit} className="rf-form">
-              <div className="rf-field">
-                <label htmlFor="issue-reason" className="rf-label">
-                  Motivo
-                </label>
-                <select
-                  id="issue-reason"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.875rem 1rem',
-                    borderRadius: '16px',
-                    border: '1.5px solid var(--md-sys-color-outline-variant)',
-                    background: 'var(--md-sys-color-surface)',
-                    fontSize: '0.9rem',
-                    color: 'var(--md-sys-color-on-surface)',
-                    fontFamily: 'inherit',
-                    outline: 'none',
-                    cursor: 'pointer',
-                  }}
+        {(() => {
+          if (state === 'loading') {
+            return (
+              <div className="rf-loading" style={{ padding: '1rem 0' }}>
+                <div
+                  className="rf-spinner"
+                  style={{ width: 40, height: 40, marginBottom: '0.75rem' }}
                 >
-                  <option value="">Seleccioná un motivo...</option>
-                  {ISSUE_REASONS.map((r) => (
-                    <option key={r.value} value={r.value}>
-                      {r.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {error && (
-                <div className="rf-error">
-                  <Icon size={18}>error</Icon>
-                  <span>{error}</span>
+                  <div className="rf-spinner__track" />
+                  <div className="rf-spinner__fill" />
                 </div>
-              )}
-
-              <div className="cf-actions">
-                <button type="submit" className="cf-btn cf-btn--secondary" disabled={!reason}>
-                  <Icon size={20}>send</Icon>
-                  ENVIAR REPORTE
-                </button>
-                <a
-                  href="#"
-                  className="cf-btn cf-btn--primary"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setState('warning');
-                    setError(null);
-                  }}
-                >
-                  VOLVER
-                </a>
+                <h2 className="rf-title rf-title--small" style={{ fontWeight: 500 }}>
+                  Enviando reporte...
+                </h2>
               </div>
-            </form>
-          </>
-        )}
+            );
+          }
+
+          if (state === 'warning') {
+            return (
+              <>
+                <div className="rf-icon-circle rf-icon-circle--compact">
+                  <Icon size={22}>warning</Icon>
+                </div>
+
+                <h2
+                  className="rf-title"
+                  style={{ fontSize: '1.1rem', fontWeight: 500, marginBottom: '0.25rem' }}
+                >
+                  ¿Reportar un problema?
+                </h2>
+
+                <p className="cf-question--compact">
+                  Abrir un reporte puede retrasar el envío. Intentá resolverlo con el negocio antes.
+                </p>
+
+                <div className="cf-actions" style={{ marginTop: '0.5rem' }}>
+                  <a
+                    href="#"
+                    className="cf-btn cf-btn--secondary cf-btn--compact"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setState('form');
+                    }}
+                  >
+                    <Icon size={16}>flag</Icon>
+                    Abrir reporte
+                  </a>
+                  <a
+                    href="#"
+                    className="cf-btn cf-btn--compact"
+                    onClick={() => (window.location.hash = '')}
+                    style={{
+                      background: 'transparent',
+                      color: 'var(--md-sys-color-on-surface-variant)',
+                      fontWeight: 400,
+                      fontSize: '0.8rem',
+                      textTransform: 'none',
+                      letterSpacing: '0',
+                    }}
+                  >
+                    Cancelar
+                  </a>
+                </div>
+              </>
+            );
+          }
+
+          return (
+            <>
+              <div className="rf-icon-circle rf-icon-circle--compact">
+                <Icon size={22}>report_problem</Icon>
+              </div>
+
+              <h2
+                className="rf-title"
+                style={{ fontSize: '1.1rem', fontWeight: 500, marginBottom: '0.25rem' }}
+              >
+                Reportar problema
+              </h2>
+
+              <p className="cf-question--compact">Seleccioná el motivo del reporte</p>
+
+              <form onSubmit={handleSubmit} className="rf-form" style={{ gap: '0.75rem' }}>
+                <div className="rf-field">
+                  <label htmlFor="issue-reason-compact" className="rf-label">
+                    Motivo
+                  </label>
+                  <select
+                    id="issue-reason-compact"
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 0.875rem',
+                      borderRadius: '14px',
+                      border: '1.5px solid var(--md-sys-color-outline-variant)',
+                      background: 'var(--md-sys-color-surface)',
+                      fontSize: '0.85rem',
+                      color: 'var(--md-sys-color-on-surface)',
+                      fontFamily: 'inherit',
+                      outline: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <option value="">Seleccioná un motivo...</option>
+                    {ISSUE_REASONS.map((r) => (
+                      <option key={r.value} value={r.value}>
+                        {r.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {error && (
+                  <div className="rf-error" style={{ fontSize: '0.75rem' }}>
+                    <Icon size={16}>error</Icon>
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <div className="cf-actions" style={{ marginTop: '0.25rem', gap: '0.5rem' }}>
+                  <button
+                    type="submit"
+                    className="cf-btn cf-btn--secondary cf-btn--compact"
+                    disabled={!reason}
+                    style={{ margin: '0 auto' }}
+                  >
+                    <Icon size={16}>send</Icon>
+                    Enviar
+                  </button>
+                  <a
+                    href="#"
+                    className="cf-btn cf-btn--compact"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setState('warning');
+                      setError(null);
+                    }}
+                    style={{
+                      background: 'transparent',
+                      color: 'var(--md-sys-color-on-surface-variant)',
+                      fontWeight: 400,
+                      fontSize: '0.8rem',
+                      textTransform: 'none',
+                      letterSpacing: '0',
+                    }}
+                  >
+                    Volver
+                  </a>
+                </div>
+              </form>
+            </>
+          );
+        })()}
       </div>
     </div>
   );

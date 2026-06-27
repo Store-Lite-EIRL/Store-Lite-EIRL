@@ -1,10 +1,12 @@
 'use client';
 
+import { PENALTY_A_PERCENTAGE, SELLER_TIMEOUT_DAYS } from '@/core/penalties/penaltyTypes';
 import { requestFinalization } from '@/features/dashboard/actions/finalizationActions';
 import {
   confirmPickedUp,
   markReadyForPickup,
   notifyDelivery,
+  prepareOrder,
   uploadTicketAndUpdatePayment,
   type UploadTicketResult,
 } from '@/features/dashboard/actions/ticketActions';
@@ -47,7 +49,7 @@ export default function OrderModal({
 }: OrderModalProps) {
   const [activeTab, setActiveTab] = useState<ModalTab>('detalles');
   const [selectedPhase, setSelectedPhase] = useState(0);
-  const [helpOpen, setHelpOpen] = useState(false);
+  const [_helpOpen, _setHelpOpen] = useState(false);
   const [ticketFile, setTicketFile] = useState<File | null>(null);
   const [ticketPreview, setTicketPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -57,10 +59,43 @@ export default function OrderModal({
   const [finalizingOrder, setFinalizingOrder] = useState(false);
   const [markingReady, setMarkingReady] = useState(false);
   const [confirmingPickup, setConfirmingPickup] = useState(false);
+  const [preparing, setPreparing] = useState(false);
   const [pickupCodeInput, setPickupCodeInput] = useState('');
   const [codeError, setCodeError] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>({ open: false, action: null });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const isPreparing = order.status === 'PREPARING_ORDER';
+
+  useEffect(() => {
+    if (!isPreparing) {
+      setTimeRemaining(null);
+      return;
+    }
+
+    let deadlineMs: number | null = null;
+
+    if (order.finalizationDeadline) {
+      deadlineMs = new Date(order.finalizationDeadline).getTime();
+    } else if (order.createdAt) {
+      deadlineMs = new Date(order.createdAt).getTime() + SELLER_TIMEOUT_DAYS * 24 * 60 * 60 * 1000;
+    }
+
+    if (!deadlineMs || isNaN(deadlineMs)) {
+      setTimeRemaining(null);
+      return;
+    }
+
+    const updateRemaining = () => {
+      setTimeRemaining(deadlineMs! - Date.now());
+    };
+
+    updateRemaining();
+    const interval = setInterval(updateRemaining, 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [isPreparing, order.finalizationDeadline, order.createdAt]);
 
   const statusInfo = URBANO_STATUS_MAP[order.status] || {
     label: order.status,
@@ -87,6 +122,7 @@ export default function OrderModal({
     setNotifyingDelivery(false);
     setMarkingReady(false);
     setConfirmingPickup(false);
+    setPreparing(false);
     setPickupCodeInput('');
     setCodeError(null);
     setActiveTab('detalles');
@@ -183,6 +219,22 @@ export default function OrderModal({
     }
   };
 
+  const handlePrepareOrder = async () => {
+    setPreparing(true);
+    try {
+      const result = await prepareOrder(order.id, order.businessId);
+      if (result.success) {
+        onOrderUpdate({ ...order, status: 'PREPARING_ORDER' as any });
+      } else {
+        alert(result.error || 'Error al preparar el pedido');
+      }
+    } catch {
+      alert('Error inesperado');
+    } finally {
+      setPreparing(false);
+    }
+  };
+
   const handleConfirmPickedUp = async () => {
     if (!pickupCodeInput.trim()) return;
     setConfirmingPickup(true);
@@ -263,6 +315,23 @@ export default function OrderModal({
             })}
           </div>
         </div>
+        {isPreparing &&
+          timeRemaining !== null &&
+          (timeRemaining > 0 ? (
+            <div className={styles.countdownIndicator}>
+              ⏱️ Te quedan {Math.floor(timeRemaining / (1000 * 60 * 60 * 24))}{' '}
+              {Math.floor(timeRemaining / (1000 * 60 * 60 * 24)) === 1 ? 'día' : 'días'} y{' '}
+              {Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))}{' '}
+              {Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)) === 1
+                ? 'hora'
+                : 'horas'}
+            </div>
+          ) : (
+            <div className={styles.overdueIndicator}>
+              🔴 ATRASADO — Multa de S/
+              {((parseFloat(order.amount) * PENALTY_A_PERCENTAGE) / 100).toFixed(2)}
+            </div>
+          ))}
         <SellerPhaseGuide
           phases={getSellerPhase(String(order.status), order.shippingType)}
           selectedPhase={selectedPhase}
@@ -303,6 +372,8 @@ export default function OrderModal({
               onConfirmPickedUp={handleConfirmPickedUp}
               markingReady={markingReady}
               confirmingPickup={confirmingPickup}
+              onPrepareOrder={handlePrepareOrder}
+              preparing={preparing}
               pickupCodeInput={pickupCodeInput}
               onPickupCodeChange={setPickupCodeInput}
               ticketFile={ticketFile}

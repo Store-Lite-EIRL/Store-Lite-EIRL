@@ -106,8 +106,13 @@
 .ticketImageWrapper {
   position: relative;
   width: 100%;
+  min-height: 320px;
   border-radius: 12px;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-sys-color-surface-container-highest);
 }
 
 .ticketImageWrapper:hover .ticketOverlay {
