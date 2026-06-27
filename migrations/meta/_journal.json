@@ -124,24 +124,26 @@
     {
       "idx": 18,
       "version": "7",
-<<<<<<< HEAD
       "when": 1781794354000,
       "tag": "0018_add_hero_images",
-=======
-      "when": 1781804053376,
-      "tag": "0018_order_flow_v2_schema",
->>>>>>> 7a08a2f (feat(orders): order flow v2 with state machine, services, UI and tests)
       "breakpoints": true
     },
     {
       "idx": 19,
+      "version": "7",
+      "when": 1781804053376,
+      "tag": "0018_order_flow_v2_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
       "version": "7",
       "when": 1782506460094,
       "tag": "0019_lazy_marrow",
       "breakpoints": true
     },
     {
-      "idx": 20,
+      "idx": 21,
       "version": "7",
       "when": 1782506817563,
       "tag": "0020_ancient_winter_soldier",
