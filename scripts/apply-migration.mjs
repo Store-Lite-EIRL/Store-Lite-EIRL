@@ -5,9 +5,9 @@
 // ──────────────────────────────────────────
 
 import { readFileSync } from 'fs';
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 import postgres from 'postgres';
+import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..');
@@ -27,7 +27,9 @@ if (!dbUrl) {
 const migrationFile = process.argv[2];
 if (!migrationFile) {
   console.error('❌ Usage: node scripts/apply-migration.mjs <sql-file>');
-  console.error('   Example: node scripts/apply-migration.mjs migrations/0028_recojo_pickup_flow.sql');
+  console.error(
+    '   Example: node scripts/apply-migration.mjs migrations/0028_recojo_pickup_flow.sql',
+  );
   process.exit(1);
 }
 
@@ -39,14 +41,15 @@ const rawSegments = sql.split('--> statement-breakpoint');
 
 // For each segment, extract the SQL (strip leading comments/lines starting with --)
 const statements = rawSegments
-  .map(seg => {
-    const lines = seg.split('\n')
-      .filter(line => !line.trim().startsWith('--')) // remove comment-only lines
-      .map(l => l.trim())
-      .filter(l => l.length > 0);
+  .map((seg) => {
+    const lines = seg
+      .split('\n')
+      .filter((line) => !line.trim().startsWith('--')) // remove comment-only lines
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
     return lines.join('\n');
   })
-  .filter(s => s.length > 0);
+  .filter((s) => s.length > 0);
 
 console.log(`📦 Migration: ${migrationFile}`);
 console.log(`📝 Found ${statements.length} statements to execute`);
