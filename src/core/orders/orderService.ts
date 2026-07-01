@@ -135,7 +135,6 @@ export async function transition(
       const pre = input.preconditions ?? {};
       if (pre.courierName) updateData.courierName = pre.courierName;
       if (pre.trackingNumber) updateData.trackingNumber = pre.trackingNumber;
-      if (pre.shippingCost) updateData.shippingCost = pre.shippingCost;
       if (pre.sellerNote) updateData.sellerNote = pre.sellerNote;
     }
 

@@ -13,7 +13,6 @@ interface PhaseReadySectionOrderItem {
   productSlug: string;
   productImage: string | null;
   amount: string;
-  shippingCost: string;
   currency: string;
   paymentMethod: string;
   shippingType: string | null;
@@ -115,17 +114,16 @@ export default function PhaseReadySection({ order, businessSlug }: PhaseReadySec
                 </span>
                 <span className={styles.productMetaItem}>
                   <span className={styles.metaLabel}>Envío:</span>{' '}
-                  {new Intl.NumberFormat('es-PE', {
-                    style: 'currency',
-                    currency: order.currency,
-                  }).format(Number(order.shippingCost))}
+                  {SHIPPING_TYPE_MAP[order.shippingType?.toLowerCase() || ''] ||
+                    order.shippingType ||
+                    'No especificado'}
                 </span>
               </div>
               <p className={styles.itemPrice}>
                 {new Intl.NumberFormat('es-PE', {
                   style: 'currency',
                   currency: order.currency,
-                }).format(Number(order.amount) - Number(order.shippingCost))}
+                }).format(Number(order.amount))}
               </p>
             </div>
           </div>
@@ -141,25 +139,6 @@ export default function PhaseReadySection({ order, businessSlug }: PhaseReadySec
             <span className={styles.detailLabel}>Método:</span>
             <span className={styles.capitalizeText}>
               {PAYMENT_METHOD_MAP[order.paymentMethod] || order.paymentMethod}
-            </span>
-          </div>
-          <div className={styles.divider} />
-          <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>Subtotal:</span>
-            <span>
-              {new Intl.NumberFormat('es-PE', {
-                style: 'currency',
-                currency: order.currency,
-              }).format(Number(order.amount) - Number(order.shippingCost))}
-            </span>
-          </div>
-          <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>Envío:</span>
-            <span>
-              {new Intl.NumberFormat('es-PE', {
-                style: 'currency',
-                currency: order.currency,
-              }).format(Number(order.shippingCost))}
             </span>
           </div>
           <div className={`${styles.detailRow} ${styles.totalRow}`}>

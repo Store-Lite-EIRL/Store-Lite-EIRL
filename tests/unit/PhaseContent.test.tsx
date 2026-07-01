@@ -94,7 +94,6 @@ function createMockOrder(overrides: Record<string, any> = {}) {
     productSlug: 'test-product',
     productImage: '/img.jpg',
     amount: '150.00',
-    shippingCost: '20.00',
     currency: 'PEN',
     paymentMethod: 'yape',
     shippingType: 'domicilio',
@@ -210,7 +209,7 @@ describe('PhaseContent', () => {
         />,
       );
 
-      expect(screen.getByText('Recojo en tienda')).toBeInTheDocument();
+      expect(screen.getAllByText('Recojo en tienda').length).toBeGreaterThanOrEqual(1);
     });
 
     // ── Preparar Pedido button (delivery) ────────────
@@ -320,7 +319,13 @@ describe('PhaseContent', () => {
   });
 
   describe('Phase 3 — CERRADO', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     test('shows pending confirmation for esperando_confirmacion', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-07-01T10:00:00Z'));
       render(
         <PhaseContent
           order={createMockOrder({
@@ -364,6 +369,8 @@ describe('PhaseContent', () => {
     });
 
     test('shows countdown when pending with finalizationDeadline', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-07-01T10:00:00Z'));
       render(
         <PhaseContent
           order={createMockOrder({

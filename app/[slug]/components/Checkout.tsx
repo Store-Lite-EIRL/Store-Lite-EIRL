@@ -45,7 +45,6 @@ export interface ShippingInfo {
   reference?: string;
   phone: string;
   dni: string;
-  cost: number;
 }
 
 export default function Checkout({
@@ -104,7 +103,6 @@ export default function Checkout({
     reference: '',
     phone: '',
     dni: '',
-    cost: 10.0,
   });
 
   // Payment State
@@ -239,8 +237,8 @@ export default function Checkout({
     }, 500);
   }, [slug, businessName, businessLogoUrl, AUTH_ORIGIN]);
 
-  // Derived total
-  const finalTotal = totalAmount + shippingInfo.cost;
+  // Derived total — shipping is free, no cost added
+  const finalTotal = totalAmount;
 
   // Derived select options
   const departments = PERU_LOCATIONS.map((d) => ({ value: d.name, label: d.name }));

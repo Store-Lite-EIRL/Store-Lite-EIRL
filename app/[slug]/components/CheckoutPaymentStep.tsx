@@ -57,15 +57,17 @@ export function CheckoutPaymentStep({
           ))}
         </div>
         <div className={styles.summaryShippingLine}>
-          <span>
-            Envío:{' '}
-            {shippingInfo.courier === 'recojo'
-              ? 'Recojo en tienda'
-              : shippingInfo.courier === 'urbano_agencia'
+          {shippingInfo.courier === 'recojo' ? (
+            <span>Envío: Recojo en tienda</span>
+          ) : (
+            <span>
+              Envío:{' '}
+              {shippingInfo.courier === 'urbano_agencia'
                 ? `Agencia Urbano (${shippingInfo.agency || '—'})`
                 : 'Domicilio'}
-          </span>
-          <span>{shippingInfo.cost === 0 ? '¡Gratis!' : `S/ ${shippingInfo.cost.toFixed(2)}`}</span>
+              {' — pagás con ticket CIP'}
+            </span>
+          )}
         </div>
         <div
           className={styles.summaryTotalFinal}

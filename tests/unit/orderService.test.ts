@@ -181,7 +181,6 @@ describe('OrderService.transition', () => {
         preconditions: {
           courierName: 'Transportes Rápidos',
           trackingNumber: 'TRK-001',
-          shippingCost: '15.00',
           sellerNote: 'Entregar antes de las 6pm',
         },
       }),

@@ -106,7 +106,6 @@ function createMockOrder(overrides: Record<string, any> = {}) {
     productSlug: 'test-product',
     productImage: '/img.jpg',
     amount: '150.00',
-    shippingCost: '20.00',
     currency: 'PEN',
     paymentMethod: 'yape',
     status: 'paid',

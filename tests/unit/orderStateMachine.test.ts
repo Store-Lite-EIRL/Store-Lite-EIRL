@@ -279,14 +279,6 @@ describe('validateTransitionFull (with preconditions)', () => {
     expect(result.valid).toBe(true);
   });
 
-  test('seller with shippingCost passes precondition check', () => {
-    const result = validateTransitionFull(PREPARING, WAITING, {
-      actor: { type: 'seller' },
-      preconditions: { shippingCost: '15.00' },
-    });
-    expect(result.valid).toBe(true);
-  });
-
   test('system bypasses precondition check', () => {
     const result = validateTransitionFull(PREPARING, WAITING, {
       actor: { type: 'system' },

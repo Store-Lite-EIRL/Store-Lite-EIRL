@@ -1379,11 +1379,6 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                     <span className="detail-price">
                       {order.currency} {order.amount}
                     </span>
-                    {order.shippingCost && Number(order.shippingCost) > 0 && (
-                      <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>
-                        + Envío: {order.currency} {order.shippingCost}
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>
@@ -1458,7 +1453,7 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                         className="detail-value"
                         style={{ fontWeight: 950, color: 'var(--md-sys-color-primary)' }}
                       >
-                        {order.currency} {Number(order.amount) + Number(order.shippingCost || 0)}
+                        {order.currency} {Number(order.amount)}
                       </span>
                     </div>
                   </div>

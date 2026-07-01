@@ -192,7 +192,7 @@ export function validateTransitionFull(
   // Actor-specific preconditions
   if (to === ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION && input.actor.type === 'seller') {
     const _pre = input.preconditions ?? {};
-    // Courier data (shippingCost, courierName, trackingNumber) is optional at this stage;
+    // Courier data (courierName, trackingNumber) is optional at this stage;
     // the seller fills it in Phase 2 (READY_TO_SHIP → IN_TRANSIT).
   }
 

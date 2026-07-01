@@ -438,7 +438,6 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
       productSlug: order.product?.slug || '',
       productImage: order.product?.media?.[0]?.mediaUrl || null,
       amount: order.amount.toString(),
-      shippingCost: order.shippingCost?.toString() || '0',
       currency: order.currency,
       paymentMethod: order.paymentMethod,
       status: order.status as any,
