@@ -411,25 +411,6 @@
   margin: 0.25rem 0 0;
 }
 
-.shippingSummary {
-  background: var(--md-sys-color-surface-container-lowest);
-  border: 2px dashed var(--md-sys-color-outline-variant);
-  border-radius: 16px;
-  padding: 1rem;
-}
-
-.summaryRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 600;
-}
-
-.shippingCost {
-  color: var(--md-sys-color-primary);
-  font-size: 1.1rem;
-}
-
 /* Step 2 Styles */
 .orderSummaryCard {
   background: var(--md-sys-color-surface-container-low);

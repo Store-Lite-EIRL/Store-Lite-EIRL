@@ -32,7 +32,6 @@ export const chargeRequestSchema = z
             agency: z.string().optional(),
             reference: z.string().optional(),
             phone: z.string().optional(),
-            cost: z.union([z.number(), z.string()]).optional(),
             dni: z.string().optional(),
           })
           .optional(),

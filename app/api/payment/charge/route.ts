@@ -34,7 +34,6 @@ interface ShippingInfoData {
   district?: string | null;
   address?: string | null;
   agency?: string | null;
-  cost?: number | string;
   reference?: string | null;
   courier?: string;
 }
@@ -328,7 +327,6 @@ export async function POST(request: Request) {
             shippingAddress: rawShipping.address ?? null,
             shippingAgency: rawShipping.agency ?? null,
             shippingPhone: rawShipping.phone ?? null,
-            shippingCost: String(rawShipping.cost ?? 0),
             shippingReference: rawShipping.reference ?? null,
             metadata: {
               ...metadata,

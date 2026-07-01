@@ -81,7 +81,6 @@ describe('OrderItem type', () => {
       productSlug: 'test',
       productImage: null,
       amount: '100',
-      shippingCost: '10',
       currency: 'PEN',
       paymentMethod: 'card',
       status: 'paid',

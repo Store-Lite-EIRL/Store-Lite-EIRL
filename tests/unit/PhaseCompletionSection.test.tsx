@@ -44,6 +44,10 @@ function createMockOrder(overrides: Record<string, any> = {}) {
 // ── Tests ────────────────────────────────────────────
 
 describe('PhaseCompletionSection', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   test('does not render guidance banner after removal', () => {
     render(<PhaseCompletionSection order={createMockOrder()} />);
 
@@ -51,6 +55,8 @@ describe('PhaseCompletionSection', () => {
   });
 
   test('shows countdown when pending with finalizationDeadline', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-01T10:00:00Z'));
     render(
       <PhaseCompletionSection
         order={createMockOrder({
@@ -64,6 +70,8 @@ describe('PhaseCompletionSection', () => {
   });
 
   test('shows countdown for DELIVERED status with deadline', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-01T10:00:00Z'));
     render(
       <PhaseCompletionSection
         order={createMockOrder({

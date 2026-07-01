@@ -66,11 +66,6 @@ export function CheckoutSuccessView({
     value: Number(item.secondPrice || item.price) * (item.quantity || 1),
   }));
 
-  receiptItems.push({
-    label: 'Costo de envio',
-    value: shippingInfo.cost,
-  });
-
   return createPortal(
     <>
       <Confetti show={showConfetti} particleCount={80} duration={4000} />

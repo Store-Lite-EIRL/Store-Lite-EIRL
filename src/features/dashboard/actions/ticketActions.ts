@@ -78,7 +78,6 @@ export async function uploadTicketAndUpdatePayment(
         trackingToken: payments.trackingToken,
         businessId: payments.businessId,
         version: payments.version,
-        shippingCost: payments.shippingCost,
       })
       .from(payments)
       .where(eq(payments.id, paymentId))
@@ -146,7 +145,7 @@ export async function uploadTicketAndUpdatePayment(
         actor: { type: 'seller', id: actorId ?? undefined },
         expectedVersion,
         extraFields: { ticketImageUrl },
-        preconditions: { shippingCost: existingPayment.shippingCost },
+        preconditions: {},
       });
 
       if (!result.success) {

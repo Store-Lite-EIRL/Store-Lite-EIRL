@@ -69,7 +69,6 @@ export function CheckoutShippingStep({
     onShippingInfoChange((prev) => ({
       ...prev,
       courier: type,
-      cost: type === 'recojo' ? 0 : type === 'urbano_agencia' ? 7.5 : 10.0,
       department: type === 'recojo' ? '' : prev.department,
       province: type === 'recojo' ? '' : prev.province,
       district: type === 'recojo' ? '' : prev.district,
@@ -216,15 +215,6 @@ export function CheckoutShippingStep({
           )}
         </>
       )}
-
-      <div className={styles.shippingSummary}>
-        <div className={styles.summaryRow}>
-          <span>Costo de Envio:</span>
-          <span className={styles.shippingCost}>
-            {shippingInfo.cost === 0 ? '¡GRATIS!' : `S/ ${shippingInfo.cost.toFixed(2)}`}
-          </span>
-        </div>
-      </div>
     </div>
   );
 }

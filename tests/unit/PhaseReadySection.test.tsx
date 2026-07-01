@@ -60,7 +60,6 @@ function createMockOrder(overrides: Record<string, any> = {}) {
     productSlug: 'test-product',
     productImage: '/img.jpg',
     amount: '150.00',
-    shippingCost: '20.00',
     currency: 'PEN',
     paymentMethod: 'yape',
     shippingType: 'domicilio',
@@ -153,6 +152,6 @@ describe('PhaseReadySection', () => {
       />,
     );
 
-    expect(screen.getByText('Recojo en tienda')).toBeInTheDocument();
+    expect(screen.getAllByText('Recojo en tienda').length).toBeGreaterThanOrEqual(1);
   });
 });

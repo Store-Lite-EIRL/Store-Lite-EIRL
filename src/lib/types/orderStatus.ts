@@ -26,7 +26,6 @@ export interface OrderItem {
   productSlug: string;
   productImage: string | null;
   amount: string;
-  shippingCost: string;
   currency: string;
   paymentMethod: string;
   status: string;
