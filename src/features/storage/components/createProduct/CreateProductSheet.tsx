@@ -56,6 +56,7 @@ export const CreateProductSheet = ({
     images,
     fileAlert,
     clearFileAlert,
+    mediaBodyError,
     fileInputRef,
     setField,
     clearError,
@@ -86,6 +87,20 @@ export const CreateProductSheet = ({
   };
 
   const { icon: saveIcon, text: saveText } = getSaveButtonContent();
+
+  const requiredFieldsFilled = Boolean(
+    form.name.trim() &&
+    form.category.trim() &&
+    form.stock.trim() &&
+    form.price.trim() &&
+    form.status,
+  );
+
+  const hasProductLimit =
+    !isEditMode &&
+    entitlements !== null &&
+    totalProducts >= (entitlements?.maxProducts ?? Infinity);
+  const canSave = requiredFieldsFilled && !mediaBodyError && !hasProductLimit;
 
   const content = (
     <>
@@ -148,6 +163,7 @@ export const CreateProductSheet = ({
           <ImageUploadSection
             images={images}
             error={errors.images}
+            sizeError={mediaBodyError}
             fileInputRef={fileInputRef}
             onRemove={handleRemoveImage}
             onChange={handleImageChange}
@@ -210,16 +226,7 @@ export const CreateProductSheet = ({
           <Button variant="outlined" onClick={handleClose} disabled={isSaving}>
             Cancelar
           </Button>
-          <Button
-            variant="filled"
-            onClick={handleSave}
-            disabled={
-              isSaving ||
-              (!isEditMode &&
-                entitlements !== null &&
-                totalProducts >= (entitlements?.maxProducts ?? Infinity))
-            }
-          >
+          <Button variant="filled" onClick={handleSave} disabled={isSaving || !canSave}>
             <Icon slot="icon" size={21} className={isSaving ? 'spinner-mini' : ''}>
               {saveIcon}
             </Icon>

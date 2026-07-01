@@ -1,13 +1,27 @@
 import type { SaveProductMediaItem } from '@/types/storage';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MAX_IMAGES } from '../components/createProduct/types';
-import { validateProductImageFile } from '../utils/productImageValidation';
+import { estimatePayloadSize, validateProductImageFile } from '../utils/productImageValidation';
 
 export type MediaItem = SaveProductMediaItem;
+
+const BODY_LIMIT_BYTES = 1 * 1024 * 1024;
+const PAYLOAD_ERROR_MSG = 'El tamaño total del formulario supera el límite del servidor (1MB)';
 
 export const useProductFormMedia = () => {
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [mediaError, setMediaError] = useState<string | undefined>();
+  const [mediaBodyError, setMediaBodyError] = useState<string | undefined>();
+
+  // Recalculate body size every time media changes
+  useEffect(() => {
+    const size = estimatePayloadSize(media);
+    if (size > BODY_LIMIT_BYTES) {
+      setMediaBodyError(PAYLOAD_ERROR_MSG);
+    } else {
+      setMediaBodyError(undefined);
+    }
+  }, [media]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
@@ -34,13 +48,24 @@ export const useProductFormMedia = () => {
     });
 
     setMediaError(imageError);
+
     e.target.value = '';
   };
 
   const handleRemoveImage = (index: number) => {
-    setMedia((prev) => prev.filter((_, i) => i !== index));
+    const updated = media.filter((_, i) => i !== index);
+    setMedia(updated);
     setMediaError(undefined);
   };
 
-  return { media, setMedia, mediaError, setMediaError, handleImageChange, handleRemoveImage };
+  return {
+    media,
+    setMedia,
+    mediaError,
+    setMediaError,
+    mediaBodyError,
+    setMediaBodyError,
+    handleImageChange,
+    handleRemoveImage,
+  };
 };
