@@ -17,6 +17,7 @@ import { completeIdempotencyKey, reserveIdempotencyKey } from '@/core/payments/i
 import { paymentRateLimiter } from '@/core/payments/rateLimiter';
 import { generateTrackingToken } from '@/core/utils/trackingToken';
 import { notifyLowStock, notifyNewOrder, notifyOutOfStock } from '@/lib/notifications';
+import { sendOrderStatusSms } from '@/lib/twilio/orderSms';
 import { createClient } from '@/lib/supabase/server';
 import type { CulqiChargeResponse } from '@/types/culqi';
 import { decrypt } from '@/utils/crypto';
@@ -371,6 +372,11 @@ export async function POST(request: Request) {
       console.error('[notifyNewOrder] Error:', notifyErr);
     });
 
+    // ─── Notificar al customer por SMS ───
+    notifyOrderPaymentSms(result, businessId).catch((smsErr) => {
+      console.error('[charge] SMS notification error:', smsErr);
+    });
+
     // Notificar stock bajo/agotado
     const cartItems = (metadata?.cartItems as { id: string; quantity: number }[]) || [];
     const itemsToCheck = cartItems.length > 0 ? cartItems : [{ id: productId, quantity: 1 }];
@@ -412,4 +418,28 @@ export async function POST(request: Request) {
     console.error('[payment/charge] Critical Error:', error);
     return NextResponse.json({ error: 'Error interno procesando el pago' }, { status: 500 });
   }
+}
+
+// ─── Helper: Send SMS confirmation after successful payment ───
+
+async function notifyOrderPaymentSms(
+  payment: typeof payments.$inferSelect,
+  businessId: string,
+): Promise<void> {
+  if (!payment.buyerPhone || !payment.trackingToken) return;
+
+  const business = await db.query.businesses.findFirst({
+    where: eq(businesses.id, businessId),
+    columns: { slug: true, name: true },
+  });
+
+  if (!business) return;
+
+  await sendOrderStatusSms({
+    toStatus: 'PAID',
+    buyerPhone: payment.buyerPhone,
+    businessSlug: business.slug,
+    businessName: business.name,
+    trackingToken: payment.trackingToken,
+  });
 }

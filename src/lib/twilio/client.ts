@@ -12,6 +12,94 @@ export interface TwilioMessageResponse {
 }
 
 /**
+ * Sends a plain SMS via Twilio to a customer phone.
+ * Used for order status notifications (Peru +51 numbers only).
+ *
+ * @param phone - Destination phone (format: "+51999999999" or "51999999999")
+ * @param message - SMS body text
+ * @returns Promise<TwilioMessageResponse>
+ */
+export async function sendSmsToCustomer(
+  phone: string,
+  message: string,
+): Promise<TwilioMessageResponse> {
+  let to = phone.trim();
+  if (!to.startsWith('+')) {
+    to = `+${to}`;
+  }
+
+  const from = env.twilioSmsCustomerNumber;
+
+  console.log(`[Twilio] Sending SMS to customer ${to} via ${from}`);
+
+  try {
+    const result = await client.messages.create({
+      body: message,
+      from,
+      to,
+    });
+
+    console.log(`[Twilio] SMS sent successfully. SID: ${result.sid}, Status: ${result.status}`);
+
+    return {
+      sid: result.sid,
+      status: result.status,
+      to: result.to,
+      body: result.body,
+    };
+  } catch (error: unknown) {
+    console.error(`[Twilio] Error sending SMS:`, error);
+    throw new Error(
+      `Twilio SMS error: ${error instanceof Error ? error.message : 'Failed to send SMS'}`,
+    );
+  }
+}
+
+/**
+ * Sends a plain SMS via Twilio to a business/seller phone.
+ * Used for administrative notifications (debt, alerts, etc.).
+ *
+ * @param phone - Destination phone (format: "+51999999999" or "51999999999")
+ * @param message - SMS body text
+ * @returns Promise<TwilioMessageResponse>
+ */
+export async function sendSmsToBusiness(
+  phone: string,
+  message: string,
+): Promise<TwilioMessageResponse> {
+  let to = phone.trim();
+  if (!to.startsWith('+')) {
+    to = `+${to}`;
+  }
+
+  const from = env.twilioSmsBusinessNumber;
+
+  console.log(`[Twilio] Sending SMS to business ${to} via ${from}`);
+
+  try {
+    const result = await client.messages.create({
+      body: message,
+      from,
+      to,
+    });
+
+    console.log(`[Twilio] SMS sent successfully. SID: ${result.sid}, Status: ${result.status}`);
+
+    return {
+      sid: result.sid,
+      status: result.status,
+      to: result.to,
+      body: result.body,
+    };
+  } catch (error: unknown) {
+    console.error(`[Twilio] Error sending SMS:`, error);
+    throw new Error(
+      `Twilio SMS error: ${error instanceof Error ? error.message : 'Failed to send SMS'}`,
+    );
+  }
+}
+
+/**
  * Sends OTP via WhatsApp using Twilio (Official Meta WhatsApp Business Cloud API)
  * @param phone - Destination phone number (format: "+51999999999" or "51999999999")
  * @param code - 6-digit OTP code
