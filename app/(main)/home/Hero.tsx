@@ -67,7 +67,7 @@ export default function Hero({
     <>
       <section
         ref={heroRef}
-        className={styles.heroContainer}
+        className={`${styles.heroContainer} ${images.length === 0 ? styles.noImages : ''} ${isEditing ? styles.isEditing : ''}`}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -123,8 +123,27 @@ export default function Hero({
           </>
         )}
 
-        {/* ─── Owner Menu ───────────────────────────────────── */}
-        {isOwner && !isEditing && business && (
+        {/* ─── Empty State CTA (owner, sin imágenes) ────────── */}
+        {images.length === 0 && isOwner && (
+          <div className={styles.emptyStateCTA}>
+            <div className={styles.emptyStateContent}>
+              <div className={styles.emptyStateIcon}>
+                <Icon size={48}>add_photo_alternate</Icon>
+              </div>
+              <p className={styles.emptyStateTitle}>Agregá una portada</p>
+              <p className={styles.emptyStateSubtitle}>
+                Las portadas hacen que tu negocio se vea más profesional. Puedes subir hasta 3
+                imágenes
+              </p>
+              <button className={styles.emptyStateButton} onClick={handleUploadClick} type="button">
+                Subir portada
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Owner Menu (solo si hay imágenes) ────────────── */}
+        {isOwner && !isEditing && business && images.length > 0 && (
           <div className={styles.menuContainer}>
             <IconButton id="hero-menu-trigger" onClick={handleMenuClick} suppressHydrationWarning>
               <md-icon suppressHydrationWarning>more_vert</md-icon>
@@ -254,10 +273,7 @@ export default function Hero({
         <input
           type="file"
           ref={fileInputRef}
-          onChange={(e) => {
-            console.warn('[Hero] input onChange triggered');
-            handleFileChange(e);
-          }}
+          onChange={(e) => handleFileChange(e)}
           accept="image/*"
           style={{ display: 'none' }}
           aria-label="Subir publicidad"

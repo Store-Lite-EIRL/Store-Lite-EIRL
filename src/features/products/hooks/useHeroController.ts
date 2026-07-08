@@ -46,9 +46,10 @@ async function processHeroImage(
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   const img = new Image();
-  img.src = backgroundImage;
-  await new Promise((resolve) => {
-    img.onload = resolve;
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error('No se pudo cargar la imagen'));
+    img.src = backgroundImage;
   });
 
   const containerWidth = heroRef.offsetWidth;
@@ -208,11 +209,23 @@ export function useHeroController({ business }: HeroControllerParams) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const url = URL.createObjectURL(file);
-    setImages((prev) => [...prev, url]);
-    setActiveSlide(images.length); // va al nuevo slide
-    setIsEditing(true);
-    setPosition({ x: 0, y: 0 });
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      setImages((prev) => [...prev, dataUrl]);
+      setActiveSlide(images.length);
+      setIsEditing(true);
+      setPosition({ x: 0, y: 0 });
+    };
+    reader.onerror = () => {
+      setSnackbar({
+        open: true,
+        description: 'Error al leer la imagen',
+        color: 'error',
+        icon: 'error',
+      });
+    };
+    reader.readAsDataURL(file);
   };
 
   // ─── Drag positioning ────────────────────────────────────
@@ -246,9 +259,9 @@ export function useHeroController({ business }: HeroControllerParams) {
     const targetIndex = index ?? activeSlide;
     const url = images[targetIndex];
 
-    // Imagen local (blob, aún no subida) → solo del estado
-    if (url.startsWith('blob:')) {
-      URL.revokeObjectURL(url);
+    // Imagen local (blob o data-url, aún no subida) → solo del estado
+    if (url.startsWith('blob:') || url.startsWith('data:')) {
+      if (url.startsWith('blob:')) URL.revokeObjectURL(url);
       setImages((prev) => prev.filter((_, i) => i !== targetIndex));
       if (targetIndex <= activeSlide && activeSlide > 0) {
         setActiveSlide((prev) => prev - 1);
@@ -389,15 +402,22 @@ export function useHeroController({ business }: HeroControllerParams) {
   const handleSave = async () => {
     if (!business || !heroRef.current) return;
 
-    // Buscar la imagen local (blob) activa para procesar
+    // Buscar la imagen local (blob o data-url) activa para procesar
     const editingImage = images[activeSlide];
-    if (!editingImage || !editingImage.startsWith('blob:')) return;
+    if (!editingImage || (!editingImage.startsWith('blob:') && !editingImage.startsWith('data:')))
+      return;
 
     setIsSaving(true);
     try {
       const blob = await processHeroImage(editingImage, heroRef.current, position);
       if (!blob) {
         setIsSaving(false);
+        setSnackbar({
+          open: true,
+          description: 'Error al procesar la imagen. Probá con otro archivo.',
+          color: 'error',
+          icon: 'error',
+        });
         return;
       }
 
@@ -419,6 +439,12 @@ export function useHeroController({ business }: HeroControllerParams) {
       uploadCover(blob, localUrl);
     } catch {
       setIsSaving(false);
+      setSnackbar({
+        open: true,
+        description: 'Error al procesar la imagen. Probá con otro archivo.',
+        color: 'error',
+        icon: 'error',
+      });
     }
   };
 
