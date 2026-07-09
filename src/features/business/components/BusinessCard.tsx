@@ -19,6 +19,7 @@ interface BusinessCardProps {
     storeType: string | null;
     description: string | null;
     logoUrl?: string | null;
+    taxId?: string | null;
     planType?: string | null;
     isTeam?: boolean;
   };
@@ -154,12 +155,14 @@ export default function BusinessCard({ biz, onDelete, onEdit, index = 0 }: Busin
             </div>
             <div className={styles.nameWrapper}>
               <h2 className={styles.businessName}>{biz.name}</h2>
-              <div className={styles.rucWrapper}>
-                <Icon size={14} className={styles.rucIcon}>
-                  badge
-                </Icon>
-                <span className={styles.rucText}>RUC: 20******123</span>
-              </div>
+              {biz.taxId && (
+                <div className={styles.rucWrapper}>
+                  <Icon size={14} className={styles.rucIcon}>
+                    badge
+                  </Icon>
+                  <span className={styles.rucText}>RUC: {biz.taxId}</span>
+                </div>
+              )}
             </div>
           </div>
 
