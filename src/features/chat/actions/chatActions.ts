@@ -293,8 +293,6 @@ export async function fetchChatSessions(businessId: string) {
     const sessions = rawSessions;
 
     return { success: true, sessions };
-
-    return { success: true, sessions };
   } catch (error) {
     console.error('Error fetching chat sessions:', error);
     return { success: false, error: 'No se pudo cargar las sesiones de chat', sessions: [] };

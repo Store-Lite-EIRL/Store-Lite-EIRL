@@ -313,7 +313,7 @@ export function ChatWindow({
                 </span>
               )}
               {session.isGoogleAuth && (
-                <span className={styles.verifiedBadge} title="Verificado con Google">
+                <span className={styles.verifiedBadge} title="Google Verified">
                   <Icon size={14}>verified</Icon>
                 </span>
               )}
