@@ -175,6 +175,21 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
     }
   }
 
+  // 🔒 SECURITY: Server-side Google customer pre-auth.
+  // If the logged-in user's Supabase ID matches the order's stored
+  // Google authId, mark the request as serverPreAuth so OrderAuthGate
+  // can skip the client-side gate entirely — no race conditions, no
+  // localStorage dependency for Google-authenticated customers.
+  let serverPreAuth = false;
+  if (user && order.metadata) {
+    const metadata = order.metadata as Record<string, unknown> | null;
+    const customerAuth = metadata?.customerAuth as Record<string, unknown> | null;
+    const storedAuthId = customerAuth?.authId as string | undefined;
+    if (storedAuthId && storedAuthId === user.id) {
+      serverPreAuth = true;
+    }
+  }
+
   const isPickup = order.shippingType?.toLowerCase() === 'recojo';
 
   // Seller delay warning: order stuck in PREPARING_ORDER for more than 5 days
@@ -454,6 +469,7 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
       token={token}
       businessName={order.business.name}
       orderNumber={order.orderNumber || ''}
+      serverPreAuth={serverPreAuth}
     >
       <div className="order-root">
         <OrderRealtimeHandler orderId={order.id} />
@@ -1614,7 +1630,7 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
                               <Icon size={14} style={{ color: 'var(--md-sys-color-primary)' }}>
                                 verified
                               </Icon>
-                              Verificado con Google
+                              Google Verified
                             </span>
                             <span style={{ fontSize: '0.75rem', opacity: 0.6, display: 'block' }}>
                               {googleName || googleEmail || 'Cuenta verificada'}

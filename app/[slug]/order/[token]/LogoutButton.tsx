@@ -14,6 +14,14 @@ export default function LogoutButton({
   const router = useRouter();
 
   const handleLogout = () => {
+    // Set logout intent in BOTH sessionStorage and localStorage.
+    // sessionStorage: prevents auto-auth in the same tab (immediate).
+    // localStorage:  persists across tab closes — without it, opening
+    //                a new tab would bypass the gate via serverPreAuth.
+    // The marker expires after 5 minutes to avoid stale locks.
+    const marker = JSON.stringify({ token, expiresAt: Date.now() + 5 * 60 * 1000 });
+    sessionStorage.setItem('order_logout_intent', token);
+    localStorage.setItem('order_logout_intent', marker);
     localStorage.removeItem(`order_session_${token}`);
     router.push(getBusinessPath(businessSlug));
   };

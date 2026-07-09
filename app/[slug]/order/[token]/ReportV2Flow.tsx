@@ -5,6 +5,21 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { reportIssueV2 } from './actions';
 import './FlowModals.css';
+import type { CallerProof } from './types';
+
+function getCallerProof(token: string): CallerProof | undefined {
+  try {
+    const raw = localStorage.getItem(`order_session_${token}`);
+    if (!raw) return undefined;
+    const session = JSON.parse(raw);
+    const proof: CallerProof = {};
+    if (typeof session.dni === 'string') proof.dni = session.dni;
+    if (typeof session.authId === 'string') proof.authId = session.authId;
+    return proof.dni || proof.authId ? proof : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 interface ReportV2FlowProps {
   paymentId: string;
@@ -37,7 +52,12 @@ export default function ReportV2Flow({ paymentId, trackingToken }: ReportV2FlowP
 
     setState('loading');
     try {
-      const result = await reportIssueV2(paymentId, trackingToken, reason);
+      const result = await reportIssueV2(
+        paymentId,
+        trackingToken,
+        reason,
+        getCallerProof(trackingToken),
+      );
       if (result.success) {
         setState('success');
         router.refresh();
