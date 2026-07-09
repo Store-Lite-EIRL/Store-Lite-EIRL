@@ -8,6 +8,8 @@ interface OrderCompletedEmailProps {
   date: string;
   trackingUrl: string;
   customerName?: string;
+  customerDni?: string;
+  paymentMethod?: string;
 }
 
 export function OrderCompletedEmail({
@@ -16,6 +18,8 @@ export function OrderCompletedEmail({
   date,
   trackingUrl,
   customerName,
+  customerDni,
+  paymentMethod,
 }: OrderCompletedEmailProps) {
   return (
     <Layout previewText="Tu pedido ha sido completado" businessName={businessName}>
@@ -52,37 +56,113 @@ export function OrderCompletedEmail({
           margin: '0 0 20px',
         }}
       >
-        <Text
+        {/* Order number + date header */}
+        <div
           style={{
-            fontSize: '11px',
-            color: '#a1a1aa',
-            textTransform: 'uppercase',
-            letterSpacing: '1px',
-            fontWeight: '600',
-            margin: '0 0 4px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: '16px',
           }}
         >
-          Nro. de orden
-        </Text>
-        <Text
-          style={{
-            fontSize: '20px',
-            color: '#18181b',
-            fontWeight: '700',
-            margin: '0 0 2px',
-          }}
-        >
-          {orderNumber}
-        </Text>
-        <Text
-          style={{
-            fontSize: '13px',
-            color: '#71717a',
-            margin: '0',
-          }}
-        >
-          {date}
-        </Text>
+          <div>
+            <Text
+              style={{
+                fontSize: '11px',
+                color: '#a1a1aa',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                fontWeight: '600',
+                margin: '0 0 4px',
+              }}
+            >
+              Nro. de orden
+            </Text>
+            <Text
+              style={{
+                fontSize: '20px',
+                color: '#18181b',
+                fontWeight: '700',
+                margin: '0',
+              }}
+            >
+              {orderNumber}
+            </Text>
+          </div>
+          <Text
+            style={{
+              fontSize: '13px',
+              color: '#71717a',
+              margin: '0',
+              textAlign: 'right',
+            }}
+          >
+            {date}
+          </Text>
+        </div>
+
+        {/* DNI + Payment method */}
+        {(customerDni || paymentMethod) && (
+          <>
+            <div style={{ borderTop: '1px dashed #d4d4d8', margin: '16px 0' }} />
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <tbody>
+                {customerDni && (
+                  <tr>
+                    <td
+                      style={{
+                        fontSize: '12px',
+                        color: '#71717a',
+                        padding: '0 0 6px',
+                        fontWeight: '400',
+                        width: '50%',
+                      }}
+                    >
+                      DNI del comprador
+                    </td>
+                    <td
+                      style={{
+                        fontSize: '13px',
+                        color: '#18181b',
+                        padding: '0 0 6px',
+                        fontWeight: '600',
+                        textAlign: 'right',
+                      }}
+                    >
+                      {customerDni}
+                    </td>
+                  </tr>
+                )}
+                {paymentMethod && (
+                  <tr>
+                    <td
+                      style={{
+                        fontSize: '12px',
+                        color: '#71717a',
+                        padding: '0',
+                        fontWeight: '400',
+                      }}
+                    >
+                      Método de pago
+                    </td>
+                    <td
+                      style={{
+                        fontSize: '13px',
+                        color: '#18181b',
+                        padding: '0',
+                        fontWeight: '600',
+                        textAlign: 'right',
+                        textTransform: 'capitalize',
+                      }}
+                    >
+                      {paymentMethod}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </>
+        )}
       </Section>
 
       {/* ── Button ── */}

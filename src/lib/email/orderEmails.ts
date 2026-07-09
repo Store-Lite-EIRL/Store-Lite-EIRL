@@ -27,6 +27,19 @@ function formatTotal(amount: string | null | undefined): string {
   return `S/ ${num.toFixed(2)}`;
 }
 
+function formatPaymentMethod(method: string | null | undefined): string {
+  if (!method) return '';
+  const map: Record<string, string> = {
+    card: 'Tarjeta',
+    yape: 'Yape',
+    plin: 'Plin',
+    pago_efectivo: 'Pago Efectivo',
+    billetera_movil: 'Billetera Móvil',
+    cuotealo: 'Cuotealo',
+  };
+  return map[method] || method;
+}
+
 // ─── Send order confirmation email ───
 
 export async function sendOrderConfirmationEmail(
@@ -37,6 +50,10 @@ export async function sendOrderConfirmationEmail(
     amount?: string | null;
     productId?: string | null;
     createdAt?: Date | string | null;
+    buyerDni?: string | null;
+    paymentMethod?: string | null;
+    orderNumber?: string | null;
+    buyerName?: string | null;
   },
   businessId: string,
 ): Promise<void> {
@@ -64,16 +81,20 @@ export async function sendOrderConfirmationEmail(
   const trackingUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/${business.slug}/order/${payment.trackingToken || payment.id}`;
   const date = formatDate(payment.createdAt);
   const total = formatTotal(payment.amount);
+  const displayOrderNumber = payment.orderNumber || payment.id.slice(0, 8).toUpperCase();
 
   try {
     const html = await render(
       OrderConfirmationEmail({
         businessName: business.name,
-        orderNumber: payment.id.slice(0, 8).toUpperCase(),
+        orderNumber: displayOrderNumber,
         date,
         productSummary: productTitle,
         total,
         trackingUrl,
+        customerName: payment.buyerName || undefined,
+        customerDni: payment.buyerDni || undefined,
+        paymentMethod: formatPaymentMethod(payment.paymentMethod),
       }),
     );
 
@@ -95,6 +116,10 @@ export async function sendOrderCompletedEmail(
     id: string;
     trackingToken?: string | null;
     createdAt?: Date | string | null;
+    buyerDni?: string | null;
+    paymentMethod?: string | null;
+    orderNumber?: string | null;
+    buyerName?: string | null;
   },
   businessId: string,
 ): Promise<void> {
@@ -111,14 +136,18 @@ export async function sendOrderCompletedEmail(
 
   const trackingUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/${business.slug}/order/${payment.trackingToken || payment.id}`;
   const date = formatDate(payment.createdAt);
+  const displayOrderNumber = payment.orderNumber || payment.id.slice(0, 8).toUpperCase();
 
   try {
     const html = await render(
       OrderCompletedEmail({
         businessName: business.name,
-        orderNumber: payment.id.slice(0, 8).toUpperCase(),
+        orderNumber: displayOrderNumber,
         date,
         trackingUrl,
+        customerName: payment.buyerName || undefined,
+        customerDni: payment.buyerDni || undefined,
+        paymentMethod: formatPaymentMethod(payment.paymentMethod),
       }),
     );
 
