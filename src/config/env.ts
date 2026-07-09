@@ -21,6 +21,11 @@ export const env = {
   twilioAccountSid: process.env.TWILIO_ACCOUNT_SID!,
   twilioAuthToken: process.env.TWILIO_AUTH_TOKEN!,
   twilioWhatsAppNumber: process.env.TWILIO_WHATSAPP_NUMBER!,
+  // JSON.pe SMS — order notifications to customers
+  jsonpeSmsToken: process.env.JSONPE_SMS_TOKEN!,
+  // Resend — transactional emails (Server-side only)
+  resendApiKey: process.env.RESEND_API_KEY!,
+  resendFromEmail: process.env.RESEND_FROM_EMAIL!,
   // OTP Hashing (Server-side only)
   // Usado como HMAC secret para hashear OTPs antes de almacenarlos en DB.
   // En producción, debe ser un string aleatorio fuerte. Si no se configura,
@@ -36,6 +41,11 @@ if (!env.supabaseUrl || !env.supabaseAnonKey) {
 // Twilio validation
 if (!env.twilioAccountSid || !env.twilioAuthToken || !env.twilioWhatsAppNumber) {
   console.warn('Twilio environment variables are missing. WhatsApp OTP will not work.');
+}
+
+// Resend validation
+if (!env.resendApiKey || !env.resendFromEmail) {
+  console.warn('Resend environment variables are missing. Email notifications will not work.');
 }
 
 // OTP hash secret: warn if using dev fallback

@@ -5,9 +5,11 @@
 // ──────────────────────────────────────────
 
 import { db } from '@/core/database/client';
-import { payments } from '@/core/database/schema';
+import { businesses, payments } from '@/core/database/schema';
 import { and, eq } from 'drizzle-orm';
 
+import { sendOrderCompletedEmail } from '@/lib/email/orderEmails';
+import { sendOrderStatusSms } from '@/lib/twilio/orderSms';
 import { generatePickupCode } from './orderPickup';
 import {
   ForbiddenActorError,
@@ -158,6 +160,11 @@ export async function transition(
       metadata: { fromStatus, toStatus: input.toStatus, ...metadata },
     });
 
+    // 7. Fire-and-forget: notify customer via SMS (no await)
+    notifyOrderSms(updated, input.toStatus, input.actor.type).catch((err) => {
+      console.error('[OrderService] SMS notification failed:', err);
+    });
+
     return { success: true, payment: updated, eventId: event.id };
   } catch (error) {
     if (
@@ -169,6 +176,44 @@ export async function transition(
     }
     console.error('[OrderService.transition] Error:', error);
     return { success: false, error: 'Error al actualizar el estado del pedido' };
+  }
+}
+
+// ─── SMS notification helper (fire-and-forget) ───
+
+async function notifyOrderSms(
+  payment: typeof payments.$inferSelect,
+  toStatus: OrderStatusV2,
+  actorType: string,
+): Promise<void> {
+  // Skip SMS for system/customer actions (avoid duplicate notifications)
+  // Focus on seller-initiated transitions where the customer needs to know
+  if (actorType === 'system') return;
+
+  if (!payment.buyerPhone) return;
+  if (!payment.trackingToken || !payment.businessId) return;
+
+  // Read business to get slug and name
+  const business = await db.query.businesses.findFirst({
+    where: eq(businesses.id, payment.businessId),
+    columns: { slug: true, name: true },
+  });
+
+  if (!business) return;
+
+  await sendOrderStatusSms({
+    toStatus,
+    buyerPhone: payment.buyerPhone,
+    businessSlug: business.slug,
+    businessName: business.name,
+    trackingToken: payment.trackingToken,
+  });
+
+  // Send email notification for completed orders
+  if (toStatus === ORDER_STATUS_V2.COMPLETED) {
+    sendOrderCompletedEmail(payment, payment.businessId).catch((err) => {
+      console.error('[OrderService] Completion email error:', err);
+    });
   }
 }
 
