@@ -21,9 +21,11 @@ export const env = {
   twilioAccountSid: process.env.TWILIO_ACCOUNT_SID!,
   twilioAuthToken: process.env.TWILIO_AUTH_TOKEN!,
   twilioWhatsAppNumber: process.env.TWILIO_WHATSAPP_NUMBER!,
-  // Twilio SMS numbers (registered Claro chips in Peru)
-  twilioSmsCustomerNumber: process.env.TWILIO_SMS_NUMBER_CUSTOMER!,
-  twilioSmsBusinessNumber: process.env.TWILIO_SMS_NUMBER_BUSINESS!,
+  // JSON.pe SMS — order notifications to customers
+  jsonpeSmsToken: process.env.JSONPE_SMS_TOKEN!,
+  // Resend — transactional emails (Server-side only)
+  resendApiKey: process.env.RESEND_API_KEY!,
+  resendFromEmail: process.env.RESEND_FROM_EMAIL!,
   // OTP Hashing (Server-side only)
   // Usado como HMAC secret para hashear OTPs antes de almacenarlos en DB.
   // En producción, debe ser un string aleatorio fuerte. Si no se configura,
@@ -41,8 +43,9 @@ if (!env.twilioAccountSid || !env.twilioAuthToken || !env.twilioWhatsAppNumber) 
   console.warn('Twilio environment variables are missing. WhatsApp OTP will not work.');
 }
 
-if (!env.twilioSmsCustomerNumber) {
-  console.warn('TWILIO_SMS_NUMBER_CUSTOMER not set. Order SMS notifications will not work.');
+// Resend validation
+if (!env.resendApiKey || !env.resendFromEmail) {
+  console.warn('Resend environment variables are missing. Email notifications will not work.');
 }
 
 // OTP hash secret: warn if using dev fallback

@@ -8,6 +8,8 @@ import { db } from '@/core/database/client';
 import { businesses, payments } from '@/core/database/schema';
 import { and, eq } from 'drizzle-orm';
 
+import { sendOrderCompletedEmail } from '@/lib/email/orderEmails';
+import { sendOrderStatusSms } from '@/lib/twilio/orderSms';
 import { generatePickupCode } from './orderPickup';
 import {
   ForbiddenActorError,
@@ -16,7 +18,6 @@ import {
 } from './orderStateMachine';
 import type { OrderStatusV2, TransitionInput } from './orderStatus';
 import { ORDER_STATUS_V2 } from './orderStatus';
-import { sendOrderStatusSms } from '@/lib/twilio/orderSms';
 import { mapToNewStatus } from './orderStatusMapping';
 import { recordEvent } from './orderTimeline';
 import type { OrderTimelineEventType } from './orderTypes';
@@ -207,6 +208,13 @@ async function notifyOrderSms(
     businessName: business.name,
     trackingToken: payment.trackingToken,
   });
+
+  // Send email notification for completed orders
+  if (toStatus === ORDER_STATUS_V2.COMPLETED) {
+    sendOrderCompletedEmail(payment, payment.businessId).catch((err) => {
+      console.error('[OrderService] Completion email error:', err);
+    });
+  }
 }
 
 // ─── Helper: map from→to to a timeline event type ───

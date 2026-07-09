@@ -16,9 +16,10 @@ import {
 import { completeIdempotencyKey, reserveIdempotencyKey } from '@/core/payments/idempotency';
 import { paymentRateLimiter } from '@/core/payments/rateLimiter';
 import { generateTrackingToken } from '@/core/utils/trackingToken';
+import { sendOrderConfirmationEmail } from '@/lib/email/orderEmails';
 import { notifyLowStock, notifyNewOrder, notifyOutOfStock } from '@/lib/notifications';
-import { sendOrderStatusSms } from '@/lib/twilio/orderSms';
 import { createClient } from '@/lib/supabase/server';
+import { sendOrderStatusSms } from '@/lib/twilio/orderSms';
 import type { CulqiChargeResponse } from '@/types/culqi';
 import { decrypt } from '@/utils/crypto';
 import { eq, sql } from 'drizzle-orm';
@@ -441,5 +442,10 @@ async function notifyOrderPaymentSms(
     businessSlug: business.slug,
     businessName: business.name,
     trackingToken: payment.trackingToken,
+  });
+
+  // Also send confirmation email
+  sendOrderConfirmationEmail(payment, businessId).catch((emailErr) => {
+    console.error('[charge] Confirmation email error:', emailErr);
   });
 }

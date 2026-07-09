@@ -3,6 +3,12 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
 
+// Prevent Resend client from blowing up during module import (no API key in test env)
+vi.mock('@/lib/email/orderEmails', () => ({
+  sendOrderConfirmationEmail: vi.fn(),
+  sendOrderCompletedEmail: vi.fn(),
+}));
+
 const mockDb = {
   _selectFrom: vi.fn(),
   _selectWhere: vi.fn(),

@@ -5,19 +5,17 @@
 
 import { env } from '@/config/env';
 import { ORDER_STATUS_V2, type OrderStatusV2 } from '@/core/orders/orderStatus';
-import { sendSmsToCustomer } from './client';
+import { sendSms } from '../sms/jsonpe';
 
 // ─── Message templates per status ───
 
 const STATUS_MESSAGES: Record<string, (businessName: string, trackingUrl: string) => string> = {
-  [ORDER_STATUS_V2.PAID]: (_name, url) =>
-    `✅ ¡Compra confirmada! Seguí tu pedido en: ${url}`,
+  [ORDER_STATUS_V2.PAID]: (_name, url) => `✅ ¡Compra confirmada! Seguí tu pedido en: ${url}`,
   [ORDER_STATUS_V2.PREPARING_ORDER]: (name, url) =>
     `📦 ${name} está preparando tu pedido. Seguilo en: ${url}`,
   [ORDER_STATUS_V2.READY_FOR_PICKUP]: (name, url) =>
     `📦 Tu pedido está listo para recoger en ${name}. Más info: ${url}`,
-  [ORDER_STATUS_V2.PICKED_UP]: (_name, _url) =>
-    `✅ Recogiste tu pedido. ¡Gracias por tu compra!`,
+  [ORDER_STATUS_V2.PICKED_UP]: (_name, _url) => `✅ Recogiste tu pedido. ¡Gracias por tu compra!`,
   [ORDER_STATUS_V2.WAITING_CUSTOMER_CONFIRMATION]: (name, url) =>
     `📬 ${name} registró el envío. Confirmá que lo recibiste en: ${url}`,
   [ORDER_STATUS_V2.READY_TO_SHIP]: (name, url) =>
@@ -26,8 +24,7 @@ const STATUS_MESSAGES: Record<string, (businessName: string, trackingUrl: string
     `🚚 Tu pedido de ${name} está en tránsito. Tracking: ${url}`,
   [ORDER_STATUS_V2.DELIVERED]: (name, url) =>
     `✅ Pedido entregado por ${name}. Confirmá en: ${url}`,
-  [ORDER_STATUS_V2.COMPLETED]: (_name, _url) =>
-    `⭐ ¡Pedido finalizado! Gracias por tu compra.`,
+  [ORDER_STATUS_V2.COMPLETED]: (_name, _url) => `⭐ ¡Pedido finalizado! Gracias por tu compra.`,
   [ORDER_STATUS_V2.ISSUE_REPORTED]: (name, url) =>
     `ℹ️ Reportaste un problema con tu pedido de ${name}. El vendedor se comunicará. Seguilo en: ${url}`,
   [ORDER_STATUS_V2.CANCELLED]: (name, _url) =>
@@ -73,7 +70,7 @@ export async function sendOrderStatusSms(params: SendOrderSmsParams): Promise<vo
   const message = template(businessName, trackingUrl);
 
   try {
-    await sendSmsToCustomer(buyerPhone, message);
+    await sendSms(buyerPhone, message);
     console.log(`[OrderSms] SMS sent for ${toStatus} to ${buyerPhone}`);
   } catch (error) {
     console.error(`[OrderSms] Failed to send SMS for ${toStatus}:`, error);
