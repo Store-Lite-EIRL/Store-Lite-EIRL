@@ -61,7 +61,7 @@ export async function GET(request: Request) {
 
     // Redirect based on user state
     if (hasBusinesses) {
-      return NextResponse.redirect(`${origin}/list-business`);
+      return NextResponse.redirect(`${origin}/list-business?fresh_auth=true`);
     } else {
       return NextResponse.redirect(`${origin}/onboarding`);
     }
