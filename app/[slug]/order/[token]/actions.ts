@@ -4,7 +4,7 @@ import { db } from '@/core/database/client';
 import { businesses, chatSessions, messages, payments } from '@/core/database/schema';
 import { transition } from '@/core/orders/orderService';
 import { ORDER_STATUS_V2 } from '@/core/orders/orderStatus';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, isNull } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import type { CallerProof } from './types';
@@ -244,7 +244,9 @@ export async function syncChatSession(params: {
   paymentId: string;
 }) {
   try {
-    const dniGuestId = `dni-${params.dni}`;
+    // Null DNI guard: si no hay DNI, usar un guestId único por paymentId
+    // para evitar que todas las órdenes sin DNI compartan sesión
+    const dniGuestId = params.dni ? `dni-${params.dni}` : `guest-${params.paymentId}`;
 
     // 1. Buscar sesión activa vinculada EXACTAMENTE a este paymentId
     const exactSession = await db.query.chatSessions.findFirst({
@@ -260,20 +262,24 @@ export async function syncChatSession(params: {
       return { success: true, sessionId: exactSession.id, guestId: exactSession.guestId };
     }
 
-    // 2. Buscar sesión activa del mismo buyer (guestId) para REUSARLA
-    //    y mantener el historial del chat pre-compra
+    // 2. Buscar sesión activa del mismo buyer SIN paymentId (pre-compra)
+    //    para REUSARLA y mantener el historial del chat pre-compra.
+    //    ⚠️ Solo reusamos sesiones con paymentId IS NULL — si ya tiene
+    //    un paymentId asignado, pertenece a OTRA orden y NO debe reusarse.
     const existingSession = await db.query.chatSessions.findFirst({
       where: and(
         eq(chatSessions.guestId, dniGuestId),
         eq(chatSessions.businessId, params.businessId),
         eq(chatSessions.status, 'active'),
+        isNull(chatSessions.paymentId),
       ),
       orderBy: [desc(chatSessions.createdAt)],
     });
 
     if (existingSession) {
-      // Reusamos la sesión existente: solo vinculamos el paymentId
+      // Reusamos la sesión existente: vinculamos el paymentId
       // así el cliente ve el historial completo del chat pre-compra
+      // (solo ocurre para sesiones sin paymentId, es decir, pre-compra)
       await db
         .update(chatSessions)
         .set({ paymentId: params.paymentId, updatedAt: new Date() })

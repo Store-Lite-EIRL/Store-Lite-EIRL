@@ -1270,7 +1270,7 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
               paymentId={order.id}
               buyerEmail={order.buyerEmail}
               buyerName={null}
-              buyerDni={order.buyerDni!}
+              buyerDni={order.buyerDni ?? ''}
               trackingToken={token}
             />
           </div>

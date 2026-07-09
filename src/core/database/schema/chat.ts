@@ -48,6 +48,7 @@ export const messages = pgTable(
     sessionId: uuid('session_id')
       .notNull()
       .references(() => chatSessions.id, { onDelete: 'cascade' }),
+    paymentId: uuid('payment_id').references(() => payments.id, { onDelete: 'set null' }),
     content: text('content').notNull(),
     isFromStore: boolean('is_from_store').default(false),
     isRead: boolean('is_read').default(false),
@@ -55,6 +56,7 @@ export const messages = pgTable(
   },
   (table) => ({
     sessionIdIdx: index('idx_messages_session_id').on(table.sessionId),
+    paymentIdIdx: index('idx_messages_payment_id').on(table.paymentId),
     createdAtIdx: index('idx_messages_created_at').on(table.createdAt),
   }),
 );

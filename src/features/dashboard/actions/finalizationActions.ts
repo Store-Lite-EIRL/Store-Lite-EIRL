@@ -12,7 +12,7 @@ import {
 } from '@/core/orders/orderStatus';
 import { createBusinessNotification } from '@/lib/notifications';
 import { createClient as createServerClient } from '@/lib/supabase/server';
-import { and, desc, eq, lt } from 'drizzle-orm';
+import { and, eq, lt } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
 async function getAuthenticatedUserId(): Promise<string | null> {
@@ -189,28 +189,21 @@ export async function requestFinalization(
     });
 
     // 8. Send automatic chat message to the customer
-    if (payment.buyerDni) {
-      const guestId = `dni-${payment.buyerDni}`;
-      const session = await db.query.chatSessions.findFirst({
-        where: and(
-          eq(chatSessions.guestId, guestId),
-          eq(chatSessions.businessId, businessId),
-          eq(chatSessions.status, 'active'),
-        ),
-        orderBy: [desc(chatSessions.createdAt)],
-      });
+    // Buscar por paymentId (sesión aislada de esta orden), no por DNI
+    const chatSession = await db.query.chatSessions.findFirst({
+      where: and(eq(chatSessions.paymentId, payment.id), eq(chatSessions.status, 'active')),
+    });
 
-      if (session) {
-        await db.insert(messages).values({
-          sessionId: session.id,
-          isFromStore: true,
-          content: `⚠️ EL VENDEDOR HA SOLICITADO FINALIZAR LA COMPRA. 
+    if (chatSession) {
+      await db.insert(messages).values({
+        sessionId: chatSession.id,
+        isFromStore: true,
+        content: `⚠️ EL VENDEDOR HA SOLICITADO FINALIZAR LA COMPRA. 
 
 Si ya recibiste tu pedido correctamente, por favor confírmalo en el portal de seguimiento. 
 
 Recuerda que si no respondes en 3 días (${deadline.toLocaleDateString('es-PE')}), el pedido se finalizará automáticamente.`,
-        });
-      }
+      });
     }
 
     revalidatePath(`/${businessId}/dashboard`, 'page');
@@ -332,24 +325,17 @@ export async function confirmFinalization(
     });
 
     // 4. Send chat message
-    if (payment.buyerDni) {
-      const guestId = `dni-${payment.buyerDni}`;
-      const session = await db.query.chatSessions.findFirst({
-        where: and(
-          eq(chatSessions.guestId, guestId),
-          eq(chatSessions.businessId, payment.businessId),
-          eq(chatSessions.status, 'active'),
-        ),
-        orderBy: [desc(chatSessions.createdAt)],
-      });
+    // Buscar por paymentId (sesión aislada de esta orden), no por DNI
+    const chatSession = await db.query.chatSessions.findFirst({
+      where: and(eq(chatSessions.paymentId, payment.id), eq(chatSessions.status, 'active')),
+    });
 
-      if (session) {
-        await db.insert(messages).values({
-          sessionId: session.id,
-          isFromStore: false, // From customer
-          content: `✅ HE CONFIRMADO LA RECEPCIÓN DEL PEDIDO. Todo conforme.`,
-        });
-      }
+    if (chatSession) {
+      await db.insert(messages).values({
+        sessionId: chatSession.id,
+        isFromStore: false, // From customer
+        content: `✅ HE CONFIRMADO LA RECEPCIÓN DEL PEDIDO. Todo conforme.`,
+      });
     }
 
     const business = await db.query.businesses.findFirst({
@@ -469,24 +455,17 @@ export async function rejectFinalization(
     });
 
     // 4. Send chat message
-    if (payment.buyerDni) {
-      const guestId = `dni-${payment.buyerDni}`;
-      const session = await db.query.chatSessions.findFirst({
-        where: and(
-          eq(chatSessions.guestId, guestId),
-          eq(chatSessions.businessId, payment.businessId),
-          eq(chatSessions.status, 'active'),
-        ),
-        orderBy: [desc(chatSessions.createdAt)],
-      });
+    // Buscar por paymentId (sesión aislada de esta orden), no por DNI
+    const chatSession = await db.query.chatSessions.findFirst({
+      where: and(eq(chatSessions.paymentId, payment.id), eq(chatSessions.status, 'active')),
+    });
 
-      if (session) {
-        await db.insert(messages).values({
-          sessionId: session.id,
-          isFromStore: false, // From customer
-          content: `❌ HE REPORTADO UN PROBLEMA: ${reason}`,
-        });
-      }
+    if (chatSession) {
+      await db.insert(messages).values({
+        sessionId: chatSession.id,
+        isFromStore: false, // From customer
+        content: `❌ HE REPORTADO UN PROBLEMA: ${reason}`,
+      });
     }
 
     const business = await db.query.businesses.findFirst({
@@ -589,24 +568,17 @@ export async function autoFinalizeExpiredPayments(): Promise<{
         });
 
         // 4. Send chat message
-        if (payment.buyerDni) {
-          const guestId = `dni-${payment.buyerDni}`;
-          const session = await db.query.chatSessions.findFirst({
-            where: and(
-              eq(chatSessions.guestId, guestId),
-              eq(chatSessions.businessId, payment.businessId),
-              eq(chatSessions.status, 'active'),
-            ),
-            orderBy: [desc(chatSessions.createdAt)],
-          });
+        // Buscar por paymentId (sesión aislada de esta orden), no por DNI
+        const chatSession = await db.query.chatSessions.findFirst({
+          where: and(eq(chatSessions.paymentId, payment.id), eq(chatSessions.status, 'active')),
+        });
 
-          if (session) {
-            await db.insert(messages).values({
-              sessionId: session.id,
-              isFromStore: true,
-              content: `⌛ PEDIDO FINALIZADO AUTOMÁTICAMENTE. Debido a la falta de respuesta en los últimos 3 días, el sistema ha dado por concluido este pedido.`,
-            });
-          }
+        if (chatSession) {
+          await db.insert(messages).values({
+            sessionId: chatSession.id,
+            isFromStore: true,
+            content: `⌛ PEDIDO FINALIZADO AUTOMÁTICAMENTE. Debido a la falta de respuesta en los últimos 3 días, el sistema ha dado por concluido este pedido.`,
+          });
         }
 
         processedCount++;
