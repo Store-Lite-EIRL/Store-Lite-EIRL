@@ -62,6 +62,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'www.yape.com.pe',
       },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
     ],
   },
 };

@@ -115,8 +115,9 @@ export default function OrderChatSection({
         },
         (payload: any) => {
           const m = payload.new;
-          // Client-side filter: solo mensajes de esta sesión
+          // Client-side filter: solo mensajes de esta sesión Y este payment
           if (String(m.session_id) !== sessionId) return;
+          if (String(m.payment_id) !== paymentId) return;
 
           // Saltar mensajes ya confirmados por server response (evitar duplicados)
           if (confirmedIdsRef.current.has(m.id)) return;
@@ -256,7 +257,7 @@ export default function OrderChatSection({
     setNewMessage('');
 
     try {
-      const result = await sendMessage({ sessionId, guestId, content: text });
+      const result = await sendMessage({ sessionId, guestId, paymentId, content: text });
 
       // Si el servidor responde con éxito, reemplazamos el mensaje temporal
       // con el real (el realtime de Supabase también lo hará, pero esto es fallback)

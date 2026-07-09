@@ -132,7 +132,7 @@ export function CheckoutPaymentStep({
                 whiteSpace: 'nowrap',
               }}
             >
-              <span style={{ fontSize: '14px' }}>✓</span> Verificado con Google
+              <span style={{ fontSize: '14px' }}>✓</span> Google Verified
             </span>
           )}
           {/* Badge cambiado: cuando el email no coincide con el de Google */}

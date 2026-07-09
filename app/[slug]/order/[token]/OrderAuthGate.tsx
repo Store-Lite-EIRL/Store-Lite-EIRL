@@ -10,6 +10,10 @@ interface OrderAuthGateProps {
   token: string;
   businessName: string;
   orderNumber: string;
+  /** When true, the server has already verified the user's identity
+   * (Google customer auth match) — skip the client-side auth gate entirely,
+   * unless a logout intent marker is present in sessionStorage. */
+  serverPreAuth?: boolean;
   children: React.ReactNode;
 }
 
@@ -19,6 +23,7 @@ export default function OrderAuthGate({
   token,
   businessName,
   orderNumber,
+  serverPreAuth = false,
   children,
 }: OrderAuthGateProps) {
   const searchParams = useSearchParams();
@@ -30,6 +35,16 @@ export default function OrderAuthGate({
   const [inputOrderNumber, setInputOrderNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Reset form fields when the user is kicked back to the auth gate
+  // (e.g. after logout, the gate re-renders but React keeps the stale state)
+  useEffect(() => {
+    if (isAuthenticated === false) {
+      setDni('');
+      setInputOrderNumber('');
+      setError(null);
+    }
+  }, [isAuthenticated]);
 
   const storageKey = `order_session_${token}`;
 
@@ -52,9 +67,52 @@ export default function OrderAuthGate({
     process.env.NEXT_PUBLIC_AUTH_ORIGIN ||
     (typeof window !== 'undefined' ? window.location.origin : '');
 
+  /**
+   * Check sessionStorage + localStorage for a valid logout intent
+   * matching this token. Returns true if a non-expired marker exists.
+   */
+  const hasLogoutIntent = useCallback((): boolean => {
+    // sessionStorage check (same-tab)
+    const ssIntent = sessionStorage.getItem('order_logout_intent');
+    if (ssIntent === token) return true;
+
+    // localStorage check (cross-tab / after tab close)
+    try {
+      const lsRaw = localStorage.getItem('order_logout_intent');
+      if (lsRaw) {
+        const parsed = JSON.parse(lsRaw);
+        if (parsed.token === token && parsed.expiresAt > Date.now()) {
+          return true;
+        }
+        // Expired or wrong token — clean up
+        localStorage.removeItem('order_logout_intent');
+      }
+    } catch {
+      localStorage.removeItem('order_logout_intent');
+    }
+
+    return false;
+  }, [token]);
+
+  /** Clear logout intent marker from both stores — call AFTER successful auth */
+  const clearLogoutIntent = useCallback(() => {
+    const intent = sessionStorage.getItem('order_logout_intent');
+    if (intent === token) {
+      sessionStorage.removeItem('order_logout_intent');
+    }
+    localStorage.removeItem('order_logout_intent');
+  }, [token]);
+
   // ─── Check for existing Supabase session (auto-link from checkout) ───
   useEffect(() => {
     const checkGoogleAuth = async () => {
+      // If there's a logout intent matching this token, SKIP auto-link.
+      // Checks both sessionStorage (same-tab) and localStorage (cross-tab).
+      if (hasLogoutIntent()) {
+        console.log('[OrderAuthGate] Logout intent present, skipping Google auto-link');
+        return;
+      }
+
       try {
         const {
           data: { session },
@@ -69,6 +127,7 @@ export default function OrderAuthGate({
               expiresAt: Date.now() + SESSION_TTL,
             };
             localStorage.setItem(storageKey, JSON.stringify(sessionData));
+            clearLogoutIntent();
             setIsAuthenticated(true);
           }
         }
@@ -94,6 +153,24 @@ export default function OrderAuthGate({
         storageKey,
       );
       console.log('[OrderAuthGate] searchParams:', Object.fromEntries(searchParams.entries()));
+
+      // 0. Server-side pre-auth: if page.tsx verified the user matches
+      //    the order's Google identity, skip client gate. BUT check for
+      //    logout intent first — explicit logout overrides serverPreAuth.
+      //    Uses hasLogoutIntent() which checks both sessionStorage and
+      //    localStorage (cross-tab persistence).
+      if (serverPreAuth && !hasLogoutIntent()) {
+        console.log('[OrderAuthGate] Server pre-auth active, bypassing gate');
+        setIsAuthenticated(true);
+        return;
+      }
+
+      // If there was a logout intent that matches THIS token, clear it
+      // and fall through to the full auth check below
+      if (hasLogoutIntent()) {
+        console.log('[OrderAuthGate] Logout intent found, clearing');
+        clearLogoutIntent();
+      }
 
       // 1. Verificar si hay sesión válida en LocalStorage
       const stored = localStorage.getItem(storageKey);
@@ -240,6 +317,7 @@ export default function OrderAuthGate({
           expiresAt: Date.now() + SESSION_TTL,
         };
         localStorage.setItem(storageKey, JSON.stringify(sessionData));
+        clearLogoutIntent();
         setIsAuthenticated(true);
         return;
       }
@@ -312,6 +390,7 @@ export default function OrderAuthGate({
           expiresAt: Date.now() + SESSION_TTL,
         };
         localStorage.setItem(storageKey, JSON.stringify(sessionData));
+        clearLogoutIntent();
         setIsAuthenticated(true);
       } else {
         setError('El DNI o N° de orden no coinciden con esta orden.');
@@ -832,7 +911,7 @@ export default function OrderAuthGate({
                     type="text"
                     value={inputOrderNumber}
                     onChange={(e) => setInputOrderNumber(e.target.value)}
-                    placeholder={orderNumber || 'Ej: ORD-001234'}
+                    placeholder="Ej: ORD-001234"
                     maxLength={30}
                     style={{
                       width: '100%',
@@ -852,6 +931,11 @@ export default function OrderAuthGate({
                     onBlur={(e) =>
                       (e.target.style.borderColor = 'var(--md-sys-color-outline-variant)')
                     }
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && googleOrderNumber.trim()) {
+                        handleGoogleOrderVerify();
+                      }
+                    }}
                   />
                 </div>
 

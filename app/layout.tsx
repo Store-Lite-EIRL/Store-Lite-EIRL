@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/shared/context/ThemeContext';
 import { CSPostHogProvider } from '@/shared/providers/PostHogProvider';
 import type { Metadata } from 'next';
 import { Google_Sans_Flex, Inter, Poppins, Roboto, Roboto_Mono } from 'next/font/google';
+import Script from 'next/script';
 import './globals.css';
 
 const google_sans_flex = Google_Sans_Flex({
@@ -96,9 +97,14 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
         />
+        {/* ⚡ Theme boot script — beforeInteractive: must be in <head> to avoid React hydration warning */}
+        <Script
+          id="theme-boot"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeBootScript }}
+        />
       </head>
       <body suppressHydrationWarning className="antialiased">
-        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
         <CSPostHogProvider>
           <ThemeProvider>
             <AuthProvider>

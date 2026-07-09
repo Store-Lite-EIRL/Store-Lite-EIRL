@@ -155,6 +155,7 @@ export async function sendMessage(data: {
   isFromStore?: boolean;
   guestId?: string;
   content: string;
+  paymentId?: string;
 }) {
   try {
     const actor = await resolveSessionActor(data.sessionId, data.guestId);
@@ -170,6 +171,7 @@ export async function sendMessage(data: {
       .insert(messages)
       .values({
         sessionId: data.sessionId,
+        paymentId: data.paymentId ?? null,
         isFromStore: actor.role === 'store',
         content: data.content,
       })
@@ -284,26 +286,11 @@ export async function fetchChatSessions(businessId: string) {
       },
     });
 
-    // Deduplicate: keep only the latest session per guestId
-    // Si un guest tiene varias sesiones, priorizar la que tiene paymentId (orden)
-    // sobre la más reciente sin orden, para que el vendedor vea el contexto de compra.
-    const seen = new Map<string, (typeof rawSessions)[number]>();
-    for (const session of rawSessions) {
-      const existing = seen.get(session.guestId);
-      if (!existing) {
-        seen.set(session.guestId, session);
-      } else if (session.paymentId && !existing.paymentId) {
-        // La nueva sesión TIENE orden y la existente NO → reemplazar
-        seen.set(session.guestId, session);
-      } else if (!session.paymentId && existing.paymentId) {
-        // La existente ya tiene orden, mantenerla
-        continue;
-      } else if (session.createdAt! > existing.createdAt!) {
-        // Ambas tienen (o ninguna) orden, quedarse con la más reciente
-        seen.set(session.guestId, session);
-      }
-    }
-    const sessions = Array.from(seen.values());
+    // ⚠️ No deduplicamos por guestId. Con la migración de aislamiento,
+    // cada orden tiene su propia sesión (paymentId) y un guestId distinto
+    // (dni-{dni} o guest-{paymentId}). Si dos sesiones comparten guestId
+    // es intencional (mismo comprador, órdenes separadas) — mostramos ambas.
+    const sessions = rawSessions;
 
     return { success: true, sessions };
   } catch (error) {

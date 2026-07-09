@@ -4,6 +4,21 @@ import { Icon } from '@/shared/components/ui';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { updateOrderStatus } from './actions';
+import type { CallerProof } from './types';
+
+function getCallerProof(token: string): CallerProof | undefined {
+  try {
+    const raw = localStorage.getItem(`order_session_${token}`);
+    if (!raw) return undefined;
+    const session = JSON.parse(raw);
+    const proof: CallerProof = {};
+    if (typeof session.dni === 'string') proof.dni = session.dni;
+    if (typeof session.authId === 'string') proof.authId = session.authId;
+    return proof.dni || proof.authId ? proof : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 interface ActionModalsProps {
   paymentId: string;
@@ -11,7 +26,11 @@ interface ActionModalsProps {
   orderNumber: string | null;
 }
 
-export default function ActionModals({ paymentId, trackingToken, orderNumber }: ActionModalsProps) {
+export default function ActionModals({
+  paymentId,
+  trackingToken,
+  orderNumber: _orderNumber,
+}: ActionModalsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [reportReason, setReportReason] = useState('');
@@ -19,7 +38,9 @@ export default function ActionModals({ paymentId, trackingToken, orderNumber }: 
   const handleAccept = async () => {
     setLoading(true);
     try {
-      const res = await updateOrderStatus(paymentId, trackingToken, 'delivered');
+      const res = await updateOrderStatus(paymentId, trackingToken, 'delivered', {
+        callerProof: getCallerProof(trackingToken),
+      });
       if (res.success) {
         window.location.hash = ''; // Cerrar modal
         router.refresh(); // Refrescar datos del servidor
@@ -42,6 +63,7 @@ export default function ActionModals({ paymentId, trackingToken, orderNumber }: 
     try {
       const res = await updateOrderStatus(paymentId, trackingToken, 'disputed', {
         rejectionReason: reportReason,
+        callerProof: getCallerProof(trackingToken),
       });
       if (res.success) {
         window.location.hash = ''; // Cerrar modal

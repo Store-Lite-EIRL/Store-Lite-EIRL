@@ -3,10 +3,11 @@
 import { db } from '@/core/database/client';
 import { businesses, chatSessions, messages, payments } from '@/core/database/schema';
 import { transition } from '@/core/orders/orderService';
-import { ORDER_STATUS_INTERNAL, ORDER_STATUS_V2 } from '@/core/orders/orderStatus';
-import { and, desc, eq } from 'drizzle-orm';
+import { ORDER_STATUS_V2 } from '@/core/orders/orderStatus';
+import { and, desc, eq, isNull } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
+import type { CallerProof } from './types';
 
 // ─── Rate Limiting (in-memory) ───
 // 5 intentos por IP cada 15 minutos
@@ -54,14 +55,60 @@ async function clearRateLimit() {
   rateLimitMap.delete(ip);
 }
 
+/**
+ * Verify that at least one of {dni, authId} in callerProof matches
+ * the payment record. Throws if neither matches or the payment is not found.
+ */
+async function verifyCallerProof(paymentId: string, callerProof: CallerProof): Promise<void> {
+  const payment = await db.query.payments.findFirst({
+    where: eq(payments.id, paymentId),
+    columns: {
+      id: true,
+      buyerDni: true,
+      metadata: true,
+    },
+  });
+
+  if (!payment) {
+    throw new Error('Pedido no encontrado');
+  }
+
+  // Check DNI match
+  if (callerProof.dni && payment.buyerDni === callerProof.dni) {
+    return;
+  }
+
+  // Check Google authId match
+  if (callerProof.authId) {
+    const metadata = payment.metadata as Record<string, unknown> | null;
+    const customerAuth = metadata?.customerAuth as Record<string, unknown> | null;
+    const storedAuthId = customerAuth?.authId as string | undefined;
+    if (storedAuthId === callerProof.authId) {
+      return;
+    }
+  }
+
+  throw new Error('No autorizado');
+}
+
+// ─── Legacy→V2 status mapping for customer actions ───
+const CUSTOMER_ACTION_MAP: Record<string, string> = {
+  delivered: ORDER_STATUS_V2.DELIVERED,
+  disputed: ORDER_STATUS_V2.DISPUTE,
+};
+
 export async function updateOrderStatus(
   paymentId: string,
   trackingToken: string,
   status: string,
-  additionalData: any = {},
+  options?: { rejectionReason?: string; callerProof?: CallerProof },
 ) {
   try {
-    // Read current version
+    // Validate caller if callerProof is provided
+    if (options?.callerProof) {
+      await verifyCallerProof(paymentId, options.callerProof);
+    }
+
     const [current] = await db
       .select({ version: payments.version })
       .from(payments)
@@ -73,38 +120,34 @@ export async function updateOrderStatus(
     }
 
     const expectedVersion = current.version ?? 0;
-    const updatePayload: Record<string, unknown> = {
-      status,
-      version: expectedVersion + 1,
-      updatedAt: new Date(),
-      ...additionalData,
-    };
 
-    if (status === ORDER_STATUS_INTERNAL.ACEPTADO) {
-      updatePayload.verifiedAt = new Date();
-    } else if (status === ORDER_STATUS_INTERNAL.RECHAZADO) {
-      updatePayload.rejectedAt = new Date();
+    // Map legacy customer status to V2 and use transition() for safety
+    const v2Status = CUSTOMER_ACTION_MAP[status] || status;
+
+    const extraFields: Record<string, unknown> = {};
+    if (options?.rejectionReason) {
+      extraFields.rejectionReason = options.rejectionReason;
     }
 
-    const [updated] = await db
-      .update(payments)
-      .set(updatePayload)
-      .where(
-        and(
-          eq(payments.id, paymentId),
-          eq(payments.trackingToken, trackingToken),
-          eq(payments.version, expectedVersion),
-        ),
-      )
-      .returning({ id: payments.id });
+    const result = await transition({
+      paymentId,
+      toStatus: v2Status as any,
+      actor: { type: 'customer' },
+      expectedVersion,
+      extraFields,
+    });
 
-    if (!updated) {
-      return { success: false, error: 'El pedido fue modificado. Recargá e intentá de nuevo.' };
+    if (!result.success) {
+      return { success: false, error: result.error };
     }
 
     revalidatePath('/[slug]/order/[token]', 'page');
     return { success: true };
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error al actualizar el estado';
+    if (message === 'No autorizado' || message === 'Pedido no encontrado') {
+      return { success: false, error: message };
+    }
     console.error('[Action Error] updateOrderStatus:', error);
     return { success: false, error: 'Error al actualizar el estado' };
   }
@@ -201,7 +244,9 @@ export async function syncChatSession(params: {
   paymentId: string;
 }) {
   try {
-    const dniGuestId = `dni-${params.dni}`;
+    // Null DNI guard: si no hay DNI, usar un guestId único por paymentId
+    // para evitar que todas las órdenes sin DNI compartan sesión
+    const dniGuestId = params.dni ? `dni-${params.dni}` : `guest-${params.paymentId}`;
 
     // 1. Buscar sesión activa vinculada EXACTAMENTE a este paymentId
     const exactSession = await db.query.chatSessions.findFirst({
@@ -217,20 +262,24 @@ export async function syncChatSession(params: {
       return { success: true, sessionId: exactSession.id, guestId: exactSession.guestId };
     }
 
-    // 2. Buscar sesión activa del mismo buyer (guestId) para REUSARLA
-    //    y mantener el historial del chat pre-compra
+    // 2. Buscar sesión activa del mismo buyer SIN paymentId (pre-compra)
+    //    para REUSARLA y mantener el historial del chat pre-compra.
+    //    ⚠️ Solo reusamos sesiones con paymentId IS NULL — si ya tiene
+    //    un paymentId asignado, pertenece a OTRA orden y NO debe reusarse.
     const existingSession = await db.query.chatSessions.findFirst({
       where: and(
         eq(chatSessions.guestId, dniGuestId),
         eq(chatSessions.businessId, params.businessId),
         eq(chatSessions.status, 'active'),
+        isNull(chatSessions.paymentId),
       ),
       orderBy: [desc(chatSessions.createdAt)],
     });
 
     if (existingSession) {
-      // Reusamos la sesión existente: solo vinculamos el paymentId
+      // Reusamos la sesión existente: vinculamos el paymentId
       // así el cliente ve el historial completo del chat pre-compra
+      // (solo ocurre para sesiones sin paymentId, es decir, pre-compra)
       await db
         .update(chatSessions)
         .set({ paymentId: params.paymentId, updatedAt: new Date() })
@@ -342,8 +391,18 @@ export async function reportIssueV2(
   paymentId: string,
   trackingToken: string,
   reason: string,
+  callerProof?: CallerProof,
 ): Promise<ReportIssueV2Result> {
   try {
+    // Validate caller if callerProof is provided
+    if (callerProof) {
+      try {
+        await verifyCallerProof(paymentId, callerProof);
+      } catch {
+        return { success: false, error: 'No autorizado' };
+      }
+    }
+
     const [payment] = await db
       .select({ version: payments.version })
       .from(payments)

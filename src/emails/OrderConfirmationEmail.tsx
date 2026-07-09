@@ -10,6 +10,8 @@ interface OrderConfirmationEmailProps {
   total: string;
   trackingUrl: string;
   customerName?: string;
+  customerDni?: string;
+  paymentMethod?: string;
 }
 
 export function OrderConfirmationEmail({
@@ -20,6 +22,8 @@ export function OrderConfirmationEmail({
   total,
   trackingUrl,
   customerName,
+  customerDni,
+  paymentMethod,
 }: OrderConfirmationEmailProps) {
   return (
     <Layout previewText="Tu compra ha sido confirmada" businessName={businessName}>
@@ -55,41 +59,55 @@ export function OrderConfirmationEmail({
           margin: '0 0 20px',
         }}
       >
-        <Text
+        {/* Order number + date header */}
+        <div
           style={{
-            fontSize: '11px',
-            color: '#a1a1aa',
-            textTransform: 'uppercase',
-            letterSpacing: '1px',
-            fontWeight: '600',
-            margin: '0 0 4px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: '16px',
           }}
         >
-          Nro. de orden
-        </Text>
-        <Text
-          style={{
-            fontSize: '20px',
-            color: '#18181b',
-            fontWeight: '700',
-            margin: '0 0 2px',
-          }}
-        >
-          {orderNumber}
-        </Text>
-        <Text
-          style={{
-            fontSize: '13px',
-            color: '#71717a',
-            margin: '0 0 20px',
-          }}
-        >
-          {date}
-        </Text>
+          <div>
+            <Text
+              style={{
+                fontSize: '11px',
+                color: '#a1a1aa',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                fontWeight: '600',
+                margin: '0 0 4px',
+              }}
+            >
+              Nro. de orden
+            </Text>
+            <Text
+              style={{
+                fontSize: '20px',
+                color: '#18181b',
+                fontWeight: '700',
+                margin: '0',
+              }}
+            >
+              {orderNumber}
+            </Text>
+          </div>
+          <Text
+            style={{
+              fontSize: '13px',
+              color: '#71717a',
+              margin: '0',
+              textAlign: 'right',
+            }}
+          >
+            {date}
+          </Text>
+        </div>
 
         {/* Divider */}
         <div style={{ borderTop: '1px dashed #d4d4d8', margin: '0 0 16px' }} />
 
+        {/* Product + Total row */}
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
@@ -145,6 +163,69 @@ export function OrderConfirmationEmail({
             </tr>
           </tbody>
         </table>
+
+        {/* DNI + Payment method */}
+        {(customerDni || paymentMethod) && (
+          <>
+            <div style={{ borderTop: '1px dashed #d4d4d8', margin: '16px 0' }} />
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <tbody>
+                {customerDni && (
+                  <tr>
+                    <td
+                      style={{
+                        fontSize: '12px',
+                        color: '#71717a',
+                        padding: '0 0 6px',
+                        fontWeight: '400',
+                        width: '50%',
+                      }}
+                    >
+                      DNI del comprador
+                    </td>
+                    <td
+                      style={{
+                        fontSize: '13px',
+                        color: '#18181b',
+                        padding: '0 0 6px',
+                        fontWeight: '600',
+                        textAlign: 'right',
+                      }}
+                    >
+                      {customerDni}
+                    </td>
+                  </tr>
+                )}
+                {paymentMethod && (
+                  <tr>
+                    <td
+                      style={{
+                        fontSize: '12px',
+                        color: '#71717a',
+                        padding: '0',
+                        fontWeight: '400',
+                      }}
+                    >
+                      Método de pago
+                    </td>
+                    <td
+                      style={{
+                        fontSize: '13px',
+                        color: '#18181b',
+                        padding: '0',
+                        fontWeight: '600',
+                        textAlign: 'right',
+                        textTransform: 'capitalize',
+                      }}
+                    >
+                      {paymentMethod}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </>
+        )}
       </Section>
 
       {/* ── Button ── */}

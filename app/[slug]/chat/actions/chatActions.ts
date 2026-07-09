@@ -155,6 +155,7 @@ export async function sendMessage(data: {
   isFromStore?: boolean;
   guestId?: string;
   content: string;
+  paymentId?: string;
 }) {
   try {
     const actor = await resolveSessionActor(data.sessionId, data.guestId);
@@ -170,6 +171,7 @@ export async function sendMessage(data: {
       .insert(messages)
       .values({
         sessionId: data.sessionId,
+        paymentId: data.paymentId ?? null,
         isFromStore: actor.role === 'store',
         content: data.content,
       })
