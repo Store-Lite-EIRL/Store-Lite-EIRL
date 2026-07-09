@@ -119,6 +119,73 @@ export async function getBusinessTeam(businessId: string) {
   }));
 }
 
+export async function removeTeamMemberAction(memberId: string) {
+  const cookieStore = await cookies();
+
+  const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
+    cookies: {
+      get(name: string) {
+        return cookieStore.get(name)?.value;
+      },
+      set(name: string, value: string, options: CookieOptions) {
+        cookieStore.set({ name, value, ...options });
+      },
+      remove(name: string, options: CookieOptions) {
+        cookieStore.set({ name, value: '', ...options });
+      },
+    },
+  });
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: 'No autenticado' };
+  }
+
+  // Get the member record to find the businessId
+  const member = await db.query.businessTeamMembers.findFirst({
+    where: eq(businessTeamMembers.id, memberId),
+    columns: { id: true, businessId: true, userId: true },
+  });
+
+  if (!member) {
+    return { success: false, error: 'Miembro no encontrado' };
+  }
+
+  // Verify the requester is the business owner
+  const business = await db.query.businesses.findFirst({
+    where: eq(businesses.id, member.businessId),
+    columns: { ownerId: true },
+  });
+
+  if (!business) {
+    return { success: false, error: 'Empresa no encontrada' };
+  }
+
+  if (business.ownerId !== user.id) {
+    return { success: false, error: 'Solo el propietario puede quitar miembros del equipo' };
+  }
+
+  // Prevent removing the owner themselves (shouldn't happen, but safety check)
+  if (member.userId === user.id) {
+    return { success: false, error: 'No puedes eliminarte a ti mismo como propietario' };
+  }
+
+  try {
+    await db.delete(businessTeamMembers).where(eq(businessTeamMembers.id, memberId));
+    revalidatePath('/list-business');
+    return { success: true };
+  } catch (error) {
+    console.error('Error removing team member:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error al quitar miembro del equipo',
+    };
+  }
+}
+
 export async function getProductsForExport(businessId: string) {
   const rows = await db.query.products.findMany({
     where: eq(products.businessId, businessId),
