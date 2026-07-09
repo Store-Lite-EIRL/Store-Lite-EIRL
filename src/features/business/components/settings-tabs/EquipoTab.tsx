@@ -51,6 +51,7 @@ export const EquipoTab: React.FC<EquipoTabProps> = ({ businessId }) => {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [brokenAvatars, setBrokenAvatars] = useState<Set<string>>(new Set());
+  const [openMenuMemberId, setOpenMenuMemberId] = useState<string | null>(null);
   const [confirmRemoveMember, setConfirmRemoveMember] = useState<TeamMember | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
   const [removeError, setRemoveError] = useState<string | null>(null);
@@ -157,9 +158,64 @@ export const EquipoTab: React.FC<EquipoTabProps> = ({ businessId }) => {
                 {formatRole(member.role)} · {member.email}
               </div>
             </div>
-            <md-icon-button suppressHydrationWarning onClick={() => setConfirmRemoveMember(member)}>
-              <Icon size={20}>more_vert</Icon>
-            </md-icon-button>
+            <div style={{ position: 'relative' }}>
+              <md-icon-button
+                id={`member-menu-${member.id}`}
+                suppressHydrationWarning
+                onClick={() =>
+                  setOpenMenuMemberId(openMenuMemberId === member.id ? null : member.id)
+                }
+              >
+                <Icon size={20}>more_vert</Icon>
+              </md-icon-button>
+
+              <md-menu
+                anchor={`member-menu-${member.id}`}
+                open={openMenuMemberId === member.id}
+                anchor-corner="bottom-end"
+                menu-corner="start"
+                style={{ zIndex: 200 }}
+                suppressHydrationWarning
+                onClose={() => setOpenMenuMemberId(null)}
+              >
+                <div
+                  style={{
+                    padding: '8px',
+                    minWidth: '180px',
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      setOpenMenuMemberId(null);
+                      setConfirmRemoveMember(member);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: 'none',
+                      borderRadius: '8px',
+                      background: 'transparent',
+                      color: 'var(--md-sys-color-error)',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background =
+                        'var(--md-sys-color-error-container, #fce4ec)')
+                    }
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <Icon size={18}>person_remove</Icon>
+                    Quitar miembro
+                  </button>
+                </div>
+              </md-menu>
+            </div>
           </div>
         ))}
       </div>
