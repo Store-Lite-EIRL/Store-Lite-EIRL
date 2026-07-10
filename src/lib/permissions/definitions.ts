@@ -29,7 +29,8 @@ export type Permission =
   | 'plan.view'
   | 'plan.change'
   | 'contact.edit'
-  | 'legal.edit';
+  | 'legal.edit'
+  | 'notifications.view';
 
 export type Role = 'owner' | 'admin' | 'member';
 
@@ -64,6 +65,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'plan.change',
     'contact.edit',
     'legal.edit',
+    'notifications.view',
   ],
 
   admin: [
@@ -86,6 +88,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'home.edit',
     'team.manage',
     'team.invite',
+    'notifications.view',
   ],
 
   member: [
@@ -105,6 +108,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'storage.upload',
     // NO storage.delete
     'home.edit',
+    'notifications.view',
   ],
 };
 
@@ -180,6 +184,11 @@ export const PERMISSION_GROUPS: Record<
     icon: 'gavel',
     permissions: ['legal.edit'],
   },
+  notifications: {
+    label: 'Notificaciones',
+    icon: 'notifications',
+    permissions: ['notifications.view'],
+  },
 };
 
 /**
@@ -226,6 +235,10 @@ export const PERMISSION_LABELS: Record<Permission, { label: string; description:
     description: 'Puede modificar información de contacto',
   },
   'legal.edit': { label: 'Editar legal', description: 'Puede modificar términos y políticas' },
+  'notifications.view': {
+    label: 'Ver notificaciones',
+    description: 'Puede ver el centro de notificaciones',
+  },
 };
 
 /**
