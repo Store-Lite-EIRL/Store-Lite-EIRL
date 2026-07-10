@@ -64,8 +64,7 @@ export default function CreateBusinessButton({ hasReachedLimit }: CreateBusiness
           >
             <strong>Límite alcanzado</strong>
             <br />
-            Has alcanzado el máximo de 3 empresas permitidas en el plan gratuito. Actualiza a{' '}
-            <strong>Premium</strong> para gestionar más negocios.
+            Has alcanzado el límite de 3 empresas por cuenta.
           </p>
         </div>
       </md-menu>

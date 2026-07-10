@@ -11,7 +11,6 @@ import { EquipoTab } from './settings-tabs/EquipoTab';
 import { NegocioTab } from './settings-tabs/NegocioTab';
 import { ProductosTab } from './settings-tabs/ProductosTab';
 import { ResultadosTab } from './settings-tabs/ResultadosTab';
-import { TemasTab } from './settings-tabs/TemasTab';
 
 interface BusinessSettingsModalProps {
   business: Business | null;
@@ -20,7 +19,7 @@ interface BusinessSettingsModalProps {
   onClose: () => void;
 }
 
-type TabType = 'negocio' | 'productos' | 'resultados' | 'equipo' | 'temas' | 'peligro';
+type TabType = 'negocio' | 'productos' | 'resultados' | 'equipo' | 'peligro';
 
 const PREMIUM_PLANS = ['business_pro', 'enterprise_ai'];
 const PREMIUM_TABS: TabType[] = ['resultados', 'equipo'];
@@ -147,8 +146,6 @@ export default function BusinessSettingsModal({
         return <ResultadosTab business={business} />;
       case 'equipo':
         return <EquipoTab businessId={business.id} />;
-      case 'temas':
-        return <TemasTab />;
       case 'peligro':
         return (
           <div className={styles.contentContainer} style={{ paddingBottom: '48px' }}>
@@ -217,14 +214,6 @@ export default function BusinessSettingsModal({
               <Icon size={20}>{isTabLocked('equipo') ? 'lock' : 'groups'}</Icon>
               Equipo
               {isTabLocked('equipo') && <Icon size={14}>lock</Icon>}
-            </button>
-
-            <button
-              className={`${styles.tabButton} ${activeTab === 'temas' ? styles.tabButtonActive : ''}`}
-              onClick={() => setActiveTab('temas')}
-            >
-              <Icon size={20}>palette</Icon>
-              Apariencia
             </button>
 
             <div

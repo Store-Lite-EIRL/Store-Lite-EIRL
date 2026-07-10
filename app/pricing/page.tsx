@@ -100,7 +100,9 @@ export default async function PricingPage({
       features: [
         { text: 'Ecosistema total: Incluye todos los beneficios previos' },
         { text: 'Asistencia técnica prioritaria 24/7 con expertos' },
-        { text: 'Potencial ilimitado: 1000+ productos y hasta 10 negocios' },
+        {
+          text: 'Potencial ilimitado: 1000+ productos y presentación premium con hasta 3 imágenes por producto',
+        },
         { text: 'Presentación premium con hasta 3 imágenes por producto' },
         { text: 'Escalabilidad extendida: 5 usuarios adicionales para tu equipo' },
         { text: 'Inteligencia en tiempo real: Dashboard interactivo con sugerencias IA' },

@@ -6,7 +6,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 2rem 5rem;
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -91,7 +91,7 @@
   background: linear-gradient(
     105deg,
     transparent 40%,
-    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.2) 50%,
     transparent 60%
   );
   animation: shimmer 5s ease-in-out infinite;
@@ -241,15 +241,6 @@
   }
 }
 
-.businessCard:hover {
-  transform: translateY(-5px) scale(1.005);
-  border-color: var(--md-sys-color-primary);
-  box-shadow:
-    0 0 0 1px var(--md-sys-color-primary),
-    0 16px 40px -10px rgba(0, 0, 0, 0.18);
-}
-
-/* Border highlight on hover - cleaner than cardAccent */
 .businessCard:hover {
   transform: translateY(-5px) scale(1.005);
   border-color: var(--md-sys-color-primary);
@@ -597,6 +588,28 @@
 
 .logoutButton:hover {
   transform: scale(1.08);
+}
+
+/* ── Loading Overlay ── */
+.loadingOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .pricingLink {
