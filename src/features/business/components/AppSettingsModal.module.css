@@ -143,11 +143,3 @@
   background: var(--md-sys-color-surface-container-highest);
   transform: scale(1.05);
 }
-
-.closeHint {
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: var(--md-sys-color-on-surface-variant);
-  opacity: 0.5;
-  letter-spacing: 0.03em;
-}

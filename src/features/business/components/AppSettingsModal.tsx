@@ -125,7 +125,6 @@ export default function AppSettingsModal({ open, onClose }: AppSettingsModalProp
             <button className={styles.closeButton} onClick={onClose} aria-label="Cerrar">
               <Icon size={18}>close</Icon>
             </button>
-            <span className={styles.closeHint}>ESC</span>
           </div>
         </div>
       </div>
