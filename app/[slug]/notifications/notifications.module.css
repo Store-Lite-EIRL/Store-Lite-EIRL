@@ -90,6 +90,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.7rem 1rem;
+  flex-shrink: 0;
   border-radius: 14px;
   border: 1px solid var(--md-sys-color-outline-variant);
   background: var(--md-sys-color-surface-container-low);
