@@ -14,12 +14,14 @@ interface AppLayoutProps {
   children: React.ReactNode;
   showNavbarByDefault?: boolean;
   navbarPlanName?: string;
+  navbarBusinessId?: string;
 }
 
 export default function AppLayout({
   children,
   showNavbarByDefault = false,
   navbarPlanName,
+  navbarBusinessId,
 }: AppLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -65,11 +67,11 @@ export default function AppLayout({
   const showNavbar =
     showNavbarByDefault && pathname !== '/list-business' && !pathname?.startsWith('/auth');
 
-  const contentWrapperClass = !showNavbar
-    ? 'content-wrapper--hidden'
-    : isCollapsed
-      ? 'content-wrapper--collapsed'
-      : 'content-wrapper--expanded';
+  const getContentWrapperClass = () => {
+    if (!showNavbar) return 'content-wrapper--hidden';
+    return isCollapsed ? 'content-wrapper--collapsed' : 'content-wrapper--expanded';
+  };
+  const contentWrapperClass = getContentWrapperClass();
 
   // If session was killed from another tab (user closed business there), redirect to list
   useEffect(() => {
@@ -89,7 +91,12 @@ export default function AppLayout({
 
         {/* Sidebar - Desktop Only (Navbar component is actually the sidebar) */}
         {showNavbar && (
-          <Navbar isCollapsed={isCollapsed} onToggle={toggleNavbar} planName={navbarPlanName} />
+          <Navbar
+            isCollapsed={isCollapsed}
+            onToggle={toggleNavbar}
+            planName={navbarPlanName}
+            businessId={navbarBusinessId}
+          />
         )}
 
         <div className={`content-wrapper ${contentWrapperClass}`}>

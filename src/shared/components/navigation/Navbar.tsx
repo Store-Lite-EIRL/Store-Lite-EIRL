@@ -9,14 +9,21 @@ import { useParams, usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { usePermissions } from '../../../../app/[slug]/context/PermissionsContext';
 import { Icon } from '../ui';
+import { NavbarNotificationsBadge } from './NavbarNotificationsBadge';
 
 interface NavbarProps {
   isCollapsed: boolean;
   onToggle: () => void;
   planName?: string;
+  businessId?: string;
 }
 
-export default function Navbar({ isCollapsed, onToggle, planName = 'Básico' }: NavbarProps) {
+export default function Navbar({
+  isCollapsed,
+  onToggle,
+  planName = 'Básico',
+  businessId,
+}: NavbarProps) {
   const pathname = usePathname();
   const params = useParams();
   const router = useRouter();
@@ -24,7 +31,10 @@ export default function Navbar({ isCollapsed, onToggle, planName = 'Básico' }: 
   const { can, isOwner } = usePermissions();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const mobileMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -37,6 +47,31 @@ export default function Navbar({ isCollapsed, onToggle, planName = 'Básico' }: 
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Viewport detection for mobile "Más" menu
+  useEffect(() => {
+    const checkViewport = () => {
+      setIsMobileViewport(window.innerWidth <= 768);
+    };
+    checkViewport();
+    window.addEventListener('resize', checkViewport);
+    return () => window.removeEventListener('resize', checkViewport);
+  }, []);
+
+  // Close mobile "Más" popup on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (mobileMoreRef.current && !mobileMoreRef.current.contains(event.target as Node)) {
+        setIsMobileMoreOpen(false);
+      }
+    };
+    if (isMobileMoreOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMobileMoreOpen]);
 
   useEffect(() => {
     if (slug) {
@@ -69,6 +104,12 @@ export default function Navbar({ isCollapsed, onToggle, planName = 'Básico' }: 
   const navItems = [
     { id: 'home', icon: 'home', label: 'Inicio', path: getBusinessPath(slug) },
     { id: 'chat', icon: 'chat', label: 'Mensajes', path: getBusinessPath(slug, '/chat') },
+    {
+      id: 'notifications',
+      icon: 'notifications',
+      label: 'Notificaciones',
+      path: getBusinessPath(slug, '/notifications'),
+    },
     { id: 'storage', icon: 'package_2', label: 'Almacén', path: getBusinessPath(slug, '/storage') },
     {
       id: 'dashboard',
@@ -121,39 +162,118 @@ export default function Navbar({ isCollapsed, onToggle, planName = 'Básico' }: 
         <div className="navbar__divider" />
 
         <div className="navbar__items">
-          {navItems
-            .filter((item) => {
-              // 1. Plan-based filtering
-              if (item.id === 'dashboard' && planName === 'basico') return false;
+          {(isMobileViewport
+            ? (() => {
+                // Determine which items are visible
+                const visibleItems = navItems.filter((item) => {
+                  if (item.id === 'dashboard' && planName === 'basico') return false;
+                  if (isOwner) return true;
+                  if (item.id === 'chat') return can('chat.view');
+                  if (item.id === 'notifications') return can('notifications.view');
+                  if (item.id === 'storage') return can('products.view') || can('categories.view');
+                  if (item.id === 'dashboard') return can('dashboard.view');
+                  return true;
+                });
 
-              // 2. Permission-based filtering
-              if (isOwner) return true;
+                const hasChat = visibleItems.some((i) => i.id === 'chat');
+                const hasNotifications = visibleItems.some((i) => i.id === 'notifications');
 
-              if (item.id === 'chat') return can('chat.view');
-              if (item.id === 'storage') return can('products.view') || can('categories.view');
-              if (item.id === 'dashboard') return can('dashboard.view');
+                // If BOTH chat and notifications are available on mobile → group into "Más"
+                if (hasChat && hasNotifications) {
+                  return visibleItems
+                    .filter((i) => i.id !== 'chat' && i.id !== 'notifications')
+                    .concat({
+                      id: 'more',
+                      icon: 'more_horiz',
+                      label: 'Más',
+                      path: '#',
+                    });
+                }
 
-              return true; // home, settings always visible
-            })
-            .map((item) => (
+                return visibleItems;
+              })()
+            : navItems.filter((item) => {
+                // 1. Plan-based filtering
+                if (item.id === 'dashboard' && planName === 'basico') return false;
+
+                // 2. Permission-based filtering
+                if (isOwner) return true;
+
+                if (item.id === 'chat') return can('chat.view');
+                if (item.id === 'notifications') return can('notifications.view');
+                if (item.id === 'storage') return can('products.view') || can('categories.view');
+                if (item.id === 'dashboard') return can('dashboard.view');
+
+                return true; // home, settings always visible
+              })
+          ).map((item) => {
+            if (item.id === 'more') {
+              return (
+                <div ref={mobileMoreRef} key="more" className="navbar__mobile-more-container">
+                  <button
+                    className={`navbar__item navbar__item--more ${isMobileMoreOpen ? 'navbar__item--active' : ''}`}
+                    onClick={() => setIsMobileMoreOpen(!isMobileMoreOpen)}
+                    aria-label="Más"
+                    title="Más"
+                    suppressHydrationWarning
+                  >
+                    <span className="navbar__item-icon-wrapper">
+                      <md-icon className="navbar__item-icon" suppressHydrationWarning>
+                        more_horiz
+                      </md-icon>
+                    </span>
+                  </button>
+                  {isMobileMoreOpen && (
+                    <div className="navbar__mobile-popup">
+                      <Link
+                        href={getBusinessPath(slug, '/chat')}
+                        className="navbar__mobile-popup-item"
+                        onClick={() => setIsMobileMoreOpen(false)}
+                        suppressHydrationWarning
+                      >
+                        <md-icon>chat</md-icon>
+                        <span>Mensajes</span>
+                      </Link>
+                      <Link
+                        href={getBusinessPath(slug, '/notifications')}
+                        className="navbar__mobile-popup-item"
+                        onClick={() => setIsMobileMoreOpen(false)}
+                        suppressHydrationWarning
+                      >
+                        <md-icon>notifications</md-icon>
+                        <span>Notificaciones</span>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            return (
               <Link
                 key={item.id}
                 href={item.path}
-                className={`navbar__item ${isActive(item.path) ? 'navbar__item--active' : ''}`}
+                className={`navbar__item navbar__item--${item.id} ${isActive(item.path) ? 'navbar__item--active' : ''}`}
                 aria-label={item.label}
                 title={item.label}
                 suppressHydrationWarning
               >
-                <md-icon className="navbar__item-icon" suppressHydrationWarning>
-                  {item.icon}
-                </md-icon>
+                <span className="navbar__item-icon-wrapper">
+                  <md-icon className="navbar__item-icon" suppressHydrationWarning>
+                    {item.icon}
+                  </md-icon>
+                  {item.id === 'notifications' && businessId && (
+                    <NavbarNotificationsBadge businessId={businessId} />
+                  )}
+                </span>
                 {!isCollapsed && (
                   <span className="navbar__item-label" suppressHydrationWarning>
                     {item.label}
                   </span>
                 )}
               </Link>
-            ))}
+            );
+          })}
         </div>
 
         <div className="navbar__divider" />
