@@ -219,7 +219,7 @@ export default function Navbar({
                   >
                     <span className="navbar__item-icon-wrapper">
                       <md-icon className="navbar__item-icon" suppressHydrationWarning>
-                        more_horiz
+                        notifications
                       </md-icon>
                     </span>
                   </button>
