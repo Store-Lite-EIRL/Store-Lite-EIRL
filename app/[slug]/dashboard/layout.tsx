@@ -1,9 +1,13 @@
 import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
+import { db } from '@/core/database/client';
+import { payments } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { checkPermission } from '@/lib/permissions';
 import { createClient } from '@/lib/supabase/server';
 import { getBusinessPath } from '@/shared/utils/url';
+import { and, eq, inArray } from 'drizzle-orm';
 import { notFound, redirect } from 'next/navigation';
+import { PlanExpiredBanner } from './components/PlanExpiredBanner';
 import { RealtimeToast } from './components/RealtimeToast';
 
 interface DashboardLayoutProps {
@@ -27,8 +31,30 @@ export default async function DashboardLayout({ children, params }: DashboardLay
 
   const entitlements = await getBusinessEntitlements(business.id);
 
+  let hasPendingOrders = false;
+
   if (entitlements.plan === 'basico') {
-    redirect(getBusinessPath(resolvedBusiness.canonicalSlug));
+    // Non-terminal order statuses that keep the dashboard accessible
+    const activeStatuses: (typeof payments.$inferSelect.status)[] = [
+      'pending',
+      'paid',
+      'validando',
+      'not_delivered',
+      'en_reparto',
+      'disputed',
+      'refund_requested',
+    ];
+
+    const pendingOrder = await db.query.payments.findFirst({
+      where: and(eq(payments.businessId, business.id), inArray(payments.status, activeStatuses)),
+      columns: { id: true },
+    });
+
+    if (!pendingOrder) {
+      redirect(getBusinessPath(resolvedBusiness.canonicalSlug));
+    }
+
+    hasPendingOrders = true;
   }
 
   const supabase = await createClient();
@@ -44,6 +70,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
   return (
     <>
       <RealtimeToast businessId={business.id} />
+      {hasPendingOrders && <PlanExpiredBanner />}
       {children}
     </>
   );
