@@ -5,7 +5,7 @@ import AppLayout from '@/shared/components/layout/AppLayout';
 import { Icon } from '@/shared/components/ui/data-display';
 import { getBusinessPath } from '@/shared/utils/url';
 import { createServerClient } from '@supabase/ssr';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
@@ -38,12 +38,17 @@ export default async function ListBusinessPage() {
   }
 
   // 1. Fetch businesses user owns
+  const now = new Date();
   const rawOwnedBusinesses = await db.query.businesses.findMany({
     where: eq(businesses.ownerId, user.id),
     orderBy: (businesses, { desc }) => [desc(businesses.createdAt)],
     with: {
       subscriptions: {
-        where: (subscriptions, { eq }) => eq(subscriptions.planStatus, 'active'),
+        where: (subscriptions, { eq, gt, isNull, or }) =>
+          and(
+            eq(subscriptions.planStatus, 'active'),
+            or(isNull(subscriptions.planEndDate), gt(subscriptions.planEndDate, now)),
+          ),
         limit: 1,
       },
     },
@@ -56,7 +61,11 @@ export default async function ListBusinessPage() {
       business: {
         with: {
           subscriptions: {
-            where: (subscriptions, { eq }) => eq(subscriptions.planStatus, 'active'),
+            where: (subscriptions, { eq, gt, isNull, or }) =>
+              and(
+                eq(subscriptions.planStatus, 'active'),
+                or(isNull(subscriptions.planEndDate), gt(subscriptions.planEndDate, now)),
+              ),
             limit: 1,
           },
         },
