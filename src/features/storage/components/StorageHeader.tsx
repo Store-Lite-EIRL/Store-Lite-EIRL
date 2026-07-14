@@ -77,6 +77,7 @@ export const StorageHeader = ({
     unreadCount,
     notifications,
     isLoading: notifLoading,
+    markAsRead,
   } = useNotifications({
     businessId,
     onNewNotification,
@@ -197,6 +198,7 @@ export const StorageHeader = ({
         notifications={notifications}
         isLoading={notifLoading}
         unreadCount={unreadCount}
+        markAsRead={markAsRead}
       />
 
       {/* Real-time toast for new notifications */}

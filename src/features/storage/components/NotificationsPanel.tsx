@@ -2,6 +2,7 @@
 
 import type { NotificationWithMeta } from '@/hooks/useNotifications';
 import { Icon } from '@/shared/components/ui';
+import { formatRelativeDate } from '@/shared/utils/date';
 import { useEffect, useRef } from 'react';
 
 interface NotificationsPanelProps {
@@ -10,25 +11,8 @@ interface NotificationsPanelProps {
   notifications: NotificationWithMeta[];
   isLoading: boolean;
   unreadCount: number;
+  markAsRead?: (id: string) => Promise<void>;
 }
-
-const formatDate = (date: Date) => {
-  const now = new Date();
-  const notifDate = new Date(date);
-
-  now.setHours(0, 0, 0, 0);
-  notifDate.setHours(0, 0, 0, 0);
-
-  const diffDays = Math.round((now.getTime() - notifDate.getTime()) / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return 'Hoy';
-  if (diffDays === 1) return 'Ayer';
-  if (diffDays < 7) return `${diffDays}d`;
-
-  const day = notifDate.getDate();
-  const month = notifDate.getMonth() + 1;
-  return `${day < 10 ? '0' + day : day}/${month < 10 ? '0' + month : month}`;
-};
 
 const CATEGORY_ICONS: Record<string, string> = {
   chat: 'chat',
@@ -52,6 +36,7 @@ export function NotificationsPanel({
   notifications,
   isLoading,
   unreadCount,
+  markAsRead,
 }: NotificationsPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -139,6 +124,11 @@ export function NotificationsPanel({
               return (
                 <div
                   key={notification.id}
+                  onClick={() => {
+                    if (!notification.isRead && markAsRead) {
+                      markAsRead(notification.id);
+                    }
+                  }}
                   className={`notif-item ${!notification.isRead ? 'notif-item-unread' : ''} ${notification.isNew ? 'notif-item-new' : ''} notif-item-${category}`}
                 >
                   <div className={`notif-item-icon notif-icon-${category}`}>
@@ -147,7 +137,9 @@ export function NotificationsPanel({
                   <div className="notif-item-content">
                     <div className="notif-item-header">
                       <span className="notif-item-category">{categoryLabel}</span>
-                      <span className="notif-item-time">{formatDate(notification.createdAt)}</span>
+                      <span className="notif-item-time">
+                        {formatRelativeDate(notification.createdAt)}
+                      </span>
                     </div>
                     <h4 className="notif-item-title">{notification.title}</h4>
                     <p className="notif-item-message">{notification.message}</p>

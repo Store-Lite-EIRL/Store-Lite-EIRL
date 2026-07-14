@@ -1,7 +1,9 @@
 'use client';
 
+import type { NotificationWithMeta } from '@/hooks/useNotifications';
 import { useNotifications } from '@/hooks/useNotifications';
-import { Checkbox } from '@/shared/components/ui/inputs/Checkbox';
+import { formatRelativeDate } from '@/shared/utils/date';
+import type { LucideProps } from 'lucide-react';
 import {
   Bell,
   CheckCheck,
@@ -10,30 +12,50 @@ import {
   MessageSquare,
   Package,
   ShoppingCart,
-  X,
 } from 'lucide-react';
-import { useState } from 'react';
+import type { ComponentType } from 'react';
+import { useMemo, useState } from 'react';
+import { getCategoryIcon } from './categoryIcons';
+import { NotificationDetailDialog } from './NotificationDetailDialog';
 import styles from './notifications.module.css';
+
+/** Definición completa de categorías con íconos. */
+const CATEGORIES: readonly { id: string; label: string; icon: ComponentType<LucideProps> }[] = [
+  { id: 'all', label: 'Todas', icon: Bell },
+  { id: 'chat', label: 'Chat', icon: MessageSquare },
+  { id: 'almacen', label: 'Almacén', icon: Package },
+  { id: 'plan', label: 'Plan', icon: CreditCard },
+  { id: 'pedidos', label: 'Pedidos', icon: ShoppingCart },
+  { id: 'sistema', label: 'Sistema', icon: Info },
+];
 
 interface NotificationsClientProps {
   businessId: string;
   businessName: string;
+  availableCategoryIds: string[];
 }
-
-const CATEGORIES = [
-  { id: 'all' as const, label: 'Todas', icon: Bell },
-  { id: 'chat' as const, label: 'Chat', icon: MessageSquare },
-  { id: 'almacen' as const, label: 'Almacén', icon: Package },
-  { id: 'plan' as const, label: 'Plan', icon: CreditCard },
-  { id: 'pedidos' as const, label: 'Pedidos', icon: ShoppingCart },
-  { id: 'sistema' as const, label: 'Sistema', icon: Info },
-] as const;
 
 export default function NotificationsClient({
   businessId,
   businessName: _businessName,
+  availableCategoryIds,
 }: NotificationsClientProps) {
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [selectedNotification, setSelectedNotification] = useState<NotificationWithMeta | null>(
+    null,
+  );
+
+  // Categorías filtradas localmente según los IDs que vienen del server
+  const availableCategories = useMemo(
+    () => CATEGORIES.filter((c) => availableCategoryIds.includes(c.id)),
+    [availableCategoryIds],
+  );
+
+  // Si la categoría activa ya no está disponible (cambio de plan), resetear a 'all'
+  const safeCategory = useMemo(
+    () => (availableCategories.some((c) => c.id === activeCategory) ? activeCategory : 'all'),
+    [availableCategories, activeCategory],
+  );
 
   const {
     notifications,
@@ -43,58 +65,16 @@ export default function NotificationsClient({
     error,
     markAsRead,
     markAllAsRead,
-    dismiss,
   } = useNotifications({ businessId });
-
-  const getCategoryIcon = (category: string, size = 18) => {
-    switch (category) {
-      case 'chat':
-        return <MessageSquare size={size} />;
-      case 'almacen':
-        return <Package size={size} />;
-      case 'plan':
-        return <CreditCard size={size} />;
-      case 'pedidos':
-        return <ShoppingCart size={size} />;
-      default:
-        return <Info size={size} />;
-    }
-  };
 
   const getCategoryLabel = (category: string) => {
     const found = CATEGORIES.find((c) => c.id === category);
     return found?.label ?? 'Sistema';
   };
 
-  const formatDate = (date: Date) => {
-    const now = new Date();
-    const notifDate = new Date(date);
-
-    now.setHours(0, 0, 0, 0);
-    notifDate.setHours(0, 0, 0, 0);
-
-    const diffDays = Math.round((now.getTime() - notifDate.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return 'Hoy';
-    if (diffDays === 1) return 'Ayer';
-    if (diffDays < 7) return `${diffDays}d`;
-
-    const day = notifDate.getDate();
-    const month = notifDate.getMonth() + 1;
-    return `${day < 10 ? '0' + day : day}/${month < 10 ? '0' + month : month}`;
-  };
-
   const filteredNotifications = notifications.filter(
-    (n) => !n.isDismissed && (activeCategory === 'all' || n.category === activeCategory),
+    (n) => !n.isDismissed && (safeCategory === 'all' || n.category === safeCategory),
   );
-
-  const handleMarkAsRead = (id: string) => {
-    markAsRead(id);
-  };
-
-  const handleDismiss = (id: string) => {
-    dismiss(id);
-  };
 
   // Derived state flags
   const showError = error && notifications.length === 0 && !isLoading;
@@ -124,7 +104,7 @@ export default function NotificationsClient({
     }
 
     if (filteredNotifications.length === 0) {
-      const isEmptyAll = activeCategory === 'all';
+      const isEmptyAll = safeCategory === 'all';
       return (
         <div className={styles.stateBox}>
           <div className={styles.emptyIconWrap}>
@@ -164,9 +144,9 @@ export default function NotificationsClient({
         )}
       </header>
 
-      {/* Category filter tabs */}
+      {/* Category filter tabs — filtradas según plan */}
       <div className={styles.tabs}>
-        {CATEGORIES.map((category) => {
+        {availableCategories.map((category) => {
           const Icon = category.icon;
           const count =
             category.id === 'all'
@@ -177,7 +157,7 @@ export default function NotificationsClient({
             <button
               key={category.id}
               onClick={() => setActiveCategory(category.id)}
-              className={`${styles.tab} ${activeCategory === category.id ? styles.tabActive : ''}`}
+              className={`${styles.tab} ${safeCategory === category.id ? styles.tabActive : ''}`}
             >
               <Icon size={18} />
               <span>{category.label}</span>
@@ -202,7 +182,17 @@ export default function NotificationsClient({
                 .join(' ');
 
               return (
-                <li key={notification.id} className={itemClasses} role="listitem">
+                <li
+                  key={notification.id}
+                  onClick={() => {
+                    if (!notification.isRead) {
+                      markAsRead(notification.id);
+                    }
+                    setSelectedNotification(notification);
+                  }}
+                  className={itemClasses}
+                  role="listitem"
+                >
                   <div className={styles.colType}>
                     <div className={`${styles.iconWrap} ${styles[notification.category]}`}>
                       {getCategoryIcon(notification.category)}
@@ -220,29 +210,11 @@ export default function NotificationsClient({
                   <div className={styles.colContent}>
                     <h3 className={styles.itemTitle}>{notification.title}</h3>
                     <p className={styles.itemMessage}>{notification.message}</p>
-                  </div>
-
-                  <div className={styles.colActions}>
                     <div className={styles.timeGroup}>
-                      <span className={styles.time}>{formatDate(notification.createdAt)}</span>
+                      <span className={styles.time}>
+                        {formatRelativeDate(notification.createdAt)}
+                      </span>
                       {!notification.isRead && <span className={styles.pulseDot} />}
-                    </div>
-
-                    <div className={styles.actionGroup}>
-                      <Checkbox
-                        checked={notification.isRead}
-                        onChange={() => handleMarkAsRead(notification.id)}
-                        className={styles.checkbox}
-                        disabled={notification.isRead}
-                      />
-                      <button
-                        onClick={() => handleDismiss(notification.id)}
-                        className={styles.dismissBtn}
-                        aria-label="Descartar notificación"
-                        title="Descartar"
-                      >
-                        <X size={16} />
-                      </button>
                     </div>
                   </div>
                 </li>
@@ -253,6 +225,12 @@ export default function NotificationsClient({
           renderState()
         )}
       </div>
+
+      <NotificationDetailDialog
+        notification={selectedNotification}
+        open={!!selectedNotification}
+        onClose={() => setSelectedNotification(null)}
+      />
     </div>
   );
 }

@@ -9,8 +9,15 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  min-height: 0;
   flex: 1;
+  min-height: 0;
+  max-height: calc(100dvh - 64px - 3rem);
+}
+
+@media (max-width: 768px) {
+  .container {
+    max-height: calc(100dvh - 64px - 1rem - 4.5rem - env(safe-area-inset-bottom));
+  }
 }
 
 /* ── Header ──────────────────────────────────────────── */
@@ -73,24 +80,18 @@
 /* ── Category filter tabs ────────────────────────────── */
 
 .tabs {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
   gap: 0.5rem;
-  overflow-x: auto;
   padding-block: 4px;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.tabs::-webkit-scrollbar {
-  display: none;
 }
 
 .tab {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  padding: 0.7rem 1rem;
-  flex-shrink: 0;
+  padding: 0.7rem 0.5rem;
   border-radius: 14px;
   border: 1px solid var(--md-sys-color-outline-variant);
   background: var(--md-sys-color-surface-container-low);
@@ -131,14 +132,14 @@
   justify-content: center;
 }
 
-/* ── List viewport — full height, no cap ─────────────── */
+/* ── List viewport — scroll container ────────────────── */
 
 .listViewport {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
-  min-height: 0;
   padding-right: 0.35rem;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--md-sys-color-outline) 55%, transparent) transparent;
@@ -162,25 +163,26 @@
 /* ── Notification list ───────────────────────────────── */
 
 .list {
+  min-height: 100%;
   list-style: none;
   margin: 0;
   padding: 0;
   border-radius: 24px;
   border: 1px solid var(--md-sys-color-outline-variant);
   background: var(--md-sys-color-surface-container);
-  overflow: hidden;
   box-shadow: var(--md-sys-elevation-1);
 }
 
 .item {
   display: grid;
-  grid-template-columns: 100px 1fr auto;
+  grid-template-columns: 100px 1fr;
   gap: 1rem;
   padding: 0.85rem 1rem;
   border-bottom: 1px solid var(--md-sys-color-outline-variant);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   align-items: center;
+  cursor: pointer;
 }
 
 .item:last-child {
@@ -192,7 +194,7 @@
 }
 
 .read:hover {
-  background: transparent;
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 4%, transparent);
 }
 
 .unread:hover {
@@ -379,15 +381,7 @@
   white-space: nowrap;
 }
 
-/* ── Col 3: Actions ──────────────────────────────────── */
-
-.colActions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
+/* ── Time group (inside colContent) ──────────────────── */
 
 .timeGroup {
   display: flex;
@@ -395,6 +389,8 @@
   justify-content: flex-end;
   gap: 0.35rem;
   min-width: 45px;
+  align-self: flex-end;
+  margin-top: 0.25rem;
 }
 
 .time {
@@ -422,49 +418,6 @@
     opacity: 0.5;
     transform: scale(1.2);
   }
-}
-
-.actionGroup {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.checkbox {
-  --md-checkbox-selected-container-color: var(--md-sys-color-primary);
-  --md-checkbox-selected-checkmark-color: var(--md-sys-color-on-primary);
-  --md-checkbox-unselected-icon-color: var(--md-sys-color-on-surface-variant);
-}
-
-.checkbox[disabled] {
-  --md-checkbox-selected-container-color: var(--md-sys-color-outline);
-  --md-checkbox-selected-checkmark-color: var(--md-sys-color-surface-container);
-  --md-checkbox-unselected-icon-color: var(--md-sys-color-outline);
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-.dismissBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: var(--md-sys-color-on-surface-variant);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.dismissBtn:hover {
-  background: var(--md-sys-color-surface-container-high);
-  color: var(--md-sys-color-on-surface);
-}
-
-.dismissBtn:active {
-  transform: scale(0.9);
 }
 
 /* ── Empty / Loading / Error state ───────────────────── */
@@ -537,8 +490,12 @@
 /* ── Responsive ──────────────────────────────────────── */
 
 @media (max-width: 900px) {
+  .tabs {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
   .item {
-    grid-template-columns: 80px 1fr auto;
+    grid-template-columns: 80px 1fr;
     gap: 0.75rem;
   }
 }
@@ -546,6 +503,15 @@
 @media (max-width: 640px) {
   .container {
     gap: 0.85rem;
+  }
+
+  .tabs {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tab {
+    padding: 0.6rem 0.4rem;
+    font-size: 0.8rem;
   }
 
   .title {
@@ -562,12 +528,5 @@
     flex-direction: row;
     justify-content: flex-start;
     gap: 0.65rem;
-  }
-
-  .colActions {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
   }
 }

@@ -1,8 +1,10 @@
 import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
+import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { getMemberPermissions } from '@/lib/permissions/checkPermission';
 import { createClient } from '@/lib/supabase/server';
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
+import { getAvailableCategoryIds } from './categoryAccess';
 import NotificationsClient from './NotificationsClient';
 
 interface Props {
@@ -53,5 +55,14 @@ export default async function NotificationsPage({ params }: Props) {
     redirect('/list-business');
   }
 
-  return <NotificationsClient businessId={business.id} businessName={business.name} />;
+  const entitlements = await getBusinessEntitlements(business.id);
+  const availableCategoryIds = getAvailableCategoryIds(entitlements);
+
+  return (
+    <NotificationsClient
+      businessId={business.id}
+      businessName={business.name}
+      availableCategoryIds={availableCategoryIds}
+    />
+  );
 }

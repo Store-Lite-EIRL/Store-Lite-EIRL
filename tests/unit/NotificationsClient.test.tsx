@@ -13,6 +13,8 @@ import NotificationsClient from '../../app/[slug]/notifications/NotificationsCli
 
 // ── Fixtures ──────────────────────────────────────────────
 
+const DEFAULT_CATEGORY_IDS = ['chat', 'almacen', 'plan', 'pedidos', 'sistema'];
+
 function createNotification(overrides: Partial<NotificationWithMeta> = {}): NotificationWithMeta {
   return {
     id: `notif-${Math.random().toString(36).slice(2, 9)}`,
@@ -87,6 +89,18 @@ function mockUseNotifications(overrides: Partial<ReturnType<typeof useNotificati
   return defaults;
 }
 
+/** Convenience: renders NotificationsClient with required availableCategoryIds. */
+function renderClient(props: Partial<Parameters<typeof NotificationsClient>[0]> = {}) {
+  return render(
+    <NotificationsClient
+      businessId="biz_123"
+      businessName="Test Business"
+      availableCategoryIds={DEFAULT_CATEGORY_IDS}
+      {...props}
+    />,
+  );
+}
+
 // ── Tests ─────────────────────────────────────────────────
 
 describe('NotificationsClient', () => {
@@ -97,7 +111,7 @@ describe('NotificationsClient', () => {
   describe('Loading state', () => {
     it('shows loading spinner when isLoading is true', () => {
       mockUseNotifications({ isLoading: true, notifications: [] });
-      render(<NotificationsClient businessId="biz_123" businessName="Test Business" />);
+      renderClient();
 
       expect(screen.getByText('Cargando notificaciones...')).toBeInTheDocument();
     });
@@ -110,7 +124,7 @@ describe('NotificationsClient', () => {
         unreadCount: 0,
         unreadCountByCategory: { chat: 0, almacen: 0, plan: 0, pedidos: 0, sistema: 0 },
       });
-      render(<NotificationsClient businessId="biz_123" businessName="Test Business" />);
+      renderClient();
 
       expect(screen.getByText('No hay notificaciones')).toBeInTheDocument();
     });
@@ -121,7 +135,7 @@ describe('NotificationsClient', () => {
         unreadCount: 1,
         unreadCountByCategory: { chat: 1, almacen: 0, plan: 0, pedidos: 0, sistema: 0 },
       });
-      render(<NotificationsClient businessId="biz_123" businessName="Test Business" />);
+      renderClient();
 
       // Click on "Almacén" tab — should show filtered empty
       fireEvent.click(screen.getByText('Almacén'));
@@ -139,7 +153,7 @@ describe('NotificationsClient', () => {
         isLoading: false,
         unreadCountByCategory: { chat: 0, almacen: 0, plan: 0, pedidos: 0, sistema: 0 },
       });
-      render(<NotificationsClient businessId="biz_123" businessName="Test Business" />);
+      renderClient();
 
       expect(screen.getByText('Error al cargar las notificaciones')).toBeInTheDocument();
     });
@@ -148,7 +162,7 @@ describe('NotificationsClient', () => {
   describe('Populated state', () => {
     it('renders all notification titles when data is available', () => {
       mockUseNotifications();
-      render(<NotificationsClient businessId="biz_123" businessName="Test Business" />);
+      renderClient();
 
       expect(screen.getByText('Nuevo mensaje')).toBeInTheDocument();
       expect(screen.getByText('Stock bajo')).toBeInTheDocument();
@@ -159,7 +173,7 @@ describe('NotificationsClient', () => {
 
     it('renders header with title and unread summary', () => {
       mockUseNotifications();
-      render(<NotificationsClient businessId="biz_123" businessName="Test Business" />);
+      renderClient();
 
       expect(screen.getByText('Notificaciones')).toBeInTheDocument();
       expect(screen.getByText(/4 sin leer/)).toBeInTheDocument();
@@ -169,7 +183,7 @@ describe('NotificationsClient', () => {
   describe('Category filter', () => {
     it('shows only matching notifications when a category tab is selected', () => {
       mockUseNotifications();
-      render(<NotificationsClient businessId="biz_123" businessName="Test Business" />);
+      renderClient();
 
       // Use getAllByText and pick the second match, or getByRole with name
       const chatTab = screen.getByRole('button', { name: /Chat/ });
@@ -184,7 +198,7 @@ describe('NotificationsClient', () => {
 
     it('shows all notifications when "Todas" tab is active', () => {
       mockUseNotifications();
-      render(<NotificationsClient businessId="biz_123" businessName="Test Business" />);
+      renderClient();
 
       // "Todas" should be the default — verify all 5 are visible
       expect(screen.getByText('Nuevo mensaje')).toBeInTheDocument();
@@ -196,7 +210,7 @@ describe('NotificationsClient', () => {
   });
 
   describe('Mark as read', () => {
-    it('calls markAsRead with the notification id when checkbox is clicked', () => {
+    it('calls markAsRead with the notification id when an unread listitem is clicked', () => {
       const mockMarkAsRead = vi.fn().mockResolvedValue(undefined);
       mockUseNotifications({
         markAsRead: mockMarkAsRead,
@@ -211,17 +225,38 @@ describe('NotificationsClient', () => {
         unreadCount: 1,
         unreadCountByCategory: { chat: 1, almacen: 0, plan: 0, pedidos: 0, sistema: 0 },
       });
-      const { container } = render(
-        <NotificationsClient businessId="biz_123" businessName="Test Business" />,
-      );
+      renderClient();
 
-      // md-checkbox is a web component — fire change event directly
-      const checkbox = container.querySelector('md-checkbox');
-      expect(checkbox).toBeInTheDocument();
-      fireEvent.change(checkbox!, { target: { checked: true } });
+      // Click the listitem (role="listitem")
+      const listitem = screen.getByRole('listitem');
+      expect(listitem).toBeInTheDocument();
+      fireEvent.click(listitem);
 
       expect(mockMarkAsRead).toHaveBeenCalledWith('n1');
       expect(mockMarkAsRead).toHaveBeenCalledTimes(1);
+    });
+
+    it('does NOT call markAsRead when a read notification is clicked', () => {
+      const mockMarkAsRead = vi.fn().mockResolvedValue(undefined);
+      mockUseNotifications({
+        markAsRead: mockMarkAsRead,
+        notifications: [
+          createNotification({
+            id: 'n1',
+            category: 'chat',
+            title: 'Test',
+            isRead: true,
+          }),
+        ],
+        unreadCount: 0,
+        unreadCountByCategory: { chat: 0, almacen: 0, plan: 0, pedidos: 0, sistema: 0 },
+      });
+      renderClient();
+
+      const listitem = screen.getByRole('listitem');
+      fireEvent.click(listitem);
+
+      expect(mockMarkAsRead).not.toHaveBeenCalled();
     });
   });
 
@@ -232,7 +267,7 @@ describe('NotificationsClient', () => {
         markAllAsRead: mockMarkAllAsRead,
         unreadCount: 4,
       });
-      render(<NotificationsClient businessId="biz_123" businessName="Test Business" />);
+      renderClient();
 
       fireEvent.click(screen.getByText('Marcar todas'));
 
@@ -244,45 +279,16 @@ describe('NotificationsClient', () => {
         unreadCount: 0,
         unreadCountByCategory: { chat: 0, almacen: 0, plan: 0, pedidos: 0, sistema: 0 },
       });
-      render(<NotificationsClient businessId="biz_123" businessName="Test Business" />);
+      renderClient();
 
       expect(screen.queryByText('Marcar todas')).not.toBeInTheDocument();
-    });
-  });
-
-  describe('Dismiss', () => {
-    it('calls dismiss with the notification id when dismiss button is clicked', () => {
-      const mockDismiss = vi.fn().mockResolvedValue(undefined);
-      mockUseNotifications({
-        dismiss: mockDismiss,
-        notifications: [
-          createNotification({
-            id: 'n1',
-            category: 'chat',
-            title: 'Dismissable',
-            isRead: false,
-          }),
-        ],
-        unreadCount: 1,
-        unreadCountByCategory: { chat: 1, almacen: 0, plan: 0, pedidos: 0, sistema: 0 },
-      });
-      render(<NotificationsClient businessId="biz_123" businessName="Test Business" />);
-
-      // Dismiss button should have aria-label "Descartar notificación"
-      const dismissBtn = screen.getByLabelText('Descartar notificación');
-      fireEvent.click(dismissBtn);
-
-      expect(mockDismiss).toHaveBeenCalledWith('n1');
-      expect(mockDismiss).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('Viewport', () => {
     it('renders the notification list without a max-height cap', () => {
       mockUseNotifications();
-      const { container } = render(
-        <NotificationsClient businessId="biz_123" businessName="Test Business" />,
-      );
+      const { container } = renderClient();
 
       // The list container should be rendered inside the component — no inline max-height
       const listItems = container.querySelectorAll('[role="listitem"]');
