@@ -57,6 +57,63 @@ Utiliza **Material Web (@material/web)**, lo que permite componentes con fidelid
 
 Protección de rutas mediante **Supabase Middleware** en el Edge, permitiendo verificaciones de sesión antes de que el servidor Next.js procese la petición.
 
+## 📢 Notificaciones Broadcast (SASS → Sellers)
+
+Hay **3 formas** de crear notificaciones para los sellers desde el panel SASS:
+
+### 1. CLI script (`scripts/notify.mjs`)
+
+```bash
+node scripts/notify.mjs "Título" "Mensaje" [flags]
+
+# Ejemplo
+node scripts/notify.mjs "Novedad" "Plan Pro 50% OFF" --target all --category plan
+```
+
+Flags disponibles:
+
+- `--target all` — todos los sellers (default)
+- `--target id1,id2,id3` — business IDs específicos
+- `--category sistema` — categoría visual (default: sistema)
+- `--type system` — tipo interno (default: system)
+
+Requiere `SASS_API_KEY` en el entorno.
+
+### 2. curl / HTTP directo
+
+```bash
+curl -X POST http://localhost:3000/api/sass/notifications/broadcast \
+  -H "Content-Type: application/json" \
+  -H "x-sass-key: $SASS_API_KEY" \
+  -d '{
+    "title": "Novedad",
+    "message": "Plan Pro 50% OFF",
+    "category": "plan",
+    "type": "system",
+    "target": "all"
+  }'
+```
+
+El endpoint acepta `target: "all"` o `target: ["id1", "id2"]`.
+
+### 3. CRON automático (`GET /api/cron/check-plans`)
+
+Ejecutado por **Vercel Cron** diariamente a las 8:00 AM. Revisa los planes próximos a vencer y envía notificaciones automáticas:
+
+- **D-7**: "Tu plan {nombre} vence en 7 días"
+- **D-3**: "Tu plan {nombre} vence en 3 días — renovalo para no perder funciones"
+- **D-1**: "Tu plan {nombre} vence mañana"
+- **Expirado**: "Tu plan {nombre} ha expirado — tus funciones están limitadas"
+
+Incluye deduplicación: no envía la misma notificación dos veces en el mismo día.
+
+### Variables de entorno
+
+| Variable       | Descripción                                         |
+| -------------- | --------------------------------------------------- |
+| `SASS_API_KEY` | Clave para autenticar broadcasts contra el endpoint |
+| `CRON_SECRET`  | Clave para autenticar requests de Vercel Cron       |
+
 ## 🛠️ Configuración de Desarrollo
 
 ```bash
