@@ -2,10 +2,11 @@
 
 import { db } from '@/core/database/client';
 import { productCategories, productMedia, products } from '@/core/database/schema';
+import { getBusinessEntitlements } from '@/core/entitlements';
 import { logError } from '@/lib/errorHandling';
 import { notifyLowStock, notifyOutOfStock } from '@/lib/notifications';
 import { getUniqueCategorySlug } from '@/shared/utils/categorySlug';
-import { eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { requireOwnedBusinessBySlug } from './authz';
 
@@ -39,6 +40,28 @@ export async function importProductsBatch(
     }));
 
     const { businessId } = await requireOwnedBusinessBySlug(businessSlug);
+
+    // ─── Entitlements Check ─────────────────────────────
+    const entitlements = await getBusinessEntitlements(businessId);
+
+    if (entitlements.maxProducts !== -1) {
+      const incomingCount = normalizedProductsList.filter((p) => p.status === 'ACTIVO').length;
+
+      if (incomingCount > 0) {
+        const [{ count: existingCount }] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(products)
+          .where(and(eq(products.businessId, businessId), eq(products.isAvailable, true)));
+
+        if (existingCount + incomingCount > entitlements.maxProducts) {
+          return {
+            success: false,
+            error: `No podés importar ${incomingCount} producto(s). Tu plan actual permite hasta ${entitlements.maxProducts} productos activos y ya tenés ${existingCount}. Reducí la cantidad a importar o mejorá tu plan.`,
+          };
+        }
+      }
+    }
+    // ─────────────────────────────────────────────────────
 
     const uniqueCategoryNames = Array.from(
       new Set(normalizedProductsList.map((p) => p.category).filter(Boolean)),
