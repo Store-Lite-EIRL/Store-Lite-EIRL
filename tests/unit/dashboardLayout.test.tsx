@@ -130,6 +130,25 @@ describe('DashboardLayout — plan enforcement redirect', () => {
     expect(screen.getByTestId('plan-expired-banner')).toBeInTheDocument();
   });
 
+  test('redirects when plan is basico and all existing orders have terminal statuses only', async () => {
+    mockGetBusinessEntitlements.mockResolvedValue({ plan: 'basico', maxProducts: 50 });
+    // Simulate: orders exist in the database but ALL have terminal statuses
+    // (completed, cancelled, expired, failed, refunded, etc.), so findFirst
+    // with only active statuses returns null → must redirect
+    mockPaymentsFindFirst.mockResolvedValue(null);
+
+    const { default: DashboardLayout } = await import('@/app/[slug]/dashboard/layout');
+
+    await expect(
+      DashboardLayout({
+        children: <div>content</div>,
+        params: Promise.resolve({ slug: 'test-store' }),
+      }),
+    ).rejects.toThrow('NEXT_REDIRECT');
+
+    expect(mockPaymentsFindFirst).toHaveBeenCalledTimes(1);
+  });
+
   test('does NOT redirect when plan is NOT basico (existing behavior)', async () => {
     mockGetBusinessEntitlements.mockResolvedValue({ plan: 'business_pro', maxProducts: 300 });
     // payments.findFirst should NOT be called for non-basico plans
