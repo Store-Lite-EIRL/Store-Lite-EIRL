@@ -104,7 +104,11 @@ export default async function BusinessLayout({ children, modal, params }: Busine
       role={role}
       permissions={permissions}
     >
-      <AppLayout showNavbarByDefault={isAdminView} navbarPlanName={navbarPlanName}>
+      <AppLayout
+        showNavbarByDefault={isAdminView}
+        navbarPlanName={navbarPlanName}
+        navbarBusinessId={business.id}
+      >
         {children}
         {modal}
       </AppLayout>

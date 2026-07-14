@@ -18,7 +18,6 @@ import { DashboardHeader } from './components/DashboardHeader';
 import { EarningsStats } from './components/EarningsStats';
 import { InventoryAlerts } from './components/InventoryAlerts';
 import { MarketInsights } from './components/MarketInsights';
-import { NotificationsPreview } from './components/NotificationsPreview';
 import { PenaltyInfoCard } from './components/PenaltyInfoCard';
 import { PlanStatusBar } from './components/PlanStatusBar';
 import { RecentOrders } from './components/RecentOrders';
@@ -507,12 +506,6 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
         totalSold={totalSold}
         entitlements={entitlements}
       />
-
-      <div className={styles.sectionHeader}>
-        <h2 className={styles.sectionTitle}>Notificaciones y Alertas</h2>
-      </div>
-
-      <NotificationsPreview businessId={business.id} />
 
       <div className={styles.sectionHeader}>
         <h2 className={styles.sectionTitle}>Análisis de Ventas</h2>

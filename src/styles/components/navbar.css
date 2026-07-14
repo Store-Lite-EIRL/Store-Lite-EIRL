@@ -338,6 +338,108 @@ md-menu-item {
 }
 
 /* ============================================
+   Badge (Unread Count Pill)
+   ============================================ */
+.navbar__item-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar__badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 50%;
+  background-color: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error);
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  white-space: nowrap;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* ============================================
+   Mobile "Más" Popup
+   ============================================ */
+.navbar__mobile-more-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  flex: 1;
+}
+
+.navbar__mobile-popup {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--md-sys-color-surface-container);
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 180px;
+  z-index: 1001;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  opacity: 0;
+  transform-origin: bottom center;
+  animation: popupFadeIn 0.2s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+@keyframes popupFadeIn {
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.navbar__mobile-popup-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  border-radius: 12px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.navbar__mobile-popup-item:hover {
+  background-color: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-primary);
+}
+
+.navbar__mobile-popup-item md-icon {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 1.25rem;
+}
+
+.navbar__mobile-popup-item:hover md-icon {
+  color: var(--md-sys-color-primary);
+}
+
+/* ============================================
    Responsive: Mobile (<= 425px)
    ============================================ */
 /* Default state (Hidden on desktop) */
