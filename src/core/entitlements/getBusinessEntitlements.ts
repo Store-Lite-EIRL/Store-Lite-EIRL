@@ -11,6 +11,7 @@ import { db } from '@/core/database/client';
 import { businessSettings, businessSubscriptions, businesses } from '@/core/database/schema';
 import { and, desc, eq } from 'drizzle-orm';
 
+import { enforceProductLimit } from './enforceProductLimit';
 import { DEFAULT_PLAN, PLAN_ENTITLEMENTS, type BusinessEntitlements, type PlanType } from './plans';
 
 /**
@@ -41,6 +42,9 @@ export async function getBusinessEntitlements(businessId: string): Promise<Busin
   const now = new Date();
   const isExpired = subscription?.planEndDate instanceof Date && subscription.planEndDate < now;
 
+  // Track previous plan for enforcement comparison
+  const previousPlan = !subscription ? null : (subscription.planType as PlanType);
+
   let plan: PlanType;
   if (!subscription || isExpired) {
     if (isExpired) {
@@ -51,6 +55,16 @@ export async function getBusinessEntitlements(businessId: string): Promise<Busin
     plan = DEFAULT_PLAN;
   } else {
     plan = subscription.planType as PlanType;
+  }
+
+  // Safety net: ensure product count is within plan limits on degradation
+  if (previousPlan !== null && previousPlan !== plan) {
+    const disabled = await enforceProductLimit(businessId, PLAN_ENTITLEMENTS[plan].maxProducts);
+    if (disabled > 0) {
+      console.log(
+        `[Entitlements] Auto-disabled ${disabled} products for business ${businessId} (plan: ${plan})`,
+      );
+    }
   }
 
   const isPaymentConfigured = Boolean(settings?.culqiPublicKey && settings?.culqiSecretKey);
