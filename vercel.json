@@ -6,6 +6,10 @@
     {
       "path": "/api/cron/order-timeouts",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/check-plans",
+      "schedule": "0 8 * * *"
     }
   ]
 }
