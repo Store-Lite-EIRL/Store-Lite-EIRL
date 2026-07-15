@@ -221,37 +221,86 @@ export function PaymentsConfig({
       <Dialog open={showConfigDialog} onClose={() => !isPending && setShowConfigDialog(false)}>
         <div slot="headline">Configurar Culqi</div>
         <div slot="content">
-          <p
+          <div
             style={{
               marginBottom: '16px',
               fontSize: '14px',
               color: 'var(--md-sys-color-on-surface-variant)',
+              lineHeight: 1.6,
             }}
           >
-            Ingresá tus API Keys de Culqi. Podés encontrarlas en tu panel de Culqi {'>'} Desarrollo{' '}
-            {'>'} API Keys.
-          </p>
+            <p style={{ margin: 0 }}>
+              Ingresá tus llaves de API para conectar tu negocio con la pasarela de pagos Culqi. Tus
+              clientes podrán pagar con tarjeta, Yape, billeteras móviles y más.
+            </p>
+            <ol
+              style={{
+                paddingLeft: '20px',
+                marginBottom: 0,
+              }}
+            >
+              <li>
+                Iniciá sesión en{' '}
+                <a
+                  href="https://panel.culqi.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'var(--md-sys-color-primary)', textDecoration: 'underline' }}
+                >
+                  panel.culqi.com
+                </a>
+              </li>
+              <li>
+                Andá a <strong>Desarrollo {'>'} API Keys</strong>
+              </li>
+              <li>
+                Copiá tu <strong>Public Key</strong> (pk_&hellip;) y <strong>Secret Key</strong>{' '}
+                (sk_&hellip;)
+              </li>
+            </ol>
+          </div>
 
           {/* Información sobre métodos de pago */}
           <div className={styles.paymentMethodsBox}>
             <p className={styles.paymentMethodsTitle}>
               <Icon size={16}>info</Icon>
-              Métodos de pago disponibles
+              Medios de pago disponibles
             </p>
             <ul className={styles.paymentMethodsList}>
               <li>
-                <strong>Yape:</strong> Monto entre S/ 6.00 y S/ 1,000.00 — Por límite de Yape para
-                compras por internet (el tope de Culqi es S/ 2,000).
+                <strong>Tarjetas</strong> — Crédito y débito (Visa, Mastercard, American Express y
+                más)
               </li>
               <li>
-                <strong>Tarjeta:</strong> Crédito y débito (Visa, Mastercard, American Express) —
-                sin límite fijo, depende del emisor.
+                <strong>Yape</strong> — Pago directo desde la app Yape
               </li>
               <li>
-                <strong>Nota:</strong> Los métodos de pago se muestran automáticamente según el
-                monto de la compra.
+                <strong>Billeteras móviles</strong> — Plin, Yape QR, BBVA Wallet, Interbank y otras
+              </li>
+              <li>
+                <strong>Cuotéalo BCP</strong> — Financiamiento en cuotas sin tarjeta
+              </li>
+              <li>
+                <strong>PagoEfectivo</strong> — Código CIP para pagar en agentes y bodegas
               </li>
             </ul>
+            <p
+              style={{
+                fontSize: '12px',
+                color: 'var(--md-sys-color-on-surface-variant)',
+                margin: '8px 0 0',
+              }}
+            >
+              Los medios disponibles varían según el monto y la configuración del comercio en Culqi.{' '}
+              <a
+                href="https://docs.culqi.com/es/documentacion/pagos-online"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: 'var(--md-sys-color-primary)', textDecoration: 'underline' }}
+              >
+                Ver documentación oficial
+              </a>
+            </p>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
