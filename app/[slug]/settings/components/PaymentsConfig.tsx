@@ -230,34 +230,67 @@ export function PaymentsConfig({
             }}
           >
             <p style={{ margin: 0 }}>
-              Ingresá tus llaves de API para conectar tu negocio con la pasarela de pagos Culqi. Tus
-              clientes podrán pagar con tarjeta, Yape, billeteras móviles y más.
+              Ingresá tus llaves de Culqi para activar los pagos en tu tienda. Tus clientes podrán
+              pagar con tarjeta, Yape, billeteras móviles y más.
             </p>
-            <ol
+
+            <p style={{ margin: '8px 0 0' }}>
+              ¿Todavía no tenés cuenta en Culqi?{' '}
+              <a
+                href="https://afiliate.culqi.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: 'var(--md-sys-color-primary)', textDecoration: 'underline' }}
+              >
+                Registrate acá
+              </a>
+              . La validación demora entre 1 y 3 días hábiles.
+            </p>
+
+            <div
               style={{
-                paddingLeft: '20px',
-                marginBottom: 0,
+                marginTop: '12px',
+                padding: '12px',
+                background: 'var(--md-sys-color-surface-container-high)',
+                borderRadius: '8px',
               }}
             >
-              <li>
-                Iniciá sesión en{' '}
-                <a
-                  href="https://panel.culqi.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: 'var(--md-sys-color-primary)', textDecoration: 'underline' }}
-                >
-                  panel.culqi.com
-                </a>
-              </li>
-              <li>
-                Andá a <strong>Desarrollo {'>'} API Keys</strong>
-              </li>
-              <li>
-                Copiá tu <strong>Public Key</strong> (pk_&hellip;) y <strong>Secret Key</strong>{' '}
-                (sk_&hellip;)
-              </li>
-            </ol>
+              <p style={{ margin: '0 0 8px', fontWeight: 500, fontSize: '13px' }}>
+                Cómo obtener tus llaves
+              </p>
+              <ol
+                style={{
+                  paddingLeft: '20px',
+                  margin: 0,
+                  fontSize: '13px',
+                }}
+              >
+                <li>
+                  Ingresá a{' '}
+                  <a
+                    href="https://culqipanel.culqi.com/login#/desarrollo/llaves"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: 'var(--md-sys-color-primary)',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    CulqiPanel
+                  </a>{' '}
+                  (usá el correo y contraseña que te llegó al registrarte)
+                </li>
+                <li>
+                  En el menú izquierdo, andá a <strong>Desarrollo {'>'} API Keys</strong> — es solo
+                  el nombre de la sección donde Culqi guarda tus llaves, no necesitas saber de
+                  programación
+                </li>
+                <li>
+                  Copiá tu <strong>Public Key</strong> (pk_&hellip;) y <strong>Secret Key</strong>{' '}
+                  (sk_&hellip;)
+                </li>
+              </ol>
+            </div>
           </div>
 
           {/* Información sobre métodos de pago */}
