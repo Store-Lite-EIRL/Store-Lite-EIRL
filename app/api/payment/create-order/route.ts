@@ -7,6 +7,7 @@
 
 import { db } from '@/core/database/client';
 import { businesses, businessSettings, paymentOrders } from '@/core/database/schema';
+import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { completeIdempotencyKey, reserveIdempotencyKey } from '@/core/payments/idempotency';
 import { decrypt } from '@/utils/crypto';
 import { eq } from 'drizzle-orm';
@@ -74,6 +75,18 @@ export async function POST(request: Request) {
         {
           error:
             'Tu pasarela de pagos está bloqueada. Pagá tus multas pendientes en Dashboard > Mis Multas.',
+        },
+        { status: 403 },
+      );
+    }
+
+    // 🚫 PLAN CHECK: Verificar que el negocio tiene un plan con pasarela de pagos
+    const entitlements = await getBusinessEntitlements(businessId);
+    if (!entitlements.hasPaymentGateway) {
+      return NextResponse.json(
+        {
+          error:
+            'Tu plan actual no incluye pasarela de pagos. Actualizá tu plan para recibir pagos.',
         },
         { status: 403 },
       );
