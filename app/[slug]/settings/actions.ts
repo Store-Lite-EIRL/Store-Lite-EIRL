@@ -3,6 +3,7 @@
 import { isBusinessSlugTaken } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { businesses, businessSettings, businessSlugAliases } from '@/core/database/schema';
+import { getBusinessEntitlements } from '@/core/entitlements';
 import {
   type StorefrontLayout,
   type StorefrontTheme,
@@ -30,7 +31,6 @@ export interface ToggleActionState extends ActionState {
 export async function updateBusinessSlug(
   businessId: string,
   newSlug: string,
-  plan: string,
 ): Promise<SlugActionState> {
   try {
     await requireAccessOnId(businessId, 'business.edit');
@@ -38,7 +38,8 @@ export async function updateBusinessSlug(
     return { success: false, error: error.message || 'No autorizado' };
   }
 
-  if (plan === 'basico') {
+  const entitlements = await getBusinessEntitlements(businessId);
+  if (entitlements.plan === 'basico') {
     return { success: false, error: 'Funcion disponible solo para planes superiores.' };
   }
 
@@ -129,7 +130,6 @@ export async function checkSlugAvailability(
 export async function toggleBusinessActive(
   businessId: string,
   currentIsActive: boolean,
-  plan: string,
 ): Promise<ToggleActionState> {
   try {
     await requireAccessOnId(businessId, 'business.edit');
@@ -137,7 +137,8 @@ export async function toggleBusinessActive(
     return { success: false, error: error.message || 'No autorizado' };
   }
 
-  if (plan === 'basico') {
+  const entitlements = await getBusinessEntitlements(businessId);
+  if (entitlements.plan === 'basico') {
     return { success: false, error: 'Funcion disponible solo para planes superiores.' };
   }
 
@@ -178,7 +179,6 @@ export interface StorefrontThemeActionState extends ActionState {
 export async function updateBusinessSEO(
   businessId: string,
   seoData: SEOActionInput,
-  plan: string,
 ): Promise<ActionState> {
   try {
     await requireAccessOnId(businessId, 'seo.edit');
@@ -186,7 +186,8 @@ export async function updateBusinessSEO(
     return { success: false, error: error.message || 'No autorizado' };
   }
 
-  if (plan === 'basico') {
+  const entitlements = await getBusinessEntitlements(businessId);
+  if (entitlements.plan === 'basico') {
     return { success: false, error: 'Funcion disponible solo para planes superiores.' };
   }
 
@@ -217,7 +218,6 @@ export async function updateStorefrontLayout(
   businessId: string,
   slug: string,
   layout: StorefrontLayout,
-  plan: string,
 ): Promise<StorefrontLayoutActionState> {
   try {
     await requireAccessOnId(businessId, 'storefront.edit');
@@ -225,7 +225,8 @@ export async function updateStorefrontLayout(
     return { success: false, error: error.message || 'No autorizado' };
   }
 
-  if (plan === 'basico' || plan === 'emprendedor') {
+  const entitlements = await getBusinessEntitlements(businessId);
+  if (entitlements.plan === 'basico' || entitlements.plan === 'emprendedor') {
     return {
       success: false,
       error: 'Funcion disponible solo para planes con personalizacion de storefront.',
@@ -288,7 +289,6 @@ export async function updateStorefrontTheme(
   businessId: string,
   slug: string,
   storefrontTheme: StorefrontTheme,
-  plan: string,
   themeMode?: 'light' | 'dark',
 ): Promise<StorefrontThemeActionState> {
   try {
@@ -297,7 +297,8 @@ export async function updateStorefrontTheme(
     return { success: false, error: error.message || 'No autorizado' };
   }
 
-  if (plan === 'basico' || plan === 'emprendedor') {
+  const entitlements = await getBusinessEntitlements(businessId);
+  if (entitlements.plan === 'basico' || entitlements.plan === 'emprendedor') {
     return {
       success: false,
       error: 'Funcion disponible solo para planes con personalizacion de storefront.',
@@ -357,18 +358,15 @@ export async function updateStorefrontTheme(
   }
 }
 
-export async function clearStorefrontTheme(
-  businessId: string,
-  slug: string,
-  plan: string,
-): Promise<ActionState> {
+export async function clearStorefrontTheme(businessId: string, slug: string): Promise<ActionState> {
   try {
     await requireAccessOnId(businessId, 'storefront.edit');
   } catch (error: any) {
     return { success: false, error: error.message || 'No autorizado' };
   }
 
-  if (plan === 'basico' || plan === 'emprendedor') {
+  const entitlements = await getBusinessEntitlements(businessId);
+  if (entitlements.plan === 'basico' || entitlements.plan === 'emprendedor') {
     return {
       success: false,
       error: 'Funcion disponible solo para planes con personalizacion de storefront.',
@@ -419,14 +417,15 @@ export async function updateCulqiCredentials(
   businessId: string,
   publicKey: string,
   secretKey: string,
-  plan: string,
 ): Promise<ActionState> {
   try {
     await requireAccessOnId(businessId, 'business.edit');
   } catch (error: any) {
     return { success: false, error: error.message || 'No autorizado' };
   }
-  if (plan !== 'business_pro' && plan !== 'enterprise_ai') {
+
+  const entitlements = await getBusinessEntitlements(businessId);
+  if (!entitlements.hasPaymentGateway) {
     return {
       success: false,
       error: 'La configuracion de pagos solo esta disponible en planes premium.',

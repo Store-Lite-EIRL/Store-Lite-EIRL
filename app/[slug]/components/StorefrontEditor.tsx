@@ -26,7 +26,6 @@ interface StorefrontEditorProps {
   currentScheme?: StorefrontColorScheme;
   /** Business default scheme from DB (themeMode). Used as initial scheme tab. */
   defaultScheme?: 'light' | 'dark';
-  plan?: string;
 }
 
 // NOTE: Built-in overlays (dots, lines, etc.) and custom CSS textarea were removed in V2.
@@ -66,7 +65,6 @@ export function StorefrontEditor({
   detectedColorScheme,
   currentScheme,
   defaultScheme,
-  plan,
 }: StorefrontEditorProps) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -280,7 +278,6 @@ export function StorefrontEditor({
         business.id,
         business.slug,
         storefrontTheme,
-        plan || 'business_pro',
         scheme,
       );
       if (result.success) {

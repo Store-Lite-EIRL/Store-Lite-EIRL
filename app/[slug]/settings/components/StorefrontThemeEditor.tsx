@@ -56,15 +56,9 @@ export function StorefrontThemeEditor({
     startTransition(async () => {
       let result;
       if (usePlatformColors) {
-        result = await clearStorefrontTheme(business.id, business.slug, entitlements.plan);
+        result = await clearStorefrontTheme(business.id, business.slug);
       } else {
-        result = await updateStorefrontTheme(
-          business.id,
-          business.slug,
-          storefrontTheme,
-          entitlements.plan,
-          scheme,
-        );
+        result = await updateStorefrontTheme(business.id, business.slug, storefrontTheme, scheme);
       }
 
       if (!result.success) {

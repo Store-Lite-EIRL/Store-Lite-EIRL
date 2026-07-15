@@ -49,12 +49,7 @@ export function PaymentsConfig({
 
     startTransition(async () => {
       setError(null);
-      const result = await updateCulqiCredentials(
-        business.id,
-        publicKey,
-        secretKey,
-        entitlements.plan,
-      );
+      const result = await updateCulqiCredentials(business.id, publicKey, secretKey);
       if (result.success) {
         showSuccess('Credenciales de Culqi actualizadas.');
         setShowConfigDialog(false);

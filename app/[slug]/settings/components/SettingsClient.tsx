@@ -221,7 +221,7 @@ function BusinessSection({
 
     startTransitionSlug(async () => {
       setSlugError(null);
-      const res = await updateBusinessSlug(business.id, newSlug, entitlements.plan);
+      const res = await updateBusinessSlug(business.id, newSlug);
       if (!res.success) {
         setSlugError(res.error || 'Error al actualizar el slug');
       } else {
@@ -235,7 +235,7 @@ function BusinessSection({
   const handleToggleActive = () => {
     startTransitionActive(async () => {
       toggleOptimisticActive(undefined); // toggle optimistically
-      const res = await toggleBusinessActive(business.id, business.isActive, entitlements.plan);
+      const res = await toggleBusinessActive(business.id, business.isActive);
       if (!res.success) {
         console.error(res.error);
         // Error handling could be a toast in the future, for now it will just revert the optimistic UI on next refresh/render
@@ -916,12 +916,7 @@ function StorefrontSectionEditor({
 
   const handleSave = () => {
     startTransition(async () => {
-      const result = await updateStorefrontLayout(
-        business.id,
-        business.slug,
-        layout,
-        entitlements.plan,
-      );
+      const result = await updateStorefrontLayout(business.id, business.slug, layout);
 
       if (!result.success) {
         showError(result.error || 'No se pudo guardar la configuración de la tienda.');
@@ -1156,17 +1151,13 @@ function SEOSection({
 
   const handleSave = () => {
     startTransition(async () => {
-      const res = await updateBusinessSEO(
-        business.id,
-        {
-          ...formData,
-          seoKeywords: formData.seoKeywords
-            .split(',')
-            .map((k) => k.trim())
-            .filter(Boolean),
-        },
-        entitlements.plan,
-      );
+      const res = await updateBusinessSEO(business.id, {
+        ...formData,
+        seoKeywords: formData.seoKeywords
+          .split(',')
+          .map((k) => k.trim())
+          .filter(Boolean),
+      });
       if (res.success) {
         router.refresh();
       } else {
