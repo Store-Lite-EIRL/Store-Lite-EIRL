@@ -60,6 +60,7 @@ import {
   type SettingsClientProps,
 } from '../constants';
 import { useSnackbarFeedback } from '../hooks/useSettingsState';
+import { ComplaintsPanel } from '../libro-reclamaciones/ComplaintsPanel';
 import styles from '../settings.module.css';
 import { PaymentsConfig } from './PaymentsConfig';
 import { NAV_GROUPS, SettingsNav, type Section } from './SettingsNav';
@@ -768,12 +769,44 @@ function PlanSection({
 function LegalSection({
   business,
   isOwner: _isOwner,
-  permissions: _permissions,
+  permissions,
+  preferences,
 }: {
   business: SettingsBusiness;
   isOwner: boolean;
   permissions: Permission[];
+  preferences: Record<string, unknown> | null;
 }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const { feedback, showSuccess, showError, close: closeFeedback } = useSnackbarFeedback();
+
+  const prefs = preferences ?? {};
+  const initialForm = {
+    termsContent: (prefs.termsContent as string) ?? '',
+    returnsContent: (prefs.returnsContent as string) ?? '',
+  };
+  const [formData, setFormData] = useState(initialForm);
+  const initialRef = useRef(initialForm);
+  const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialRef.current);
+  const canSave = _isOwner || permissions.includes('legal.edit');
+
+  const handleSave = () => {
+    startTransition(async () => {
+      const { saveLegalContent } = await import('@/features/legal/actions');
+      const res = await saveLegalContent(business.id, business.slug, {
+        termsContent: formData.termsContent || null,
+        returnsContent: formData.returnsContent || null,
+      });
+      if (res.success) {
+        showSuccess('Contenido legal guardado correctamente.');
+        router.refresh();
+      } else {
+        showError(res.error ?? 'Error al guardar el contenido legal.');
+      }
+    });
+  };
+
   return (
     <div className={styles.sectionArea}>
       <div className={styles.businessHero}>
@@ -783,11 +816,13 @@ function LegalSection({
         <div>
           <h2 className={styles.businessHeroTitle}>Información Legal</h2>
           <p className={styles.businessHeroSubtitle}>
-            Datos tributarios del negocio e información del representante legal.
+            Datos tributarios del negocio, representante legal y documentos obligatorios para la
+            tienda.
           </p>
         </div>
       </div>
 
+      {/* ── Tax Info Card (existing, unchanged) ── */}
       <Card variant="outlined" className={styles.infoCard}>
         <p className={styles.cardLabel}>Datos tributarios</p>
         <List>
@@ -811,6 +846,7 @@ function LegalSection({
         </List>
       </Card>
 
+      {/* ── Legal Representative Card ── */}
       <Card variant="outlined" className={styles.infoCard}>
         <p className={styles.cardLabel}>Representante legal</p>
         <List>
@@ -842,6 +878,83 @@ function LegalSection({
           </ListItem>
         </List>
       </Card>
+
+      {/* ── Legal Documents Card ── */}
+      <Card variant="outlined" className={styles.infoCard}>
+        <p className={styles.cardLabel}>Documentos legales de la tienda</p>
+        <p className={styles.previewSupporting} style={{ padding: '0 24px', margin: 0 }}>
+          Estos textos se muestran en las páginas públicas de tu tienda. Son obligatorios para
+          operar con Culqi y cumplir con la normativa peruana.
+        </p>
+
+        <div className={styles.metaFields}>
+          {/* Términos y Condiciones */}
+          <div>
+            <TextField
+              label="Términos y Condiciones"
+              type="textarea"
+              rows={6}
+              value={formData.termsContent}
+              placeholder="Escribí los términos y condiciones de tu tienda..."
+              onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                setFormData({ ...formData, termsContent: e.target.value })
+              }
+              supportingText="Se muestra en /{slug}/terminos. Dejalo vacío para ocultar la página."
+            >
+              <Icon slot="leading-icon">description</Icon>
+            </TextField>
+            <CharCounter current={formData.termsContent.length} limit={10000} />
+          </div>
+
+          <Divider />
+
+          {/* Política de Devoluciones */}
+          <div>
+            <TextField
+              label="Política de Devoluciones"
+              type="textarea"
+              rows={6}
+              value={formData.returnsContent}
+              placeholder="Escribí la política de devoluciones de tu tienda..."
+              onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                setFormData({ ...formData, returnsContent: e.target.value })
+              }
+              supportingText="Se muestra en /{slug}/devoluciones. Dejalo vacío para ocultar la página."
+            >
+              <Icon slot="leading-icon">undo</Icon>
+            </TextField>
+            <CharCounter current={formData.returnsContent.length} limit={10000} />
+          </div>
+        </div>
+      </Card>
+
+      {/* ── Save Button ── */}
+      <div className={styles.actionRow}>
+        <Button
+          variant="filled"
+          onClick={handleSave}
+          disabled={isPending || !canSave || !hasChanges}
+        >
+          <Icon slot="icon" size={21}>
+            {isPending ? 'sync' : 'save'}
+          </Icon>
+          {isPending
+            ? 'Guardando...'
+            : !canSave
+              ? 'Sin permiso'
+              : !hasChanges
+                ? 'Sin cambios pendientes'
+                : 'Guardar documentos legales'}
+        </Button>
+      </div>
+
+      <AlertSnackbar
+        open={feedback.open}
+        description={feedback.description}
+        color={feedback.color}
+        icon={feedback.icon}
+        onClose={closeFeedback}
+      />
     </div>
   );
 }
@@ -1394,6 +1507,9 @@ export function SettingsClient({
             case 'legal':
               hasAccess = permissions.includes('legal.edit');
               break;
+            case 'complaints':
+              hasAccess = permissions.includes('legal.edit');
+              break;
             case 'seo':
               hasAccess = permissions.includes('seo.edit');
               break;
@@ -1512,7 +1628,19 @@ export function SettingsClient({
                   />
                 )}
                 {active === 'legal' && (
-                  <LegalSection business={business} isOwner={isOwner} permissions={permissions} />
+                  <LegalSection
+                    business={business}
+                    isOwner={isOwner}
+                    permissions={permissions}
+                    preferences={business.preferences}
+                  />
+                )}
+                {active === 'complaints' && (
+                  <ComplaintsPanel
+                    businessId={business.id}
+                    isOwner={isOwner}
+                    permissions={permissions}
+                  />
                 )}
                 {active === 'payments' && (
                   <PaymentsConfig

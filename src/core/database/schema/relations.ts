@@ -14,6 +14,7 @@ import {
   businessTeamRoles,
 } from './businesses';
 import { chatSessions, messages } from './chat';
+import { complaintBookRecords } from './complaints';
 import { importJobs, importRows } from './imports';
 import { notifications } from './notifications';
 import {
@@ -224,6 +225,13 @@ export const paymentOrdersRelations = relations(paymentOrders, ({ one }) => ({
 export const notificationsRelations = relations(notifications, ({ one }) => ({
   business: one(businesses, {
     fields: [notifications.businessId],
+    references: [businesses.id],
+  }),
+}));
+
+export const complaintBookRecordsRelations = relations(complaintBookRecords, ({ one }) => ({
+  business: one(businesses, {
+    fields: [complaintBookRecords.businessId],
     references: [businesses.id],
   }),
 }));

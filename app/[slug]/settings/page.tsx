@@ -116,6 +116,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
           socialLinks: business.socialLinks ?? null,
           culqiPublicKey: settings?.culqiPublicKey ?? null,
           culqiSecretKey: settings?.culqiSecretKey ?? null,
+          preferences: settings?.preferences ?? null,
         } as SettingsBusiness
       }
       entitlements={{

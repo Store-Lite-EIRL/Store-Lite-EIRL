@@ -3,6 +3,7 @@
 import { Icon } from '@/shared/components/ui/data-display/Icon';
 import type { Business } from '@/types/business';
 import Image from 'next/image';
+import Link from 'next/link';
 import styles from './Footer.module.css';
 
 interface FooterProps {
@@ -113,6 +114,31 @@ export function Footer({ business }: FooterProps) {
                 </a>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Columna 3: Legales */}
+        <div className={styles.column}>
+          <h4 className={styles.columnTitle}>Legales</h4>
+          <div className={styles.infoList}>
+            <div className={styles.infoItem}>
+              <Icon className={styles.infoIcon}>description</Icon>
+              <Link href={`/${business.slug}/terminos`} className={styles.infoLink}>
+                Términos y Condiciones
+              </Link>
+            </div>
+            <div className={styles.infoItem}>
+              <Icon className={styles.infoIcon}>undo</Icon>
+              <Link href={`/${business.slug}/devoluciones`} className={styles.infoLink}>
+                Política de Devoluciones
+              </Link>
+            </div>
+            <div className={styles.infoItem}>
+              <Icon className={styles.infoIcon}>contact_support</Icon>
+              <Link href={`/${business.slug}/libro-reclamaciones`} className={styles.infoLink}>
+                Libro de Reclamaciones
+              </Link>
+            </div>
           </div>
         </div>
       </div>

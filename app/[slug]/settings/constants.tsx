@@ -48,6 +48,7 @@ export interface SettingsBusiness {
   isActive: boolean;
   culqiPublicKey: string | null;
   culqiSecretKey: string | null;
+  preferences: Record<string, unknown> | null;
   createdAt: Date;
 }
 

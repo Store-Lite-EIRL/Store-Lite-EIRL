@@ -10,6 +10,7 @@ export type Section =
   | 'plan'
   | 'team'
   | 'legal'
+  | 'complaints'
   | 'seo'
   | 'payments'
   | 'social';
@@ -32,6 +33,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { id: 'business', label: 'Mi Negocio', icon: 'store' },
       { id: 'social', label: 'Redes Sociales', icon: 'share' },
       { id: 'legal', label: 'Legal', icon: 'gavel' },
+      { id: 'complaints', label: 'Libro de Reclamaciones', icon: 'contact_support' },
     ],
   },
   {

@@ -1,0 +1,78 @@
+import { resolveBusinessSlug } from '@/core/business/slug';
+import { db } from '@/core/database/client';
+import { businessSettings } from '@/core/database/schema';
+import { eq } from 'drizzle-orm';
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+
+interface ReturnsPageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: ReturnsPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const business = (await resolveBusinessSlug(slug))?.business;
+
+  if (!business) return { title: 'Política de Devoluciones' };
+
+  return {
+    title: `Política de Devoluciones — ${business.name}`,
+    description: 'Política de devoluciones y cambios de la tienda.',
+    robots: { index: true, follow: true },
+  };
+}
+
+export default async function ReturnsPage({ params }: ReturnsPageProps) {
+  const { slug } = await params;
+  const business = (await resolveBusinessSlug(slug))?.business;
+
+  if (!business) {
+    return notFound();
+  }
+
+  const settings = await db.query.businessSettings.findFirst({
+    where: eq(businessSettings.businessId, business.id),
+    columns: { preferences: true },
+  });
+
+  const content = (settings?.preferences as Record<string, unknown> | null)?.returnsContent as
+    | string
+    | undefined;
+
+  return (
+    <div style={{ maxWidth: '720px', margin: '0 auto', padding: '48px 16px' }}>
+      <h1
+        style={{
+          fontSize: '1.75rem',
+          fontWeight: '700',
+          marginBottom: '24px',
+          color: 'var(--md-sys-color-on-surface)',
+        }}
+      >
+        Política de Devoluciones
+      </h1>
+
+      {content ? (
+        <div
+          style={{
+            whiteSpace: 'pre-wrap',
+            lineHeight: '1.7',
+            fontSize: '0.9375rem',
+            color: 'var(--md-sys-color-on-surface-variant)',
+          }}
+        >
+          {content}
+        </div>
+      ) : (
+        <p
+          style={{
+            color: 'var(--md-sys-color-on-surface-variant)',
+            fontSize: '0.9375rem',
+          }}
+        >
+          El comercio aún no ha configurado esta página.
+        </p>
+      )}
+    </div>
+  );
+}
