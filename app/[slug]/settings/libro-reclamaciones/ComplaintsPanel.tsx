@@ -12,7 +12,7 @@ import { useCallback, useEffect, useState, useTransition } from 'react';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-import type { ComplaintRecord } from '@/features/legal/actions';
+import type { ComplaintRecord } from '@/features/legal/types';
 
 interface ComplaintsPanelProps {
   businessId: string;
@@ -70,7 +70,18 @@ function ReplyForm({
     if (!response.trim()) return;
 
     startTransition(async () => {
-      const { respondToComplaint } = await import('@/features/legal/actions');
+      const { respondToComplaint } = await import('@/features/legal/actions').catch(
+        (err: unknown) => {
+          console.error('[ComplaintsPanel] Failed to load actions:', err);
+          setFeedback({
+            open: true,
+            description: 'Error al cargar el módulo de reclamos.',
+            color: 'error',
+          });
+          return { respondToComplaint: null };
+        },
+      );
+      if (!respondToComplaint) return;
       const res = await respondToComplaint(businessId, complaint.id, response.trim());
 
       if (res.success) {
@@ -132,15 +143,25 @@ export function ComplaintsPanel({ businessId, isOwner, permissions }: Complaints
   }>({ complaints: [], loaded: false });
 
   const loadComplaints = useCallback(() => {
-    import('@/features/legal/actions').then(({ getComplaints }) => {
-      getComplaints(businessId).then((result) => {
-        if (result.success) {
-          setData({ complaints: result.complaints, loaded: true });
-        } else {
-          setData({ complaints: [], error: result.error, loaded: true });
-        }
+    import('@/features/legal/actions')
+      .then(({ getComplaints }) => {
+        getComplaints(businessId)
+          .then((result) => {
+            if (result.success) {
+              setData({ complaints: result.complaints, loaded: true });
+            } else {
+              setData({ complaints: [], error: result.error, loaded: true });
+            }
+          })
+          .catch((err: unknown) => {
+            console.error('[ComplaintsPanel] getComplaints failed:', err);
+            setData({ complaints: [], error: 'Error al cargar los reclamos.', loaded: true });
+          });
+      })
+      .catch((err: unknown) => {
+        console.error('[ComplaintsPanel] Failed to load actions module:', err);
+        setData({ complaints: [], error: 'Error al cargar el módulo de reclamos.', loaded: true });
       });
-    });
   }, [businessId]);
 
   useEffect(() => {

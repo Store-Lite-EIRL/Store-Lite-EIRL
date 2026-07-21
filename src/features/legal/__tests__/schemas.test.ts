@@ -10,7 +10,7 @@ vi.mock('@/core/database/client', () => {
   return { db: new MockDb() };
 });
 
-import { complaintFormSchema, legalContentSchema } from '../actions';
+import { complaintFormSchema, legalContentSchema } from '../schemas';
 
 describe('legalContentSchema', () => {
   it('accepts valid content', () => {
@@ -94,7 +94,7 @@ describe('complaintFormSchema', () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      const emailError = result.error.issues.find((i) => i.path.includes('consumerEmail'));
+      const emailError = result.error.issues.find((i: any) => i.path.includes('consumerEmail'));
       expect(emailError?.message).toContain('Correo');
     }
   });
@@ -106,7 +106,7 @@ describe('complaintFormSchema', () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      const descError = result.error.issues.find((i) => i.path.includes('claimDescription'));
+      const descError = result.error.issues.find((i: any) => i.path.includes('claimDescription'));
       expect(descError?.message).toContain('20');
     }
   });
@@ -118,7 +118,7 @@ describe('complaintFormSchema', () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      const descError = result.error.issues.find((i) => i.path.includes('claimDescription'));
+      const descError = result.error.issues.find((i: any) => i.path.includes('claimDescription'));
       expect(descError?.message).toContain('2,000');
     }
   });
@@ -128,7 +128,7 @@ describe('complaintFormSchema', () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       // Should have errors for all required fields
-      const paths = result.error.issues.map((i) => i.path.join('.'));
+      const paths = result.error.issues.map((i: any) => i.path.join('.'));
       expect(paths).toContain('consumerLastName');
       expect(paths).toContain('consumerFirstName');
       expect(paths).toContain('consumerDocumentType');

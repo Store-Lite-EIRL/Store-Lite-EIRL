@@ -67,3 +67,18 @@ export interface ComplaintAdminView {
   createdAt: string;
   slaDeadline: string;
 }
+
+/**
+ * Complaint record returned by getComplaints server action.
+ */
+export interface ComplaintRecord {
+  id: string;
+  ticketNumber: string;
+  consumerFirstName: string;
+  consumerLastName: string;
+  consumerEmail: string;
+  claimDescription: string;
+  status: 'pending' | 'acknowledged' | 'responded';
+  createdAt: string;
+  slaDeadline: string;
+}

@@ -785,6 +785,7 @@ function LegalSection({
   const initialForm = {
     termsContent: (prefs.termsContent as string) ?? '',
     returnsContent: (prefs.returnsContent as string) ?? '',
+    complaintContactEmail: (prefs.complaintContactEmail as string) ?? '',
   };
   const [formData, setFormData] = useState(initialForm);
   const initialRef = useRef(initialForm);
@@ -797,6 +798,7 @@ function LegalSection({
       const res = await saveLegalContent(business.id, business.slug, {
         termsContent: formData.termsContent || null,
         returnsContent: formData.returnsContent || null,
+        complaintContactEmail: formData.complaintContactEmail || null,
       });
       if (res.success) {
         showSuccess('Contenido legal guardado correctamente.');
@@ -877,6 +879,28 @@ function LegalSection({
             </Icon>
           </ListItem>
         </List>
+      </Card>
+
+      {/* ── Complaint Contact Email Card ── */}
+      <Card variant="outlined" className={styles.infoCard}>
+        <p className={styles.cardLabel}>Contacto para Reclamos</p>
+        <div style={{ padding: '0 24px 24px' }}>
+          <TextField
+            label="Email de contacto para reclamos"
+            type="email"
+            value={formData.complaintContactEmail}
+            placeholder="reclamos@tutienda.pe"
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setFormData({
+                ...formData,
+                complaintContactEmail: (e.target as HTMLInputElement).value,
+              })
+            }
+            supportingText="Se muestra en la página pública del Libro de Reclamaciones. Dejalo vacío si no querés mostrarlo."
+          >
+            <Icon slot="leading-icon">mail</Icon>
+          </TextField>
+        </div>
       </Card>
 
       {/* ── Legal Documents Card ── */}
