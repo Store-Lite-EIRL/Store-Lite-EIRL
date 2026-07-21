@@ -350,3 +350,24 @@ export async function respondToComplaint(
     return { success: false, error: 'Error al registrar la respuesta.' };
   }
 }
+
+// =====================================================
+// submitSupportRequest — Seller → Store_Lite support
+// =====================================================
+
+export async function submitSupportRequest(subject: string, message: string): Promise<ActionState> {
+  try {
+    const { sendEmail } = await import('@/lib/email/resend');
+
+    await sendEmail({
+      to: 'devkittopsac@gmail.com',
+      subject: `[Soporte Store Lite] ${subject}`,
+      html: `<p>Nuevo mensaje de soporte:</p><p><strong>Asunto:</strong> ${subject}</p><p><strong>Mensaje:</strong></p><p>${message.replace(/\n/g, '<br>')}</p>`,
+    });
+
+    return { success: true, message: 'Mensaje enviado correctamente.' };
+  } catch (error) {
+    console.error('[legal] Error sending support request:', error);
+    return { success: false, error: 'Error al enviar el mensaje de soporte.' };
+  }
+}

@@ -112,6 +112,12 @@ export default function Navbar({
     },
     { id: 'storage', icon: 'package_2', label: 'Almacén', path: getBusinessPath(slug, '/storage') },
     {
+      id: 'soporte',
+      icon: 'support',
+      label: 'Soporte',
+      path: getBusinessPath(slug, '/soporte'),
+    },
+    {
       id: 'dashboard',
       icon: 'dashboard',
       label: 'Dashboard',
