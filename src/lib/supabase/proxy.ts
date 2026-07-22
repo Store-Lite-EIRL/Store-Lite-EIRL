@@ -82,7 +82,11 @@ export async function updateProxy(request: NextRequest) {
       !['auth', 'created', 'list-business', 'pricing'].includes(pathSegments[0]);
     const isProductDetail = pathSegments.length === 3 && pathSegments[1] === 'product';
     const isOrderTracking = pathSegments.length === 3 && pathSegments[1] === 'order';
-    const isPublicStorefront = isStorefrontBase || isProductDetail || isOrderTracking;
+    const isLegalPage =
+      pathSegments.length === 2 &&
+      ['terminos', 'devoluciones', 'libro-reclamaciones'].includes(pathSegments[1]);
+    const isPublicStorefront =
+      isStorefrontBase || isProductDetail || isOrderTracking || isLegalPage;
 
     // Las API routes son server-side y manejan su propia autorización.
     // El proxy no debe interceptarlas — permite que requests del storefront

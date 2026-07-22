@@ -2,9 +2,9 @@ import styles from './SkeletonBusinessPage.module.css';
 
 // Reusing layout classes where possible or mimicking structure
 import Skeleton from '@/shared/components/feedback/Skeleton';
-import featuredStyles from '../../(main)/home/FeaturedItems.module.css';
-import feedStyles from '../../(main)/home/Feed.module.css';
-import heroStyles from '../../(main)/home/Hero.module.css';
+import featuredStyles from '../../../(main)/home/FeaturedItems.module.css';
+import feedStyles from '../../../(main)/home/Feed.module.css';
+import heroStyles from '../../../(main)/home/Hero.module.css';
 import SkeletonProductCard from './SkeletonProductCard';
 
 export default function SkeletonBusinessPage() {
