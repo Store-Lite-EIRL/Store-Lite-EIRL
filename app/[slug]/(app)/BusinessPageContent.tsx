@@ -39,13 +39,13 @@ import {
   type Dispatch,
   type SetStateAction,
 } from 'react';
-import FeaturedItems from '../(main)/home/FeaturedItems';
-import Feed from '../(main)/home/Feed';
-import FilterBar from '../(main)/home/FilterBar';
-import filterStyles from '../(main)/home/FilterBar.module.css';
-import Hero from '../(main)/home/Hero';
-import Pagination from '../(main)/home/Pagination';
-import ProductFiltersTopBar from '../(main)/home/components/ProductFiltersTopBar';
+import FeaturedItems from '../../(main)/home/FeaturedItems';
+import Feed from '../../(main)/home/Feed';
+import FilterBar from '../../(main)/home/FilterBar';
+import filterStyles from '../../(main)/home/FilterBar.module.css';
+import Hero from '../../(main)/home/Hero';
+import Pagination from '../../(main)/home/Pagination';
+import ProductFiltersTopBar from '../../(main)/home/components/ProductFiltersTopBar';
 import styles from './BusinessPageContent.module.css';
 import { Footer } from './Footer';
 import { BasicContactDialog } from './components/BasicContactDialog';

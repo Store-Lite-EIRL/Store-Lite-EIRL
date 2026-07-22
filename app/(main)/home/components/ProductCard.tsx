@@ -3,7 +3,7 @@
 import { Button, IconButton } from '@/shared/components/ui/buttons';
 import { Icon } from '@/shared/components/ui/data-display';
 import type { Product, ProductCategory } from '@/types/product';
-import Checkout from '@app/[slug]/components/Checkout';
+import Checkout from '@app/[slug]/(app)/components/Checkout';
 import Image from 'next/image';
 import { useState } from 'react';
 

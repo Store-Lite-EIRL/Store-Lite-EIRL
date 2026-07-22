@@ -1,6 +1,6 @@
 import { useNotifications } from '@/hooks/useNotifications';
 import { AlertSnackbar, Button, Icon } from '@/shared/components/ui';
-import { usePermissions } from '@app/[slug]/context/PermissionsContext';
+import { usePermissions } from '@app/[slug]/(app)/context/PermissionsContext';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { useStorage } from '../context/StorageContext';

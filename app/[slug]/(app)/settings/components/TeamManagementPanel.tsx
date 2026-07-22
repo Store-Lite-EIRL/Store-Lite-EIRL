@@ -23,7 +23,7 @@ import {
   revokeInvitationCode,
   updateMemberPermissions,
   updateMemberRole,
-} from '../../../actions/team';
+} from '../../../../actions/team';
 import { type Entitlements, type SettingsBusiness, type TeamMemberData } from '../constants';
 import { useSnackbarFeedback } from '../hooks/useSettingsState';
 import styles from '../settings.module.css';

@@ -11,7 +11,7 @@ export default async function PublicLayout({
   const { slug } = await params;
   const business = (await resolveBusinessSlug(slug))?.business;
 
-  if (!business) {
+  if (!business || !business.isActive) {
     return notFound();
   }
 

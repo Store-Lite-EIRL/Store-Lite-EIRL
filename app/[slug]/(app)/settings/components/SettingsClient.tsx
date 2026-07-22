@@ -32,7 +32,7 @@ import React, {
   useTransition,
   type CSSProperties,
 } from 'react';
-import { updateBusinessLogo } from '../../../actions/business';
+import { updateBusinessLogo } from '../../../../actions/business';
 import {
   checkSlugAvailability,
   toggleBusinessActive,

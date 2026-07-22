@@ -210,7 +210,9 @@ export function ComplaintsPanel({ businessId, isOwner, permissions }: Complaints
           </p>
         </div>
         <Button variant="outlined" onClick={handleRefresh}>
-          <Icon slot="icon">refresh</Icon>
+          <Icon slot="icon" size={20}>
+            refresh
+          </Icon>
           Actualizar
         </Button>
       </div>

@@ -5,7 +5,7 @@ import { chargePayment } from '@/shared/payments/paymentApi';
 import type { CulqiOrderResult } from '@/types/culqi';
 import { posthog } from 'posthog-js';
 import { useEffect } from 'react';
-import type { ShippingInfo } from '../../../../app/[slug]/components/Checkout';
+import type { ShippingInfo } from '../../../../app/[slug]/(app)/components/Checkout';
 
 // ─── Límites de métodos de pago ─────────────────────────────────────────────
 // Yape tiene un tope de S/ 950 para pagos en comercios (según validación
