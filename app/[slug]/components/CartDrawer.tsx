@@ -5,6 +5,7 @@ import { IconButton } from '@/shared/components/ui/buttons';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import posthog from 'posthog-js';
 import { useState } from 'react';
 import { useCart } from '../storage/context/CartContext';
 import styles from './CartDrawer.module.css';
@@ -128,6 +129,11 @@ export function CartDrawer({ hasPaymentGateway = true, onContactClick }: CartDra
               className={styles.checkoutBtn}
               onClick={() => {
                 if (hasPaymentGateway) {
+                  posthog.capture('cart_checkout_started', {
+                    item_count: cartItems.length,
+                    total_price: totalPrice,
+                    business_slug: slug,
+                  });
                   setIsCheckoutOpen(true);
                 } else {
                   setIsCartOpen(false);

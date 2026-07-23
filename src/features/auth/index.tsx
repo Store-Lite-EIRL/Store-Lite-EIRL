@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import type { AuthContextType, AuthSession, AuthUser } from '@/types/auth';
+import posthog from 'posthog-js';
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -153,6 +154,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (session?.user) {
         applySession(session);
 
+        if (_event === 'SIGNED_IN') {
+          posthog.identify(session.user.id, {
+            email: session.user.email,
+            name: session.user.user_metadata?.full_name,
+          });
+          posthog.capture('user_signed_in');
+        } else if (_event === 'INITIAL_SESSION') {
+          posthog.identify(session.user.id, {
+            email: session.user.email,
+            name: session.user.user_metadata?.full_name,
+          });
+        }
+
         // Supabase recomienda NO hacer awaits de otros métodos de Supabase dentro
         // del callback de onAuthStateChange. Se difiere para evitar deadlocks/races.
         setTimeout(() => {
@@ -160,6 +174,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           void fetchProfile(session);
         }, 0);
       } else {
+        if (_event === 'SIGNED_OUT') {
+          posthog.capture('user_signed_out');
+          posthog.reset();
+        }
         applySession(null);
       }
       setLoading(false);

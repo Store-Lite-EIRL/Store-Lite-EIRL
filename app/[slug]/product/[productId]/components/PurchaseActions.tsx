@@ -2,6 +2,7 @@
 
 import type { Business } from '@/core/database/schema';
 import { Button } from '@/shared/components/ui/buttons/Button';
+import posthog from 'posthog-js';
 import { useState } from 'react';
 import { BasicContactDialog } from '../../../components/BasicContactDialog';
 import Checkout from '../../../components/Checkout';
@@ -15,7 +16,11 @@ interface PurchaseActionsProps {
   hasPaymentGateway: boolean;
 }
 
-export default function PurchaseActions({ product, business, hasPaymentGateway }: PurchaseActionsProps) {
+export default function PurchaseActions({
+  product,
+  business,
+  hasPaymentGateway,
+}: PurchaseActionsProps) {
   const { addToCart } = useCart();
   const [isAdding, setIsAdding] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -33,10 +38,25 @@ export default function PurchaseActions({ product, business, hasPaymentGateway }
       stock: product.stock,
       status: product.status,
     });
+    posthog.capture('product_added_to_cart', {
+      product_id: product.id,
+      category: product.category,
+      price: product.price,
+      currency: product.currency,
+      business_slug: business.slug,
+    });
     setIsAdding(false);
   };
 
   const handleBuyNow = () => {
+    posthog.capture('product_buy_now_clicked', {
+      product_id: product.id,
+      category: product.category,
+      price: product.price,
+      currency: product.currency,
+      business_slug: business.slug,
+      has_payment_gateway: hasPaymentGateway,
+    });
     if (hasPaymentGateway) {
       setIsPaymentModalOpen(true);
     } else {

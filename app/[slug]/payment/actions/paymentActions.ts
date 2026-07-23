@@ -3,6 +3,7 @@
 import { db } from '@/core/database/client';
 import { businesses, payments, products } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
+import { getPostHogClient } from '@/lib/posthogServer';
 import { createClient } from '@/lib/supabase/server';
 import { and, eq, gt, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
@@ -229,6 +230,23 @@ export async function processPayment(input: ProcessPaymentInput): Promise<Proces
   }
 
   revalidatePath(`/${businessSlug}`);
+
+  const posthog = getPostHogClient();
+  if (posthog) {
+    posthog.capture({
+      distinctId: business.ownerId,
+      event: 'payment_completed',
+      properties: {
+        product_id: productId,
+        business_slug: businessSlug,
+        amount: authoritativeAmountSoles,
+        currency,
+        payment_method: paymentMethod,
+        payment_id: paymentRecord.id,
+      },
+    });
+    await posthog.flush();
+  }
 
   return {
     success: true,
