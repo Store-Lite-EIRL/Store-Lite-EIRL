@@ -3,12 +3,13 @@
 import { db } from '@/core/database/client';
 import { productCategories, productLikes, productMedia, products } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements';
+import { logError } from '@/lib/errorHandling';
+import { getPostHogClient } from '@/lib/posthogServer';
 import { getUniqueCategorySlug } from '@/shared/utils/categorySlug';
 import { getUniqueProductSlug } from '@/shared/utils/productSlug';
 import { and, eq, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
-import { logError } from '@/lib/errorHandling';
 import { requireAccess } from './authz';
 
 export type SaleStatus = 'NORMAL' | 'MAS_VENDIDO' | 'NUEVO_PRODUCTO';
@@ -175,7 +176,7 @@ export async function getProductById(businessSlug: string, productId: string) {
 export async function createProduct(businessSlug: string, productData: ProductActionInput) {
   try {
     const normalizedProduct = normalizeProductInput(productData);
-    const { businessId } = await requireAccess(businessSlug, 'products.create');
+    const { businessId, userId } = await requireAccess(businessSlug, 'products.create');
 
     // --- Entitlements Check ---
     const entitlements = await getBusinessEntitlements(businessId);
@@ -295,6 +296,22 @@ export async function createProduct(businessSlug: string, productData: ProductAc
     revalidatePath(`/${businessSlug}`);
     revalidatePath(`/${businessSlug}/storage`);
 
+    const posthog = getPostHogClient();
+    if (posthog) {
+      posthog.capture({
+        distinctId: userId,
+        event: 'product_created',
+        properties: {
+          product_id: newProduct.id,
+          business_slug: businessSlug,
+          category: normalizedProduct.category,
+          price: normalizedProduct.price,
+          stock: normalizedProduct.stock,
+        },
+      });
+      await posthog.flush();
+    }
+
     return { success: true, productId: newProduct.id, error: null };
   } catch (error) {
     logError('createProduct', error);
@@ -313,7 +330,7 @@ export async function updateProduct(
 ) {
   try {
     const normalizedProduct = normalizeProductInput(productData);
-    const { businessId } = await requireAccess(businessSlug, 'products.edit');
+    const { businessId, userId } = await requireAccess(businessSlug, 'products.edit');
 
     const existingProduct = await db.query.products.findFirst({
       where: (table, { and, eq }) => and(eq(table.id, productId), eq(table.businessId, businessId)),
@@ -396,6 +413,22 @@ export async function updateProduct(
     revalidatePath(`/${businessSlug}`);
     revalidatePath(`/${businessSlug}/storage`);
 
+    const posthog = getPostHogClient();
+    if (posthog) {
+      posthog.capture({
+        distinctId: userId,
+        event: 'product_updated',
+        properties: {
+          product_id: productId,
+          business_slug: businessSlug,
+          category: normalizedProduct.category,
+          price: normalizedProduct.price,
+          stock: normalizedProduct.stock,
+        },
+      });
+      await posthog.flush();
+    }
+
     return { success: true, productId, error: null };
   } catch (error) {
     logError('updateProduct', error);
@@ -464,7 +497,7 @@ export async function toggleLikeProduct(productId: string, businessSlug?: string
 export async function deleteProduct(businessSlug: string, productId: string) {
   try {
     // Usar requireAccess para soportar miembros del equipo con permisos
-    const { businessId } = await requireAccess(businessSlug, 'products.delete');
+    const { businessId, userId } = await requireAccess(businessSlug, 'products.delete');
 
     const product = await db.query.products.findFirst({
       where: eq(products.id, productId),
@@ -480,6 +513,19 @@ export async function deleteProduct(businessSlug: string, productId: string) {
 
     revalidatePath(`/${businessSlug}`);
     revalidatePath(`/${businessSlug}/storage`);
+
+    const posthog = getPostHogClient();
+    if (posthog) {
+      posthog.capture({
+        distinctId: userId,
+        event: 'product_deleted',
+        properties: {
+          product_id: productId,
+          business_slug: businessSlug,
+        },
+      });
+      await posthog.flush();
+    }
 
     return { success: true, error: null };
   } catch (error) {

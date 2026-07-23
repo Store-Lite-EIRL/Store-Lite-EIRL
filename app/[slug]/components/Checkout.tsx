@@ -4,6 +4,7 @@ import { PERU_LOCATIONS } from '@/core/logistics/peruLocations';
 import { SHALOM_AGENCIES } from '@/core/logistics/shalomAgencies';
 import { Icon } from '@/shared/components/ui';
 import { Select } from '@/shared/components/ui/inputs/Select';
+import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { CartItem } from '../storage/context/CartContext';
@@ -150,6 +151,13 @@ export default function Checkout({ totalAmount, cartItems, onSuccess, onCancel }
         alert('Por favor, ingresa tu dirección para Olva Courier.');
         return;
       }
+      posthog.capture('checkout_shipping_completed', {
+        courier: shippingInfo.courier,
+        department: shippingInfo.department,
+        item_count: cartItems?.length ?? 0,
+        subtotal: totalAmount,
+        shipping_cost: shippingInfo.cost,
+      });
       setStep(2);
     }
   };
@@ -159,6 +167,13 @@ export default function Checkout({ totalAmount, cartItems, onSuccess, onCancel }
       alert('Por favor, ingresa tu correo electrónico.');
       return;
     }
+
+    posthog.capture('checkout_payment_initiated', {
+      payment_method: paymentMethod,
+      courier: shippingInfo.courier,
+      item_count: cartItems?.length ?? 0,
+      total_amount: finalTotal,
+    });
 
     setLoading(true);
     try {
