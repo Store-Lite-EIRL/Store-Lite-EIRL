@@ -488,3 +488,89 @@ export async function updateCulqiCredentials(
     return { success: false, error: 'Error inesperado al actualizar las credenciales.' };
   }
 }
+
+export interface SocialLinksInput {
+  instagram?: string;
+  facebook?: string;
+  twitter?: string;
+  tiktok?: string;
+  youtube?: string;
+}
+
+const SOCIAL_URL_ALLOWLIST: Record<string, string[]> = {
+  instagram: ['instagram.com', 'instagr.am'],
+  facebook: ['facebook.com', 'fb.com', 'fb.watch'],
+  twitter: ['x.com', 'twitter.com'],
+  tiktok: ['tiktok.com', 'vm.tiktok.com'],
+  youtube: ['youtube.com', 'youtu.be'],
+};
+
+function isValidSocialUrl(platform: string, raw: string): boolean {
+  let href = raw.trim();
+  if (!href) return true; // empty → skip (cleaned later)
+
+  // Add protocol if missing so URL constructor doesn't choke
+  if (!/^https?:\/\//i.test(href)) href = 'https://' + href;
+
+  try {
+    const url = new URL(href);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return false;
+    const host = url.hostname.replace(/^www\./, '');
+    const allowed = SOCIAL_URL_ALLOWLIST[platform];
+    if (!allowed) return false;
+    return allowed.some((d) => host === d || host.endsWith('.' + d));
+  } catch {
+    return false;
+  }
+}
+
+function validateSocialLinks(input: SocialLinksInput): string | null {
+  for (const [platform, url] of Object.entries(input)) {
+    if (url && url.trim().length > 0 && !isValidSocialUrl(platform, url)) {
+      const label = platform.charAt(0).toUpperCase() + platform.slice(1);
+      return `El enlace de ${label} no pertenece a un dominio válido de ${label}.`;
+    }
+  }
+  return null;
+}
+
+export async function updateSocialLinks(
+  businessId: string,
+  socialLinks: SocialLinksInput,
+): Promise<ActionState> {
+  try {
+    await requireAccessOnId(businessId, 'business.edit');
+  } catch (error: any) {
+    return { success: false, error: error.message || 'No autorizado' };
+  }
+
+  // Validar URLs contra dominios permitidos
+  const validationError = validateSocialLinks(socialLinks);
+  if (validationError) {
+    return { success: false, error: validationError };
+  }
+
+  // Sanitizar: eliminar claves con valor vacío
+  const cleaned: Record<string, string> = {};
+  for (const [key, value] of Object.entries(socialLinks)) {
+    if (value && value.trim().length > 0) {
+      cleaned[key] = value.trim();
+    }
+  }
+
+  try {
+    await db
+      .update(businesses)
+      .set({
+        socialLinks: cleaned,
+        updatedAt: new Date(),
+      })
+      .where(eq(businesses.id, businessId));
+
+    revalidatePath('/', 'layout');
+    return { success: true, message: 'Redes sociales actualizadas correctamente.' };
+  } catch (error) {
+    console.error('Error updating social links:', error);
+    return { success: false, error: 'Error inesperado al actualizar las redes sociales.' };
+  }
+}

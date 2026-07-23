@@ -43,6 +43,7 @@ export const businesses = pgTable(
     storeType: text('store_type'),
     description: text('description'),
     whatsappNumber: text('whatsapp_number'),
+    socialLinks: jsonb('social_links').$type<Record<string, string>>().default({}),
     taxId: text('tax_id'),
     personType: text('person_type'),
     country: text('country'),

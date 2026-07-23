@@ -182,11 +182,22 @@ export async function updateBusinessData(
   }
 
   try {
-    // 3. Update DB record
+    // 3. Sanitize whatsappNumber if present
+    const sanitizedData = { ...data };
+    if (sanitizedData.whatsappNumber !== undefined) {
+      const raw = sanitizedData.whatsappNumber;
+      const cleaned = raw.replace(/\D/g, '');
+      if (cleaned && cleaned.length !== 9) {
+        return { error: 'El número de WhatsApp debe tener exactamente 9 dígitos.' };
+      }
+      sanitizedData.whatsappNumber = cleaned ? '+' + cleaned : '';
+    }
+
+    // 4. Update DB record
     await db
       .update(businesses)
       .set({
-        ...data,
+        ...sanitizedData,
         updatedAt: new Date(),
       })
       .where(eq(businesses.id, businessId));

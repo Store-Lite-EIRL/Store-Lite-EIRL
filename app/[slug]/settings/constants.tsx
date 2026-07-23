@@ -27,6 +27,7 @@ export interface SettingsBusiness {
   storeType: string | null;
   description: string | null;
   whatsappNumber: string | null;
+  socialLinks: Record<string, string> | null;
   taxId: string | null;
   personType: string | null;
   country: string | null;

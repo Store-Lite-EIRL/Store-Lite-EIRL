@@ -63,6 +63,7 @@ import { useSnackbarFeedback } from '../hooks/useSettingsState';
 import styles from '../settings.module.css';
 import { PaymentsConfig } from './PaymentsConfig';
 import { NAV_GROUPS, SettingsNav, type Section } from './SettingsNav';
+import { SocialLinksSection } from './SocialLinksSection';
 import { StorefrontThemeEditor } from './StorefrontThemeEditor';
 import { TeamManagementPanel } from './TeamManagementPanel';
 
@@ -1405,6 +1406,9 @@ export function SettingsClient({
             case 'seo':
               hasAccess = permissions.includes('seo.edit');
               break;
+            case 'social':
+              hasAccess = permissions.includes('business.edit');
+              break;
             case 'payments': {
               const isPremiumPlan = ['business_pro', 'enterprise_ai'].includes(entitlements.plan);
               hasAccess = isPremiumPlan && permissions.includes('business.edit');
@@ -1525,6 +1529,17 @@ export function SettingsClient({
                     entitlements={entitlements}
                     isOwner={isOwner}
                     permissions={permissions}
+                  />
+                )}
+                {active === 'social' && (
+                  <SocialLinksSection
+                    business={business}
+                    isOwner={isOwner}
+                    permissions={permissions}
+                    whatsappNumber={business.whatsappNumber ?? ''}
+                    onWhatsAppSaved={() => {
+                      /* router.refresh() inside SocialLinksSection handles it */
+                    }}
                   />
                 )}
               </>

@@ -113,6 +113,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
       business={
         {
           ...business,
+          socialLinks: business.socialLinks ?? null,
           culqiPublicKey: settings?.culqiPublicKey ?? null,
           culqiSecretKey: settings?.culqiSecretKey ?? null,
         } as SettingsBusiness
