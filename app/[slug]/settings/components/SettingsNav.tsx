@@ -11,7 +11,8 @@ export type Section =
   | 'team'
   | 'legal'
   | 'seo'
-  | 'payments';
+  | 'payments'
+  | 'social';
 
 export interface NavItem {
   id: Section;
@@ -29,6 +30,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Información del Negocio',
     items: [
       { id: 'business', label: 'Mi Negocio', icon: 'store' },
+      { id: 'social', label: 'Redes Sociales', icon: 'share' },
       { id: 'legal', label: 'Legal', icon: 'gavel' },
     ],
   },

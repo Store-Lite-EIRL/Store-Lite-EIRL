@@ -182,11 +182,22 @@ export async function updateBusinessData(
   }
 
   try {
-    // 3. Update DB record
+    // 3. Sanitize whatsappNumber if present
+    const sanitizedData = { ...data };
+    if (sanitizedData.whatsappNumber !== undefined) {
+      const raw = sanitizedData.whatsappNumber;
+      const cleaned = raw.replace(/[^\d+]/g, '');
+      if (cleaned && !/^\+?\d{7,15}$/.test(cleaned)) {
+        return { error: 'Número de WhatsApp no válido.' };
+      }
+      sanitizedData.whatsappNumber = cleaned;
+    }
+
+    // 4. Update DB record
     await db
       .update(businesses)
       .set({
-        ...data,
+        ...sanitizedData,
         updatedAt: new Date(),
       })
       .where(eq(businesses.id, businessId));

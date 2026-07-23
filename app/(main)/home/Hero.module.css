@@ -431,6 +431,42 @@
   text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
 }
 
+/* ── Social links (right side) ──────────────────────── */
+.socialLinks {
+  position: absolute;
+  bottom: 3.5rem;
+  right: 2.5rem;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.socialLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+  text-decoration: none;
+}
+
+.socialLink:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
 /* Hide any description or avatar if they still exist in some ghost way */
 .description,
 .businessAvatar,
@@ -460,5 +496,15 @@
   .emptyStateButton {
     padding: 0.5rem 1.25rem;
     font-size: 0.825rem;
+  }
+
+  .socialLinks {
+    position: static;
+    gap: 0.375rem;
+  }
+
+  .socialLink {
+    width: 30px;
+    height: 30px;
   }
 }
