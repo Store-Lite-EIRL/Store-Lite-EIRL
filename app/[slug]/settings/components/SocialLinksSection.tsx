@@ -61,9 +61,8 @@ const PLATFORMS = [
 
 function validatePhone(value: string): string | null {
   if (!value || value.trim().length === 0) return null;
-  const cleaned = value.replace(/[\s-]/g, '');
-  if (!/^\+?\d{7,15}$/.test(cleaned)) {
-    return 'Número no válido (7-15 dígitos, podés usar + al inicio).';
+  if (!/^\d{9}$/.test(value)) {
+    return 'El número debe tener exactamente 9 dígitos.';
   }
   return null;
 }
@@ -97,15 +96,15 @@ export function SocialLinksSection({
   const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialRef.current);
   const canSave = isOwner || permissions.includes('business.edit');
 
-  // WhatsApp state
-  const [waValue, setWaValue] = useState(whatsappNumber);
-  const initialWaRef = useRef(whatsappNumber);
+  // WhatsApp state — strip + prefix for display (input only shows digits after the + prefix)
+  const [waValue, setWaValue] = useState(whatsappNumber.replace(/^\+/, ''));
+  const initialWaRef = useRef(whatsappNumber.replace(/^\+/, ''));
   const hasWaChanges = waValue !== initialWaRef.current;
   const [waError, setWaError] = useState<string | null>(null);
 
   /** Called after OTP is successfully verified — persists the number to DB */
   const onOtpVerified = useCallback(async () => {
-    const normalized = waValue.trim().replace(/[^\d+]/g, '');
+    const normalized = '+' + waValue;
     const res = await persistWhatsApp(business.id, business.slug, normalized);
     if (res.error) {
       showError(res.error);
@@ -175,13 +174,13 @@ export function SocialLinksSection({
     setWaError(err);
     if (err) return;
 
-    const normalized = waValue.trim().replace(/[^\d+]/g, '');
-    await otp.requestOtp(normalized);
+    await otp.requestOtp(waValue);
   };
 
   const handleWhatsAppChange = (value: string) => {
-    setWaValue(value);
-    setWaError(validatePhone(value));
+    const filtered = value.replace(/\D/g, '').slice(0, 9);
+    setWaValue(filtered);
+    setWaError(null);
   };
 
   return (
@@ -218,11 +217,14 @@ export function SocialLinksSection({
             onInput={(e: React.FormEvent<HTMLInputElement>) =>
               handleWhatsAppChange(e.currentTarget.value)
             }
-            placeholder="+51 999 123 456"
-            supportingText="Número con código de país. Ej: +51 999 123 456"
+            placeholder="999 123 456"
+            supportingText="9 dígitos — el + se agrega automáticamente"
             error={!!waError}
             errorText={waError || ''}
             disabled={!canSave}
+            prefixText="+"
+            type="tel"
+            maxLength={9}
           >
             <svg
               slot="leading-icon"
