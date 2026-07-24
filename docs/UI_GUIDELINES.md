@@ -9,6 +9,7 @@ Generic `<div>` layouts and raw CSS structural blocks should be avoided unless a
 All these primitives live in `src/shared/components/ui/`.
 
 **Do use:**
+
 - `Card` (Elevated, Outlined, Filled) for section containers.
 - `List` and `ListItem` for structured data rows, settings options, and navigation.
 - `Chips` for status tags, small selections, or descriptors.
@@ -16,6 +17,7 @@ All these primitives live in `src/shared/components/ui/`.
 - `Button`, `IconButton`, `TextButton`, `FilledTonalButton` for actions.
 
 **Do NOT use:**
+
 - Custom `div` styling mimicking cards or lists (e.g., `border rounded-md p-4` or equivalent CSS hashes).
 - Third-party component libraries' visual logic (like shadcn/ui) if it conflicts with MD3.
 - Raw `<button>` or custom styled buttons.
@@ -33,6 +35,7 @@ Always use MD3 tokens instead of hardcoded hex colors or arbitrary sizing, so th
 ## 3. High-Fidelity Dashboards
 
 When creating complex pages (like `/settings`):
+
 1. **Shell layout:** Use an MD3 Navigation Drawer pattern for sidebars (clickable pill-shaped list items acting as links or tabs).
 2. **Surfaces:** Use `Card` to wrap logical groups of information. Avoid flat un-boxed data unless heavily guided by typographies.
 3. **Data Rows:** Standardize mapping over data with `List` components. Use slots (`slot="start"`, `slot="headline"`, `slot="supporting-text"`) properly instead of trying to flex-box elements inside a `ListItem`.
@@ -41,6 +44,7 @@ When creating complex pages (like `/settings`):
 ## 4. Why this matters
 
 By relying on pre-built MD3 components:
+
 - We immediately gain rippling effects, proper accessibility (A11Y), focus management, and responsive states.
 - The UI becomes cohesive. A setting row looks the same as a dashboard row, creating continuity.
 - Development speed increases since CSS adjustments are minimal and focused only on macro-layouts (like CSS Grid or general Flexbox spacing).

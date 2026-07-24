@@ -13,7 +13,7 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "jsx": "react-jsx",
     "incremental": true,
@@ -25,6 +25,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@app/*": ["./app/*"],
       "@mweb/*": ["./node_modules/@material/web/*"],
       "@material-design/*": ["./src/styles/material-design/*"]
     }

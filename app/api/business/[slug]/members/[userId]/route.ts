@@ -1,5 +1,6 @@
+import { resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
-import { businesses, businessTeamMembers } from '@/core/database/schema';
+import { businessTeamMembers } from '@/core/database/schema';
 import type { Permission } from '@/lib/permissions';
 import { createClient } from '@/lib/supabase/server';
 import { and, eq } from 'drizzle-orm';
@@ -31,10 +32,7 @@ export async function PATCH(
   }
 
   // Obtener negocio por slug
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-    columns: { id: true, ownerId: true },
-  });
+  const business = (await resolveBusinessSlug(slug))?.business;
 
   if (!business) {
     return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
@@ -158,10 +156,7 @@ export async function DELETE(
   }
 
   // Obtener negocio por slug
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-    columns: { id: true, ownerId: true },
-  });
+  const business = (await resolveBusinessSlug(slug))?.business;
 
   if (!business) {
     return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });

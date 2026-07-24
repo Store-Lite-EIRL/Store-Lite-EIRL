@@ -1,0 +1,327 @@
+/* Modern Glassmorphism Receipt — High Fidelity Design */
+.receipt {
+  --glass-bg: #ffffff;
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --accent: var(--md-sys-color-primary, #0061a4);
+  --on-surface: #1c1b1f; /* MD3 Light On-Surface */
+  --on-surface-variant: #49454f; /* MD3 Light On-Surface Variant */
+  --outline-variant: #cac4d0; /* MD3 Light Outline Variant */
+
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 28px;
+  max-width: 360px;
+  width: 100%;
+  margin: 0 auto;
+  font-family: var(--storefront-font-family, 'Inter', sans-serif);
+  color: var(--on-surface);
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    inset 0 0 0 1px var(--glass-border);
+  border: 1px solid var(--outline-variant);
+}
+
+/* Header Section */
+.header {
+  padding: 24px 24px 16px;
+  text-align: center;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.successBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #e8f5e9; /* Fixed light tertiary container */
+  color: #2e7d32; /* Fixed light on-tertiary container */
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 16px;
+  white-space: nowrap;
+}
+
+.logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  object-fit: cover;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: #fff;
+}
+
+.logoSvg {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 12px;
+  display: block;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.35);
+}
+
+.brandBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.3;
+  color: #000;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  margin-top: 8px;
+}
+
+.brandLogo {
+  width: 12px;
+  height: 12px;
+}
+
+.businessInfoWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.businessName {
+  font-size: 19px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  width: 100%;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.ruc,
+.address {
+  font-size: 11px;
+  color: var(--on-surface-variant);
+  margin: 0;
+  width: 100%;
+  word-wrap: break-word;
+  line-height: 1.4;
+}
+
+/* Order Info Grid */
+.orderInfo {
+  padding: 0 24px 16px;
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 16px;
+}
+
+.infoBlock {
+  display: flex;
+  flex-direction: column;
+}
+
+.infoLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--on-surface-variant);
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.infoValue {
+  font-size: 12px;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+/* Items List */
+.items {
+  padding: 16px 24px;
+  border-top: 1px solid var(--outline-variant);
+}
+
+.itemRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.itemInfo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.itemLabel {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.itemSub {
+  font-size: 11px;
+  color: var(--on-surface-variant);
+}
+
+.itemValue {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Total Section */
+.totalSection {
+  padding: 24px;
+  background: var(--accent);
+  color: white;
+  margin: 0 12px 12px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.totalLabel {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.9;
+}
+
+.totalAmount {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+/* Details List (Payment & Customer) */
+.detailsList {
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.detailLabel {
+  color: var(--on-surface-variant);
+}
+
+.detailValue {
+  font-weight: 600;
+}
+
+/* Footer */
+.footer {
+  padding: 24px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.footerText {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.footerSubtext {
+  font-size: 11px;
+  color: var(--on-surface-variant);
+  opacity: 0.8;
+}
+
+.barcode {
+  height: 40px;
+  margin: 16px auto 0;
+  opacity: 0.3;
+  background: repeating-linear-gradient(90deg, #000 0 1px, transparent 1px 4px, #000 4px 5px);
+}
+
+/* Utility */
+.defaultLogo {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--md-sys-color-primary, #0061a4) 10%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  color: var(--md-sys-color-primary, #0061a4);
+}
+
+/* Shipping Address Section */
+.shippingSection {
+  margin: 0 12px 12px;
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--md-sys-color-primary, #0061a4) 5%, transparent);
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary, #0061a4) 12%, transparent);
+}
+
+.shippingHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--md-sys-color-primary, #0061a4);
+  margin-bottom: 8px;
+}
+
+.shippingLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.shippingHeader svg {
+  flex-shrink: 0;
+}
+
+.shippingAddress {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--on-surface);
+  line-height: 1.5;
+}
+
+.divider {
+  height: 1px;
+  background: var(--outline-variant);
+  margin: 0 24px;
+}
+
+@media (max-width: 400px) {
+  .receipt {
+    border-radius: 0;
+    max-width: 100%;
+  }
+}

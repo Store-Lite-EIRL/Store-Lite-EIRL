@@ -8,6 +8,8 @@
 import type { Profile } from '@/core/database/schema';
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 
+export type { Profile };
+
 // =====================================================
 // USER TYPES
 // =====================================================
@@ -38,6 +40,7 @@ export interface AuthState {
  */
 export interface AuthContextType extends AuthState {
   signInWithGoogle: () => Promise<void>;
+  signInWithGoogleForChat: (slug: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 

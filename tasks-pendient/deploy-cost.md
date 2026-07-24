@@ -2,186 +2,201 @@
 
 ## Resumen ejecutivo
 
-Costo base serio para llevar este proyecto a producción hoy:
+Costo base serio para llevar este proyecto a producciï¿½n hoy:
 
 - **Vercel Pro**: ~**S/ 68.4/mes**
 - **Supabase Pro**: ~**S/ 85.5/mes**
 - **Total fijo base**: **~S/ 154/mes**
-- **Dominio**: aprox **S/ 40–70/año**
-- **Culqi**: comisión variable por transacción
+- **Dominio**: aprox **S/ 40ï¿½70/aï¿½o**
+- **Culqi**: comisiï¿½n variable por transacciï¿½n
 
-> Recomendación práctica inicial: **presupuestar entre S/ 160 y S/ 180 mensuales** para una primera producción razonable.
+> Recomendaciï¿½n prï¿½ctica inicial: **presupuestar entre S/ 160 y S/ 180 mensuales** para una primera producciï¿½n razonable.
 
 ---
 
 ## Estado real del proyecto
 
-El proyecto **todavía no está listo para producción comercial completa**, aunque sí tiene una base técnica seria.
+El proyecto **todavï¿½a no estï¿½ listo para producciï¿½n comercial completa**, aunque sï¿½ tiene una base tï¿½cnica seria.
 
 ### Hallazgos principales
 
 1. **Las suscripciones SaaS siguen mockeadas**
    - Archivo: `app/pricing/actions.ts`
    - Se crean `mockSubscriptionId` y `mockCustomerId`
-   - En producción devuelve: `La activacion requiere verificacion de pago`
-   - Implicancia: todavía no se pueden cobrar planes de negocio de forma real end-to-end.
+   - En producciï¿½n devuelve: `La activacion requiere verificacion de pago`
+   - Implicancia: todavï¿½a no se pueden cobrar planes de negocio de forma real end-to-end.
 
-2. **El cobro al comprador sí tiene integración real con Culqi**
+2. **El cobro al comprador sï¿½ tiene integraciï¿½n real con Culqi**
    - Archivo: `app/[slug]/payment/actions/paymentActions.ts`
    - Incluye reserva de stock, cargo real y registro del pago.
 
-3. **La UI promete más de lo que el backend soporta hoy**
+3. **La UI promete mï¿½s de lo que el backend soporta hoy**
    - La UI muestra **Plin**
    - Pero el backend tipa `PaymentMethod = 'card' | 'yape'`
-   - Implicancia: Plin no está cerrado de punta a punta.
+   - Implicancia: Plin no estï¿½ cerrado de punta a punta.
 
-4. **Los entitlements por plan no están endurecidos en todos los flujos server-side**
+4. **Los entitlements por plan no estï¿½n endurecidos en todos los flujos server-side**
    - Base central: `src/core/entitlements/plans.ts`
-   - Hay límites/flags en UI y contexto, pero no todos los flujos críticos están protegidos consistentemente desde server actions.
+   - Hay lï¿½mites/flags en UI y contexto, pero no todos los flujos crï¿½ticos estï¿½n protegidos consistentemente desde server actions.
 
-5. **No se observó suite de tests automatizados ni observabilidad real**
+5. **No se observï¿½ suite de tests automatizados ni observabilidad real**
    - En `package.json` no hay scripts de test
-   - Eso aumenta el riesgo operativo en producción.
+   - Eso aumenta el riesgo operativo en producciï¿½n.
 
 ---
 
-## Qué tipo de producto es hoy
+## Quï¿½ tipo de producto es hoy
 
 Este proyecto funciona como:
 
 - **SaaS multi-tenant para negocios**
 - **Storefront por negocio**
-- **Catálogo de productos**
+- **Catï¿½logo de productos**
 - **Pagos con Culqi**
 - **Chat con clientes**
-- **Gestión de productos**
-- **Planes de suscripción**
+- **Gestiï¿½n de productos**
+- **Planes de suscripciï¿½n**
 
 ### Tipos de usuarios relevantes
 
-1. **Dueños y equipos de negocios**
+1. **Dueï¿½os y equipos de negocios**
    - impactan auth, DB, panel y permisos
 
 2. **Compradores invitados**
-   - impactan tráfico, imágenes, lectura de catálogo y pagos
+   - impactan trï¿½fico, imï¿½genes, lectura de catï¿½logo y pagos
 
 Esto importa porque el costo no escala solo por usuarios autenticados.
 
 ---
 
-## Escenarios de inversión vs usuarios
+## Escenarios de inversiï¿½n vs usuarios
 
 ### 1. MVP serio
-**Costo estimado:** **S/ 155–160/mes**
+
+**Costo estimado:** **S/ 155ï¿½160/mes**
 
 Incluye:
+
 - Vercel Pro
 - Supabase Pro
 - dominio aparte
 
 Escala estimada razonable:
-- **10–30 negocios activos**
-- **3,000–15,000 visitantes/mes**
-- catálogos medianos
+
+- **10ï¿½30 negocios activos**
+- **3,000ï¿½15,000 visitantes/mes**
+- catï¿½logos medianos
 - pagos reales con volumen bajo/medio
 - chat liviano
 
 ---
 
 ### 2. Crecimiento inicial
-**Costo estimado:** **S/ 170–180/mes**
+
+**Costo estimado:** **S/ 170ï¿½180/mes**
 
 Incluye:
+
 - Vercel Pro
 - Supabase Pro
 - upgrade de compute en Supabase a **Small** si empieza a crecer la carga
 
 Escala estimada:
-- **30–80 negocios**
-- **15,000–50,000 visitantes/mes**
-- más operaciones de panel, productos, chat y pagos
+
+- **30ï¿½80 negocios**
+- **15,000ï¿½50,000 visitantes/mes**
+- mï¿½s operaciones de panel, productos, chat y pagos
 
 ---
 
 ### 3. Escala media
-**Costo estimado:** **S/ 325–500/mes**
+
+**Costo estimado:** **S/ 325ï¿½500/mes**
 
 Incluye:
+
 - Vercel Pro
 - Supabase con compute **Medium o Large**
 - posibles overages de egress/storage
 
 Escala estimada:
-- **80–200 negocios**
-- **50,000–150,000 visitantes/mes**
-- tráfico importante de imágenes
-- más concurrencia y consultas pesadas
+
+- **80ï¿½200 negocios**
+- **50,000ï¿½150,000 visitantes/mes**
+- trï¿½fico importante de imï¿½genes
+- mï¿½s concurrencia y consultas pesadas
 
 ---
 
-## ¿Hace falta pagar más memoria en Supabase desde el inicio?
+## ï¿½Hace falta pagar mï¿½s memoria en Supabase desde el inicio?
 
 **No.**
 
-Recomendación:
+Recomendaciï¿½n:
+
 - empezar con **Supabase Pro**
-- subir compute recién cuando haya señales reales de carga:
+- subir compute reciï¿½n cuando haya seï¿½ales reales de carga:
   - CPU alta sostenida
   - queries lentas
   - crecimiento real de negocios activos
-  - más chat/pagos concurrentes
+  - mï¿½s chat/pagos concurrentes
 
 ---
 
-## Comisión variable por ventas
+## Comisiï¿½n variable por ventas
 
 Referencia verificada de mercado para Culqi:
 
-- alrededor de **3.44%** por transacción online
-- **+ US$ 0.20 fijos por operación**
+- alrededor de **3.44%** por transacciï¿½n online
+- **+ US$ 0.20 fijos por operaciï¿½n**
 - tarifas publicadas sin IGV
 
 ### Ejemplo aproximado
+
 Venta de **S/ 100**:
+
 - 3.44% = **S/ 3.44**
 - fijo = **~S/ 0.68**
 - subtotal = **S/ 4.12**
-- más IGV sobre comisión
+- mï¿½s IGV sobre comisiï¿½n
 
-Resultado práctico aproximado:
-- costo total por venta de S/ 100: **~S/ 4.8–4.9**
+Resultado prï¿½ctico aproximado:
+
+- costo total por venta de S/ 100: **~S/ 4.8ï¿½4.9**
 
 ---
 
 ## Presupuesto recomendado
 
 ### Para beta paga controlada
-- **S/ 160–180/mes**
 
-### Para producción comercial con margen operativo
-- **S/ 180–350/mes**
+- **S/ 160ï¿½180/mes**
+
+### Para producciï¿½n comercial con margen operativo
+
+- **S/ 180ï¿½350/mes**
 
 ---
 
-## Riesgos antes de producción comercial
+## Riesgos antes de producciï¿½n comercial
 
 ### Debe resolverse antes de vender seriamente
 
 1. integrar cobro real de planes SaaS
 2. endurecer entitlements server-side
-3. alinear UI y backend en métodos de pago
+3. alinear UI y backend en mï¿½todos de pago
 4. agregar observabilidad y alertas
-5. incorporar testing mínimo crítico
+5. incorporar testing mï¿½nimo crï¿½tico
 6. revisar manejo de fraude, reintentos y webhooks
 
 ---
 
 ## Veredicto final
 
-- **Deployable:** sí
-- **Listo para vender a escala comercial:** todavía no
-- **Costo mínimo serio para arrancar:** **~S/ 160/mes**
-- **Costo recomendado con margen:** **S/ 180–250/mes**
+- **Deployable:** sï¿½
+- **Listo para vender a escala comercial:** todavï¿½a no
+- **Costo mï¿½nimo serio para arrancar:** **~S/ 160/mes**
+- **Costo recomendado con margen:** **S/ 180ï¿½250/mes**
 
 ---
 

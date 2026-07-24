@@ -1,0 +1,160 @@
+.infoSection {
+  margin-bottom: 0;
+}
+
+/* ── Shipping Card ── */
+.shippingCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+  border-radius: 20px;
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.shippingHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.shippingHeader svg {
+  color: var(--md-sys-color-primary);
+  flex-shrink: 0;
+}
+
+.shippingTypeLabel {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--md-sys-color-primary);
+}
+
+.shippingDesc {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+/* ── Pickup Code Box ── */
+.pickupCodeBox {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--md-sys-color-primary-container);
+  border-radius: 12px;
+}
+
+.pickupCodeLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--md-sys-color-on-primary-container);
+  opacity: 0.7;
+}
+
+.pickupCodeValue {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--md-sys-color-on-primary-container);
+  font-family: var(--md-sys-typescale-body-small-font, monospace);
+}
+
+/* ── Info Grid ── */
+.infoGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--md-sys-color-surface-container);
+  border-radius: 12px;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  padding: 0.25rem 0;
+}
+
+.infoRow + .infoRow {
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.infoLabel {
+  font-weight: 600;
+  color: var(--md-sys-color-outline);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.infoValue {
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+  text-align: right;
+  word-break: break-word;
+}
+
+/* ── Status Tag ── */
+.statusTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  width: fit-content;
+}
+
+.statusIdle {
+  background: color-mix(in srgb, var(--md-sys-color-primary-container) 50%, transparent);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.statusActive {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.statusDone {
+  background: color-mix(in srgb, var(--md-sys-color-tertiary-container) 60%, transparent);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+/* ── Address Detail ── */
+.addressBlock {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  padding: 0.75rem;
+  background: var(--md-sys-color-surface-container);
+  border-radius: 12px;
+  color: var(--md-sys-color-on-surface);
+}
+
+.addressBlock strong {
+  display: block;
+  font-weight: 600;
+  color: var(--md-sys-color-outline);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.2rem;
+}
+
+.addressRef {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+}

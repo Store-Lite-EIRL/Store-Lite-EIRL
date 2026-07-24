@@ -11,8 +11,16 @@ interface FeedProps {
   isOwner?: boolean;
   onProductPreview?: (product: ProductWithRelations, initialIndex?: number) => void;
   hasPaymentGateway?: boolean;
+  isPaymentConfigured?: boolean;
+  culqiPublicKey?: string;
   onContactClick?: () => void;
   gridConfig?: ProductGridConfig;
+  // Props del negocio para el checkout
+  businessName?: string;
+  businessRuc?: string;
+  businessAddress?: string;
+  businessId?: string;
+  businessLogoUrl?: string;
 }
 
 function mapGapTokenToCss(gap: ProductGridConfig['gap']['mobile']): string {
@@ -34,10 +42,19 @@ export default function Feed({
   products = [],
   isOwner = false,
   onProductPreview,
-  hasPaymentGateway = true,
+  hasPaymentGateway = false,
+  isPaymentConfigured = false,
+  culqiPublicKey,
   onContactClick,
   gridConfig,
+  businessName,
+  businessRuc,
+  businessAddress,
+  businessId,
+  businessLogoUrl,
 }: FeedProps) {
+  // Pagos habilitados solo si el plan lo permite Y las credenciales están configuradas
+  const paymentsEnabled = hasPaymentGateway && isPaymentConfigured && !!businessId;
   const gridStyle = gridConfig
     ? ({
         '--storefront-grid-columns-mobile': String(gridConfig.columns.mobile),
@@ -63,8 +80,14 @@ export default function Feed({
                 product={product}
                 isOwner={isOwner}
                 onPreviewOpen={(idx) => onProductPreview?.(product, idx)}
-                hasPaymentGateway={hasPaymentGateway}
+                hasPaymentGateway={paymentsEnabled}
+                culqiPublicKey={culqiPublicKey}
                 onContactClick={onContactClick}
+                businessName={businessName}
+                businessRuc={businessRuc}
+                businessAddress={businessAddress}
+                businessId={businessId}
+                businessLogoUrl={businessLogoUrl}
               />
             </div>
           ))}

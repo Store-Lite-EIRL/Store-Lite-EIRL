@@ -1,0 +1,11 @@
+.actionsWrapper {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0 0;
+}
+
+.buttonInner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

@@ -23,6 +23,12 @@ export const Dialog = ({ id, className, children, open, onClose, ...props }: Dia
   React.useEffect(() => {
     const dialog = dialogRef.current;
     if (dialog) {
+      // LitElement may reset web component properties during upgrade.
+      // Re-apply the type property directly to guarantee it sticks.
+      if (props.type) {
+        (dialog as MdDialogElement & { type?: string }).type = props.type;
+      }
+
       if (open) {
         if (typeof dialog.show === 'function') {
           dialog.show();
@@ -43,26 +49,37 @@ export const Dialog = ({ id, className, children, open, onClose, ...props }: Dia
     return () => {
       document.body.style.overflow = '';
     };
-  }, [open]);
+  }, [open, props.type]);
 
   React.useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
 
+    const handleCancel = (e: Event) => {
+      // 'cancel' fires when user tries to close via Escape / backdrop click.
+      // It does NOT fire when dialog.close() is called programmatically.
+      // For alert dialogs we block it — only explicit Cancel button can close.
+      if (props.type === 'alert') {
+        e.preventDefault();
+      }
+    };
+
     const handleClosed = () => {
       if (onClose) onClose();
     };
 
-    // 'close' or 'closed' event depending on MD3 implementation, usually 'close' for native dialogs or 'closed' for some components
-    // Material Web often uses 'close' or 'closed'. Let's listen to 'close' as standard MD3 web component event
+    // Intercept native cancel first (Escape / backdrop)
+    dialog.addEventListener('cancel', handleCancel);
+    // Then listen for actual close (fires from our own dialog.close() call)
     dialog.addEventListener('close', handleClosed);
-    dialog.addEventListener('closed', handleClosed); // Listen to both to be safe
+    dialog.addEventListener('closed', handleClosed);
 
     return () => {
+      dialog.removeEventListener('cancel', handleCancel);
       dialog.removeEventListener('close', handleClosed);
       dialog.removeEventListener('closed', handleClosed);
     };
-  }, [onClose]);
+  }, [onClose, props.type]);
 
   const dialogContent = (
     <md-dialog ref={dialogRef} id={id} className={className} {...props}>

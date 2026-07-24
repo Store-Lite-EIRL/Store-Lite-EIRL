@@ -1,11 +1,11 @@
 'use client';
 
+import { clearBusinessSessionData, useBusinessSession } from '@/hooks/useBusinessSession';
 import Navbar from '@/shared/components/navigation/Navbar';
 import { CircularProgress } from '@/shared/components/ui/feedback/Progress';
-import { useBusinessSession } from '@/shared/hooks/useBusinessSession';
 import '@/styles/components/layout.css';
 import '@/styles/components/navbar.css';
-import { useParams, usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const NAVBAR_COLLAPSED_KEY = 'navbarCollapsed';
@@ -14,12 +14,14 @@ interface AppLayoutProps {
   children: React.ReactNode;
   showNavbarByDefault?: boolean;
   navbarPlanName?: string;
+  navbarBusinessId?: string;
 }
 
 export default function AppLayout({
   children,
   showNavbarByDefault = false,
   navbarPlanName,
+  navbarBusinessId,
 }: AppLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -36,43 +38,25 @@ export default function AppLayout({
   }, []);
   const [isGlobalLoading, setIsGlobalLoading] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     setIsGlobalLoading(false);
   }, [pathname]);
 
-  const router = useRouter();
-  const params = useParams();
-  const urlSlug = params?.slug as string;
-
   const isChatPage = pathname?.includes('/chat') || pathname?.endsWith('/chat');
 
+  // Fresh auth cleanup (defense layers B + D): when auth callback redirects with ?fresh_auth=true
   useEffect(() => {
-    const getCookie = (name: string) => {
-      if (typeof document === 'undefined') {
-        return undefined;
+    if (pathname === '/list-business' && typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('fresh_auth')) {
+        clearBusinessSessionData();
+        // Clean the URL param without full reload
+        window.history.replaceState({}, '', '/list-business');
       }
-      const cookiesArr = document.cookie.split('; ');
-      const cookie = cookiesArr.find((row) => row.startsWith(`${name}=`));
-      return cookie ? cookie.split('=')[1] : undefined;
-    };
-
-    const selectedSlug = localStorage.getItem('selectedBusinessSlug');
-    const cookieSlug = getCookie('selected_business_slug');
-    const activeSessionSlug = cookieSlug || selectedSlug;
-
-    const isPublicPath =
-      pathname === '/list-business' || pathname === '/created' || pathname.startsWith('/auth');
-
-    if (pathname === '/list-business' && activeSessionSlug) {
-      router.push(`/${activeSessionSlug}`);
-      return;
     }
-
-    if (isPublicPath) {
-      return;
-    }
-  }, [urlSlug, pathname, router]);
+  }, [pathname]);
 
   const toggleNavbar = () => {
     const next = !isCollapsed;
@@ -82,6 +66,12 @@ export default function AppLayout({
 
   const showNavbar =
     showNavbarByDefault && pathname !== '/list-business' && !pathname?.startsWith('/auth');
+
+  const getContentWrapperClass = () => {
+    if (!showNavbar) return 'content-wrapper--hidden';
+    return isCollapsed ? 'content-wrapper--collapsed' : 'content-wrapper--expanded';
+  };
+  const contentWrapperClass = getContentWrapperClass();
 
   // If session was killed from another tab (user closed business there), redirect to list
   useEffect(() => {
@@ -101,12 +91,15 @@ export default function AppLayout({
 
         {/* Sidebar - Desktop Only (Navbar component is actually the sidebar) */}
         {showNavbar && (
-          <Navbar isCollapsed={isCollapsed} onToggle={toggleNavbar} planName={navbarPlanName} />
+          <Navbar
+            isCollapsed={isCollapsed}
+            onToggle={toggleNavbar}
+            planName={navbarPlanName}
+            businessId={navbarBusinessId}
+          />
         )}
 
-        <div
-          className={`content-wrapper ${isCollapsed || !showNavbar ? 'content-wrapper--collapsed' : ''}`}
-        >
+        <div className={`content-wrapper ${contentWrapperClass}`}>
           <main className={`main-area ${isChatPage ? 'main-area--chat' : ''}`}>{children}</main>
         </div>
 

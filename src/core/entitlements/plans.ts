@@ -23,6 +23,12 @@ export interface BusinessEntitlements {
   /** Puede mostrar botón de compra (Yape, Plin, tarjeta) */
   hasPaymentGateway: boolean;
 
+  /** El negocio ha configurado sus credenciales de pago (Public/Secret Key) */
+  isPaymentConfigured: boolean;
+
+  /** API Key pública de Culqi (solo si está configurada) */
+  culqiPublicKey?: string;
+
   // ─── Productos ────────────────────────────────────────
   /** Máximo de productos permitidos (-1 = ilimitado) */
   maxProducts: number;
@@ -51,6 +57,10 @@ export interface BusinessEntitlements {
   /** Puede usar el asistente de IA */
   canUseAIAssistant: boolean;
 
+  // ─── Suscripción ──────────────────────────────────────
+  /** Fecha de vencimiento del plan en ISO string (null si Free o sin suscripción) */
+  planEndDate: string | null;
+
   // ─── Equipo ───────────────────────────────────────────
   /** Máximo de miembros en el equipo (-1 = ilimitado) */
   maxTeamMembers: number;
@@ -62,15 +72,18 @@ export interface BusinessEntitlements {
  */
 export const PLAN_ENTITLEMENTS: Record<
   PlanType,
-  Omit<BusinessEntitlements, 'plan' | 'isActive'>
+  Omit<
+    BusinessEntitlements,
+    'plan' | 'isActive' | 'isPaymentConfigured' | 'culqiPublicKey' | 'planEndDate'
+  >
 > = {
   basico: {
     hasPaymentGateway: false,
     maxProducts: 50,
-    maxCategories: 5,
+    maxCategories: 7, // máximo
     canImportProducts: false,
     canCustomizeStorefront: false,
-    chatEnabled: false,
+    chatEnabled: true,
     dashboardEnabled: false,
     seoEnabled: false,
     canUseAIAssistant: false,
@@ -80,7 +93,7 @@ export const PLAN_ENTITLEMENTS: Record<
   emprendedor: {
     hasPaymentGateway: false,
     maxProducts: 150,
-    maxCategories: 20,
+    maxCategories: 7, // máximo
     canImportProducts: true,
     canCustomizeStorefront: false,
     chatEnabled: true,
@@ -93,7 +106,7 @@ export const PLAN_ENTITLEMENTS: Record<
   business_pro: {
     hasPaymentGateway: true,
     maxProducts: 300,
-    maxCategories: 50,
+    maxCategories: 7, // máximo
     canImportProducts: true,
     canCustomizeStorefront: true,
     chatEnabled: true,
@@ -105,8 +118,8 @@ export const PLAN_ENTITLEMENTS: Record<
 
   enterprise_ai: {
     hasPaymentGateway: true,
-    maxProducts: -1, // ilimitado
-    maxCategories: -1, // ilimitado
+    maxProducts: 600,
+    maxCategories: 7, // máximo
     canImportProducts: true,
     canCustomizeStorefront: true,
     chatEnabled: true,

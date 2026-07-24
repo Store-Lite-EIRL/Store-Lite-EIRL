@@ -1,0 +1,68 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  background: color-mix(in srgb, var(--md-sys-color-error-container) 25%, transparent);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 20%, transparent);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  text-decoration: none;
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
+  cursor: pointer;
+}
+
+.card:hover {
+  background: color-mix(in srgb, var(--md-sys-color-error-container) 35%, transparent);
+  box-shadow: var(--md-sys-elevation-1);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--md-sys-color-error);
+}
+
+.description {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.action {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--md-sys-color-error);
+}
+
+.arrow {
+  font-size: 0.85rem;
+  color: var(--md-sys-color-error);
+  transition: transform 0.15s;
+}
+
+.card:hover .arrow {
+  transform: translateX(3px);
+}

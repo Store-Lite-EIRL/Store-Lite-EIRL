@@ -1,8 +1,7 @@
 'use server';
 
-
-
 import { env } from '@/config/env';
+import { generateAvailableBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { businesses, businessSettings, profiles } from '@/core/database/schema';
 import {
@@ -70,30 +69,81 @@ export async function createBusinessAction(formData: FormData) {
     };
   }
 
-  // 2. Extract Data
-  const commercialName = formData.get('commercialName') as string;
-  const personType = formData.get('personType') as string;
-  const country = formData.get('country') as string;
-  const taxId = formData.get('taxId') as string;
-  const sector = formData.get('sector') as string;
-  const description = formData.get('description') as string;
-  const city = formData.get('city') as string;
-  const address = formData.get('address') as string;
-  const phone = formData.get('phone') as string;
-  const email = formData.get('email') as string;
-  const legalRepName = formData.get('legalRepName') as string;
-  const legalRepRole = formData.get('legalRepRole') as string;
-  const legalRepPhone = formData.get('legalRepPhone') as string;
-  const legalRepEmail = formData.get('legalRepEmail') as string;
+  // 2. Validate Data using Zod
+  const rawData = {
+    commercialName: formData.get('commercialName'),
+    personType: formData.get('personType'),
+    country: formData.get('country'),
+    taxId: formData.get('taxId'),
+    sector: formData.get('sector'),
+    description: formData.get('description'),
+    city: formData.get('city'),
+    departamento: formData.get('departamento'),
+    provincia: formData.get('provincia'),
+    distrito: formData.get('distrito'),
+    address: formData.get('address'),
+    phone: formData.get('phone'),
+    email: formData.get('email'),
+    legalRepName: formData.get('legalRepName'),
+    legalRepRole: formData.get('legalRepRole'),
+    legalRepPhone: formData.get('legalRepPhone'),
+    legalRepEmail: formData.get('legalRepEmail'),
+    storefrontTheme: formData.get('storefrontTheme'),
+  };
+
+  const { createBusinessSchema } = await import('@/features/business/schemas');
+  const validationResult = createBusinessSchema.safeParse(rawData);
+
+  if (!validationResult.success) {
+    const firstError = validationResult.error.issues[0]?.message;
+    return { error: firstError || 'Datos de entrada no válidos' };
+  }
+
+  const {
+    commercialName,
+    personType: rawPersonType,
+    country,
+    taxId,
+    sector,
+    description,
+    city,
+    departamento,
+    provincia,
+    distrito,
+    address,
+    phone,
+    email,
+    legalRepName,
+    legalRepRole,
+    legalRepPhone,
+    legalRepEmail,
+    storefrontTheme: rawStorefrontTheme,
+  } = validationResult.data;
+
+  // AUTO-DETECT personType if not provided (from RUC prefix)
+  let personType = rawPersonType;
+  if (!personType && taxId && taxId.length === 11) {
+    // Detect from RUC prefix: "20" = juridica, else = natural
+    personType = taxId.startsWith('20') ? 'juridica' : 'natural';
+    console.log('[createBusinessAction] Auto-detected personType:', personType);
+  }
+
+  if (!personType) {
+    return { error: 'No se pudo determinar el tipo de persona. Verifique el RUC/DNI.' };
+  }
+
   const logoFile = formData.get('logo') as File | null;
-  const rawStorefrontTheme = formData.get('storefrontTheme');
 
   let storefrontTheme = createDefaultStorefrontTheme();
+
   if (typeof rawStorefrontTheme === 'string' && rawStorefrontTheme.trim().length > 0) {
     try {
       storefrontTheme = normalizeStorefrontTheme(JSON.parse(rawStorefrontTheme));
     } catch (error) {
-      console.warn('[createBusinessAction] Invalid storefront theme payload, using default.', error);
+      console.warn(
+        '[createBusinessAction] Invalid storefront theme payload, using default.',
+        error,
+      );
     }
   }
 
@@ -103,7 +153,9 @@ export async function createBusinessAction(formData: FormData) {
 
   // 4. Generate Slug
   // Use 'store' as default type for slug generation if sector is generic
-  const finalSlug = generateBusinessSlug(commercialName, 'store');
+  const finalSlug = await generateAvailableBusinessSlug(() =>
+    generateBusinessSlug(commercialName, 'store'),
+  );
 
   console.warn(
     '[createBusinessAction] Initiating business creation with logo size:',
@@ -122,6 +174,9 @@ export async function createBusinessAction(formData: FormData) {
         personType,
         country,
         city,
+        departamento,
+        provincia,
+        distrito,
         address,
         email,
         whatsappNumber: phone,
@@ -149,9 +204,7 @@ export async function createBusinessAction(formData: FormData) {
 
     await db.insert(businessSettings).values({
       businessId,
-      themeMode: storefrontTheme.surfaceMode,
       contrastLevel: 'standard',
-      customColors: storefrontTheme.palette,
       preferences: initialPreferences,
     });
 
@@ -194,10 +247,7 @@ export async function createBusinessAction(formData: FormData) {
 
       console.warn('[createBusinessAction] Final logo URL:', publicUrl);
 
-      await db
-        .update(businesses)
-        .set({ logoUrl: publicUrl })
-        .where(eq(businesses.id, businessId));
+      await db.update(businesses).set({ logoUrl: publicUrl }).where(eq(businesses.id, businessId));
     }
 
     console.warn('[createBusinessAction] Creation fully completed for slug:', finalSlug);

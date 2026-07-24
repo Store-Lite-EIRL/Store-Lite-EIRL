@@ -90,7 +90,11 @@ export const DEFAULT_STOREFRONT_LAYOUT: StorefrontLayout = {
   ],
 };
 
-const SECTION_ORDER: readonly StorefrontSectionType[] = ['hero', 'featured_categories', 'product_grid'];
+const SECTION_ORDER: readonly StorefrontSectionType[] = [
+  'hero',
+  'featured_categories',
+  'product_grid',
+];
 const GRID_GAPS: readonly GridGap[] = ['sm', 'md', 'lg', 'xl'];
 const GRID_CARD_STYLES: readonly ProductGridCardStyle[] = ['default', 'compact', 'comfortable'];
 
@@ -194,7 +198,9 @@ function normalizeSection(
   value: unknown,
   fallbackOrder: number,
 ): StorefrontSection {
-  const defaultSection = cloneDefaultLayout().sections.find((section) => section.type === sectionType);
+  const defaultSection = cloneDefaultLayout().sections.find(
+    (section) => section.type === sectionType,
+  );
 
   if (!defaultSection || !isRecord(value)) {
     return defaultSection ?? DEFAULT_STOREFRONT_LAYOUT.sections[fallbackOrder];

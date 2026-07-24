@@ -9,8 +9,14 @@ import type { PricingCardProps } from './components/PricingCard';
 import { PricingCard } from './components/PricingCard';
 import './pricing.css';
 
-export default async function PricingPage() {
+export default async function PricingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const cookieStore = await cookies();
+  const searchParamsAwaited = await searchParams;
+  const slug = searchParamsAwaited.slug as string;
 
   const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
     cookies: {
@@ -33,19 +39,23 @@ export default async function PricingPage() {
         subscriptions: {
           where: (subscriptions, { eq }) => eq(subscriptions.planStatus, 'active'),
           limit: 1,
-        }
-      }
+        },
+      },
     });
-    myBusinesses = rawBusinesses.map(b => ({
+    myBusinesses = rawBusinesses.map((b) => ({
       ...b,
       planType: b.subscriptions?.[0]?.planType || 'basico',
       planEndDate: b.subscriptions?.[0]?.planEndDate,
     }));
   }
+
+  const preselectedBusinessId = myBusinesses.find((b) => b.slug === slug)?.id;
+
   const plans: PricingCardProps[] = [
     {
       title: 'Plan Emprendedor',
-      description: 'La base sólida e inteligente para formalizar y despegar tu primer gran proyecto.',
+      description:
+        'La base sólida e inteligente para formalizar y despegar tu primer gran proyecto.',
       price: '30',
       period: 'mes',
       buttonText: 'Comenzar ahora',
@@ -70,15 +80,16 @@ export default async function PricingPage() {
       features: [
         { text: 'Pasarela completa: Pagos digitales y tarjetas bancarias' },
         { text: 'Almacenamiento premium para 300 productos' },
-        { text: 'Personalización avanzada: Edición Drag & Drop, colores y tipografía' },
+        { text: 'Personalización avanzada: Edición del negocio' },
         { text: 'Colaboración élite: Equipo de trabajo con 2 usuarios adicionales' },
         { text: 'Centro de mando: Dashboard de ventas y métricas de progreso' },
-        { text: 'Servicio de envios con Shalom en tiempo real' },
+        { text: 'Servicio de envios con Urbano en tiempo real' },
       ],
     },
     {
       title: 'Plan Enterprise AI',
-      description: 'La solución definitiva con potencia de Inteligencia Artificial y datos masivos.',
+      description:
+        'La solución definitiva con potencia de Inteligencia Artificial y datos masivos.',
       price: '90',
       period: 'mes',
       originalPrice: '100',
@@ -89,7 +100,9 @@ export default async function PricingPage() {
       features: [
         { text: 'Ecosistema total: Incluye todos los beneficios previos' },
         { text: 'Asistencia técnica prioritaria 24/7 con expertos' },
-        { text: 'Potencial ilimitado: 1000+ productos y hasta 10 negocios' },
+        {
+          text: 'Potencial ilimitado: 1000+ productos y presentación premium con hasta 3 imágenes por producto',
+        },
         { text: 'Presentación premium con hasta 3 imágenes por producto' },
         { text: 'Escalabilidad extendida: 5 usuarios adicionales para tu equipo' },
         { text: 'Inteligencia en tiempo real: Dashboard interactivo con sugerencias IA' },
@@ -107,14 +120,19 @@ export default async function PricingPage() {
       <div className="pricing-header">
         <h1 className="pricing-title">Planes y Precios</h1>
         <p className="pricing-subtitle">
-          Elige el plan que mejor se adapte al tamaño y las necesidades de tu negocio.
-          Cambia o cancela en cualquier momento.
+          Elige el plan que mejor se adapte al tamaño y las necesidades de tu negocio. Cambia o
+          cancela en cualquier momento.
         </p>
       </div>
 
       <div className="pricing-grid">
         {plans.map((plan, index) => (
-          <PricingCard key={index} {...plan} businesses={myBusinesses} />
+          <PricingCard
+            key={index}
+            {...plan}
+            businesses={myBusinesses}
+            preselectedBusinessId={preselectedBusinessId}
+          />
         ))}
       </div>
     </div>

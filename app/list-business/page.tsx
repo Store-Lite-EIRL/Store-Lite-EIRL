@@ -3,17 +3,19 @@ import { db } from '@/core/database/client';
 import { businesses, businessTeamMembers } from '@/core/database/schema';
 import AppLayout from '@/shared/components/layout/AppLayout';
 import { Icon } from '@/shared/components/ui/data-display';
+import { getBusinessPath } from '@/shared/utils/url';
 import { createServerClient } from '@supabase/ssr';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 
+import AppSettingsButton from '@/features/business/components/AppSettingsButton';
+import BusinessGrid from '@/features/business/components/BusinessGrid';
+import CreateBusinessButton from '@/features/business/components/CreateBusinessButton';
+import LogoutButton from '@/features/business/components/LogoutButton';
+import PremiumButton from '@/features/business/components/PremiumButton';
 import style from './ListBusiness.module.css';
-import BusinessGrid from './components/BusinessGrid';
-import CreateBusinessButton from './components/CreateBusinessButton';
-import LogoutButton from './components/LogoutButton';
-import PremiumButton from './components/PremiumButton';
 
 export default async function ListBusinessPage() {
   const cookieStore = await cookies();
@@ -36,12 +38,17 @@ export default async function ListBusinessPage() {
   }
 
   // 1. Fetch businesses user owns
+  const now = new Date();
   const rawOwnedBusinesses = await db.query.businesses.findMany({
     where: eq(businesses.ownerId, user.id),
     orderBy: (businesses, { desc }) => [desc(businesses.createdAt)],
     with: {
       subscriptions: {
-        where: (subscriptions, { eq }) => eq(subscriptions.planStatus, 'active'),
+        where: (subscriptions, { eq, gt, isNull, or }) =>
+          and(
+            eq(subscriptions.planStatus, 'active'),
+            or(isNull(subscriptions.planEndDate), gt(subscriptions.planEndDate, now)),
+          ),
         limit: 1,
       },
     },
@@ -54,7 +61,11 @@ export default async function ListBusinessPage() {
       business: {
         with: {
           subscriptions: {
-            where: (subscriptions, { eq }) => eq(subscriptions.planStatus, 'active'),
+            where: (subscriptions, { eq, gt, isNull, or }) =>
+              and(
+                eq(subscriptions.planStatus, 'active'),
+                or(isNull(subscriptions.planEndDate), gt(subscriptions.planEndDate, now)),
+              ),
             limit: 1,
           },
         },
@@ -83,7 +94,7 @@ export default async function ListBusinessPage() {
   const allBusinesses = [...ownedBusinesses, ...teamBusinesses];
 
   if (selectedSlug && allBusinesses.some((business) => business.slug === selectedSlug)) {
-    redirect(`/${selectedSlug}`);
+    redirect(getBusinessPath(selectedSlug));
   }
 
   const myBusinesses = ownedBusinesses; // Keep this for limit calculations
@@ -117,6 +128,9 @@ export default async function ListBusinessPage() {
 
         {/* ── Hero / Header ── */}
         <div className={style.hero}>
+          {/* Shimmer aislado con overflow hidden */}
+          <div className={style.heroShimmer} />
+
           {/* Left: user info */}
           <div className={style.heroLeft}>
             <div className={style.userAvatar}>{avatarInitial}</div>
@@ -130,6 +144,7 @@ export default async function ListBusinessPage() {
           {/* Right: actions in one row */}
           <div className={style.heroActions}>
             <CreateBusinessButton hasReachedLimit={myBusinesses.length >= 3} />
+            <AppSettingsButton />
             <LogoutButton />
           </div>
         </div>
@@ -140,12 +155,12 @@ export default async function ListBusinessPage() {
             <div className={style.sectionHeader}>
               <span className={style.sectionTitle}>
                 {displayBusinesses.length === 1
-                   ? '1 negocio encontrado'
-                   : `${displayBusinesses.length} negocios encontrados`}
+                  ? '1 negocio encontrado'
+                  : `${displayBusinesses.length} negocios encontrados`}
                 {ownedBusinesses.length > 0 && teamBusinesses.length > 0 && (
-                   <span style={{ fontSize: '0.8rem', opacity: 0.7, marginLeft: '8px' }}>
-                     ({ownedBusinesses.length} propios, {teamBusinesses.length} de equipo)
-                   </span>
+                  <span style={{ fontSize: '0.8rem', opacity: 0.7, marginLeft: '8px' }}>
+                    ({ownedBusinesses.length} propios, {teamBusinesses.length} de equipo)
+                  </span>
                 )}
               </span>
             </div>

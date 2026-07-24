@@ -24,7 +24,7 @@
   box-sizing: border-box;
 }
 
-/* Tipografía: texto principal usa --mio-theme-text-font-family (Google Sans Text) */
+/* Typography: main text uses the global Material theme font token. */
 body {
   font-family: var(--mio-theme-text-font-family), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -35,8 +35,10 @@ body {
   min-height: 100vh;
 }
 
-/* Iconos: Standardizing Material Symbols loading */
-md-icon {
+/* Icons: standardize Material Symbols ligature rendering everywhere. */
+md-icon,
+.material-symbols-outlined,
+.material-symbols-rounded {
   font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif !important;
   font-weight: normal;
   font-style: normal;
@@ -107,8 +109,7 @@ md-icon {
   gap: 0.5rem;
 }
 
-/* Campos (Field): altura mínima para que se vea el cuadro completo (label + borde + input).
-   Sin esto el host colapsa y solo se ven las líneas del borde solapadas. */
+/* Fields: keep Material field hosts from collapsing. */
 .form-row--fields {
   gap: 1.5rem;
 }
@@ -228,13 +229,14 @@ md-icon {
   justify-content: center;
 }
 
-/* ── Import Preview Dialog: enlarged size ── */
+/* Import Preview Dialog: enlarged size */
 md-dialog.import-xl-dialog {
   --md-dialog-container-max-block-size: 92vh;
   --md-dialog-container-max-inline-size: min(1280px, 92vw);
   --md-dialog-container-min-inline-size: min(1280px, 92vw);
 }
-/* ── Global Scrollbar Styling ── */
+
+/* Global Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -259,4 +261,25 @@ md-dialog.import-xl-dialog {
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--md-sys-color-outline-variant) var(--md-sys-color-surface-container-low);
+}
+
+/* Culqi Checkout v4: fix white overlay and z-index issue. */
+#culqi-container,
+.culqi_checkout,
+div#culqi_checkout,
+[id^='culqi'] > div:first-child,
+body > div[style*='z-index'] > iframe[src*='culqi'],
+div[style*='z-index'][style*='background-color: rgb(255, 255, 255)'],
+div[style*='z-index'][style*='background-color: #ffffff'],
+div[style*='z-index'][style*='background-color:white'] {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+body > div[style*='z-index']:has(iframe[src*='culqi']),
+.culqi_checkout,
+#culqi-container {
+  z-index: 99999 !important;
 }

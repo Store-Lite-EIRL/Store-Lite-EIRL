@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 
 import { db } from '@/core/database/client';
-import { payments } from '@/core/database/schema';
+import { paymentOrders, payments } from '@/core/database/schema';
+import type { OrderStatus } from '@/types/order';
 import { eq } from 'drizzle-orm';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
@@ -110,6 +111,7 @@ export async function POST(request: Request) {
     data?: {
       id?: string;
       reference_code?: string;
+      status?: string;
       outcome?: { type?: string };
     };
   };
@@ -150,6 +152,39 @@ export async function POST(request: Request) {
           .update(payments)
           .set({ status: 'refund_requested', updatedAt: new Date() })
           .where(eq(payments.culqiChargeId, chargeId));
+        break;
+      }
+      case 'order.status.changed': {
+        const orderStatus = event.data?.status;
+        const culqiOrderId = event.data?.id;
+
+        if (!culqiOrderId || !orderStatus) {
+          console.warn('[culqi-webhook] Missing order ID or status in order.status.changed');
+          break;
+        }
+
+        const statusMap: Record<string, OrderStatus> = {
+          paid: 'paid',
+          expired: 'expired',
+          cancelled: 'cancelled',
+        };
+
+        const mapped = statusMap[orderStatus];
+        if (!mapped) {
+          console.warn(`[culqi-webhook] Unknown order status: ${orderStatus}`);
+          break;
+        }
+
+        const result = (await db
+          .update(paymentOrders)
+          .set({ status: mapped, updatedAt: new Date() })
+          .where(eq(paymentOrders.culqiOrderId, culqiOrderId))) as unknown as {
+          rowCount: number;
+        };
+
+        if (!result?.rowCount || result.rowCount === 0) {
+          console.warn(`[culqi-webhook] Order not found in DB: ${culqiOrderId}`);
+        }
         break;
       }
       default:

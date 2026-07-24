@@ -1,0 +1,152 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  margin-bottom: 2rem;
+}
+
+/* ─── Identity ─── */
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.logoWrap {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--md-sys-color-surface-container-high);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--md-sys-elevation-1);
+}
+
+.logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.logoFallback {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.businessName {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* ─── Actions & Bell ─── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+/* ─── Plan Badge ─── */
+.planBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.75rem;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #fff;
+  background: var(--plan-color, var(--md-sys-color-primary));
+}
+
+.statusActive {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.statusActive::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--md-sys-color-primary);
+  border-radius: 50%;
+  display: block;
+}
+
+/* ─── Expiry Warning ─── */
+.expiryWarning {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1.25rem;
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: var(--md-sys-elevation-1);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.expiryIcon {
+  font-size: 1rem;
+}
+
+.expiryText {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+  .expiryText {
+    color: var(--md-sys-color-tertiary);
+  }
+}
+
+@media (max-width: 600px) {
+  .businessName {
+    font-size: 1.05rem;
+  }
+
+  .expiryWarning {
+    width: 100%;
+  }
+}

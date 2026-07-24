@@ -1,0 +1,35 @@
+.toggle {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 50;
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  border: none;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--md-sys-elevation-3, 0 4px 8px rgba(0, 0, 0, 0.2));
+  transition:
+    background-color 200ms ease,
+    transform 100ms ease;
+}
+
+.toggle:hover {
+  transform: scale(1.05);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
+  transition: transform 300ms ease;
+}

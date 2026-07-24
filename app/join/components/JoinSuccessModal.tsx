@@ -9,10 +9,7 @@ interface JoinSuccessModalProps {
   onComplete: () => void;
 }
 
-export function JoinSuccessModal({
-  businessName,
-  onComplete,
-}: JoinSuccessModalProps) {
+export function JoinSuccessModal({ businessName, onComplete }: JoinSuccessModalProps) {
   const [countdown, setCountdown] = useState(3);
   const [showConfetti, setShowConfetti] = useState(true);
 

@@ -3,7 +3,7 @@
 .layout {
   display: flex;
   min-height: 100dvh;
-  background-color: var(--md-sys-color-surface);
+  background-color: var(--storefront-bg, var(--md-sys-color-surface));
 }
 
 .layout--chat {
@@ -18,12 +18,20 @@
   flex-direction: column;
   min-width: 0;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-left: var(--navbar-width); /* Adjust based on navbar */
-  padding-left: 1rem; /* Gap between navbar and content */
+  margin-left: 0;
+}
+
+.content-wrapper--expanded {
+  margin-left: var(--navbar-expanded-width);
 }
 
 .content-wrapper--collapsed {
-  margin-left: var(--navbar-width); /* If navbar doesn't shrink, or adjust if it does */
+  margin-left: var(--navbar-width);
+}
+
+.content-wrapper--hidden {
+  margin-left: 0;
+  padding-left: 0;
 }
 
 .app-header {
@@ -55,8 +63,10 @@
 
 .main-area {
   flex: 1;
+  min-height: 0;
   padding: 1.5rem;
   min-width: 0;
+  background-color: var(--storefront-bg, var(--md-sys-color-surface));
 }
 
 .main-area--chat {

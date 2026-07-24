@@ -1,0 +1,579 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 0.3s;
+  padding: 20px;
+}
+
+.overlayOpen {
+  visibility: visible;
+  opacity: 1;
+}
+
+.modalContainer {
+  width: 100%;
+  max-width: 1000px;
+  height: 85vh;
+  max-height: 800px;
+  background-color: var(--md-sys-color-surface);
+  border-radius: 28px;
+  display: flex;
+  overflow: hidden;
+  box-shadow: var(--md-sys-elevation-3);
+  transform: translateY(20px) scale(0.95);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.overlayOpen .modalContainer {
+  transform: translateY(0) scale(1);
+}
+
+.sidebar {
+  width: 280px;
+  background-color: var(--md-sys-color-surface-container);
+  padding: 40px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.sidebarContent {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebarHeader {
+  font-family: var(--md-sys-typescale-label-medium-font-family-name);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--md-sys-color-primary);
+  margin-bottom: 16px;
+  padding-left: 12px;
+}
+
+.tabButton {
+  background: transparent;
+  border: none;
+  font-family: var(--md-sys-typescale-body-medium-font-family-name);
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant);
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tabButton:hover {
+  background-color: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface);
+}
+
+.tabButtonActive {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font-weight: 600;
+}
+
+.mainContent {
+  flex: 1;
+  background-color: var(--md-sys-color-surface);
+  padding: 48px 48px 0;
+  position: relative;
+  overflow-y: auto;
+}
+
+.closeButtonContainer {
+  position: fixed;
+  top: 40px;
+  right: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--md-sys-color-on-surface-variant);
+  z-index: 1001;
+}
+
+.closeButton {
+  background: transparent;
+  border: 2px solid var(--md-sys-color-outline-variant);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--md-sys-color-on-surface-variant);
+  transition: all 0.2s;
+}
+
+.logoLoadingOverlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinIcon {
+  color: white;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.closeButton:hover {
+  background-color: var(--md-sys-color-surface-container-highest);
+  border-color: var(--md-sys-color-on-surface);
+  color: var(--md-sys-color-on-surface);
+}
+
+.closeHint {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sectionTitle {
+  margin: 0 0 5px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+}
+
+.formGroup {
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.formLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.formHint {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: 32px;
+}
+
+.formSection {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.logoSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.logoLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.logoPreviewContainer {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 16px;
+  background-color: var(--md-sys-color-surface-container-high);
+  border: 2px dashed var(--md-sys-color-outline-variant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.logoPreviewImage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.profileHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  overflow: hidden;
+  background-color: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.bannerPlaceholder {
+  height: 120px;
+  background: linear-gradient(
+    to right,
+    var(--md-sys-color-primary-container),
+    var(--md-sys-color-secondary-container)
+  );
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 24px;
+}
+
+.bannerPlaceholder .logoPreviewContainer {
+  margin-bottom: -40px;
+  border: 4px solid var(--md-sys-color-surface-container-low);
+  box-shadow: var(--md-sys-elevation-2);
+}
+
+.editLogoButton {
+  position: absolute;
+  bottom: -40px;
+  left: 110px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--md-sys-elevation-2);
+  transition: transform 0.2s ease;
+  z-index: 10;
+}
+
+.editLogoButton:hover {
+  transform: scale(1.1);
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.profileInfo {
+  padding: 56px 24px 24px;
+}
+
+.businessNamePreview {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+}
+
+.businessTypePreviewText {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* For small screens */
+@media (max-width: 850px) {
+  .overlay {
+    padding: 0;
+  }
+
+  .modalContainer {
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+    flex-direction: column;
+    border: none;
+  }
+
+  .sidebar {
+    width: 100%;
+    padding: 1rem;
+    border-right: none;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    overflow-x: auto;
+  }
+
+  .sidebarHeader {
+    display: none;
+  }
+
+  .sidebarContent {
+    flex-direction: row;
+    gap: 8px;
+    width: max-content;
+  }
+
+  .tabButton {
+    white-space: nowrap;
+    padding: 8px 16px;
+  }
+
+  .mainContent {
+    padding: 2rem 1.5rem 0;
+  }
+
+  .stickyFooter {
+    padding: 12px 0;
+  }
+
+  .closeButtonContainer {
+    top: 1rem;
+    right: 1rem;
+    gap: 2px;
+  }
+
+  .closeButton {
+    width: 32px;
+    height: 32px;
+  }
+
+  .closeHint {
+    font-size: 10px;
+  }
+
+  .actionsCard {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.5rem;
+  }
+}
+
+/* ── New Tabs Styles ── */
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.metricCard {
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.metricLabel {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 500;
+}
+
+.metricValue {
+  font-size: 1.5rem;
+  color: var(--md-sys-color-on-surface);
+  font-weight: 700;
+}
+
+.chartPlaceholder {
+  margin-top: 24px;
+  height: 200px;
+  border-radius: 12px;
+  background: linear-gradient(
+    180deg,
+    var(--md-sys-color-surface-container-high) 0%,
+    var(--md-sys-color-surface-container-low) 100%
+  );
+  border: 1px dashed var(--md-sys-color-outline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+}
+
+.actionsCard {
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.actionsCardInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.actionsCardTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.actionsCardDesc {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.teamList {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.teamMember {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.teamAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.teamInfo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.teamName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.teamRole {
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.formWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Wrapper para que el stickyFooter pueda ocupar todo el ancho del mainContent */
+.tabContentWrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.contentContainer {
+  flex: 1;
+  max-width: 600px;
+}
+
+.stickyFooter {
+  margin-top: 30px;
+  padding: 12px 0;
+  position: sticky;
+  bottom: 0;
+  background: var(--md-sys-color-surface);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  z-index: 10;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.subSectionTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin: 16px 0 8px;
+}
+
+/* Read-only / disabled fields — look like display data, not broken inputs */
+.disabledField {
+  --md-outlined-text-field-outline-color: var(--md-sys-color-outline-variant);
+  --md-outlined-text-field-hover-outline-color: var(--md-sys-color-outline-variant);
+  --md-outlined-text-field-focus-outline-color: var(--md-sys-color-outline-variant);
+  --md-outlined-text-field-input-text-color: var(--md-sys-color-on-surface);
+  opacity: 0.85;
+  cursor: default;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Locked tab — premium only */
+.tabButtonLocked {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: auto; /* needed so hover effects don't override */
+}
+.tabButtonLocked:hover {
+  background-color: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Upgrade prompt in locked tab content */
+.upgradePrompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 32px;
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+@media (max-width: 600px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}

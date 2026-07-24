@@ -6,10 +6,10 @@ export function slugify(text: string): string {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '') // Remove accents
-    .replace(/[^\w-]/g, '-') // Simplified alphanumeric replacement (ReDoS safe)
+    .replace(/[^a-z0-9-]/g, '-') // DNS-safe: solo minúsculas, números y guiones
     .replace(/-+/g, '-') // Collapse multiple hyphens
     .replace(/^-+/g, '') // Remove leading hyphens
-    .replace(/-{2,}/g, '-'); // Remove trailing hyphens
+    .replace(/-+$/g, ''); // Remove trailing hyphens
 }
 
 /**
@@ -38,7 +38,6 @@ export function generateBusinessSlug(name: string, storeType: string): string {
   }
 
   // Use simple robust randomness
-  // eslint-disable-next-line sonarjs/pseudo-random
   const randomPart = Math.random().toString(36).substring(2, 6);
   return `${finalBase}-${randomPart}`;
 }

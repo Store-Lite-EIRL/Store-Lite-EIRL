@@ -19,4 +19,5 @@ export default {
   },
   verbose: true,
   strict: true,
+  schemaFilter: ['public'], // 🔥 Fix: Only look at public tables to avoid timeouts
 } satisfies Config;

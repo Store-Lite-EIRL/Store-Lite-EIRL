@@ -1,6 +1,7 @@
 'use server';
 
 import { env } from '@/config/env';
+import { resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import {
   businessInvitations,
@@ -9,21 +10,12 @@ import {
   businesses,
 } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
+import type { ActionState } from '@/types/actions';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { and, eq, isNull, or, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
-
-// =====================================================
-// TYPES
-// =====================================================
-
-export interface ActionState {
-  error?: string;
-  success?: boolean;
-  message?: string;
-}
 
 export interface TeamMember {
   id: string;
@@ -150,6 +142,13 @@ async function getTeamMemberCount(businessId: string): Promise<number> {
 export async function generateInvitationCode(
   businessId: string,
 ): Promise<ActionState & { code?: string }> {
+  // 0. Validate input
+  const { businessIdParamSchema } = await import('@/features/team/schemas');
+  const validation = businessIdParamSchema.safeParse({ businessId });
+  if (!validation.success) {
+    return { success: false, error: validation.error.issues[0]?.message };
+  }
+
   // 1. Verify ownership
   const ownership = await assertOwnership(businessId);
   if (ownership.error) {
@@ -229,6 +228,13 @@ export async function generateInvitationCode(
 export async function getTeamMembers(
   businessId: string,
 ): Promise<ActionState & { members?: TeamMember[] }> {
+  // 0. Validate input
+  const { businessIdParamSchema } = await import('@/features/team/schemas');
+  const validation = businessIdParamSchema.safeParse({ businessId });
+  if (!validation.success) {
+    return { success: false, error: validation.error.issues[0]?.message };
+  }
+
   // 1. Verify ownership or membership
   const supabase = await createUserAuthClient();
   const {
@@ -320,6 +326,13 @@ export async function getTeamMembers(
 export async function getInvitationCode(
   businessId: string,
 ): Promise<ActionState & { invitation?: InvitationInfo }> {
+  // 0. Validate input
+  const { businessIdParamSchema } = await import('@/features/team/schemas');
+  const validation = businessIdParamSchema.safeParse({ businessId });
+  if (!validation.success) {
+    return { success: false, error: validation.error.issues[0]?.message };
+  }
+
   // Only owner can see the code
   const ownership = await assertOwnership(businessId);
   if (ownership.error) {
@@ -357,6 +370,13 @@ export async function revokeInvitationCode(
   businessId: string,
   invitationId: string,
 ): Promise<ActionState> {
+  // 0. Validate input
+  const { revokeInvitationSchema } = await import('@/features/team/schemas');
+  const validation = revokeInvitationSchema.safeParse({ businessId, invitationId });
+  if (!validation.success) {
+    return { success: false, error: validation.error.issues[0]?.message };
+  }
+
   const ownership = await assertOwnership(businessId);
   if (ownership.error) {
     return { error: ownership.error };
@@ -389,6 +409,13 @@ export async function removeTeamMember(
   businessId: string,
   memberUserId: string,
 ): Promise<ActionState> {
+  // 0. Validate input
+  const { memberActionSchema } = await import('@/features/team/schemas');
+  const validation = memberActionSchema.safeParse({ businessId, memberUserId });
+  if (!validation.success) {
+    return { success: false, error: validation.error.issues[0]?.message };
+  }
+
   const ownership = await assertOwnership(businessId);
   if (ownership.error) {
     return { error: ownership.error };
@@ -422,6 +449,13 @@ export async function removeTeamMember(
  * Leave a team (member removes themselves)
  */
 export async function leaveTeam(businessId: string): Promise<ActionState> {
+  // 0. Validate input
+  const { businessIdParamSchema } = await import('@/features/team/schemas');
+  const validation = businessIdParamSchema.safeParse({ businessId });
+  if (!validation.success) {
+    return { success: false, error: validation.error.issues[0]?.message };
+  }
+
   const supabase = await createUserAuthClient();
   const {
     data: { user },
@@ -464,6 +498,13 @@ export async function joinTeam(
     ownBusinessId?: string;
   }
 > {
+  // 0. Validate input
+  const { joinTeamSchema } = await import('@/features/team/schemas');
+  const validation = joinTeamSchema.safeParse({ slug, code: code.toUpperCase() });
+  if (!validation.success) {
+    return { success: false, error: validation.error.issues[0]?.message };
+  }
+
   // 1. Verify user is authenticated
   const supabase = await createUserAuthClient();
   const {
@@ -475,10 +516,7 @@ export async function joinTeam(
   }
 
   // 2. Find business by slug
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.slug, slug),
-    columns: { id: true, name: true, slug: true, ownerId: true },
-  });
+  const business = (await resolveBusinessSlug(slug))?.business;
 
   if (!business) {
     return { success: false, error: 'Negocio no encontrado. Verificá el nombre.' };
@@ -586,6 +624,13 @@ export async function joinTeam(
  * Confirm joining a team (after user decides to leave their own business)
  */
 export async function confirmJoinTeam(code: string, ownBusinessId: string): Promise<ActionState> {
+  // 0. Validate input
+  const { confirmJoinTeamSchema } = await import('@/features/team/schemas');
+  const validation = confirmJoinTeamSchema.safeParse({ code: code.toUpperCase(), ownBusinessId });
+  if (!validation.success) {
+    return { success: false, error: validation.error.issues[0]?.message };
+  }
+
   // 1. Verify user is authenticated
   const supabase = await createUserAuthClient();
   const {
@@ -705,6 +750,13 @@ export async function updateMemberRole(
   memberUserId: string,
   newRole: 'admin' | 'member',
 ): Promise<ActionState> {
+  // 0. Validate input
+  const { updateMemberRoleSchema } = await import('@/features/team/schemas');
+  const validation = updateMemberRoleSchema.safeParse({ businessId, memberUserId, newRole });
+  if (!validation.success) {
+    return { success: false, error: validation.error.issues[0]?.message };
+  }
+
   const ownership = await assertOwnership(businessId);
   if (ownership.error) {
     return { error: ownership.error };
@@ -746,6 +798,17 @@ export async function updateMemberPermissions(
   memberUserId: string,
   permissions: string[],
 ): Promise<ActionState> {
+  // 0. Validate input
+  const { updateMemberPermissionsSchema } = await import('@/features/team/schemas');
+  const validation = updateMemberPermissionsSchema.safeParse({
+    businessId,
+    memberUserId,
+    permissions,
+  });
+  if (!validation.success) {
+    return { success: false, error: validation.error.issues[0]?.message };
+  }
+
   const ownership = await assertOwnership(businessId);
   if (ownership.error) {
     return { error: ownership.error };
@@ -796,6 +859,13 @@ export async function updateRolePermissions(
   role: string,
   permissions: string[],
 ): Promise<ActionState> {
+  // 0. Validate input
+  const { updateRolePermissionsSchema } = await import('@/features/team/schemas');
+  const validation = updateRolePermissionsSchema.safeParse({ businessId, role, permissions });
+  if (!validation.success) {
+    return { success: false, error: validation.error.issues[0]?.message };
+  }
+
   const ownership = await assertOwnership(businessId);
   if (ownership.error) {
     return { error: ownership.error };
@@ -845,6 +915,13 @@ export async function removeMemberPermissionsOverride(
   businessId: string,
   memberUserId: string,
 ): Promise<ActionState> {
+  // 0. Validate input
+  const { memberActionSchema } = await import('@/features/team/schemas');
+  const validation = memberActionSchema.safeParse({ businessId, memberUserId });
+  if (!validation.success) {
+    return { success: false, error: validation.error.issues[0]?.message };
+  }
+
   const ownership = await assertOwnership(businessId);
   if (ownership.error) {
     return { error: ownership.error };
@@ -863,7 +940,7 @@ export async function removeMemberPermissionsOverride(
 
     revalidatePath(`/${businessId}/settings`, 'page');
 
-    return { success: true, message: 'Se恢复了 permisos por defecto del rol.' };
+    return { success: true, message: 'Se restauraron los permisos por defecto del rol.' };
   } catch (err) {
     console.error('[removeMemberPermissionsOverride] Error:', err);
     return { success: false, error: 'Error al restaurar los permisos.' };

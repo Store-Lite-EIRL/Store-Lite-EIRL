@@ -8,35 +8,18 @@
 // =====================================================
 
 import { db } from '@/core/database/client';
-import { businessSubscriptions, businesses } from '@/core/database/schema';
+import { businessSettings, businessSubscriptions, businesses } from '@/core/database/schema';
 import { and, desc, eq } from 'drizzle-orm';
 
-import {
-  DEFAULT_PLAN,
-  PLAN_ENTITLEMENTS,
-  type BusinessEntitlements,
-  type PlanType,
-} from './plans';
+import { enforceProductLimit } from './enforceProductLimit';
+import { DEFAULT_PLAN, PLAN_ENTITLEMENTS, type BusinessEntitlements, type PlanType } from './plans';
 
 /**
  * Calcula los entitlements de un negocio según su plan de suscripción activo.
- *
- * - Si no tiene suscripción activa → plan `basico` (mínimos permisos)
- * - Si el negocio no existe → plan `basico`, isActive: false
- *
- * @example
- * // En layout.tsx (Server Component)
- * const entitlements = await getBusinessEntitlements(business.id);
- *
- * @example
- * // En Server Action
- * const entitlements = await getBusinessEntitlements(businessId);
- * if (!entitlements.hasPaymentGateway) {
- *   return { success: false, error: 'Tu plan no incluye gateway de pago.' };
- * }
+ * Además verifica si el negocio tiene configurada su pasarela de pago.
  */
 export async function getBusinessEntitlements(businessId: string): Promise<BusinessEntitlements> {
-  const [business, subscription] = await Promise.all([
+  const [business, subscription, settings] = await Promise.all([
     db.query.businesses.findFirst({
       where: eq(businesses.id, businessId),
       columns: { isActive: true },
@@ -47,15 +30,52 @@ export async function getBusinessEntitlements(businessId: string): Promise<Busin
         eq(businessSubscriptions.planStatus, 'active'),
       ),
       orderBy: [desc(businessSubscriptions.createdAt)],
-      columns: { planType: true },
+      columns: { planType: true, planEndDate: true },
+    }),
+    db.query.businessSettings.findFirst({
+      where: eq(businessSettings.businessId, businessId),
+      columns: { culqiPublicKey: true, culqiSecretKey: true },
     }),
   ]);
 
-  const plan: PlanType = (subscription?.planType as PlanType) ?? DEFAULT_PLAN;
+  // Verificar expiración: si planEndDate ya pasó, degradar a Free
+  const now = new Date();
+  const isExpired = subscription?.planEndDate instanceof Date && subscription.planEndDate < now;
+
+  // Track previous plan for enforcement comparison
+  const previousPlan = !subscription ? null : (subscription.planType as PlanType);
+
+  let plan: PlanType;
+  if (!subscription || isExpired) {
+    if (isExpired) {
+      console.warn(
+        `[entitlements] Business ${businessId} plan expired (${subscription?.planEndDate?.toISOString()}), degrading to ${DEFAULT_PLAN}`,
+      );
+    }
+    plan = DEFAULT_PLAN;
+  } else {
+    plan = subscription.planType as PlanType;
+  }
+
+  // Safety net: ensure product count is within plan limits on degradation
+  if (previousPlan !== null && previousPlan !== plan) {
+    const disabled = await enforceProductLimit(businessId, PLAN_ENTITLEMENTS[plan].maxProducts);
+    if (disabled > 0) {
+      console.log(
+        `[Entitlements] Auto-disabled ${disabled} products for business ${businessId} (plan: ${plan})`,
+      );
+    }
+  }
+
+  const isPaymentConfigured = Boolean(settings?.culqiPublicKey && settings?.culqiSecretKey);
+  const planEndDate = subscription?.planEndDate?.toISOString() ?? null;
 
   return {
     plan,
     isActive: business?.isActive ?? false,
     ...PLAN_ENTITLEMENTS[plan],
+    isPaymentConfigured,
+    culqiPublicKey: settings?.culqiPublicKey ?? undefined,
+    planEndDate,
   };
 }

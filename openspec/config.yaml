@@ -1,0 +1,68 @@
+# openspec/config.yaml
+schema: spec-driven
+
+context: |
+  Tech stack: Next.js 16 (App Router) + React 19, TypeScript 5 (strict), Supabase (auth/db),
+    Drizzle ORM (PostgreSQL), pnpm workspaces, Material Design 3 via Web Components
+  Architecture: App Router with server/client components, domain-driven layout in src/
+  Testing: Vitest 4 (unit) + @testing-library/react 16 (integration) + Playwright 1.59 (e2e)
+  Style: ESLint 9 (flat config) + Prettier 3 + conventional commits (commitlint)
+
+testing:
+  strict_tdd: true
+  runner:
+    framework: vitest
+    version: '4.1.4'
+    command: pnpm test:unit
+    watch_command: pnpm test:unit:watch
+  layers:
+    unit:
+      available: true
+      tool: vitest + jsdom
+    integration:
+      available: true
+      tool: '@testing-library/react 16 + @testing-library/user-event 14'
+    e2e:
+      available: true
+      tool: '@playwright/test 1.59 (Chromium)'
+  coverage:
+    available: false
+    command: null
+  quality:
+    linter:
+      available: true
+      command: pnpm lint
+    type_checker:
+      available: true
+      command: pnpm type-check
+    formatter:
+      available: true
+      command: pnpm format
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Keep scope narrow — one change per proposal
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+    - Consider server/client component boundaries
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+    - Include test tasks alongside implementation
+  apply:
+    rules:
+      - Follow existing code patterns
+      - Respect strict_tdd: true — RED-GREEN-REFACTOR
+      - Keep changes under 400 lines per review slice
+    test_command: pnpm test:unit
+  verify:
+    test_command: pnpm test:unit
+    build_command: pnpm build
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas

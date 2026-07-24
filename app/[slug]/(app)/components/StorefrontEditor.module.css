@@ -1,0 +1,802 @@
+/* ============================================================
+   FAB
+   ============================================================ */
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 900;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  border: none;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.fab:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.fab md-icon {
+  font-size: 24px;
+}
+
+/* ============================================================
+   Backdrop
+   ============================================================ */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 910;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================================
+   Panel
+   ============================================================ */
+.panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 920;
+  width: 420px;
+  max-width: 100vw;
+  background: var(--md-sys-color-surface-container-high);
+  border-left: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+}
+
+.panelOpen {
+  transform: translateX(0);
+}
+
+/* ============================================================
+   Header
+   ============================================================ */
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  flex-shrink: 0;
+}
+
+.panelTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.closeBtn:hover {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+/* ============================================================
+   Body (scrollable)
+   ============================================================ */
+.panelBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Section card wrapper ── */
+.sectionCard {
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: box-shadow 0.2s;
+}
+
+.sectionCard:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Section titles with icon
+   ═══════════════════════════════════════════════════════════════ */
+.sectionTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sectionTitle md-icon {
+  font-size: 1.15rem;
+  color: var(--md-sys-color-primary);
+}
+
+/* ── Sub-group dividers inside a section card ── */
+.sectionSubtitle {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--md-sys-color-outline);
+  margin: 0;
+  padding-top: 4px;
+}
+
+.sectionDivider {
+  border: none;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Scheme tabs (light / dark)
+   ═══════════════════════════════════════════════════════════════ */
+.schemeTabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.schemeTab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--md-sys-color-outline-variant);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    color 0.2s,
+    background 0.2s;
+}
+
+.schemeTab:hover {
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-primary);
+  background: color-mix(in srgb, var(--md-sys-color-primary) 4%, transparent);
+}
+
+.schemeTabActive {
+  border-color: var(--md-sys-color-primary);
+  background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+  color: var(--md-sys-color-primary);
+}
+
+/* ============================================================
+   Color palette rows
+   ============================================================ */
+.colorList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.colorRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  transition: border-color 0.15s;
+}
+
+.colorRow:hover {
+  border-color: var(--md-sys-color-primary);
+}
+
+.colorPreviewWrap {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1.5px solid var(--md-sys-color-outline-variant);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.colorInput {
+  position: absolute;
+  inset: -4px; /* slightly larger than the wrap to avoid clipping */
+  width: calc(100% + 8px);
+  height: calc(100% + 8px);
+  opacity: 0;
+  cursor: pointer;
+}
+
+.colorPreview {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+}
+
+.colorMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.colorLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+}
+
+.colorHint {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.3;
+}
+
+.colorHex {
+  font-size: 0.7rem;
+  font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+  color: var(--md-sys-color-outline);
+  letter-spacing: 0.02em;
+  margin-top: 1px;
+}
+
+/* ── Palette color preview (decorative dots) ── */
+.palettePreview {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding-top: 4px;
+}
+
+.paletteDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--md-sys-color-outline-variant);
+  flex-shrink: 0;
+}
+
+.paletteDot:first-child {
+  margin-left: 0;
+}
+
+/* ============================================================
+   Font options
+   ============================================================ */
+.fontGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.fontOption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px 12px;
+  border-radius: 12px;
+  border: 1.5px solid var(--md-sys-color-outline-variant);
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    color 0.2s;
+}
+
+.fontOption:hover {
+  border-color: var(--md-sys-color-primary);
+  background: color-mix(in srgb, var(--md-sys-color-primary) 4%, transparent);
+}
+
+.fontOptionActive {
+  border-color: var(--md-sys-color-primary) !important;
+  background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+  color: var(--md-sys-color-primary);
+}
+
+.fontPreview {
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.fontLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ============================================================
+   Color count (gradient)
+   ============================================================ */
+.colorCountRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+  flex-shrink: 0;
+}
+
+/* ── Gradient direction control ── */
+.gradientDirRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.dirControl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dirAngle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+  font-variant-numeric: tabular-nums;
+  min-width: 40px;
+  text-align: right;
+  letter-spacing: 0.02em;
+}
+
+.dirRandomBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    transform 0.15s;
+  flex-shrink: 0;
+}
+
+.dirRandomBtn:hover {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  transform: scale(1.05);
+}
+
+.dirRandomBtn:active {
+  transform: scale(0.92);
+}
+
+.dirRandomBtn md-icon {
+  font-size: 1.1rem;
+}
+
+/* ── Remove color button (X) inside each color row ── */
+.removeColorBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.removeColorBtn:hover {
+  background: color-mix(in srgb, var(--md-sys-color-error) 12%, transparent);
+  color: var(--md-sys-color-error);
+}
+
+.removeColorBtn md-icon {
+  font-size: 1rem;
+}
+
+/* ── Add color button ── */
+.addColorBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 4px;
+  padding: 10px;
+  border: 1.5px dashed var(--md-sys-color-outline-variant);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    color 0.2s,
+    background 0.2s;
+}
+
+.addColorBtn:hover {
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-primary);
+  background: color-mix(in srgb, var(--md-sys-color-primary) 6%, transparent);
+}
+
+.addColorBtn md-icon {
+  font-size: 1rem;
+}
+
+/* ── Pattern color editor (when pattern has its own bg color) ── */
+
+/* ── Suggested palette chips (inside fill color rows) ── */
+.colorChips {
+  display: grid;
+  grid-template-columns: 24px 24px;
+  gap: 4px;
+  align-content: center;
+  margin-left: auto;
+}
+
+.colorChip {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1.5px solid var(--md-sys-color-outline-variant);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    transform 0.15s,
+    border-color 0.15s;
+}
+
+.colorChip:hover {
+  transform: scale(1.25);
+  border-color: var(--md-sys-color-primary);
+}
+
+.colorChipActive {
+  outline: 2.5px solid var(--md-sys-color-primary);
+  outline-offset: 1.5px;
+}
+
+/* ============================================================
+   Toggle switch (patrón decorativo)
+   ============================================================ */
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+
+.toggle {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggleSlider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  transition: background 0.2s;
+}
+
+.toggleSlider::before {
+  content: '';
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background: var(--md-sys-color-surface);
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggle input:checked + .toggleSlider {
+  background: var(--md-sys-color-primary);
+}
+
+.toggle input:checked + .toggleSlider::before {
+  transform: translateX(18px);
+}
+
+/* Active pattern info bar */
+.patternCraftActive {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent);
+  font-size: 0.78rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.patternCraftActiveRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.patternCraftActiveIcon {
+  font-size: 0.9rem;
+  color: var(--md-sys-color-primary);
+  flex-shrink: 0;
+}
+
+.patternCraftHint {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--md-sys-color-outline);
+  line-height: 1.3;
+  padding-left: 1.7rem;
+}
+
+.patternCraftRemoveBtn {
+  margin-left: auto;
+  padding: 4px 12px;
+  border: 1px solid var(--md-sys-color-error, #b3261e);
+  background: transparent;
+  color: var(--md-sys-color-error, #b3261e);
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.patternCraftRemoveBtn:hover {
+  background: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
+}
+
+/* ── Fill disabled state (when non-geometric pattern is active) ── */
+.fillDisabled {
+  opacity: 0.45;
+  pointer-events: none;
+  user-select: none;
+  position: relative;
+}
+
+.fillDisabledHint {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--md-sys-color-outline);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: var(--md-sys-color-surface-container-high);
+  border-radius: 8px;
+  pointer-events: auto;
+}
+
+.fillDisabledHint md-icon {
+  font-size: 1rem;
+  color: var(--md-sys-color-primary);
+}
+
+/* ============================================================
+   Color actions
+   ============================================================ */
+.colorActions {
+  display: flex;
+  gap: 10px;
+}
+
+.randomBtn,
+.resetBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+
+.randomBtn {
+  border: 1.5px solid var(--md-sys-color-primary);
+  background: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+  color: var(--md-sys-color-primary);
+}
+
+.randomBtn:hover {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent);
+}
+
+.randomBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+  border-color: var(--md-sys-color-outline-variant);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.resetBtn {
+  border: 1.5px solid var(--md-sys-color-outline-variant);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.resetBtn:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+/* ============================================================
+   Panel Footer
+   ============================================================ */
+.panelFooter {
+  flex-shrink: 0;
+  padding: 16px 20px 20px;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feedback {
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+  color: var(--md-sys-color-primary);
+  animation: feedbackIn 0.25s ease-out;
+}
+
+.feedbackError {
+  background: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
+  color: var(--md-sys-color-error, #b3261e);
+}
+
+@keyframes feedbackIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.saveBtn {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: none;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    opacity 0.2s,
+    transform 0.15s;
+}
+
+.saveBtn:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.saveBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.saveBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 420px) {
+  .panel {
+    width: 100vw;
+  }
+
+  .fab {
+    bottom: 16px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+  }
+}

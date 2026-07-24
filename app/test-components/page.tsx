@@ -3,7 +3,6 @@
 import { ThemeSettings } from '@/shared/components/ui/ThemeSettings';
 import { closeElementById, showElementById, showNextSiblingElement } from '@/shared/utils';
 
-
 export default function TestComponents() {
   return (
     <div className="page-container">

@@ -1,6 +1,7 @@
 'use client';
 
 import { Button, Card, Icon, TextField } from '@/shared/components/ui';
+import { getBusinessPath } from '@/shared/utils/url';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useState, useTransition } from 'react';
 import { confirmJoinTeam, joinTeam } from '../actions/team';
@@ -88,7 +89,7 @@ export default function JoinTeamPage() {
 
   const handleSuccessComplete = useCallback(() => {
     if (joinedBusiness) {
-      router.push(`/${joinedBusiness.slug}/settings`);
+      router.push(getBusinessPath(joinedBusiness.slug, '/settings'));
     }
   }, [joinedBusiness, router]);
 
@@ -194,10 +195,7 @@ export default function JoinTeamPage() {
 
       {/* Success Modal with Confetti */}
       {showSuccessModal && joinedBusiness && (
-        <JoinSuccessModal
-          businessName={joinedBusiness.name}
-          onComplete={handleSuccessComplete}
-        />
+        <JoinSuccessModal businessName={joinedBusiness.name} onComplete={handleSuccessComplete} />
       )}
     </div>
   );

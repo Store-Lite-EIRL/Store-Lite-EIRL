@@ -1,18 +1,17 @@
-/* eslint-disable max-lines */
-/* eslint-disable max-lines-per-function */
-
 'use client';
 
+import { DeleteProductDialog } from '@/features/storage/components/DeleteProductDialog';
+import { CreateProductSheet } from '@/features/storage/components/createProduct/CreateProductSheet';
+import type { Product } from '@/features/storage/data';
+import { formatPrice } from '@/features/storage/utils/currency';
 import { AlertSnackbar, Icon } from '@/shared/components/ui';
 import { Button, IconButton } from '@/shared/components/ui/buttons';
+import { getBusinessPath } from '@/shared/utils/url';
+import Checkout from '@app/[slug]/(app)/components/Checkout';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import React, { useState } from 'react';
-import Checkout from '../../../[slug]/components/Checkout';
-import { DeleteProductDialog } from '../../../[slug]/storage/components/DeleteProductDialog';
-import { CreateProductSheet } from '../../../[slug]/storage/components/createProduct/CreateProductSheet';
-import type { Product } from '../../../[slug]/storage/data';
 import styles from './ProductItem.module.css';
 
 export interface ProductViewData {
@@ -51,6 +50,12 @@ interface ProductItemViewProps {
     color: 'success' | 'error';
     icon: string;
   };
+  // Props del negocio para el checkout
+  businessName?: string;
+  businessRuc?: string;
+  businessAddress?: string;
+  businessId?: string;
+  businessLogoUrl?: string;
   onEditOpen: () => void;
   onDeleteOpen: () => void;
   onDeleteClose: () => void;
@@ -74,6 +79,7 @@ interface ProductItemViewProps {
   onPaymentModalClose: () => void;
   onBuyNow: () => void;
   hasPaymentGateway?: boolean;
+  culqiPublicKey?: string;
 }
 
 export function ProductItemView({
@@ -112,12 +118,21 @@ export function ProductItemView({
   onPaymentModalClose,
   onBuyNow,
   hasPaymentGateway = true,
+  culqiPublicKey,
+  businessName,
+  businessRuc,
+  businessAddress,
+  businessId,
+  businessLogoUrl,
 }: ProductItemViewProps) {
   const [copied, setCopied] = useState(false);
+  const [lastLoadedIndex, setLastLoadedIndex] = useState(currentImgIndex);
+  const isImageSwitching = lastLoadedIndex !== currentImgIndex && allImages.length > 1;
   const params = useParams();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
-  const slugPart = slug ? `/${slug}` : '';
-  const productUrl = `${slugPart}/product/${product.id}`;
+  const productUrl = slug
+    ? getBusinessPath(slug, `/product/${product.id}`)
+    : `/product/${product.id}`;
   const shouldUsePreview = Boolean(onOpenPreview);
 
   const productFeatures = product.tags || [];
@@ -141,7 +156,6 @@ export function ProductItemView({
   };
 
   const renderImageSection = () => {
-
     return (
       <div className={styles.imageContainer} data-purpose="image-container">
         {/* Visual Content (Lowest Z-Index) */}
@@ -154,6 +168,8 @@ export function ProductItemView({
             className={`${styles.image} ${isSaving ? styles.imageUpdating : ''}`}
             sizes="(max-width: 600px) 50vw, (max-width: 1024px) 33vw, 25vw"
             priority={false}
+            onLoad={() => setLastLoadedIndex(currentImgIndex)}
+            onError={() => setLastLoadedIndex(currentImgIndex)}
           />
         ) : (
           <span className={styles.noImage}>
@@ -264,19 +280,26 @@ export function ProductItemView({
           </div>
         )}
 
-        {/* Segmented Progress (At the Top) */}
+        {/* Segmented Progress — uses lastLoadedIndex to stay in sync with actually displayed image */}
         {allImages.length > 1 && (
           <div className={styles.segmentedProgress}>
             {allImages.map((_, idx) => (
               <div
                 key={idx}
-                className={`${styles.segment} ${idx === currentImgIndex ? styles.segmentActive : ''}`}
+                className={`${styles.segment} ${idx === lastLoadedIndex ? styles.segmentActive : ''} ${isImageSwitching ? styles.segmentPending : ''}`}
               />
             ))}
           </div>
         )}
 
-        {/* Progress Overlay (Highest Z-Index) */}
+        {/* Image switching spinner */}
+        {isImageSwitching && (
+          <div className={styles.imageLoaderOverlay}>
+            <div className={styles.imageSpinner} />
+          </div>
+        )}
+
+        {/* Saving overlay (owner only) */}
         {isSaving && (
           <div className={styles.loaderOverlay}>
             <div className={styles.spinner} />
@@ -312,21 +335,37 @@ export function ProductItemView({
 
     return (
       <>
-        <Button
-          className={styles.buyBtn}
-          variant="filled"
-          onClick={(e) => {
-            e.stopPropagation();
-            onBuyNow();
-          }}
-          style={
-            {
-              '--md-filled-button-container-color': 'var(--md-sys-color-tertiary)',
-            } as React.CSSProperties
-          }
-        >
-          {hasPaymentGateway ? 'Comprar' : 'Contactar'}
-        </Button>
+        {product.stock > 0 ? (
+          <Button
+            className={styles.buyBtn}
+            variant="filled"
+            onClick={(e) => {
+              e.stopPropagation();
+              onBuyNow();
+            }}
+            style={
+              {
+                '--md-filled-button-container-color': 'var(--md-sys-color-tertiary)',
+              } as React.CSSProperties
+            }
+          >
+            {hasPaymentGateway ? 'Comprar' : 'Contactar'}
+          </Button>
+        ) : (
+          <Button
+            className={styles.buyBtn}
+            variant="filled"
+            disabled
+            style={
+              {
+                '--md-filled-button-container-color': 'var(--md-sys-color-surface-variant)',
+                '--md-filled-button-label-text-color': 'var(--md-sys-color-on-surface-variant)',
+              } as React.CSSProperties
+            }
+          >
+            SIN STOCK
+          </Button>
+        )}
         <Button
           className={styles.cartBtn}
           variant="filled"
@@ -372,8 +411,11 @@ export function ProductItemView({
           </span>
           <div className={styles.divider} />
           <div className={styles.rating}>
-            <Icon size={21}>star</Icon>
-            <span>{product.stars || 0}</span>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Icon key={i} size={16}>
+                {product.stars && i <= Math.round(product.stars) ? 'star' : 'star'}
+              </Icon>
+            ))}
           </div>
         </div>
 
@@ -391,8 +433,12 @@ export function ProductItemView({
         </div>
 
         <div className={styles.stockInfo}>
-          <div className={styles.stockDot} />
-          <span>{product.isAvailable ? 'En Stock' : 'Agotado'}</span>
+          <div
+            className={`${styles.stockDot} ${product.stock === 0 ? styles.unavailable : styles.available}`}
+          />
+          <span className={product.stock === 0 ? styles.unavailable : styles.available}>
+            {product.stock === 0 ? 'AGOTADO' : product.isAvailable ? 'En Stock' : 'Agotado'}
+          </span>
         </div>
 
         {product.shippingInfo && (
@@ -411,15 +457,12 @@ export function ProductItemView({
                 style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10 }}
               >
                 <span className={styles.originalPrice}>
-                  {currencySymbol}
-                  {originalPrice.toLocaleString()}
+                  {formatPrice(originalPrice, currencySymbol)}
                 </span>
                 {discount && <span className={styles.discountBadge}>-{discount}%</span>}
               </div>
             )}
-            <span className={styles.currentPrice}>
-              {currencySymbol}&nbsp;{price.toLocaleString()}
-            </span>
+            <span className={styles.currentPrice}>{formatPrice(price, currencySymbol)}</span>
           </div>
         </div>
 
@@ -450,10 +493,16 @@ export function ProductItemView({
         icon={alert.icon}
         onClose={onAlertClose}
       />
-      {!isOwner && isPaymentModalOpen && (
+      {!isOwner && isPaymentModalOpen && businessId && (
         <Checkout
           totalAmount={price}
           cartItems={[{ ...storageProduct, quantity: 1 }]}
+          culqiPublicKey={culqiPublicKey}
+          businessName={businessName}
+          businessRuc={businessRuc}
+          businessAddress={businessAddress}
+          businessId={businessId}
+          businessLogoUrl={businessLogoUrl}
           onSuccess={() => onPaymentModalClose()}
           onCancel={() => onPaymentModalClose()}
         />

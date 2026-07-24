@@ -1,0 +1,490 @@
+.card {
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 24px;
+  overflow: hidden;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table th {
+  padding: 1.25rem 1.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.table td {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface);
+  vertical-align: middle;
+}
+
+.table tr:hover {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 5%, transparent);
+}
+
+.orderNumber {
+  font-family: var(--md-sys-typescale-body-small-font, monospace);
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
+  padding: 0.25rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+}
+
+.productTableLink {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.productTableLink:hover {
+  color: var(--md-sys-color-primary);
+  text-decoration: underline;
+}
+
+.priceCell {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.dateCell {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.tableWrapperRelative {
+  position: relative;
+}
+
+.loaderOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--md-sys-color-surface-rgb, 255, 255, 255), 0.8);
+  z-index: 10;
+  border-radius: inherit;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loaderSpin {
+  animation: spin 1s linear infinite;
+  color: var(--md-sys-color-primary);
+}
+
+.statusIcon {
+  margin-right: 0.3rem;
+  vertical-align: middle;
+}
+
+.inlineLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+  margin-left: 0.5rem;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--md-sys-color-primary) 60%, transparent);
+  }
+  70% {
+    transform: scale(1.4);
+    box-shadow: 0 0 0 6px transparent;
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* ── Status Badge ── */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+/* ── Status Badge Colors ── */
+.statusPending {
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-error-container) 60%,
+    var(--md-sys-color-surface)
+  );
+  color: var(--md-sys-color-on-error-container);
+}
+
+.statusPaid {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.statusProcessing {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.statusAnalyzing {
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-secondary-container) 70%,
+    var(--md-sys-color-surface)
+  );
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.statusFailed {
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-error-container) 60%,
+    var(--md-sys-color-surface)
+  );
+  color: var(--md-sys-color-on-error-container);
+}
+
+.statusVerifying {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.statusAccepted {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.statusWaiting {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.statusCompleted {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.statusRejected {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.statusDisputed {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.statusReported {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.statusDelivered {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.statusReadyPickup {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  animation: pulse 2s infinite;
+}
+
+.statusPickedUp {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.statusEnReparto {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  animation: pulse 2s infinite;
+}
+
+/* ── Filters ── */
+.filtersHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.searchWrapper {
+  flex: 1;
+  min-width: 250px;
+}
+
+.searchWithButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.searchContainer {
+  position: relative;
+  flex: 1;
+}
+
+.searchButtonInside {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: 12px;
+  border: none;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  z-index: 2;
+}
+
+.searchButtonInside:hover {
+  opacity: 0.9;
+}
+
+.filterGroup {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.dateSelectMD3 {
+  width: 100%;
+}
+
+/* ── Pagination ── */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+  gap: 1.5rem;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.pageButton {
+  padding: 0.6rem 1.5rem;
+  border-radius: 100px;
+  border: 1px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pageButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pageInfo {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ── View More ── */
+.viewMoreCol {
+  width: 60px;
+  text-align: center;
+}
+
+.viewMoreCell {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.viewMoreButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 100px;
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-primary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.viewMoreButton:hover {
+  background: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
+}
+
+.viewMoreLabel {
+  font-size: 0.75rem;
+}
+
+/* ── Table Row ── */
+.tableRow {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.tableRow:hover {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 5%, transparent);
+}
+
+.orderNumberCell {
+  white-space: nowrap;
+}
+
+.statusCell {
+  white-space: nowrap;
+}
+
+.emptyRow {
+  text-align: center;
+  padding: 3rem 1.5rem !important;
+  color: var(--md-sys-color-on-surface-variant);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* ── Tracking / Progress Indicators ── */
+.active {
+  background: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.trackingContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.trackingContainer:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.iconWrapper {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-sys-color-surface-container-low);
+  border: 1.5px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-outline);
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.iconWrapper.active {
+  background: var(--md-sys-color-primary);
+  border-color: var(--md-sys-color-primary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.dotsWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 1;
+  max-width: 60px;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--md-sys-color-outline-variant);
+}
+
+.activeDot {
+  background: var(--md-sys-color-primary);
+}
+
+.glowingDot {
+  background: var(--md-sys-color-primary);
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  .hideOnTablet {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .hideOnMobile {
+    display: none;
+  }
+  .table th.hideOnMobile,
+  .table td.hideOnMobile {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .table th,
+  .table td {
+    padding: 0.85rem 0.65rem;
+    font-size: 0.8rem;
+  }
+  .table th:first-child,
+  .table td:first-child {
+    padding-left: 0.75rem;
+  }
+  .statusBadge {
+    font-size: 0.6rem;
+    padding: 0.3rem 0.6rem;
+  }
+}

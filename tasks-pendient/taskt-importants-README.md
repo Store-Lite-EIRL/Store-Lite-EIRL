@@ -1,18 +1,22 @@
 # Taskt Importants - Security Review (Pre-Implementation)
 
 ## Purpose
+
 This document captures **observed security risks** from a static review of the current codebase.
 All remediations are intentionally written as **possible solutions** for senior validation before any code changes.
 
 ## Audience
+
 - Senior engineers / security reviewers
 - AI agents that need structured context before proposing patches
 
 ## Scope
+
 - Static code review only (no dynamic pentest, no runtime exploitation proof)
 - Focus areas: authz/authn, webhooks, payments, uploads, chat flows, RLS policies, security headers
 
 ## Confidence Model
+
 - **High confidence**: issue directly visible in code paths and business logic
 - **Medium confidence**: depends on deployment config / policy application state
 
@@ -21,6 +25,7 @@ All remediations are intentionally written as **possible solutions** for senior 
 ## Findings Summary
 
 ### 1) Critical - Culqi webhook signature is not verified
+
 - Severity: `critical`
 - Confidence: `high`
 - Risk:
@@ -36,6 +41,7 @@ All remediations are intentionally written as **possible solutions** for senior 
   - Add anti-replay controls (timestamp tolerance + event id deduplication).
 
 ### 2) Critical - Missing ownership checks in storage/product server actions (IDOR risk)
+
 - Severity: `critical`
 - Confidence: `high`
 - Risk:
@@ -54,6 +60,7 @@ All remediations are intentionally written as **possible solutions** for senior 
   - Add unit/integration tests for cross-tenant access attempts.
 
 ### 3) Critical - Chat actions allow unauthorized reads/writes and role spoofing
+
 - Severity: `critical`
 - Confidence: `high`
 - Risk:
@@ -70,6 +77,7 @@ All remediations are intentionally written as **possible solutions** for senior 
   - Add audit trail fields (`createdBy`, actor type, source).
 
 ### 4) High - Payment amount is client-influenced (price tampering risk)
+
 - Severity: `high`
 - Confidence: `high`
 - Risk:
@@ -85,6 +93,7 @@ All remediations are intentionally written as **possible solutions** for senior 
   - Persist a server-side payment intent snapshot before charging.
 
 ### 5) High - Business media deletion paths miss ownership checks
+
 - Severity: `high`
 - Confidence: `high`
 - Risk:
@@ -97,6 +106,7 @@ All remediations are intentionally written as **possible solutions** for senior 
   - Use one shared authorization guard utility to avoid drift.
 
 ### 6) High - Service role upload/delete actions without robust authz + weak file validation
+
 - Severity: `high`
 - Confidence: `high`
 - Risk:
@@ -113,6 +123,7 @@ All remediations are intentionally written as **possible solutions** for senior 
   - Consider virus/malware scan for uploaded assets in production workflows.
 
 ### 7) High - Public RLS policy on `profiles` may expose PII
+
 - Severity: `high`
 - Confidence: `medium` (depends on whether migration is applied exactly as written)
 - Risk:
@@ -129,6 +140,7 @@ All remediations are intentionally written as **possible solutions** for senior 
   - Keep sensitive columns private to owner/admin policies.
 
 ### 8) Medium - Missing baseline hardening headers
+
 - Severity: `medium`
 - Confidence: `high`
 - Risk:
@@ -143,10 +155,12 @@ All remediations are intentionally written as **possible solutions** for senior 
 ---
 
 ## Not Observed in This Review
+
 - No explicit backdoor pattern found (static inspection).
 - No direct `dangerouslySetInnerHTML` / `eval` sink identified in the reviewed paths.
 
 ## Suggested Review Order (Senior)
+
 1. Webhook authenticity and replay controls
 2. Authorization invariants for all server actions (multi-tenant boundaries)
 3. Payment integrity (server-authoritative pricing)
@@ -156,12 +170,14 @@ All remediations are intentionally written as **possible solutions** for senior 
 7. Security header baseline
 
 ## Suggested Validation Before Coding
+
 - Confirm business-required public data for storefront (minimal field contract).
 - Confirm Culqi webhook signing algorithm and operational rotation plan.
 - Confirm tenancy model: what actions are owner-only vs public vs guest.
 - Confirm logging policy to avoid sensitive payload leakage.
 
 ## Notes for AI Agents
+
 - Treat every fix above as a **proposal**, not an approved change.
 - Do not refactor unrelated modules while patching security-critical paths.
 - Prefer small, auditable PRs by risk domain:
@@ -175,6 +191,7 @@ All remediations are intentionally written as **possible solutions** for senior 
 ---
 
 ## Review Metadata
+
 - Review type: static analysis
 - Date: 2026-03-19
 - Environment: Next.js + Supabase + Drizzle

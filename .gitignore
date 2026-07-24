@@ -1,16 +1,26 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# docs IA
-.agent-teams
-.ai-tools
-.engram
-.guardian
-.kilocode
-designInspo
+# docs IA & AI Tools
+.agent/
+.agent-teams/
+.ai-tools/
+.atl/
+.codex/
+.cursor/
+.engram/
+.gemini/
+.guardian/
+.kilocode/
+.opencode/
+.qoder/
+designInspo/
 
 .aider.chat.history.md
 .aider.input.history
+.aider.tags.cache.v4/
 clone.html
+checkout_diff.txt
+*.backup
 
 # dependencies
 /node_modules
@@ -24,6 +34,8 @@ clone.html
 
 # testing
 /coverage
+playwright-report/
+test-results/
 
 # next.js
 /.next/
@@ -43,7 +55,8 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env
+.env.prod
 # vercel
 .vercel
 
@@ -51,20 +64,41 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .aider*
+.claude/
 
 
-tasks.txt
+# NOTE: keep *.txt files tracked by default. If you previously ignored a specific
+# .txt file (e.g. `tasks.txt`) and want it tracked, remove it from this list.
+*.txt
 
+# Sentry Config File
+.env.sentry-build-plugin
 
-# AI & documents
-.agent-teams
-.ai-tools
-.engram
-.guardian
-.kilocode
-designInspo
+# AI debug/dump files (transcript recovery, pattern dumps, etc.)
+dump.*
+found.*
+raw_*
+recover.*
+recovered_*
+search_history.*
 
-.aider.chat.history.md
-.aider.input.history
-clone.html
+# IDE & MCP Meta
+.mcp.json
+opencode.json
+
+# --------------------------------------------------
+# Ignore Markdown files by default but allow a short whitelist
+# (use this to avoid committing auto-generated analysis files)
+*.md
+!README.md
+!SOUL.md
+!AGENTS.md
+
+# Explicitly ignore analysis files created in the workspace
+informe_detallado_archivos_grandes.md
+tareas_prs_prioritizadas.md
+
+# If you prefer an alternate naming convention for local notes, consider
+# using a suffix not matching .md (e.g. .task or .private) and add patterns
+# here as needed.
 .env.local

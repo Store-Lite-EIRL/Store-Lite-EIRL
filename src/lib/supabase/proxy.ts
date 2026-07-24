@@ -1,19 +1,24 @@
 // =====================================================
-// SUPABASE PROXY CLIENT (Next.js 16)
+// SUPABASE PROXY CLIENT
 // =====================================================
 // Description: Supabase client for Next.js proxy
 // Usage: Import from '@/lib/supabase/proxy'
 // =====================================================
 
+import { env } from '@/config/env';
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 /**
- * Handles proxy operations (formerly middleware)
+ * Handles proxy operations
  * Handles session refresh and cookie management
  */
 export async function updateProxy(request: NextRequest) {
-  let supabaseResponse = NextResponse.next();
+  let supabaseResponse = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -30,10 +35,26 @@ export async function updateProxy(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
+        // Propagate cookies to request (solo value, no necesita options)
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        supabaseResponse = NextResponse.next();
+
+        // Update response to include mutated request so server components see the refreshed token
+        supabaseResponse = NextResponse.next({
+          request,
+        });
+
+        // Propagate cookies to response for the browser.
+        // Apply shared cookie domain for cross-subdomain auth when set.
+        // Cuando FEATURE_SUBDOMAIN_REWRITE está activo, las cookies de sesión
+        // deben compartirse entre subdominios (slug.localhost → slug.localhost).
+        // Sin esto, Supabase crea cookies host-only y la sesión se pierde al
+        // navegar entre subdominios.
         cookiesToSet.forEach(({ name, value, options }) =>
-          supabaseResponse.cookies.set(name, value, options),
+          supabaseResponse.cookies.set(
+            name,
+            value,
+            env.sharedCookieDomain ? { ...options, domain: env.sharedCookieDomain } : options,
+          ),
         );
       },
     },
@@ -41,7 +62,7 @@ export async function updateProxy(request: NextRequest) {
 
   // IMPORTANT: Avoid writing any logic between createServerClient and
   // supabase.auth.getUser().
-  
+
   try {
     const {
       data: { user },
@@ -49,55 +70,81 @@ export async function updateProxy(request: NextRequest) {
 
     const pathname = request.nextUrl.pathname;
     const isAuthPage = pathname.startsWith('/auth');
+    const isCustomerAuthPopup = pathname === '/auth/customer';
     const isCreatePage = pathname.startsWith('/created');
     const isListPage = pathname.startsWith('/list-business');
     const isPricingPage = pathname.startsWith('/pricing');
 
-    // Identify public storefront paths like /[slug] or /[slug]/product/[id]
+    // Identify public storefront paths like /[slug], /[slug]/product/[id] or /[slug]/order/[token]
     const pathSegments = pathname.split('/').filter(Boolean);
     const isStorefrontBase =
-      pathSegments.length === 1 && !['auth', 'created', 'list-business', 'pricing'].includes(pathSegments[0]);
+      pathSegments.length === 1 &&
+      !['auth', 'created', 'list-business', 'pricing'].includes(pathSegments[0]);
     const isProductDetail = pathSegments.length === 3 && pathSegments[1] === 'product';
-    const isPublicStorefront = isStorefrontBase || isProductDetail;
-    const adminSections = new Set(['storage', 'chat', 'settings', 'dashboard']);
-    const isBusinessAdminRoute = pathSegments.length >= 2 && adminSections.has(pathSegments[1]);
+    const isOrderTracking = pathSegments.length === 3 && pathSegments[1] === 'order';
+    const isLegalPage =
+      pathSegments.length === 2 &&
+      ['terminos', 'devoluciones', 'libro-reclamaciones'].includes(pathSegments[1]);
+    const isPublicStorefront =
+      isStorefrontBase || isProductDetail || isOrderTracking || isLegalPage;
+
+    // Las API routes son server-side y manejan su propia autorización.
+    // El proxy no debe interceptarlas — permite que requests del storefront
+    // público (ej: validación de carrito sin sesión) lleguen al handler.
+    const isApiRoute = pathname.startsWith('/api/');
+
+    // Helper to return redirects while preserving refreshed cookies.
+    // NOTA: supabaseResponse.cookies.getAll() devuelve solo name/value sin options.
+    // Aplicamos sharedCookieDomain manualmente para mantener consistencia cross-subdominio.
+    const redirectWithCookies = (url: URL) => {
+      const redirectResponse = NextResponse.redirect(url);
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        if (env.sharedCookieDomain) {
+          redirectResponse.cookies.set(cookie.name, cookie.value, {
+            domain: env.sharedCookieDomain,
+          });
+        } else {
+          redirectResponse.cookies.set(cookie.name, cookie.value);
+        }
+      });
+      return redirectResponse;
+    };
+
+    const isRootPage = pathname === '/';
 
     // Handle unauthenticated users
-    if (!user && !isAuthPage && !isPublicStorefront) {
+    if (!user && !isAuthPage && !isPublicStorefront && !isRootPage && !isApiRoute) {
       const url = request.nextUrl.clone();
       url.pathname = '/auth';
-      return NextResponse.redirect(url);
+      return redirectWithCookies(url);
     }
 
-    // Handle authenticated users on auth page
-    if (user && isAuthPage) {
+    // Handle authenticated users on auth page (EXCEPT /auth/customer popup).
+    // /auth/customer is designed to handle already-authenticated users by sending
+    // existing tokens via postMessage to the storefront popup opener. Redirecting it
+    // would break the flow — the popup would show the user's own business instead.
+    if (user && isAuthPage && !isCustomerAuthPopup) {
       const url = request.nextUrl.clone();
       url.pathname = '/';
-      return NextResponse.redirect(url);
-    }
-
-    // Owner-only enforcement for tenant admin routes
-    if (user && isBusinessAdminRoute) {
-      const slug = pathSegments[0];
-      if (slug) {
-        const { data: ownedBusiness } = await supabase
-          .from('businesses')
-          .select('id')
-          .eq('slug', slug)
-          .eq('owner_id', user.id)
-          .maybeSingle();
-
-        if (!ownedBusiness) {
-          const url = request.nextUrl.clone();
-          url.pathname = '/list-business';
-          return NextResponse.redirect(url);
-        }
-      }
+      return redirectWithCookies(url);
     }
 
     // Handle business redirection for authenticated users
     if (user && !isCreatePage && !isListPage && !isPricingPage && pathname === '/') {
-      return await handleBusinessRedirection(request, supabase, user.id);
+      const { data: userBusinesses, error } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('owner_id', user.id);
+
+      if (!error) {
+        const url = request.nextUrl.clone();
+        if (!userBusinesses || userBusinesses.length === 0) {
+          url.pathname = '/created';
+        } else {
+          url.pathname = '/list-business';
+        }
+        return redirectWithCookies(url);
+      }
     }
   } catch (error) {
     // Gracefully handle fetch failures in proxy/edge runtime
@@ -105,34 +152,4 @@ export async function updateProxy(request: NextRequest) {
   }
 
   return supabaseResponse;
-}
-
-/**
- * Handles redirection for authenticated users without an active business session
- */
-async function handleBusinessRedirection(
-  request: NextRequest,
-  supabase: ReturnType<typeof createServerClient>,
-  userId: string,
-) {
-  try {
-    const { data: userBusinesses, error } = await supabase
-      .from('businesses')
-      .select('id')
-      .eq('owner_id', userId);
-
-    if (!error) {
-      const url = request.nextUrl.clone();
-      if (!userBusinesses || userBusinesses.length === 0) {
-        url.pathname = '/created';
-      } else {
-        url.pathname = '/list-business';
-      }
-      return NextResponse.redirect(url);
-    }
-  } catch (err) {
-    console.error('Business redirection fetch failed:', err);
-  }
-
-  return NextResponse.next();
 }

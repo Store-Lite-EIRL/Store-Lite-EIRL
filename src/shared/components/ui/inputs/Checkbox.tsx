@@ -23,7 +23,13 @@ export const Checkbox = ({
   const checkboxId = id || generatedId;
 
   return (
-    <md-checkbox id={checkboxId} touch-target={touchTarget} className={className} suppressHydrationWarning {...props}>
+    <md-checkbox
+      id={checkboxId}
+      touch-target={touchTarget}
+      className={className}
+      suppressHydrationWarning
+      {...props}
+    >
       {children}
     </md-checkbox>
   );

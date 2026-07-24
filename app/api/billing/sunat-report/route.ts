@@ -1,0 +1,85 @@
+import { db } from '@/core/database/client';
+import { planPayments } from '@/core/database/schema';
+import { and, gte, lte } from 'drizzle-orm';
+import { NextResponse } from 'next/server';
+
+/**
+ * /api/billing/sunat-report
+ * GET ?month=04&year=2026
+ *
+ * Solo para administradores del SaaS.
+ * Retorna las boletas en CSV/JSON del mes para declarar a SUNAT.
+ */
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const month = searchParams.get('month');
+    const year = searchParams.get('year');
+
+    if (!month || !year) {
+      return NextResponse.json(
+        { error: 'Faltan parámetros de mes (1-12) y año (YYYY)' },
+        { status: 400 },
+      );
+    }
+
+    const startOfMonth = new Date(Number(year), Number(month) - 1, 1);
+    const endOfMonth = new Date(Number(year), Number(month), 0, 23, 59, 59, 999);
+
+    const records = await db.query.planPayments.findMany({
+      where: and(
+        gte(planPayments.ticketIssuedAt, startOfMonth),
+        lte(planPayments.ticketIssuedAt, endOfMonth),
+      ),
+      orderBy: (params, { asc }) => [asc(params.ticketCorrelative)],
+      with: {
+        business: {
+          with: { owner: true },
+        },
+      },
+    });
+
+    const csvRows = [
+      [
+        'Fecha',
+        'Serie-Correlativo',
+        'Tipo Doc',
+        'Nro Doc',
+        'Cliente',
+        'Subtotal',
+        'IGV',
+        'Total',
+        'Moneda',
+        'Estado',
+      ],
+    ];
+
+    for (const record of records) {
+      csvRows.push([
+        record.ticketIssuedAt?.toISOString().split('T')[0] || '',
+        `${record.ticketSeries}-${String(record.ticketCorrelative).padStart(8, '0')}`,
+        record.buyerDocumentType || 'DNI',
+        record.buyerDocumentNumber || '-',
+        record.buyerFullName || record.business.owner.fullName,
+        record.amountSubtotal,
+        record.amountIgv,
+        record.amountTotal,
+        record.currency,
+        record.status,
+      ]);
+    }
+
+    const csvString = csvRows.map((row) => row.join(',')).join('\n');
+
+    return new NextResponse(csvString, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/csv',
+        'Content-Disposition': `attachment; filename="boletas-saas-${year}-${month}.csv"`,
+      },
+    });
+  } catch (error) {
+    console.error('[sunat-report] Error:', error);
+    return NextResponse.json({ error: 'Error generando reporte' }, { status: 500 });
+  }
+}

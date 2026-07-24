@@ -1,4 +1,3 @@
-
 /**
  * Lista de mensajes de error esperados (lógica de negocio, permisos, etc.)
  * que no deben ensuciar la consola como errores de sistema.
@@ -13,7 +12,7 @@ export const EXPECTED_ERROR_MESSAGES = [
   'Has alcanzado el límite de categorías de tu plan',
   'Categoria no encontrada o acceso denegado',
   'No se pueden sincronizar las categorías',
-  'Ya has dado me gusta a este producto'
+  'Ya has dado me gusta a este producto',
 ];
 
 /**
@@ -25,8 +24,10 @@ export function isBusinessError(error: unknown): boolean {
   const getMessage = (err: unknown): string => {
     if (typeof err === 'string') return err;
     if (err instanceof Error) return err.message;
-    if (err && typeof err === 'object' && 'message' in err) return String((err as { message: unknown }).message);
-    if (err && typeof err === 'object' && 'error' in err) return String((err as { error: unknown }).error);
+    if (err && typeof err === 'object' && 'message' in err)
+      return String((err as { message: unknown }).message);
+    if (err && typeof err === 'object' && 'error' in err)
+      return String((err as { error: unknown }).error);
     return String(err);
   };
 

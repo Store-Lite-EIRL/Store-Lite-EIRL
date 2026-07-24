@@ -1,6 +1,6 @@
 'use client';
 
-import BackButton from 'app/[slug]/product/[productId]/components/BackButton';
+import BackButton from 'app/[slug]/(app)/product/[productId]/components/BackButton';
 import { useRouter } from 'next/navigation';
 
 export function PricingBackButton() {
@@ -22,6 +22,6 @@ export function PricingBackButton() {
     //   </Icon>
     //   Volver
     // </Button>
-    <BackButton href="/list-business" style={{ position: 'absolute', top: 50, }} />
+    <BackButton href="/list-business" style={{ position: 'absolute', top: 50 }} />
   );
 }

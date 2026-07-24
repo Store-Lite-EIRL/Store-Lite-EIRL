@@ -3,16 +3,14 @@
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businesses } from '@/core/database/schema';
+import type { ActionState as BaseActionState } from '@/types/actions';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 
-export interface ActionState {
-  error?: string;
-  success?: boolean;
-  message?: string;
+export interface ActionState extends BaseActionState {
   url?: string;
 }
 
@@ -151,6 +149,9 @@ export async function updateBusinessData(
     name: string;
     description: string;
     address: string;
+    departamento: string;
+    provincia: string;
+    distrito: string;
     storeType: string;
     whatsappNumber: string;
     taxId: string;
@@ -181,11 +182,22 @@ export async function updateBusinessData(
   }
 
   try {
-    // 3. Update DB record
+    // 3. Sanitize whatsappNumber if present
+    const sanitizedData = { ...data };
+    if (sanitizedData.whatsappNumber !== undefined) {
+      const raw = sanitizedData.whatsappNumber;
+      const cleaned = raw.replace(/\D/g, '');
+      if (cleaned && cleaned.length !== 9) {
+        return { error: 'El número de WhatsApp debe tener exactamente 9 dígitos.' };
+      }
+      sanitizedData.whatsappNumber = cleaned ? '+' + cleaned : '';
+    }
+
+    // 4. Update DB record
     await db
       .update(businesses)
       .set({
-        ...data,
+        ...sanitizedData,
         updatedAt: new Date(),
       })
       .where(eq(businesses.id, businessId));
@@ -367,7 +379,7 @@ export async function removeBusinessCover(businessId: string, slug: string): Pro
 
     await db
       .update(businesses)
-      .set({ coverImageUrl: null, updatedAt: new Date() })
+      .set({ heroImages: [], coverImageUrl: null, updatedAt: new Date() })
       .where(eq(businesses.id, businessId));
 
     revalidatePath(`/${slug}`);
@@ -376,5 +388,149 @@ export async function removeBusinessCover(businessId: string, slug: string): Pro
   } catch (err) {
     console.error(err);
     return { error: 'Error inesperado.' };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HERO CAROUSEL — Múltiples imágenes (hasta 3)
+// Bucket: store-covers | Path: portadas/{businessId}/{fileName}
+// Mantiene coverImageUrl sincronizado con heroImages[0] para backward compat
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MAX_HERO_IMAGES = 3;
+
+/**
+ * Sube una nueva imagen al array heroImages (máx. 3).
+ * Sincroniza coverImageUrl con heroImages[0] para backward compat.
+ */
+export async function addHeroImage(
+  businessId: string,
+  slug: string,
+  formData: FormData,
+): Promise<ActionState> {
+  const file = formData.get('file') as File;
+  if (!file) return { error: 'No se ha proporcionado ninguna imagen.' };
+  if (file.size > MAX_FILE_SIZE) return { error: 'La imagen excede el límite de 5MB.' };
+
+  // 1. Authenticate & authorize
+  const supabaseUser = await createUserAuthClient();
+  const {
+    data: { user },
+  } = await supabaseUser.auth.getUser();
+  if (!user) return { error: 'No autorizado.' };
+
+  const business = await db.query.businesses.findFirst({
+    where: eq(businesses.id, businessId),
+    columns: { ownerId: true, heroImages: true },
+  });
+  if (!business || business.ownerId !== user.id) {
+    return { error: 'No tienes permiso para editar este negocio.' };
+  }
+
+  // 2. Validate limit
+  const currentImages = (business.heroImages || []).filter(Boolean);
+  if (currentImages.length >= MAX_HERO_IMAGES) {
+    return { error: `Máximo ${MAX_HERO_IMAGES} imágenes de publicidad.` };
+  }
+
+  try {
+    // 3. Upload
+    const adminStorage = createAdminStorageClient();
+    const fileExt = file.name.split('.').pop();
+    const fileName = `hero-${Date.now()}.${fileExt}`;
+    const filePath = `portadas/${businessId}/${fileName}`;
+
+    const { error: uploadError } = await adminStorage.storage
+      .from('store-covers')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+      return { error: `Error al subir la imagen: ${uploadError.message}` };
+    }
+
+    const {
+      data: { publicUrl },
+    } = adminStorage.storage.from('store-covers').getPublicUrl(filePath);
+
+    // 4. Append to heroImages array
+    const newImages = [...currentImages, publicUrl];
+
+    const updateData: Record<string, unknown> = {
+      heroImages: newImages,
+      updatedAt: new Date(),
+    };
+
+    // Sync coverImageUrl con el primer elemento
+    updateData.coverImageUrl = newImages[0];
+
+    await db.update(businesses).set(updateData).where(eq(businesses.id, businessId));
+
+    revalidatePath(`/${slug}`);
+    return { success: true, url: publicUrl, message: 'Imagen agregada a la galería.' };
+  } catch (err) {
+    console.error(err);
+    return { error: 'Error inesperado al subir la imagen.' };
+  }
+}
+
+/**
+ * Elimina una imagen del heroImages por índice.
+ * También borra el archivo de storage y sincroniza coverImageUrl.
+ */
+export async function deleteHeroImage(
+  businessId: string,
+  slug: string,
+  index: number,
+): Promise<ActionState> {
+  const authCheck = await assertBusinessOwnershipOrFail(businessId);
+  if (authCheck.error) return { error: authCheck.error };
+
+  const business = await db.query.businesses.findFirst({
+    where: eq(businesses.id, businessId),
+    columns: { heroImages: true },
+  });
+
+  const currentImages = (business?.heroImages || []).filter(Boolean);
+  if (index < 0 || index >= currentImages.length) {
+    return { error: 'Índice de imagen inválido.' };
+  }
+
+  const removedUrl = currentImages[index];
+  const newImages = currentImages.filter((_, i) => i !== index);
+
+  try {
+    const adminStorage = createAdminStorageClient();
+
+    // Extraer file path de la URL y eliminar de storage
+    const urlParts = removedUrl.split('/portadas/');
+    if (urlParts.length === 2) {
+      const filePath = `portadas/${urlParts[1]}`;
+      const { error: deleteError } = await adminStorage.storage
+        .from('store-covers')
+        .remove([filePath]);
+      if (deleteError) {
+        console.warn('Could not delete file from storage:', deleteError.message);
+      }
+    }
+
+    const updateData: Record<string, unknown> = {
+      heroImages: newImages.length > 0 ? newImages : [],
+      updatedAt: new Date(),
+    };
+
+    // Sincronizar coverImageUrl: si se borró la primera, usar la nueva primera (o null)
+    if (newImages.length > 0) {
+      updateData.coverImageUrl = newImages[0];
+    } else {
+      updateData.coverImageUrl = null;
+    }
+
+    await db.update(businesses).set(updateData).where(eq(businesses.id, businessId));
+
+    revalidatePath(`/${slug}`);
+    return { success: true, message: 'Imagen eliminada.' };
+  } catch (err) {
+    console.error(err);
+    return { error: 'Error inesperado al eliminar la imagen.' };
   }
 }

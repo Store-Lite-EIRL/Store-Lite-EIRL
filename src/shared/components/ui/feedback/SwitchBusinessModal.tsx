@@ -114,10 +114,10 @@ export const SwitchBusinessModal: React.FC<SwitchBusinessModalProps> = ({
               margin: 0,
             }}
           >
-            Ya tienes <strong>"{currentBusiness}"</strong> abierto en otra pestaña.
+            Ya tienes <strong>&quot;{currentBusiness}&quot;</strong> abierto en otra pestaña.
             <br />
             <br />
-            ¿Querés cambiar a <strong>"{pendingBusiness}"</strong>?
+            ¿Querés cambiar a <strong>&quot;{pendingBusiness}&quot;</strong>?
           </p>
         </div>
 

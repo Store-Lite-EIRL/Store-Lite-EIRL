@@ -143,7 +143,7 @@
 }
 
 .category {
-  color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-surface-variant);
   font-size: 0.7rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -166,7 +166,7 @@
 }
 
 .rating i {
-  color: #ffb400;
+  color: var(--md-sys-color-tertiary, #ffb400);
   font-size: 0.875rem;
 }
 
@@ -207,7 +207,7 @@
   gap: 0.5rem;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #10b981; /* Success Green */
+  color: var(--md-sys-color-tertiary, #10b981); /* Success Green */
 }
 
 .stockDot {
@@ -217,6 +217,12 @@
   background-color: currentColor;
 }
 
+.unavailable {
+  color: var(--md-sys-color-error, #e82828);
+}
+.available {
+  color: var(--md-sys-color-tertiary, #10b981);
+}
 .shippingInfo {
   display: flex;
   align-items: center;
@@ -270,8 +276,8 @@
 }
 
 .discountBadge {
-  background-color: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  background-color: color-mix(in srgb, var(--md-sys-color-tertiary, #10b981) 10%, transparent);
+  color: var(--md-sys-color-tertiary, #10b981);
   font-size: 0.625rem;
   font-weight: 700;
   padding: 0.25rem 0.5rem;
@@ -367,6 +373,21 @@
   background-color: var(--md-sys-color-primary);
 }
 
+.segmentPending {
+  opacity: 0.4;
+  animation: segmentPulse 1s ease-in-out infinite;
+}
+
+@keyframes segmentPulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
 /* ── Carousel Nav Overlay ── */
 .carouselNavOverlay {
   position: absolute;
@@ -380,6 +401,34 @@
   height: 100%;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Image Switching Spinner ── */
+.imageLoaderOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(2px);
+  z-index: 30;
+  border-radius: 1rem;
+}
+
+.imageSpinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-top-color: var(--md-sys-color-primary, #65558f);
+  border-radius: 50%;
+  animation: imageSpin 0.7s linear infinite;
+}
+
+@keyframes imageSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Custom indicator if no images (avoiding clutter) */

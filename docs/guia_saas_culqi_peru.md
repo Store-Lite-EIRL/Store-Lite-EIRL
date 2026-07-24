@@ -117,9 +117,11 @@ Comisión (10%) → S/500
 ### Paso 5: Cálculo de impuestos
 
 #### IGV:
+
 Solo sobre tus ingresos (800)
 
 #### Renta:
+
 Utilidad = ingresos - gastos
 
 ---
@@ -137,6 +139,7 @@ Utilidad = ingresos - gastos
 ## 🚀 8. Estrategia por etapas
 
 ### Nivel 1 (Inicio / MVP)
+
 - Usar tu Culqi
 - Excel para control
 - Términos básicos
@@ -144,6 +147,7 @@ Utilidad = ingresos - gastos
 ---
 
 ### Nivel 2 (Formal)
+
 - Mejor contabilidad
 - Reportes automáticos
 - Mejor documentación
@@ -151,6 +155,7 @@ Utilidad = ingresos - gastos
 ---
 
 ### Nivel 3 (Escalar)
+
 - Abogado
 - Contratos formales
 - Estructura legal más sólida

@@ -246,6 +246,6 @@ export const AlertSnackbar: React.FC<AlertSnackbarProps> = ({
         }
       `}</style>
     </div>,
-    document.body
+    document.body,
   );
 };

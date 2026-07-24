@@ -1,0 +1,354 @@
+/* MODERN UI REDESIGN - Popup Styles */
+
+.modernModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modernModalContent {
+  background: white;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  border-radius: 24px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: modalEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modernModalHeader {
+  padding: 24px 32px;
+  background: var(--md-sys-color-surface-container-low, #f9fafb);
+  border-bottom: 1px solid var(--md-sys-color-surface-variant, #f1f5f9);
+  position: relative;
+}
+
+.headerTitleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.headerTitleGroup h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1e293b);
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+
+.headerTopRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.headerSubtitle {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant, #64748b);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.modernCloseBtn {
+  background: var(--md-sys-color-surface-variant, #f1f5f9);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-on-surface-variant, #64748b);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modernCloseBtn:hover {
+  background: var(--md-sys-color-surface-variant, #e2e8f0);
+  color: var(--md-sys-color-on-surface, #0f172a);
+  transform: rotate(90deg);
+}
+
+.modernStatusBadge {
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modernModalScroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+}
+
+.modernLayoutGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 40px;
+}
+
+.modernMainCol {
+  display: flex;
+  flex-direction: column;
+}
+
+.modernSideCol {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .modernLayoutGrid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+.sectionModern {
+  margin-bottom: 32px;
+}
+
+.sectionModernTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Product Card Modern */
+.modernProductCard {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: var(--md-sys-color-surface-container-low, #f8fafc);
+  border-radius: 16px;
+  border: 1px solid var(--md-sys-color-surface-variant, #f1f5f9);
+}
+
+.modernProductImg {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: white;
+}
+
+.modernProductInfo h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #1e293b);
+  margin: 0 0 4px 0;
+}
+
+/* Payment Summary Modern */
+.paymentModern {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-surface-variant, #f1f5f9);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.paymentRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant, #64748b);
+}
+
+.paymentTotal {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 2px dashed var(--md-sys-color-surface-variant, #f1f5f9);
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #0f172a);
+  font-size: 1.125rem;
+}
+
+/* Customer/Shipping Card */
+.modernContactCard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.contactItem {
+  display: flex;
+  gap: 12px;
+}
+
+.contactIcon {
+  width: 36px;
+  height: 36px;
+  background: var(--md-sys-color-surface-variant, #f1f5f9);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-on-surface-variant, #64748b);
+  flex-shrink: 0;
+}
+
+.contactContent p {
+  margin: 0;
+}
+
+.contactLabel {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant, #94a3b8);
+  font-weight: 500;
+}
+
+.contactValue {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface, #1e293b);
+  font-weight: 600;
+}
+
+/* Compact Timeline */
+.compactTimeline {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 40px;
+  position: relative;
+  padding: 0 10px;
+}
+
+.compactTimeline::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 30px;
+  right: 30px;
+  height: 2px;
+  background: var(--md-sys-color-surface-variant, #f1f5f9);
+  z-index: 0;
+}
+
+.timelinePoint {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.pointDot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--md-sys-color-surface-variant, #f1f5f9);
+  border: 4px solid white;
+  box-shadow: 0 0 0 1px var(--md-sys-color-surface-variant, #f1f5f9);
+  transition: all 0.3s;
+}
+
+.pointLabel {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant, #94a3b8);
+}
+
+.pointActive .pointDot {
+  background: var(--md-sys-color-primary, #3b82f6);
+  box-shadow:
+    0 0 0 1px var(--md-sys-color-primary, #3b82f6),
+    0 0 10px rgba(var(--md-sys-color-primary-rgb, 59, 130, 246), 0.4);
+}
+
+.pointActive .pointLabel {
+  color: var(--md-sys-color-primary, #3b82f6);
+}
+
+.pointCompleted .pointDot {
+  background: var(--md-sys-color-tertiary, #10b981);
+  box-shadow: 0 0 0 1px var(--md-sys-color-tertiary, #10b981);
+}
+
+.pointCompleted .pointLabel {
+  color: var(--md-sys-color-tertiary, #10b981);
+}
+
+.modernModalFooter {
+  padding: 24px 32px;
+  background: var(--md-sys-color-surface-container-low, #f9fafb);
+  border-top: 1px solid var(--md-sys-color-surface-variant, #f1f5f9);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.secondaryBtn {
+  padding: 10px 20px;
+  border-radius: 12px;
+  background: white;
+  border: 1px solid var(--md-sys-color-surface-variant, #e2e8f0);
+  color: var(--md-sys-color-on-surface-variant, #64748b);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.secondaryBtn:hover {
+  background: var(--md-sys-color-surface-container-low, #f8fafc);
+  color: var(--md-sys-color-on-surface, #1e293b);
+}
+
+.copyAddressBtn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--md-sys-color-primary-container, #eff6ff);
+  border: 1px dashed var(--md-sys-color-primary-container, #bfdbfe);
+  color: var(--md-sys-color-on-primary-container, #2563eb);
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.copyAddressBtn:hover {
+  background: var(--md-sys-color-primary-container, #dbeafe);
+}

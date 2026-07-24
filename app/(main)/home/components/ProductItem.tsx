@@ -1,15 +1,22 @@
 'use client';
 
+import { useProductItemController } from '@/features/products/hooks/useProductItemController';
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
 import { ProductItemView } from './ProductItemView';
-import { useProductItemController } from './useProductItemController';
 
 interface ProductItemProps {
   product: ProductWithRelations;
   isOwner?: boolean;
   onPreviewOpen?: (index: number) => void;
   hasPaymentGateway?: boolean;
+  culqiPublicKey?: string;
   onContactClick?: () => void;
+  // Props del negocio para el checkout
+  businessName?: string;
+  businessRuc?: string;
+  businessAddress?: string;
+  businessId?: string;
+  businessLogoUrl?: string;
 }
 
 export default function ProductItem({
@@ -17,14 +24,20 @@ export default function ProductItem({
   isOwner = false,
   onPreviewOpen,
   hasPaymentGateway = true,
+  culqiPublicKey,
   onContactClick,
+  businessName,
+  businessRuc,
+  businessAddress,
+  businessId,
+  businessLogoUrl,
 }: ProductItemProps) {
   const controller = useProductItemController(product, isOwner, hasPaymentGateway, onContactClick);
 
   return (
     <ProductItemView
       product={{
-// ... (rest is same)
+        // ... (rest is same)
         id: product.id,
         title: product.title,
         stock: product.stock,
@@ -70,6 +83,12 @@ export default function ProductItem({
       onPaymentModalClose={controller.handlePaymentModalClose}
       onBuyNow={controller.handleBuyNow}
       hasPaymentGateway={hasPaymentGateway}
+      culqiPublicKey={culqiPublicKey}
+      businessName={businessName}
+      businessRuc={businessRuc}
+      businessAddress={businessAddress}
+      businessId={businessId}
+      businessLogoUrl={businessLogoUrl}
     />
   );
 }

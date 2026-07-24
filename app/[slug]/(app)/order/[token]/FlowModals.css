@@ -1,0 +1,531 @@
+/* ============================================================
+   ConfirmationFlow & ReportFlow — MD3 Dialog Styles
+   Shared patterns for customer-facing modals.
+   ============================================================ */
+
+/* ─── Overlay (shared) ─── */
+.cf-overlay,
+.rf-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: cf-fade-in 0.2s ease;
+}
+
+/* Visible when :target OR .--visible modifier */
+.cf-overlay:target,
+.cf-overlay--visible,
+.rf-overlay:target,
+.rf-overlay--visible {
+  display: flex;
+}
+
+@keyframes cf-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ─── Dialog (shared base) ─── */
+.cf-dialog,
+.rf-dialog {
+  background: var(--md-sys-color-surface-container-low, #f5f5f5);
+  border-radius: 28px;
+  width: 100%;
+  max-width: 480px;
+  padding: 2.5rem 2rem 2rem;
+  position: relative;
+  animation: cf-slide-up 0.3s cubic-bezier(0.2, 0, 0, 1);
+  border: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.12);
+  text-align: center;
+}
+
+@keyframes cf-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ─── Close button ─── */
+.cf-close,
+.rf-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #666);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+
+.cf-close:hover,
+.rf-close:hover {
+  background: var(--md-sys-color-on-surface, rgba(0, 0, 0, 0.08));
+  color: var(--md-sys-color-on-surface, #000);
+}
+
+.cf-close:disabled,
+.rf-close:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ─── Icon circle (shared) ─── */
+.cf-icon-circle,
+.rf-icon-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+}
+
+.cf-icon-circle--warning,
+.rf-icon-circle--warning {
+  background: var(--md-sys-color-error-container, #fde8e8);
+  color: var(--md-sys-color-on-error-container, #b71c1c);
+  border: 2px solid var(--md-sys-color-error, #ef5350);
+}
+
+.cf-icon-circle--success {
+  background: linear-gradient(
+    135deg,
+    var(--md-sys-color-tertiary, #6750a4) 0%,
+    var(--md-sys-color-primary, #6750a4) 100%
+  );
+  color: white;
+  box-shadow: 0 12px 32px rgba(103, 80, 164, 0.3);
+  animation: cf-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.cf-icon-circle--success-small {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  background: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+.rf-icon-circle--shield {
+  background: linear-gradient(
+    135deg,
+    var(--md-sys-color-secondary, #6750a4) 0%,
+    var(--md-sys-color-primary, #6750a4) 100%
+  );
+  color: white;
+  box-shadow: 0 12px 32px rgba(103, 80, 164, 0.25);
+  animation: cf-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* ─── Compact Dialog (for report flows) ─── */
+.rf-dialog--compact {
+  max-width: 380px;
+  padding: 1.75rem 1.5rem 1.25rem;
+}
+
+.rf-icon-circle--compact {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.75rem;
+  background: var(--md-sys-color-error-container, #fde8e8);
+  color: var(--md-sys-color-on-error-container, #b71c1c);
+}
+
+.rf-icon-circle--compact-shield {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.75rem;
+  background: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+@keyframes cf-pop {
+  0% {
+    transform: scale(0) rotate(-15deg);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.1) rotate(3deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* ─── Typography (shared) ─── */
+.cf-title,
+.rf-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  line-height: 1.25;
+}
+
+.cf-title--success {
+  font-size: 1.75rem;
+  font-weight: 450;
+  letter-spacing: -0.03em;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin-bottom: 0.5rem;
+}
+
+.cf-title--small,
+.rf-title--small {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.cf-title--danger {
+  color: var(--md-sys-color-error, #b71c1c);
+}
+
+.cf-question,
+.rf-question {
+  font-size: 1rem;
+  font-weight: 450;
+  margin: 0 0 1.25rem;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.cf-question--compact {
+  font-size: 0.875rem;
+  font-weight: 400;
+  margin-bottom: 1rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.cf-body,
+.rf-body {
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  line-height: 1.6;
+  margin: 0 0 1.5rem;
+}
+
+.cf-body--compact {
+  font-size: 0.85rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin: 0 0 1rem;
+}
+
+.cf-subtitle,
+.rf-subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0.7;
+}
+
+.cf-brand,
+.rf-brand {
+  color: var(--md-sys-color-primary, #6750a4);
+  font-weight: 500;
+}
+
+/* ─── Card (shared) ─── */
+.cf-card,
+.rf-card {
+  background: var(--md-sys-color-surface-container-highest, #e8e8e8);
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.cf-card--warning {
+  background: var(--md-sys-color-error-container, #fde8e8);
+}
+
+.cf-card-text,
+.rf-card-text {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  line-height: 1.5;
+}
+
+.cf-card-text strong,
+.rf-card-text strong {
+  font-weight: 500;
+}
+
+/* ─── Badge (shared) ─── */
+.cf-badge,
+.rf-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0.6;
+  margin-bottom: 1.5rem;
+}
+
+/* ─── Actions ─── */
+.cf-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ─── Buttons (shared) ─── */
+.cf-btn,
+.rf-btn {
+  border: none;
+  padding: 0.875rem 2rem;
+  border-radius: 100px;
+  font-weight: 500;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+  text-decoration: none;
+}
+
+.cf-btn--compact {
+  padding: 0.625rem 1.25rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  width: auto;
+}
+
+.cf-btn--primary,
+.rf-btn--primary {
+  background: var(--md-sys-color-primary, #6750a4);
+  color: white;
+  box-shadow: 0 4px 16px rgba(103, 80, 164, 0.25);
+}
+
+.cf-btn--primary:hover {
+  box-shadow: 0 8px 24px rgba(103, 80, 164, 0.35);
+  transform: translateY(-1px);
+}
+
+.cf-btn--secondary,
+.rf-btn--secondary {
+  background: var(--md-sys-color-error-container, #fde8e8);
+  color: var(--md-sys-color-on-error-container, #b71c1c);
+}
+
+.cf-btn--secondary:hover,
+.rf-btn--secondary:hover {
+  background: var(--md-sys-color-error, #ef5350);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.cf-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ─── Loading state ─── */
+.cf-loading,
+.rf-loading {
+  padding: 2rem 0;
+}
+
+.cf-spinner,
+.rf-spinner {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 1.5rem;
+  position: relative;
+}
+
+.cf-spinner__track,
+.rf-spinner__track {
+  position: absolute;
+  inset: 0;
+  border: 4px solid var(--md-sys-color-primary-container, #e8def8);
+  border-radius: 50%;
+}
+
+.cf-spinner__fill {
+  position: absolute;
+  inset: 0;
+  border: 4px solid transparent;
+  border-top-color: var(--md-sys-color-primary, #6750a4);
+  border-radius: 50%;
+  animation: cf-spin 0.8s linear infinite;
+}
+
+.rf-spinner__fill {
+  position: absolute;
+  inset: 0;
+  border: 4px solid transparent;
+  border-top-color: var(--md-sys-color-secondary, #6750a4);
+  border-radius: 50%;
+  animation: cf-spin 0.8s linear infinite;
+}
+
+@keyframes cf-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ─── Form (ReportFlow) ─── */
+.rf-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.rf-field {
+  text-align: left;
+}
+
+.rf-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--md-sys-color-primary, #6750a4);
+  margin-bottom: 0.375rem;
+  padding-left: 0.25rem;
+}
+
+.rf-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 0.875rem 1rem;
+  border-radius: 16px;
+  border: 1.5px solid var(--md-sys-color-outline-variant, #e0e0e0);
+  background: var(--md-sys-color-surface, #fff);
+  font-size: 0.9rem;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.rf-textarea:focus {
+  border-color: var(--md-sys-color-primary, #6750a4);
+  box-shadow: 0 0 0 3px rgba(103, 80, 164, 0.12);
+}
+
+.rf-textarea::placeholder {
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0.6;
+}
+
+/* ─── Error (shared) ─── */
+.cf-error,
+.rf-error {
+  background: var(--md-sys-color-error-container, #fde8e8);
+  color: var(--md-sys-color-on-error-container, #b71c1c);
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.8125rem;
+  font-weight: 450;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+}
+
+/* ─── Snackbar (ConfirmationFlow error toast) ─── */
+.cf-snackbar {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--md-sys-color-inverse-surface, #323033);
+  color: var(--md-sys-color-inverse-on-surface, #f5f5f5);
+  padding: 0.875rem 1.25rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  animation: cf-snackbar-in 0.3s ease;
+  max-width: calc(100vw - 2rem);
+}
+
+@keyframes cf-snackbar-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.cf-snackbar-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 1.125rem;
+  padding: 0 0.25rem;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.cf-snackbar-close:hover {
+  opacity: 1;
+}

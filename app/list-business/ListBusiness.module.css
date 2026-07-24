@@ -6,7 +6,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 2rem 5rem;
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -67,11 +67,21 @@
     var(--md-sys-color-secondary-container) 100%
   );
   position: relative;
+  /* overflow NO está hidden — el tooltip de límite necesita verse fuera */
+}
+
+/* Contenedor interno para el shimmer con overflow aislado */
+.heroShimmer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
   overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Shimmer sweep */
-.hero::after {
+.heroShimmer::after {
   content: '';
   position: absolute;
   top: -50%;
@@ -81,11 +91,10 @@
   background: linear-gradient(
     105deg,
     transparent 40%,
-    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.2) 50%,
     transparent 60%
   );
   animation: shimmer 5s ease-in-out infinite;
-  pointer-events: none;
 }
 
 @keyframes shimmer {
@@ -237,15 +246,6 @@
   border-color: var(--md-sys-color-primary);
   box-shadow:
     0 0 0 1px var(--md-sys-color-primary),
-    0 16px 40px -10px rgba(0, 0, 0, 0.18);
-}
-
-/* Border highlight on hover - cleaner than cardAccent */
-.businessCard:hover {
-  transform: translateY(-5px) scale(1.005);
-  border-color: var(--md-sys-color-primary);
-  box-shadow:
-    0 0 0 1px var(--md-sys-color-primary),
     0 20px 40px -12px rgba(0, 0, 0, 0.25);
 }
 
@@ -302,8 +302,12 @@
   align-items: center;
   gap: 4px;
   padding: 0.35rem 0.85rem;
-  background: linear-gradient(135deg, #1e1e1e 0%, #3a3a3a 100%);
-  color: #ffffff;
+  background: linear-gradient(
+    135deg,
+    var(--md-sys-color-surface-container-high, #1e1e1e) 0%,
+    var(--md-sys-color-surface-container-highest, #3a3a3a) 100%
+  );
+  color: var(--md-sys-color-on-surface, #ffffff);
   border-radius: 12px 4px 12px 4px;
   font-size: 0.6rem;
   font-weight: 800;
@@ -408,6 +412,7 @@
   width: 52px;
   padding: 0;
   display: flex;
+  padding-top: 4px;
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -570,6 +575,41 @@
   font-size: 0.9rem;
   color: var(--md-sys-color-on-surface-variant);
   margin: 0;
+}
+
+.logoutButton {
+  --md-icon-button-icon-color: var(--md-sys-color-on-primary-container);
+  --md-icon-button-hover-state-layer-color: var(--md-sys-color-on-primary-container);
+  --md-icon-button-hover-state-layer-opacity: 0.12;
+  --md-icon-button-pressed-state-layer-color: var(--md-sys-color-on-primary-container);
+  --md-icon-button-pressed-state-layer-opacity: 0.18;
+  transition: transform 0.2s ease;
+}
+
+.logoutButton:hover {
+  transform: scale(1.08);
+}
+
+/* ── Loading Overlay ── */
+.loadingOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .pricingLink {

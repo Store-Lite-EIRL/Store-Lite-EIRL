@@ -4,8 +4,8 @@ import { useEffect } from 'react';
 
 /**
  * MaterialWebInit handles the global registration of Material Design 3 Web Components.
- * 
- * We use a conditional dynamic import strategy to prevent 'CustomElementRegistry' 
+ *
+ * We use a conditional dynamic import strategy to prevent 'CustomElementRegistry'
  * duplication warnings during development (HMR).
  */
 export function MaterialWebInit() {
@@ -14,7 +14,7 @@ export function MaterialWebInit() {
     if (typeof window !== 'undefined' && !customElements.get('md-focus-ring')) {
       const initMaterial = async () => {
         try {
-          // Dynamic imports avoid top-level static registration which triggers 
+          // Dynamic imports avoid top-level static registration which triggers
           // warnings when the module re-executes during Hot Module Replacement.
           await Promise.all([
             import('@material/web/all.js'),

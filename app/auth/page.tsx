@@ -1,9 +1,10 @@
 'use client';
 
 import { useAuth } from '@/features/auth';
+import { clearBusinessSessionData } from '@/hooks/useBusinessSession';
 import Link from 'next/link';
 // Space Grotesk removed to use project default font (Google Sans)
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './page.module.css';
 
 /**
@@ -13,6 +14,11 @@ import styles from './page.module.css';
 export default function AuthPage() {
   const { signInWithGoogle } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Clean stale business data from previous sessions (defense layer C)
+  useEffect(() => {
+    clearBusinessSessionData();
+  }, []);
 
   const handleGoogleSignIn = async () => {
     try {

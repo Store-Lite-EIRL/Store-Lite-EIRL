@@ -4,7 +4,7 @@ md-outlined-button,
 md-text-button,
 md-elevated-button,
 md-filled-tonal-button {
-  --md-sys-typescale-label-large-font: var(--mio-theme-text-font-family);
+  --md-sys-typescale-label-large-font-family-name: var(--mio-theme-text-font-family);
 }
 
 /* Icon Buttons */
