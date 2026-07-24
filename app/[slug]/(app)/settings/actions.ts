@@ -532,6 +532,35 @@ export async function updateCulqiCredentials(
   }
 }
 
+export async function updateBusinessData(
+  businessId: string,
+  slug: string,
+  data: { whatsappNumber?: string | null },
+): Promise<ActionState> {
+  try {
+    await requireAccessOnId(businessId, 'business.edit');
+  } catch (error: any) {
+    return { success: false, error: error.message || 'No autorizado' };
+  }
+
+  try {
+    await db
+      .update(businesses)
+      .set({
+        whatsappNumber: data.whatsappNumber ?? null,
+        updatedAt: new Date(),
+      })
+      .where(eq(businesses.id, businessId));
+
+    revalidatePath(`/${slug}/settings`);
+    revalidatePath('/', 'layout');
+    return { success: true, message: 'WhatsApp actualizado correctamente.' };
+  } catch (error) {
+    console.error('Error updating business data:', error);
+    return { success: false, error: 'Error inesperado al actualizar datos del negocio.' };
+  }
+}
+
 export interface SocialLinksInput {
   instagram?: string;
   facebook?: string;
