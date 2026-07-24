@@ -126,6 +126,7 @@ const eslintConfig = defineConfig([
             'page.tsx',
             'route.ts',
             'middleware.ts',
+            'instrumentation-client.ts',
           ],
         },
       ],

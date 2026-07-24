@@ -4,6 +4,7 @@ import { db } from '@/core/database/client';
 import { businesses, businessTeamMembers, chatSessions, messages } from '@/core/database/schema';
 import { notifyNewMessage } from '@/lib/notifications';
 import { checkPermission } from '@/lib/permissions';
+import { getPostHogClient } from '@/lib/posthogServer';
 import { createClient } from '@/lib/supabase/server';
 import { and, desc, eq } from 'drizzle-orm';
 
@@ -142,6 +143,19 @@ export async function startChatSession(data: {
       isFromStore: true,
       content: `Hola ${data.guestName}. Bienvenido a nuestra tienda. En que podemos ayudarte hoy?`,
     });
+
+    const posthog = getPostHogClient();
+    if (posthog) {
+      posthog.capture({
+        distinctId: data.guestId,
+        event: 'chat_session_started',
+        properties: {
+          business_id: data.businessId,
+          session_id: newSession.id,
+        },
+      });
+      await posthog.flush();
+    }
 
     return { success: true, sessionId: newSession.id };
   } catch (error) {
