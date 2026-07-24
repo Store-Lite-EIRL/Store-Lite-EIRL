@@ -2,7 +2,8 @@
 
 import { db } from '@/core/database/client';
 import { products } from '@/core/database/schema';
-import { and, eq } from 'drizzle-orm';
+import { getBusinessEntitlements } from '@/core/entitlements';
+import { and, eq, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { updateProduct, type SaleStatus } from './actions';
 import { requireOwnedBusinessBySlug } from './actions/authz';
@@ -46,6 +47,25 @@ export async function toggleProductStatus(
   try {
     const { businessId } = await requireOwnedBusinessBySlug(businessSlug);
     const newStatus = !currentStatus;
+
+    // Guard: when enabling, check plan product limit
+    if (newStatus) {
+      const entitlements = await getBusinessEntitlements(businessId);
+      if (entitlements.maxProducts !== -1) {
+        const result = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(products)
+          .where(and(eq(products.businessId, businessId), eq(products.isAvailable, true)));
+
+        const activeCount = Number(result[0]?.count ?? 0);
+        if (activeCount >= entitlements.maxProducts) {
+          return {
+            success: false,
+            error: `Has alcanzado el límite de ${entitlements.maxProducts} productos activos para tu plan actual. Desactivá otros productos o mejorá tu plan para activar este.`,
+          };
+        }
+      }
+    }
 
     await db
       .update(products)

@@ -148,6 +148,13 @@
       "when": 1782506817563,
       "tag": "0020_ancient_winter_soldier",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1784326582928,
+      "tag": "0022_charming_excalibur",
+      "breakpoints": true
     }
   ]
 }

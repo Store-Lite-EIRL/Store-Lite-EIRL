@@ -7,7 +7,7 @@ import '@/styles/components/navbar.css';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { usePermissions } from '../../../../app/[slug]/context/PermissionsContext';
+import { usePermissions } from '../../../../app/[slug]/(app)/context/PermissionsContext';
 import { Icon } from '../ui';
 import { NavbarNotificationsBadge } from './NavbarNotificationsBadge';
 
@@ -111,6 +111,12 @@ export default function Navbar({
       path: getBusinessPath(slug, '/notifications'),
     },
     { id: 'storage', icon: 'package_2', label: 'Almacén', path: getBusinessPath(slug, '/storage') },
+    {
+      id: 'soporte',
+      icon: 'support',
+      label: 'Soporte',
+      path: getBusinessPath(slug, '/soporte'),
+    },
     {
       id: 'dashboard',
       icon: 'dashboard',

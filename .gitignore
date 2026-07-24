@@ -56,6 +56,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env
+.env.prod
 # vercel
 .vercel
 
@@ -63,6 +64,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .aider*
+.claude/
+
 
 # NOTE: keep *.txt files tracked by default. If you previously ignored a specific
 # .txt file (e.g. `tasks.txt`) and want it tracked, remove it from this list.
@@ -98,3 +101,4 @@ tareas_prs_prioritizadas.md
 # If you prefer an alternate naming convention for local notes, consider
 # using a suffix not matching .md (e.g. .task or .private) and add patterns
 # here as needed.
+.env.local

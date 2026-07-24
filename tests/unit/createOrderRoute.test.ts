@@ -6,7 +6,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
 
+const mockBusinessFindFirst = vi.fn();
 const mockBusinessSettingsFindFirst = vi.fn();
+const mockSubscriptionFindFirst = vi.fn();
 const mockReturning = vi.fn();
 const mockValues = vi.fn(() => ({ returning: mockReturning }));
 const mockInsert = vi.fn(() => ({ values: mockValues }));
@@ -23,7 +25,9 @@ vi.mock('@/core/database/client', () => ({
       })),
     })),
     query: {
+      businesses: { findFirst: mockBusinessFindFirst },
       businessSettings: { findFirst: mockBusinessSettingsFindFirst },
+      businessSubscriptions: { findFirst: mockSubscriptionFindFirst },
     },
   },
 }));
@@ -70,6 +74,15 @@ function createCulqiOrderResponse(overrides: Record<string, unknown> = {}) {
 describe('POST /api/payment/create-order', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Default mock: business is active
+    mockBusinessFindFirst.mockResolvedValue({ isActive: true });
+
+    // Default mock: business has an active subscription (business_pro)
+    mockSubscriptionFindFirst.mockResolvedValue({
+      planType: 'business_pro',
+      planEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días
+    });
 
     // Default mock: culqiBlocked check — business is NOT blocked
     mockSelectCulqiBlocked.mockResolvedValue([{ culqiBlocked: false }]);

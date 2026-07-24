@@ -15,14 +15,18 @@ export const env = {
   //   null/empty → cookies host-only (comportamiento default, no cross-subdominio)
   sharedCookieDomain: process.env.SHARED_COOKIE_DOMAIN || null,
   // Factiliza API Configuration (Server-side only)
-  factilizaToken: process.env.FACTILIZA_TOKEN!,
-  factilizaWspInstance: process.env.FACTILIZA_WSP_INSTANCE!,
+  jsonToken: process.env.JSON_TOKEN!,
+  jsonWspInstance: process.env.JSON_WSP_INSTANCE!,
   // Twilio WhatsApp OTP Configuration (Server-side only)
   twilioAccountSid: process.env.TWILIO_ACCOUNT_SID!,
   twilioAuthToken: process.env.TWILIO_AUTH_TOKEN!,
   twilioWhatsAppNumber: process.env.TWILIO_WHATSAPP_NUMBER!,
   // JSON.pe SMS — order notifications to customers
   jsonpeSmsToken: process.env.JSONPE_SMS_TOKEN!,
+  // Culqi — al activar esta flag, solo se aceptan llaves _live (producción).
+  //   false/omit → acepta cualquier key pk_/sk_ (desarrollo).
+  //   true       → fuerza pk_live_ / sk_live_ al guardar credenciales.
+  enforceLiveCulqiKeys: process.env.CULQI_ENFORCE_LIVE_KEYS === 'true',
   // Resend — transactional emails (Server-side only)
   resendApiKey: process.env.RESEND_API_KEY!,
   resendFromEmail: process.env.RESEND_FROM_EMAIL!,

@@ -3,8 +3,8 @@
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
 import { AlertSnackbar, Icon, IconButton } from '@/shared/components/ui';
 import { getBusinessPath } from '@/shared/utils/url';
-import ProductPreviewSheet from '@app/[slug]/components/ProductPreviewSheet';
-import { usePermissions } from '@app/[slug]/context/PermissionsContext';
+import ProductPreviewSheet from '@app/[slug]/(app)/components/ProductPreviewSheet';
+import { usePermissions } from '@app/[slug]/(app)/context/PermissionsContext';
 import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useRef, useState } from 'react';
 import { useCurrency } from '../context/CurrencyContext';

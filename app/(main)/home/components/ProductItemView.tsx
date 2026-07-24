@@ -7,7 +7,7 @@ import { formatPrice } from '@/features/storage/utils/currency';
 import { AlertSnackbar, Icon } from '@/shared/components/ui';
 import { Button, IconButton } from '@/shared/components/ui/buttons';
 import { getBusinessPath } from '@/shared/utils/url';
-import Checkout from '@app/[slug]/components/Checkout';
+import Checkout from '@app/[slug]/(app)/components/Checkout';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';

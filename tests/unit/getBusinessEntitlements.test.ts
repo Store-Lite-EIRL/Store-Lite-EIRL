@@ -23,6 +23,11 @@ vi.mock('@/core/database/client', () => ({
   },
 }));
 
+const mockEnforceProductLimit = vi.fn().mockResolvedValue(0);
+vi.mock('@/core/entitlements/enforceProductLimit', () => ({
+  enforceProductLimit: mockEnforceProductLimit,
+}));
+
 // ── Helpers ──────────────────────────────────────────
 
 function makeSubscription(overrides: Record<string, unknown> = {}) {
@@ -126,5 +131,43 @@ describe('getBusinessEntitlements', () => {
 
     expect(result.culqiPublicKey).toBe('pk_test_xxx');
     expect(result.isPaymentConfigured).toBe(true);
+  });
+
+  describe('safety net — enforceProductLimit', () => {
+    test('calls enforceProductLimit when subscription expired (plan degrades)', async () => {
+      mockSubscriptionFindFirst.mockResolvedValue(
+        makeSubscription({ planEndDate: new Date('2024-01-01T00:00:00Z') }),
+      );
+
+      const { getBusinessEntitlements } =
+        await import('@/core/entitlements/getBusinessEntitlements');
+
+      await getBusinessEntitlements('biz_123');
+
+      expect(mockEnforceProductLimit).toHaveBeenCalledTimes(1);
+      expect(mockEnforceProductLimit).toHaveBeenCalledWith('biz_123', 50);
+    });
+
+    test('does NOT call enforceProductLimit when plan stays same (active)', async () => {
+      mockSubscriptionFindFirst.mockResolvedValue(makeSubscription());
+
+      const { getBusinessEntitlements } =
+        await import('@/core/entitlements/getBusinessEntitlements');
+
+      await getBusinessEntitlements('biz_123');
+
+      expect(mockEnforceProductLimit).not.toHaveBeenCalled();
+    });
+
+    test('does NOT call enforceProductLimit when no subscription exists', async () => {
+      mockSubscriptionFindFirst.mockResolvedValue(null);
+
+      const { getBusinessEntitlements } =
+        await import('@/core/entitlements/getBusinessEntitlements');
+
+      await getBusinessEntitlements('biz_123');
+
+      expect(mockEnforceProductLimit).not.toHaveBeenCalled();
+    });
   });
 });

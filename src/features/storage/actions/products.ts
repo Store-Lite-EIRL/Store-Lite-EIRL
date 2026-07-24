@@ -342,11 +342,32 @@ export async function updateProduct(
 
     const existingProduct = await db.query.products.findFirst({
       where: (table, { and, eq }) => and(eq(table.id, productId), eq(table.businessId, businessId)),
-      columns: { id: true, stock: true, title: true },
+      columns: { id: true, stock: true, title: true, isAvailable: true },
     });
 
     if (!existingProduct) {
       throw new Error('Producto no encontrado o no autorizado');
+    }
+
+    // 🚫 PLAN CHECK: Si se está habilitando un producto que estaba desactivado,
+    // verificar que no exceda el límite del plan
+    const isBeingEnabled = normalizedProduct.status === 'ACTIVO' && !existingProduct.isAvailable;
+    if (isBeingEnabled) {
+      const entitlements = await getBusinessEntitlements(businessId);
+      if (entitlements.maxProducts !== -1) {
+        const [{ count: currentActiveCount }] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(products)
+          .where(and(eq(products.businessId, businessId), eq(products.isAvailable, true)));
+
+        if (currentActiveCount >= entitlements.maxProducts) {
+          return {
+            success: false,
+            productId: null,
+            error: `Has alcanzado el límite de productos activos de tu plan (${entitlements.maxProducts}). Desactivá otros productos o mejorá tu plan.`,
+          };
+        }
+      }
     }
 
     let categoryId: string | null = null;

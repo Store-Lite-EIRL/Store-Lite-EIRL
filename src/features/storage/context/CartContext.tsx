@@ -1,5 +1,6 @@
 'use client';
 
+import posthog from 'posthog-js';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { Product } from '../data';
 
@@ -89,6 +90,12 @@ export const CartProvider = ({
         if (existingItem.quantity >= product.stock) {
           return prevItems;
         }
+        posthog.capture('cart_item_added', {
+          product_id: product.id,
+          product_name: product.name,
+          quantity: existingItem.quantity + 1,
+          store_slug: businessSlug,
+        });
         return prevItems.map((item) =>
           item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item,
         );
@@ -97,6 +104,12 @@ export const CartProvider = ({
       if (product.stock <= 0) {
         return prevItems;
       }
+      posthog.capture('cart_item_added', {
+        product_id: product.id,
+        product_name: product.name,
+        quantity: 1,
+        store_slug: businessSlug,
+      });
       return [...prevItems, { ...product, quantity: 1 }];
     });
     // Invalidar validación previa — el carrito cambió, hay que re-validar
