@@ -5,8 +5,7 @@ import { AlertSnackbar, Button, Card, Icon, TextField } from '@/shared/component
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useRef, useState, useTransition } from 'react';
 import { createPortal } from 'react-dom';
-import { updateBusinessData } from '../../../actions/business';
-import { updateSocialLinks, type SocialLinksInput } from '../actions';
+import { updateBusinessData, updateSocialLinks, type SocialLinksInput } from '../actions';
 import { SectionHeader, type SettingsBusiness } from '../constants';
 import { useOtpVerification } from '../hooks/useOtpVerification';
 import { useSnackbarFeedback } from '../hooks/useSettingsState';
