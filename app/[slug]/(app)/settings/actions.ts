@@ -1,5 +1,6 @@
 'use server';
 
+import { env } from '@/config/env';
 import { isBusinessSlugTaken } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { businesses, businessSettings, businessSlugAliases } from '@/core/database/schema';
@@ -16,6 +17,7 @@ import {
   normalizeStorefrontTheme,
 } from '@/core/storefront';
 import { requireAccessOnId } from '@/features/storage/actions/authz';
+import { getPostHogClient } from '@/lib/posthogServer';
 import type { ActionState } from '@/types/actions';
 import { and, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
@@ -102,6 +104,15 @@ export async function updateBusinessSlug(
     revalidatePath(`/${newSlug}`);
     revalidatePath(`/${newSlug}/settings`);
     revalidatePath('/', 'layout');
+
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: businessId,
+      event: 'business_slug_updated',
+      properties: { business_id: businessId, new_slug: newSlug },
+    });
+    await posthog.flush();
+
     return { success: true, newSlug };
   } catch (error) {
     console.error('Error updating slug:', error);
@@ -343,6 +354,14 @@ export async function updateStorefrontTheme(
     revalidatePath(`/${slug}/settings`);
     revalidatePath('/', 'layout');
 
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: businessId,
+      event: 'storefront_customized',
+      properties: { business_id: businessId, customization_type: 'theme', slug },
+    });
+    await posthog.flush();
+
     return {
       success: true,
       message: 'Apariencia publica actualizada correctamente.',
@@ -453,6 +472,22 @@ export async function updateCulqiCredentials(
     };
   }
 
+  // 🔥 ENFORCE LIVE KEYS: cuando CULQI_ENFORCE_LIVE_KEYS=true,
+  //     solo se aceptan llaves _live (producción).
+  //     false/omit → se acepta cualquier key pk_/sk_ (desarrollo).
+  if (env.enforceLiveCulqiKeys) {
+    const isPublicKeyLive = publicKey.startsWith('pk_live_');
+    const isSecretKeyLive = secretKey.startsWith('sk_live_');
+    if (!isPublicKeyLive || !isSecretKeyLive) {
+      return {
+        success: false,
+        error:
+          'Solo se aceptan llaves de producción (pk_live_ / sk_live_). ' +
+          'Encontrás las correctas en tu CulqiPanel > Desarrollo > API Keys > Producción.',
+      };
+    }
+  }
+
   // 🔥 SECURITY: Encrypt the secret key before DB storage
   const { encrypt } = await import('@/utils/crypto');
   const encryptedSecretKey = encrypt(secretKey);
@@ -481,6 +516,15 @@ export async function updateCulqiCredentials(
     }
 
     revalidatePath('/', 'layout');
+
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: businessId,
+      event: 'payment_gateway_configured',
+      properties: { business_id: businessId, gateway: 'culqi' },
+    });
+    await posthog.flush();
+
     return { success: true, message: 'Credenciales de Culqi actualizadas correctamente.' };
   } catch (error) {
     console.error('Error updating Culqi credentials:', error);

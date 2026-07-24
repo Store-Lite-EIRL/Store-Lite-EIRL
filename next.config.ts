@@ -2,7 +2,6 @@ import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // ... (previous config)
   // Exponer explícitamente vars al build para que el Edge Runtime las tenga disponibles
   env: {
     FEATURE_SUBDOMAIN_REWRITE: process.env.FEATURE_SUBDOMAIN_REWRITE,
@@ -29,7 +28,7 @@ const nextConfig: NextConfig = {
               "frame-ancestors 'none'",
               "form-action 'self'",
               "img-src 'self' data: https:",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.culqi.com https://*.culqi.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.culqi.com https://*.culqi.com https://*.posthog.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' data: https://fonts.gstatic.com",
               "frame-src 'self' https://checkout.culqi.com https://*.culqi.com",
@@ -41,6 +40,18 @@ const nextConfig: NextConfig = {
             value: 'max-age=31536000; includeSubDomains; preload',
           },
         ],
+      },
+    ];
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/ingest/static/:path*',
+        destination: 'https://us-assets.i.posthog.com/static/:path*',
+      },
+      {
+        source: '/ingest/:path*',
+        destination: 'https://us.i.posthog.com/:path*',
       },
     ];
   },
@@ -74,9 +85,9 @@ export default withSentryConfig(nextConfig, {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
-  org: 'devkitop',
+  org: 'store-lite-eirl',
 
-  project: 'store-lite',
+  project: 'javascript-nextjs',
 
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,

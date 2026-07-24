@@ -7,6 +7,7 @@
 // =====================================================
 
 import { AlertSnackbar, Button, Card, Checkbox, Icon, TextField } from '@/shared/components/ui';
+import posthog from 'posthog-js';
 import { useCallback, useState, useTransition } from 'react';
 
 interface ComplaintFormProps {
@@ -42,6 +43,7 @@ export function ComplaintForm({ slug }: ComplaintFormProps) {
     claimedAmount: '',
     claimDescription: '',
     consumerRequest: '',
+    fax: '',
   });
 
   // Field-level errors
@@ -119,9 +121,16 @@ export function ComplaintForm({ slug }: ComplaintFormProps) {
         claimedAmount: formData.claimedAmount ? parseFloat(formData.claimedAmount) : null,
         claimDescription: formData.claimDescription.trim(),
         consumerRequest: formData.consumerRequest.trim(),
+        fax: formData.fax,
       });
 
       if (res.success) {
+        posthog.capture('complaint_submitted', {
+          store_slug: slug,
+          has_claimed_amount: Boolean(formData.claimedAmount),
+          is_minor: formData.minorAge,
+          email_delivered: !res.emailFailed,
+        });
         setTicketNumber(res.ticketNumber ?? null);
         setEmailFailed(res.emailFailed ?? false);
         setStep('success');
@@ -211,6 +220,25 @@ export function ComplaintForm({ slug }: ComplaintFormProps) {
   // ── Form State ──
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* 🕵️ Honeypot: campo invisible para bots — los humanos no lo ven */}
+      <input
+        name="fax"
+        type="text"
+        value={formData.fax}
+        onChange={handleChange('fax')}
+        tabIndex={-1}
+        autoComplete="off"
+        style={{
+          position: 'absolute',
+          left: '-9999px',
+          top: 'auto',
+          width: '1px',
+          height: '1px',
+          overflow: 'hidden',
+        }}
+        aria-hidden="true"
+      />
+
       {/* ── Consumer Data Section ── */}
       <Card variant="outlined" style={{ padding: '1.5rem' }}>
         <h3

@@ -52,7 +52,7 @@ async function cachedFetch<T>(key: string, fetchFn: () => Promise<T>): Promise<T
 async function factilizaFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${FACTILIZA_BASE_URL}${endpoint}`;
   const headers = {
-    Authorization: `Bearer ${env.factilizaToken}`,
+    Authorization: `Bearer ${env.jsonToken}`,
     'Content-Type': 'application/json',
     ...options?.headers,
   };

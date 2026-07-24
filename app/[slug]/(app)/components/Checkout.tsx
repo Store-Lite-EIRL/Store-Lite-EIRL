@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { AlertSnackbar, Icon } from '@/shared/components/ui';
 import type { AuthTokenResponse } from '@supabase/supabase-js';
 import { useParams, useRouter } from 'next/navigation';
+import posthog from 'posthog-js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { downloadLocally, generateTicketBlob, uploadTicket } from '../services/ticketService';
@@ -293,17 +294,27 @@ export default function Checkout({
     slug,
     businessAddress,
     businessCity,
-    onOrderPaid: useCallback((order) => {
-      setCompletedOrder(order);
-      setShowReceipt(true);
-      setShowConfetti(true);
-      setAlert({
-        open: true,
-        description: '¡Pago procesado exitosamente!',
-        color: 'success',
-        icon: 'check_circle',
-      });
-    }, []),
+    onOrderPaid: useCallback(
+      (order) => {
+        posthog.capture('order_completed', {
+          order_number: order.orderNumber,
+          payment_method: order.paymentMethod,
+          total_amount: finalTotal,
+          item_count: cartItems.length,
+          store_slug: slug,
+        });
+        setCompletedOrder(order);
+        setShowReceipt(true);
+        setShowConfetti(true);
+        setAlert({
+          open: true,
+          description: '¡Pago procesado exitosamente!',
+          color: 'success',
+          icon: 'check_circle',
+        });
+      },
+      [finalTotal, cartItems.length, slug],
+    ),
     onPaymentInstructions: useCallback((instructions) => {
       setPaymentInstructions(instructions);
     }, []),
@@ -365,6 +376,11 @@ export default function Checkout({
           return;
         }
       }
+      posthog.capture('checkout_shipping_completed', {
+        courier: shippingInfo.courier,
+        department: shippingInfo.department,
+        store_slug: slug,
+      });
       setStep(2);
     }
   };
@@ -407,7 +423,14 @@ export default function Checkout({
     onSuccess();
   }, [onSuccess]);
 
-  const handlePayment = hookHandlePayment;
+  const handlePayment = () => {
+    posthog.capture('payment_initiated', {
+      total_amount: finalTotal,
+      item_count: cartItems.length,
+      store_slug: slug,
+    });
+    hookHandlePayment();
+  };
 
   if (!mounted) return null;
 

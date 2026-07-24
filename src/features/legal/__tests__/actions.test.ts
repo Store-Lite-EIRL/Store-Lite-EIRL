@@ -141,6 +141,7 @@ describe('submitComplaint', () => {
     claimedAmount: null as number | null,
     claimDescription: 'El producto llegó dañado y no funciona correctamente.',
     consumerRequest: 'Solicito el reembolso completo.',
+    fax: '',
   };
 
   it('rejects invalid form data', async () => {

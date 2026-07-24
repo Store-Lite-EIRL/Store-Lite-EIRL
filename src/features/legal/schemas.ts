@@ -49,6 +49,8 @@ export const complaintFormSchema = z.object({
     .min(20, 'La descripción debe tener entre 20 y 2,000 caracteres')
     .max(2000, 'La descripción debe tener entre 20 y 2,000 caracteres'),
   consumerRequest: z.string().min(1, 'El pedido del consumidor es obligatorio').max(2000),
+  // 🕵️ Honeypot: campo invisible para bots. Si tiene valor, se ignora el envío.
+  fax: z.string().optional().default(''),
 });
 
 export const complaintResponseSchema = z.object({

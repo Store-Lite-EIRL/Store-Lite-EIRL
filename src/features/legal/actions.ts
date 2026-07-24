@@ -130,6 +130,16 @@ export async function submitComplaint(
 
     const data = parsed.data;
 
+    // 🕵️ Honeypot check: si el campo oculto tiene valor, es un bot →
+    //     devolvemos éxito falso para no alertarlo
+    if (data.fax) {
+      return {
+        success: true,
+        ticketNumber: 'LR-0000-00000000-0000',
+        emailFailed: false,
+      };
+    }
+
     // Resolve business from slug
     const business = await db.query.businesses.findFirst({
       where: eq(businesses.slug, slug),
@@ -142,6 +152,26 @@ export async function submitComplaint(
 
     const businessId = business.id;
     const businessName = business.name ?? 'Tienda';
+
+    // ⏱️ Rate limiting: máximo 1 reclamo por email cada 24h
+    const recentCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(complaintBookRecords)
+      .where(
+        and(
+          eq(complaintBookRecords.businessId, businessId),
+          eq(complaintBookRecords.consumerEmail, data.consumerEmail),
+          sql`${complaintBookRecords.createdAt} > NOW() - INTERVAL '24 hours'`,
+        ),
+      );
+
+    if (Number(recentCount[0]?.count ?? 0) > 0) {
+      return {
+        success: false,
+        error:
+          'Ya registraste un reclamo con este correo en las últimas 24 horas. Esperá antes de enviar otro.',
+      };
+    }
 
     // Generate ticket number: LR-{year}-{businessIdShort}-{seq}
     const year = new Date().getFullYear();
@@ -165,25 +195,26 @@ export async function submitComplaint(
     // Calculate SLA deadline (15 business days)
     const slaDeadline = addBusinessDays(new Date(), 15);
 
-    // Insert complaint record
+    // Insert complaint record (excluir fax que es honeypot)
+    const { fax: _fax, ...insertData } = data;
     const [record] = await db
       .insert(complaintBookRecords)
       .values({
         businessId,
         ticketNumber,
-        consumerLastName: data.consumerLastName,
-        consumerFirstName: data.consumerFirstName,
-        consumerDocType: data.consumerDocumentType,
-        consumerDocId: data.consumerDocumentId,
-        consumerAddress: data.consumerAddress,
-        consumerPhone: data.consumerPhone,
-        consumerEmail: data.consumerEmail,
-        minorAge: data.minorAge,
-        guardianName: data.guardianName ?? null,
-        contractDescription: data.contractDescription,
-        claimedAmount: data.claimedAmount ? String(data.claimedAmount) : null,
-        claimDescription: data.claimDescription,
-        consumerRequest: data.consumerRequest,
+        consumerLastName: insertData.consumerLastName,
+        consumerFirstName: insertData.consumerFirstName,
+        consumerDocType: insertData.consumerDocumentType,
+        consumerDocId: insertData.consumerDocumentId,
+        consumerAddress: insertData.consumerAddress,
+        consumerPhone: insertData.consumerPhone,
+        consumerEmail: insertData.consumerEmail,
+        minorAge: insertData.minorAge,
+        guardianName: insertData.guardianName ?? null,
+        contractDescription: insertData.contractDescription,
+        claimedAmount: insertData.claimedAmount ? String(insertData.claimedAmount) : null,
+        claimDescription: insertData.claimDescription,
+        consumerRequest: insertData.consumerRequest,
         slaDeadline,
         status: 'pending',
       })

@@ -40,6 +40,7 @@
     "next": "^16.2.9",
     "postgres": "^3.4.9",
     "posthog-js": "^1.386.8",
+    "posthog-node": "^5.46.0",
     "react": "19.2.3",
     "react-barcode": "^1.6.1",
     "react-dom": "19.2.3",

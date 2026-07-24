@@ -68,6 +68,7 @@ export function PaymentsConfig({
   };
 
   const isConfigured = business.culqiPublicKey && business.culqiSecretKey;
+  const isTestKeys = business.culqiPublicKey?.startsWith('pk_test_');
 
   const isPremiumPlan = ['business_pro', 'enterprise_ai'].includes(entitlements.plan);
 
@@ -179,6 +180,113 @@ export function PaymentsConfig({
                     </IconButton>
                   </div>
                 </div>
+              </div>
+
+              {/* ⚠️ Aviso de llaves de prueba */}
+              {isTestKeys && (
+                <div
+                  style={{
+                    margin: '16px 0 0',
+                    padding: '12px',
+                    background: '#fefce8',
+                    border: '1px solid #fde047',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  <p style={{ margin: 0, color: '#854d0e' }}>
+                    <strong>⚠️ Estás usando llaves de PRUEBA.</strong> Los cobros con estas llaves
+                    no generan pagos reales. Para recibir dinero de verdad, solicitá la activación
+                    de tu comercio en{' '}
+                    <a
+                      href="https://afiliate.culqi.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#1e40af', textDecoration: 'underline' }}
+                    >
+                      Culqi
+                    </a>{' '}
+                    y reemplazalas por tus llaves de producción (<code>pk_live_</code> /{' '}
+                    <code>sk_live_</code>).
+                  </p>
+                </div>
+              )}
+
+              {/* ✅ Checklist de requisitos para producción */}
+              <div
+                style={{
+                  margin: '16px 0 0',
+                  padding: '12px',
+                  background: 'var(--md-sys-color-surface-container-high)',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  lineHeight: 1.6,
+                }}
+              >
+                <p style={{ margin: '0 0 8px', fontWeight: 500 }}>
+                  <Icon size={16} style={{ verticalAlign: 'middle', marginRight: '4px' }}>
+                    checklist
+                  </Icon>
+                  Antes de pedirle a Culqi que valide tu tienda
+                </p>
+                <ul style={{ margin: 0, paddingLeft: '16px' }}>
+                  <li>
+                    ✅ Términos y Condiciones publicados —{' '}
+                    <a
+                      href={`/${business.slug}/terminos`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ textDecoration: 'underline' }}
+                    >
+                      Ver página
+                    </a>
+                  </li>
+                  <li>
+                    ✅ Política de Devoluciones publicada —{' '}
+                    <a
+                      href={`/${business.slug}/devoluciones`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ textDecoration: 'underline' }}
+                    >
+                      Ver página
+                    </a>
+                  </li>
+                  <li>
+                    ✅ Libro de Reclamaciones activo —{' '}
+                    <a
+                      href={`/${business.slug}/libro-reclamaciones`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ textDecoration: 'underline' }}
+                    >
+                      Ver página
+                    </a>
+                  </li>
+                  <li>
+                    ✅ <strong>WhatsApp</strong> configurado en Datos del negocio
+                  </li>
+                  <li>
+                    ✅ Al menos <strong>5 productos</strong> con foto, precio y descripción
+                  </li>
+                  <li>
+                    ✅ Cuenta en{' '}
+                    <a
+                      href="https://afiliate.culqi.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ textDecoration: 'underline' }}
+                    >
+                      Culqi
+                    </a>{' '}
+                    activa y en producción
+                  </li>
+                  <li>
+                    ✅ Llaves de <strong>producción</strong> (<code>pk_live_</code> /{' '}
+                    <code>sk_live_</code>) configuradas acá
+                  </li>
+                </ul>
               </div>
 
               <div className={styles.paymentActionRow}>
@@ -334,6 +442,31 @@ export function PaymentsConfig({
                 Ver documentación oficial
               </a>
             </p>
+          </div>
+
+          {/* ⚠️ Información sobre tipo de llaves */}
+          <div
+            style={{
+              padding: '12px',
+              background: 'var(--md-sys-color-surface-container-high)',
+              borderRadius: '8px',
+              fontSize: '13px',
+              lineHeight: 1.5,
+            }}
+          >
+            <p style={{ margin: 0 }}>
+              <strong>💡 Tipos de llaves Culqi</strong>
+            </p>
+            <ul style={{ margin: '6px 0 0', paddingLeft: '16px' }}>
+              <li>
+                <code>pk_live_</code> / <code>sk_live_</code> — llaves de{' '}
+                <strong>producción</strong>. Procesan pagos reales.
+              </li>
+              <li>
+                <code>pk_test_</code> / <code>sk_test_</code> — llaves de <strong>prueba</strong>.
+                Solo para desarrollo, no generan cobros reales.
+              </li>
+            </ul>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

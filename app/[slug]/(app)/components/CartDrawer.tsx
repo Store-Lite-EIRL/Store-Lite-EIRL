@@ -9,6 +9,7 @@ import { getBusinessPath } from '@/shared/utils/url';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
 import styles from './CartDrawer.module.css';
 import Checkout from './Checkout';
@@ -273,6 +274,11 @@ export function CartDrawer({
                   // Re-validar antes de checkout por si pasó tiempo
                   await validateCart();
                   if (hasPaymentGateway) {
+                    posthog.capture('checkout_started', {
+                      item_count: cartItems.length,
+                      total_amount: totalPrice,
+                      store_slug: slug,
+                    });
                     setIsCheckoutOpen(true);
                   } else {
                     setIsCartOpen(false);
