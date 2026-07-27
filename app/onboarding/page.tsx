@@ -16,12 +16,13 @@ interface OnboardingUser {
 export default function OnboardingPage() {
   const router = useRouter();
   const [user, setUser] = useState<OnboardingUser | null>(null);
+  const [hasBusinesses, setHasBusinesses] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const trackedRef = useRef(false);
 
   useEffect(() => {
-    // Fetch current user info from auth
+    // Fetch current user info + business state from auth
     const fetchUser = async () => {
       try {
         const response = await fetch('/api/auth/user');
@@ -30,6 +31,7 @@ export default function OnboardingPage() {
           if (data.user) {
             setUser(data.user);
           }
+          setHasBusinesses(data.hasBusinesses ?? false);
         }
       } catch (error) {
         console.error('Error fetching user:', error);
@@ -97,9 +99,13 @@ export default function OnboardingPage() {
             <div className={styles.optionIcon}>
               <Icon size={32}>add_business</Icon>
             </div>
-            <h2 className={styles.optionTitle}>Crear mi negocio</h2>
+            <h2 className={styles.optionTitle}>
+              {hasBusinesses ? 'Crear otro negocio' : 'Crear mi negocio'}
+            </h2>
             <p className={styles.optionDescription}>
-              Lanza tu propia tienda virtual y comienza a vender productos digitales.
+              {hasBusinesses
+                ? 'Sumá un nuevo negocio a tu panel y gestioná todas tus tiendas desde un solo lugar.'
+                : 'Lanza tu propia tienda virtual y comienza a vender productos digitales.'}
             </p>
             <Button
               variant="filled"

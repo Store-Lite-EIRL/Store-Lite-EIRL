@@ -5,19 +5,15 @@
 // Usage: Called automatically by Supabase after OAuth
 // =====================================================
 
-import { db } from '@/core/database/client';
-import { businesses } from '@/core/database/schema';
 import { createClient } from '@/lib/supabase/server';
-import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 /**
  * GET handler for OAuth callback
  * Exchanges the authorization code for a session
  * Creates or updates user profile in database
- * Redirects based on user state:
- * - NO businesses → /onboarding
- * - HAS businesses → /list-business
+ * Always redirects to /onboarding — the page shows relevant
+ * options based on whether the user has businesses or not.
  */
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -50,25 +46,13 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}/${slug}?chat_ready=true`);
     }
 
-    // Check if user has any businesses
-    const userBusinesses = await db.query.businesses.findMany({
-      where: eq(businesses.ownerId, data.user.id),
-      columns: { id: true },
-      limit: 1,
-    });
-
-    const hasBusinesses = userBusinesses.length > 0;
-
-    // Redirect based on user state
-    if (hasBusinesses) {
-      return NextResponse.redirect(`${origin}/list-business?fresh_auth=true`);
-    } else {
-      return NextResponse.redirect(`${origin}/onboarding`);
-    }
+    // Always redirect to onboarding — the page checks the user's state
+    // and shows relevant options (create business, join team, go to list)
+    return NextResponse.redirect(`${origin}/onboarding`);
   }
 
-  // Fallback
-  return NextResponse.redirect(`${origin}/list-business`);
+  // Fallback — same destination for any edge case
+  return NextResponse.redirect(`${origin}/onboarding`);
 }
 
 import { type SupabaseClient, type User } from '@supabase/supabase-js';
