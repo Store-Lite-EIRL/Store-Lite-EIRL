@@ -21,6 +21,8 @@ import {
   planPayments,
   type SubscriptionPlan,
 } from '@/core/database/schema';
+import { requireOwnedBusinessById } from '@/features/storage/actions/authz';
+import { createClient } from '@/lib/supabase/server';
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
@@ -71,6 +73,15 @@ function roundTwo(n: number): number {
 }
 
 export async function POST(request: Request) {
+  // ── Auth check ──────────────────────────────────────────
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 });
+  }
+
   try {
     const body: PurchasePlanBody = await request.json();
 
@@ -85,6 +96,16 @@ export async function POST(request: Request) {
       buyerDocumentNumber,
       buyerAddress,
     } = body;
+
+    // ── Auth: verify ownership ────────────────────────────────────────────────
+    try {
+      await requireOwnedBusinessById(businessId);
+    } catch (err) {
+      return NextResponse.json(
+        { success: false, error: err instanceof Error ? err.message : 'No autorizado' },
+        { status: 401 },
+      );
+    }
 
     // ── Validación ────────────────────────────────────────────────────────────
     if (!token || !planType || !period || !businessId || !buyerEmail || !buyerDocumentNumber) {
@@ -298,12 +319,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('[purchase-plan] Error inesperado:', error);
-    return NextResponse.json(
-      {
-        error: 'Error interno del servidor',
-        details: error instanceof Error ? error.message : 'Error desconocido',
-      },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

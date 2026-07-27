@@ -14,6 +14,14 @@ const mockValues = vi.fn(() => ({ returning: mockReturning }));
 const mockInsert = vi.fn(() => ({ values: mockValues }));
 const mockSelectCulqiBlocked = vi.fn();
 
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(() => ({
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'test-user-id' } }, error: null }),
+    },
+  })),
+}));
+
 vi.mock('@/core/database/client', () => ({
   db: {
     insert: mockInsert,

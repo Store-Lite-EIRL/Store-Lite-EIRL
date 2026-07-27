@@ -9,6 +9,7 @@ import { db } from '@/core/database/client';
 import { businesses, businessSettings, paymentOrders } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { completeIdempotencyKey, reserveIdempotencyKey } from '@/core/payments/idempotency';
+import { createClient } from '@/lib/supabase/server';
 import { decrypt } from '@/utils/crypto';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
@@ -34,6 +35,15 @@ interface CulqiOrderResponse {
 }
 
 export async function POST(request: Request) {
+  // ── Auth check ──────────────────────────────────────────
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 });
+  }
+
   try {
     const idempotencyKey = request.headers.get('Idempotency-Key');
     let reservedIdempotencyKey: string | null = null;

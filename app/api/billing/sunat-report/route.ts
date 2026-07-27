@@ -1,5 +1,6 @@
 import { db } from '@/core/database/client';
 import { planPayments } from '@/core/database/schema';
+import { requireAuthenticatedUserId } from '@/features/storage/actions/authz';
 import { and, gte, lte } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
@@ -11,6 +12,13 @@ import { NextResponse } from 'next/server';
  * Retorna las boletas en CSV/JSON del mes para declarar a SUNAT.
  */
 export async function GET(request: Request) {
+  // ── Auth check ──────────────────────────────────────────
+  try {
+    await requireAuthenticatedUserId();
+  } catch {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const month = searchParams.get('month');
