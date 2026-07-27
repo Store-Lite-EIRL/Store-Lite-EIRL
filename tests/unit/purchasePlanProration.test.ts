@@ -29,6 +29,20 @@ const mockTransaction = vi.fn((callback) =>
   }),
 );
 
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(() => ({
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'test-user-id' } }, error: null }),
+    },
+  })),
+}));
+
+vi.mock('@/features/storage/actions/authz', () => ({
+  requireOwnedBusinessById: vi
+    .fn()
+    .mockResolvedValue({ businessId: 'biz_123', ownerId: 'test-user-id', slug: 'test-business' }),
+}));
+
 vi.mock('@/core/database/client', () => ({
   db: {
     insert: mockInsert,

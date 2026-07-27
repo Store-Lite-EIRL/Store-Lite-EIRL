@@ -7,12 +7,23 @@
 
 import { db } from '@/core/database/client';
 import { businesses, businessSettings, penalties } from '@/core/database/schema';
+import { requireOwnedBusinessById } from '@/features/storage/actions/authz';
+import { createClient } from '@/lib/supabase/server';
 import type { CulqiChargeResponse } from '@/types/culqi';
 import { decrypt } from '@/utils/crypto';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
+  // ── Auth check ──────────────────────────────────────────
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 });
+  }
+
   try {
     const { businessId, penaltyIds, culqiToken } = await request.json();
 
@@ -21,6 +32,16 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'businessId, penaltyIds y culqiToken son requeridos' },
         { status: 400 },
+      );
+    }
+
+    // ── Auth: verify ownership ──────────────────────────────
+    try {
+      await requireOwnedBusinessById(businessId);
+    } catch (err) {
+      return NextResponse.json(
+        { success: false, error: err instanceof Error ? err.message : 'No autorizado' },
+        { status: 401 },
       );
     }
 
