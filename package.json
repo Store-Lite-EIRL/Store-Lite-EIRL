@@ -31,7 +31,7 @@
     "@react-email/components": "^1.0.12",
     "@sentry/nextjs": "^10.58.0",
     "@supabase/ssr": "^0.8.0",
-    "@supabase/supabase-js": "^2.108.2",
+    "@supabase/supabase-js": "^2.110.9",
     "canvas-confetti": "^1.9.4",
     "dayjs": "^1.11.21",
     "drizzle-orm": "^0.45.2",
