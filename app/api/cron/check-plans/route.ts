@@ -4,9 +4,9 @@
 // Notifica a sellers sobre expiración de planes
 // ──────────────────────────────────────────
 
+import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businessSubscriptions, notifications } from '@/core/database/schema';
-import { env } from '@/config/env';
 import { notifyPlanExpired, notifyPlanExpiring } from '@/lib/notifications';
 import { and, eq, gte, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
@@ -16,7 +16,10 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   // Auth: requires CRON_SECRET via ?token= or Authorization: Bearer header
   const url = new URL(request.url);
-  const token = url.searchParams.get('token') || request.headers.get('authorization')?.replace('Bearer ', '') || '';
+  const token =
+    url.searchParams.get('token') ||
+    request.headers.get('authorization')?.replace('Bearer ', '') ||
+    '';
   if (!token || token !== env.cronSecret) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

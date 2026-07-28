@@ -4,7 +4,7 @@
 
 import { render, screen } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
-import PhaseTicketSection from '../../app/[slug]/dashboard/components/PhaseTicketSection';
+import PhaseTicketSection from '../../app/[slug]/(app)/dashboard/components/PhaseTicketSection';
 
 // ── Mocks ────────────────────────────────────────────
 
@@ -21,7 +21,7 @@ vi.mock('@/shared/components/ui/buttons/Button', () => ({
   ),
 }));
 
-vi.mock('../../app/[slug]/dashboard/components/TicketSection', () => ({
+vi.mock('../../app/[slug]/(app)/dashboard/components/TicketSection', () => ({
   default: () => <div data-testid="ticket-section">TicketSection Mock</div>,
 }));
 

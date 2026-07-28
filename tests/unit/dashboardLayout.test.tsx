@@ -50,12 +50,12 @@ vi.mock('@/core/database/client', () => ({
 // ── Test-specific mocks ─────────────────────────────
 
 // RealtimeToast is a client component — mock it away
-vi.mock('@/app/[slug]/dashboard/components/RealtimeToast', () => ({
+vi.mock('@/app/[slug]/(app)/dashboard/components/RealtimeToast', () => ({
   RealtimeToast: () => null,
 }));
 
 // PlanExpiredBanner is a client component — mock it to render a visible element
-vi.mock('@/app/[slug]/dashboard/components/PlanExpiredBanner', () => ({
+vi.mock('@/app/[slug]/(app)/dashboard/components/PlanExpiredBanner', () => ({
   PlanExpiredBanner: () => <div data-testid="plan-expired-banner" />,
 }));
 
@@ -93,7 +93,7 @@ describe('DashboardLayout — plan enforcement redirect', () => {
     mockGetBusinessEntitlements.mockResolvedValue({ plan: 'basico', maxProducts: 50 });
     mockPaymentsFindFirst.mockResolvedValue(null); // no pending orders
 
-    const { default: DashboardLayout } = await import('@/app/[slug]/dashboard/layout');
+    const { default: DashboardLayout } = await import('@/app/[slug]/(app)/dashboard/layout');
 
     await expect(
       DashboardLayout({
@@ -113,7 +113,7 @@ describe('DashboardLayout — plan enforcement redirect', () => {
     mockGetBusinessEntitlements.mockResolvedValue({ plan: 'basico', maxProducts: 50 });
     mockPaymentsFindFirst.mockResolvedValue({ id: 'order_1' }); // has pending order
 
-    const { default: DashboardLayout } = await import('@/app/[slug]/dashboard/layout');
+    const { default: DashboardLayout } = await import('@/app/[slug]/(app)/dashboard/layout');
 
     // Should render, not redirect
     const result = await DashboardLayout({
@@ -137,7 +137,7 @@ describe('DashboardLayout — plan enforcement redirect', () => {
     // with only active statuses returns null → must redirect
     mockPaymentsFindFirst.mockResolvedValue(null);
 
-    const { default: DashboardLayout } = await import('@/app/[slug]/dashboard/layout');
+    const { default: DashboardLayout } = await import('@/app/[slug]/(app)/dashboard/layout');
 
     await expect(
       DashboardLayout({
@@ -154,7 +154,7 @@ describe('DashboardLayout — plan enforcement redirect', () => {
     // payments.findFirst should NOT be called for non-basico plans
     mockPaymentsFindFirst.mockResolvedValue(null);
 
-    const { default: DashboardLayout } = await import('@/app/[slug]/dashboard/layout');
+    const { default: DashboardLayout } = await import('@/app/[slug]/(app)/dashboard/layout');
 
     const result = await DashboardLayout({
       children: <div>content</div>,

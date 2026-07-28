@@ -4,8 +4,8 @@
 // Processes expired orders (seller inactivity, customer auto-approve, auto-complete)
 // ──────────────────────────────────────────
 
-import { processTimeouts } from '@/core/orders/orderTimeouts';
 import { env } from '@/config/env';
+import { processTimeouts } from '@/core/orders/orderTimeouts';
 import { NextResponse } from 'next/server';
 
 // Vercel Cron: */15 * * * *
@@ -13,7 +13,10 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   // Auth: requires CRON_SECRET via ?token= or Authorization: Bearer header
   const url = new URL(request.url);
-  const token = url.searchParams.get('token') || request.headers.get('authorization')?.replace('Bearer ', '') || '';
+  const token =
+    url.searchParams.get('token') ||
+    request.headers.get('authorization')?.replace('Bearer ', '') ||
+    '';
   if (!token || token !== env.cronSecret) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

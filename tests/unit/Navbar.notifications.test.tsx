@@ -13,7 +13,7 @@ import type { Mock } from 'vitest';
 // Mock the permissions context
 const mockCan = vi.fn();
 const mockIsOwner = vi.fn();
-vi.mock('../../app/[slug]/context/PermissionsContext', () => ({
+vi.mock('../../app/[slug]/(app)/context/PermissionsContext', () => ({
   usePermissions: () => ({
     can: mockCan,
     isOwner: mockIsOwner(),

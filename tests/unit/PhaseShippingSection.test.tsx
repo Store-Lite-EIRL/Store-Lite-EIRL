@@ -4,14 +4,21 @@
 
 import { render, screen } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
-import PhaseShippingSection from '../../app/[slug]/dashboard/components/PhaseShippingSection';
+import PhaseShippingSection from '../../app/[slug]/(app)/dashboard/components/PhaseShippingSection';
 
 // ── Mocks ────────────────────────────────────────────
 
 vi.mock('lucide-react', () => ({
   AlertCircle: () => <span>AlertCircle</span>,
+  AlertTriangle: () => <span>AlertTriangle</span>,
   CheckCircle: () => <span>CheckCircle</span>,
+  Clock: () => <span>Clock</span>,
+  CreditCard: () => <span>CreditCard</span>,
+  Home: () => <span>Home</span>,
+  Package: () => <span>Package</span>,
   RefreshCw: () => <span>RefreshCw</span>,
+  Search: () => <span>Search</span>,
+  Store: () => <span>Store</span>,
   Truck: () => <span>Truck</span>,
 }));
 
@@ -28,7 +35,7 @@ vi.mock('@/shared/components/ui/buttons/Button', () => ({
   ),
 }));
 
-vi.mock('../../app/[slug]/dashboard/components/ShippingSection', () => ({
+vi.mock('../../app/[slug]/(app)/dashboard/components/ShippingSection', () => ({
   default: ({ order }: any) => (
     <div data-testid="shipping-section">
       {order?.courierName && <span>{order.courierName}</span>}

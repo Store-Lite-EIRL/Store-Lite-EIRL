@@ -21,9 +21,10 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Si el usuario ya está logueado, lo mandamos a su panel
+    // Si el usuario ya está logueado, lo mandamos a onboarding
+    // (ahí elige qué hacer: crear negocio, unirse a equipo, ir a lista)
     if (!loading && user) {
-      router.replace('/list-business');
+      router.replace('/onboarding');
     }
   }, [user, loading, router]);
 

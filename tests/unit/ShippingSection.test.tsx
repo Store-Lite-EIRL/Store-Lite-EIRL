@@ -4,7 +4,7 @@
 
 import { render, screen } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
-import ShippingSection from '../../app/[slug]/dashboard/components/ShippingSection';
+import ShippingSection from '../../app/[slug]/(app)/dashboard/components/ShippingSection';
 
 // ── Mock next/image ──────────────────────────────────
 vi.mock('next/image', () => ({

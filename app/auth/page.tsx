@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/features/auth';
+import ConsentCheckbox from '@/features/auth/ConsentCheckbox';
 import { clearBusinessSessionData } from '@/hooks/useBusinessSession';
 import Link from 'next/link';
 // Space Grotesk removed to use project default font (Google Sans)
@@ -14,6 +15,7 @@ import styles from './page.module.css';
 export default function AuthPage() {
   const { signInWithGoogle } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [consented, setConsented] = useState(false);
 
   // Clean stale business data from previous sessions (defense layer C)
   useEffect(() => {
@@ -115,10 +117,12 @@ export default function AuthPage() {
           </div>
 
           <div className={styles.formArea}>
+            <ConsentCheckbox onConsentChange={setConsented} />
+
             <button
               className={styles.googleButton}
               onClick={handleGoogleSignIn}
-              disabled={isLoading}
+              disabled={!consented || isLoading}
             >
               {isLoading ? (
                 <span className="material-symbols-rounded">progress_activity</span>
@@ -152,11 +156,6 @@ export default function AuthPage() {
               <span className={styles.dividerText}>INSTANT ACCESS</span>
               <div className={styles.dividerLine} />
             </div>
-
-            <p className={styles.termsText}>
-              By continuing, you agree to our <span className={styles.link}>Terms of Service</span>{' '}
-              and <span className={styles.link}>Privacy Policy</span>.
-            </p>
           </div>
         </div>
 
