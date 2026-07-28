@@ -35,6 +35,9 @@ export const env = {
   // En producción, debe ser un string aleatorio fuerte. Si no se configura,
   // se usa un fallback para dev — pero OJO, no es seguro para producción.
   otpHashSecret: process.env.OTP_HASH_SECRET || 'dev-fallback-otp-secret-not-for-production',
+  // CRON_SECRET / cron_secret — protege los endpoints cron contra acceso público.
+  //   Las llamadas desde Supabase pg_cron deben incluir este token.
+  cronSecret: process.env.CRON_SECRET || process.env.cron_secret || '',
 } as const;
 
 // Optional: Add validation here to throw early if vars are missing

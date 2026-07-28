@@ -1,5 +1,6 @@
 'use client';
 
+import ConsentCheckbox from '@/features/auth/ConsentCheckbox';
 import { createClient } from '@/lib/supabase/client';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -45,6 +46,7 @@ function CustomerAuthContent() {
   const [step, setStep] = useState<'loading' | 'ready' | 'authenticating' | 'session_confirmed'>(
     'loading',
   );
+  const [consented, setConsented] = useState(false);
   const [sessionUser, setSessionUser] = useState<SessionUserInfo | null>(null);
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
 
@@ -303,8 +305,15 @@ function CustomerAuthContent() {
           </div>
         ) : (
           <>
+            {/* Consent Checkbox */}
+            <ConsentCheckbox onConsentChange={setConsented} storeName={storeName ?? undefined} />
+
             {/* Google Sign-In Button */}
-            <button className={styles.googleButton} onClick={handleGoogleSignIn}>
+            <button
+              className={styles.googleButton}
+              onClick={handleGoogleSignIn}
+              disabled={!consented}
+            >
               <svg viewBox="0 0 24 24" width="20" height="20" className={styles.googleIcon}>
                 <path
                   fill="#4285F4"

@@ -4,7 +4,7 @@
 
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
-import { RecentOrders } from '../../app/[slug]/dashboard/components/RecentOrders';
+import { RecentOrders } from '../../app/[slug]/(app)/dashboard/components/RecentOrders';
 
 // ── Mocks ────────────────────────────────────────────
 
@@ -84,7 +84,7 @@ vi.mock('lucide-react', () => ({
 }));
 
 // Mock OrderModal to avoid rendering its full content
-vi.mock('../../app/[slug]/dashboard/components/OrderModal', () => ({
+vi.mock('../../app/[slug]/(app)/dashboard/components/OrderModal', () => ({
   default: ({ order, onClose }: any) => (
     <div data-testid="order-modal">
       <span>Modal for {order.orderNumber || order.id}</span>

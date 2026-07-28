@@ -138,11 +138,9 @@ export async function updateProxy(request: NextRequest) {
 
       if (!error) {
         const url = request.nextUrl.clone();
-        if (!userBusinesses || userBusinesses.length === 0) {
-          url.pathname = '/created';
-        } else {
-          url.pathname = '/list-business';
-        }
+        // Always redirect to /onboarding — the page checks user state
+        // and shows relevant options (create business, join team, go to list)
+        url.pathname = '/onboarding';
         return redirectWithCookies(url);
       }
     }

@@ -2,7 +2,7 @@
 // Checkout — Component-level tests
 // =====================================================
 
-import type { CartItem } from '@/app/[slug]/storage/context/CartContext';
+import type { CartItem } from '@/features/storage/context/CartContext';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
@@ -145,7 +145,7 @@ describe('Checkout — Order creation before Culqi.open()', () => {
     globalThis.fetch = fetchMock;
 
     const props = createCheckoutProps({ totalAmount: 1500 }); // > 1000
-    const Checkout = (await import('@/app/[slug]/components/Checkout')).default;
+    const Checkout = (await import('@/app/[slug]/(app)/components/Checkout')).default;
     render(<Checkout {...props} />);
 
     await fillCheckoutAndGoToPay();
@@ -178,7 +178,7 @@ describe('Checkout — Order creation before Culqi.open()', () => {
     globalThis.fetch = fetchMock;
 
     const props = createCheckoutProps({ totalAmount: 500 }); // <= 1000
-    const Checkout = (await import('@/app/[slug]/components/Checkout')).default;
+    const Checkout = (await import('@/app/[slug]/(app)/components/Checkout')).default;
     render(<Checkout {...props} />);
 
     await fillCheckoutAndGoToPay();
@@ -201,7 +201,7 @@ describe('Checkout — Order creation before Culqi.open()', () => {
     globalThis.fetch = fetchMock;
 
     const props = createCheckoutProps({ totalAmount: 1500 });
-    const Checkout = (await import('@/app/[slug]/components/Checkout')).default;
+    const Checkout = (await import('@/app/[slug]/(app)/components/Checkout')).default;
     render(<Checkout {...props} />);
 
     await fillCheckoutAndGoToPay();
@@ -242,7 +242,7 @@ describe('Checkout — Culqi.order callback handling', () => {
   });
 
   test('sets paymentInstructions when Culqi.order is present', async () => {
-    const Checkout = (await import('@/app/[slug]/components/Checkout')).default;
+    const Checkout = (await import('@/app/[slug]/(app)/components/Checkout')).default;
     const props = createCheckoutProps({ totalAmount: 500 });
     render(<Checkout {...props} />);
 
@@ -284,7 +284,7 @@ describe('Checkout — Culqi.order callback handling', () => {
       }),
     });
 
-    const Checkout = (await import('@/app/[slug]/components/Checkout')).default;
+    const Checkout = (await import('@/app/[slug]/(app)/components/Checkout')).default;
     const props = createCheckoutProps({ totalAmount: 500 });
     render(<Checkout {...props} />);
 
@@ -331,7 +331,7 @@ describe('Checkout — Payment instructions overlay', () => {
   });
 
   test('renders CIP code for PagoEfectivo', async () => {
-    const Checkout = (await import('@/app/[slug]/components/Checkout')).default;
+    const Checkout = (await import('@/app/[slug]/(app)/components/Checkout')).default;
     const props = createCheckoutProps({ totalAmount: 500 });
     render(<Checkout {...props} />);
 
@@ -364,7 +364,7 @@ describe('Checkout — Payment instructions overlay', () => {
   });
 
   test('renders QR image for Billetera Móvil', async () => {
-    const Checkout = (await import('@/app/[slug]/components/Checkout')).default;
+    const Checkout = (await import('@/app/[slug]/(app)/components/Checkout')).default;
     const props = createCheckoutProps({ totalAmount: 500 });
     render(<Checkout {...props} />);
 
@@ -398,7 +398,7 @@ describe('Checkout — Payment instructions overlay', () => {
   });
 
   test('overlay is closable', async () => {
-    const Checkout = (await import('@/app/[slug]/components/Checkout')).default;
+    const Checkout = (await import('@/app/[slug]/(app)/components/Checkout')).default;
     const props = createCheckoutProps({ totalAmount: 500 });
     render(<Checkout {...props} />);
 

@@ -4,7 +4,7 @@
 
 import { render, screen } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
-import TicketSection from '../../app/[slug]/dashboard/components/TicketSection';
+import TicketSection from '../../app/[slug]/(app)/dashboard/components/TicketSection';
 
 // ── Mocks ────────────────────────────────────────────
 
