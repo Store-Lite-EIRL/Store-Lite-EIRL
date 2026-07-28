@@ -41,8 +41,8 @@ export default function FooterSection() {
             </div>
             <div className="footer-column">
               <h4>Legal</h4>
-              <Link href="#">Términos de servicio</Link>
-              <Link href="#">Política de privacidad</Link>
+              <Link href="/terminos">Términos de servicio</Link>
+              <Link href="/privacidad">Política de privacidad</Link>
               <Link href="#">Política de reembolsos</Link>
             </div>
           </div>

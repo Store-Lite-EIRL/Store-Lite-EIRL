@@ -1,0 +1,64 @@
+/* ─── Consent Checkbox ─── */
+/* Matches the dark auth page theme (app/auth/page.module.css) */
+
+.checkboxLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1rem;
+  height: 1rem;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+  transition: all 150ms ease;
+  position: relative;
+}
+
+.checkbox:checked {
+  background-color: #135bec;
+  border-color: #135bec;
+}
+
+.checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox:focus-visible {
+  outline: 2px solid #135bec;
+  outline-offset: 2px;
+}
+
+.checkboxText {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.625;
+}
+
+.link {
+  color: #94a3b8;
+  text-decoration-line: underline;
+  text-decoration-color: #334155;
+  transition: color 150ms;
+}
+
+.link:hover {
+  color: #135bec;
+}
