@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/filename-case */
 // This file configures the initialization of Sentry on the client.
 // The added config here will be used whenever a users loads a page in their browser.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
@@ -39,6 +38,7 @@ import posthog from 'posthog-js';
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST;
+const isDev = process.env.NODE_ENV === 'development';
 
 if (!POSTHOG_KEY) {
   if (process.env.NODE_ENV !== 'production') {
@@ -48,11 +48,12 @@ if (!POSTHOG_KEY) {
   }
 } else {
   posthog.init(POSTHOG_KEY, {
-    api_host: '/ingest',
-    ui_host: 'https://us.posthog.com',
+    // In dev: use direct URL to avoid proxy/rewrite issues causing JSON parse errors.
+    // In prod: use the /ingest proxy so ad-blockers don't block posthog.com domains.
+    api_host: isDev ? POSTHOG_HOST || 'https://us.i.posthog.com' : '/ingest',
+    ui_host: POSTHOG_HOST || 'https://us.posthog.com',
     defaults: '2026-01-30',
     capture_exceptions: true,
-    debug: process.env.NODE_ENV === 'development',
-    ...(POSTHOG_HOST && { ui_host: POSTHOG_HOST }),
+    debug: isDev,
   });
 }
