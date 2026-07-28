@@ -1,4 +1,4 @@
-import { getSellerPhase } from '@/app/[slug]/dashboard/components/SellerPhaseGuide';
+import { getSellerPhase } from '@/app/[slug]/(app)/dashboard/components/SellerPhaseGuide';
 import { describe, expect, test } from 'vitest';
 
 // =====================================================

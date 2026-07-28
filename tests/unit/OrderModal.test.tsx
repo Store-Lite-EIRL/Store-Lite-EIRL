@@ -4,7 +4,7 @@
 
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
-import OrderModal from '../../app/[slug]/dashboard/components/OrderModal';
+import OrderModal from '../../app/[slug]/(app)/dashboard/components/OrderModal';
 
 // ── Mocks ────────────────────────────────────────────
 
@@ -23,7 +23,7 @@ vi.mock('@/features/dashboard/actions/finalizationActions', () => ({
 }));
 
 // Mock child components
-vi.mock('../../app/[slug]/dashboard/components/HelpPanel', () => ({
+vi.mock('../../app/[slug]/(app)/dashboard/components/HelpPanel', () => ({
   default: ({ selectedPhase }: any) => (
     <div data-testid="help-panel" data-phase={selectedPhase}>
       HelpPanel
@@ -31,7 +31,7 @@ vi.mock('../../app/[slug]/dashboard/components/HelpPanel', () => ({
   ),
 }));
 
-vi.mock('../../app/[slug]/dashboard/components/PhaseContent', () => ({
+vi.mock('../../app/[slug]/(app)/dashboard/components/PhaseContent', () => ({
   default: ({ order, selectedPhase, ...props }: any) => (
     <div data-testid="phase-content" data-phase={selectedPhase}>
       PhaseContent for {order.id} phase {selectedPhase}
@@ -39,7 +39,7 @@ vi.mock('../../app/[slug]/dashboard/components/PhaseContent', () => ({
   ),
 }));
 
-vi.mock('../../app/[slug]/dashboard/components/SellerPhaseGuide', () => ({
+vi.mock('../../app/[slug]/(app)/dashboard/components/SellerPhaseGuide', () => ({
   __esModule: true,
   default: ({ selectedPhase, phases, onSelect }: any) => (
     <div data-testid="seller-phase-guide" data-selected={selectedPhase}>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveActiveScheme } from '../../app/[slug]/components/schemeResolution';
+import { resolveActiveScheme } from '../../app/[slug]/(app)/components/schemeResolution';
 
 describe('resolveActiveScheme', () => {
   it('prioritizes viewerTheme over previewScheme and effectiveTheme', () => {
