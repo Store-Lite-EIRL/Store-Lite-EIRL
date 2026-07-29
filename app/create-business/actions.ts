@@ -3,7 +3,12 @@
 import { env } from '@/config/env';
 import { generateAvailableBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
-import { businesses, businessSettings, profiles } from '@/core/database/schema';
+import {
+  businesses,
+  businessSettings,
+  businessSubscriptions,
+  profiles,
+} from '@/core/database/schema';
 import {
   createDefaultStorefrontLayout,
   createDefaultStorefrontTheme,
@@ -206,6 +211,15 @@ export async function createBusinessAction(formData: FormData) {
       businessId,
       contrastLevel: 'standard',
       preferences: initialPreferences,
+    });
+
+    await db.insert(businessSubscriptions).values({
+      businessId,
+      planType: 'basico',
+      planStatus: 'active',
+      planStartDate: new Date(),
+      planEndDate: null,
+      cancelAtPeriodEnd: false,
     });
 
     // 3. Handle Logo Upload
