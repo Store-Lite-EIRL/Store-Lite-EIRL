@@ -362,8 +362,8 @@ export default async function ProductDetailContent({
               )}
               {product.tags && product.tags.length > 0 && (
                 <div className={styles.tagsRow}>
-                  {product.tags.map((tag) => (
-                    <span key={tag} className={styles.tagChip}>
+                  {product.tags.map((tag, idx) => (
+                    <span key={`${tag}-${idx}`} className={styles.tagChip}>
                       #{tag}
                     </span>
                   ))}

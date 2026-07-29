@@ -444,6 +444,9 @@ export default function ProductPreviewSheet({
                                 image: mainImage,
                                 images: product.media?.map((item) => item.mediaUrl) || [],
                                 description: product.description || '',
+                                secondPrice: product.secondPrice
+                                  ? String(product.secondPrice)
+                                  : null,
                               }),
                             )
                           }

@@ -63,6 +63,7 @@ function RelatedProductCard({ product, slug }: { product: RelatedProductItem; sl
           image: product.image,
           images: product.images,
           description: product.description,
+          secondPrice: product.secondPrice ?? null,
         }),
       );
     },

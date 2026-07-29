@@ -253,7 +253,31 @@ export const ProductTable = ({
                     )}
                   </td>
                   <td className="secondary-text">
-                    {formatPrice(parsePriceValue(product.price), currencySymbol)}
+                    {product.secondPrice ? (
+                      <>
+                        <span style={{ textDecoration: 'line-through', opacity: 0.6 }}>
+                          {formatPrice(parsePriceValue(product.price), currencySymbol)}
+                        </span>{' '}
+                        <strong>
+                          {formatPrice(parsePriceValue(product.secondPrice), currencySymbol)}
+                        </strong>{' '}
+                        <span
+                          className="text-red-500"
+                          style={{ fontSize: '0.75rem', fontWeight: 700 }}
+                        >
+                          -
+                          {Math.round(
+                            ((parsePriceValue(product.price) -
+                              parsePriceValue(product.secondPrice)) /
+                              parsePriceValue(product.price)) *
+                              100,
+                          )}
+                          %
+                        </span>
+                      </>
+                    ) : (
+                      formatPrice(parsePriceValue(product.price), currencySymbol)
+                    )}
                   </td>
                   <td>
                     <span

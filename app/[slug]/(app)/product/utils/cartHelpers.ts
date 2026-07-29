@@ -12,6 +12,8 @@ interface CartProductInput {
   description?: string;
   /** Si se omite, se deriva de `stock > 0` */
   status?: string;
+  /** Precio con descuento. Se omite si no hay oferta. */
+  secondPrice?: string | null;
 }
 
 /** Construye un objeto Product listo para `toggleCartItem()` o `addToCart()` */
@@ -24,6 +26,7 @@ export function toCartProduct(input: CartProductInput): Product {
     price: input.price,
     currency: input.currency,
     status: input.status ?? (input.stock > 0 ? 'ACTIVO' : 'NO ACTIVO'),
+    secondPrice: input.secondPrice ?? null,
     image: input.image,
     images: input.images,
     description: input.description,
