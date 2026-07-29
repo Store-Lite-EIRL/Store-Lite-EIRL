@@ -222,7 +222,7 @@ export const sellerPayoutAccounts = pgTable(
 // =====================================================
 
 export const planPaymentSeq = pgSequence('seq_plan_payment_b001', {
-  start: 1,
+  startWith: 1,
   increment: 1,
   minValue: 1,
   maxValue: 2147483647,
