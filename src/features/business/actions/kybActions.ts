@@ -98,56 +98,38 @@ export async function verifyIdentityAction(formData: FormData) {
 
     const rucInfo = await getRucInfo(documentNumber);
 
-    // Debug: log what Factiliza returned
-    console.log(
-      `[KYB] Factiliza response for ${documentNumber}:`,
-      JSON.stringify(rucInfo, null, 2),
-    );
+    // Debug: log what the API returned
+    console.log(`[KYB] API response for ${documentNumber}:`, JSON.stringify(rucInfo, null, 2));
 
-    // Check if we got valid data from Factiliza
-    // API returns 'numero' field (not 'ruc')
-    // NOTE: factilizaFetch now handles 404 and returns { success: false, data: null }
-    if (!rucInfo || !rucInfo.numero) {
-      // Check if it's a "not found" response
-      if (rucInfo && rucInfo.success === false) {
-        return {
-          error: `El documento ${documentNumber} no está registrado en SUNAT. Verifique el número e intente nuevamente.`,
-        };
-      }
+    // Check if we got valid data
+    // JSON.pe returns field 'ruc' (not 'numero')
+    if (!rucInfo || !rucInfo.ruc) {
       return {
         error: `No se encontró información para el documento ${documentNumber}. Verifique que el RUC sea válido y esté activo en SUNAT.`,
       };
     }
 
-    // Check if business is active (using correct API field names)
+    // Check if business is active
     if (rucInfo.estado !== 'ACTIVO' || rucInfo.condicion !== 'HABIDO') {
       return {
         error: `El RUC ${documentNumber} no está activo. Estado: ${rucInfo.estado}, Condición: ${rucInfo.condicion}`,
       };
     }
 
-    const tipo = (rucInfo.tipo_contribuyente || '').toUpperCase();
-    let personType: 'natural' | 'juridica';
-    if (tipo.includes('PERSONA NATURAL')) {
-      personType = 'natural';
-    } else if (tipo.includes('SOCIEDAD') || tipo.includes('JURIDICA')) {
-      personType = 'juridica';
-    } else {
-      // Fallback: RUCs starting with "20" are usually juridica
-      personType = documentNumber.startsWith('20') ? 'juridica' : 'natural';
-    }
+    // Detect person type from RUC prefix:
+    //   "10" = Persona Natural, "20" = Persona Jurídica
+    // JSON.pe doesn't return tipo_contribuyente, so we use this heuristic
+    const personType: 'natural' | 'juridica' = documentNumber.startsWith('20')
+      ? 'juridica'
+      : 'natural';
 
-    // Map API response fields to our internal structure (using SPANISH field names)
-    // API uses: numero, nombre_o_razon_social, direccion, departamento, provincia, distrito
     if (personType === 'juridica') {
-      // For PJ: Fetch representatives from the representatives endpoint
+      // For PJ: Fetch legal representatives
       console.log(`[KYB] Fetching representatives for PJ RUC: ${documentNumber}`);
       const representatives = await getRucRepresentatives(documentNumber);
 
-      // Log what we got
       console.log(`[KYB] Representatives found:`, JSON.stringify(representatives, null, 2));
 
-      // Check if we got any representatives
       if (!Array.isArray(representatives) || representatives.length === 0) {
         return {
           error: `No se encontraron representantes para el RUC ${documentNumber}. Verifique que el RUC sea válido.`,
@@ -158,31 +140,30 @@ export async function verifyIdentityAction(formData: FormData) {
         success: true,
         data: {
           personType,
-          taxId: rucInfo.numero,
+          taxId: rucInfo.ruc,
           razonSocial: rucInfo.nombre_o_razon_social,
           address: rucInfo.direccion,
           departamento: rucInfo.departamento,
           provincia: rucInfo.provincia,
           distrito: rucInfo.distrito,
-          // PASS representatives for validation (as JSON string)
           representativesJson: JSON.stringify(representatives),
         },
       };
-    } else {
-      // For PN: Return legalRepName mapped from nombre_o_razon_social
-      return {
-        success: true,
-        data: {
-          personType,
-          taxId: rucInfo.numero,
-          legalRepName: rucInfo.nombre_o_razon_social,
-          address: rucInfo.direccion,
-          departamento: rucInfo.departamento,
-          provincia: rucInfo.provincia,
-          distrito: rucInfo.distrito,
-        },
-      };
     }
+
+    // For PN: Return legalRepName from razon social
+    return {
+      success: true,
+      data: {
+        personType,
+        taxId: rucInfo.ruc,
+        legalRepName: rucInfo.nombre_o_razon_social,
+        address: rucInfo.direccion,
+        departamento: rucInfo.departamento,
+        provincia: rucInfo.provincia,
+        distrito: rucInfo.distrito,
+      },
+    };
   } catch (error: unknown) {
     console.error(`[KYB] Error verifying ${formData.get('documentNumber')}:`, error);
     return { error: error instanceof Error ? error.message : 'Error al verificar el documento' };

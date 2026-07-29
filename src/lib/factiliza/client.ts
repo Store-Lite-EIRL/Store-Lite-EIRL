@@ -1,102 +1,88 @@
 ﻿// =====================================================
-// FACTILIZA CLIENT (Server-side only)
+// JSON.pe API CLIENT (Server-side only)
 // =====================================================
-// Description: HTTP client for Factiliza API with caching
+// Description: HTTP client for JSON.pe API (RUC, DNI, representatives)
 // Usage: Import { getRucInfo } from '@/lib/factiliza/client'
+// Base URL configurable via env JSONPE_API_BASE_URL
 // =====================================================
 
 import { env } from '@/config/env';
 import type {
   CacheEntry,
-  FactilizaDniInfo,
-  FactilizaRepresentative,
-  FactilizaRucInfo,
+  JsonpeDniInfo,
+  JsonpeRepresentative,
+  JsonpeResponse,
+  JsonpeRucInfo,
 } from './types';
 
 // Re-export types for consumers
-export type { FactilizaDniInfo, FactilizaRepresentative, FactilizaRucInfo };
+export type { JsonpeDniInfo, JsonpeRepresentative, JsonpeRucInfo };
 
-// Base URL for Factiliza API
-const FACTILIZA_BASE_URL = 'https://api.factiliza.com/v1';
+// Base URL from env — configurable without code changes
+const API_BASE_URL = env.jsonpeApiBaseUrl;
 
-// Cache instance (in-memory Map, migrate to Redis before production)
-const factilizaCache = new Map<string, CacheEntry>();
-
-// Cache duration: 5 minutes
+// Cache instance
+const apiCache = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
-function cleanExpiredCache() {
+function cleanExpiredCache(): void {
   const now = Date.now();
-  for (const [key, entry] of factilizaCache.entries()) {
+  for (const [key, entry] of apiCache.entries()) {
     if (now - entry.timestamp > CACHE_TTL_MS) {
-      factilizaCache.delete(key);
+      apiCache.delete(key);
     }
   }
 }
 
 async function cachedFetch<T>(key: string, fetchFn: () => Promise<T>): Promise<T> {
   cleanExpiredCache();
-  const cached = factilizaCache.get(key);
+  const cached = apiCache.get(key);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
     return cached.data as T;
   }
 
   const data = await fetchFn();
-  factilizaCache.set(key, { data, timestamp: Date.now() });
+  apiCache.set(key, { data, timestamp: Date.now() });
   return data;
 }
 
 /**
- * Cliente base para Factiliza
+ * Generic POST to JSON.pe API
+ * All JSON.pe endpoints use POST with JSON body and Bearer token
  */
-async function factilizaFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const url = `${FACTILIZA_BASE_URL}${endpoint}`;
-  const headers = {
-    Authorization: `Bearer ${env.jsonToken}`,
-    'Content-Type': 'application/json',
-    ...options?.headers,
-  };
+async function apiPost<T>(endpoint: string, body: Record<string, string>): Promise<T> {
+  const url = `${API_BASE_URL}${endpoint}`;
 
   const response = await fetch(url, {
-    ...options,
-    headers,
-  } as RequestInit);
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.jsonToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
 
   if (!response.ok) {
-    const errorBody = await response.text();
-    console.error(`[Factiliza] HTTP Error ${response.status}: ${errorBody}`);
+    const errorBody = await response.text().catch(() => '');
 
-    // SPECIAL HANDLING: 404 for RUC/DNI not found (valid response, not an error)
+    // 404 = not found (valid response — RUC/DNI doesn't exist)
     if (response.status === 404) {
-      // Return a structured error that the caller can handle
-      return {
-        success: false,
-        status: 404,
-        message: 'Not found',
-        data: null,
-      } as T;
+      return { success: false, message: 'Not found', data: null } as T;
     }
 
-    throw new Error(`Factiliza API Error (${response.status}): ${errorBody}`);
+    // Generic error — NEVER expose provider name or internal details
+    console.error(`[API] HTTP Error ${response.status}: ${errorBody}`);
+    throw new Error('Error al consultar el documento. Intente nuevamente.');
   }
 
-  const data = await response.json();
+  const json: JsonpeResponse<T> = await response.json();
 
-  // Log the response for debugging
-  // Check if the API returned success: false (API-level error, not HTTP error)
-  if (data && data.success === false) {
-    console.warn(`[Factiliza] API returned success:false - ${data.message || 'Unknown error'}`);
-    // Return the data anyway, let the caller decide what to do
+  if (!json.success) {
+    console.warn(`[API] Response error: ${json.message}`);
+    throw new Error(json.message || 'Error al consultar el documento.');
   }
 
-  // Extract the 'data' field from the response
-  // Factiliza API returns: { status, message, success, data: {...} }
-  // We want to return only the content of 'data'
-  if (data && data.data) {
-    return data.data as T;
-  }
-
-  return data as T;
+  return json.data;
 }
 
 // =====================================================
@@ -105,43 +91,36 @@ async function factilizaFetch<T>(endpoint: string, options?: RequestInit): Promi
 
 /**
  * Obtiene información de un RUC
- * @param ruc - RUC de 11 dígitos
- * @returns FactilizaRucInfo
+ * POST /api/ruc  { "ruc": "..." }
  */
-export async function getRucInfo(ruc: string): Promise<FactilizaRucInfo> {
-  return cachedFetch(`ruc:${ruc}`, () => factilizaFetch<FactilizaRucInfo>(`/ruc/info/${ruc}`));
+export async function getRucInfo(ruc: string): Promise<JsonpeRucInfo> {
+  return cachedFetch(`ruc:${ruc}`, () => apiPost<JsonpeRucInfo>('/ruc', { ruc }));
 }
 
 /**
  * Obtiene los representantes legales de un RUC
- * @param ruc - RUC de 11 dígitos
- * @returns FactilizaRepresentative[] (array of representatives)
- * NOTE: factilizaFetch extracts 'data' from API response, so we get the array directly
+ * POST /api/ruc/representantes  { "ruc": "..." }
  */
-export async function getRucRepresentatives(ruc: string): Promise<FactilizaRepresentative[]> {
+export async function getRucRepresentatives(ruc: string): Promise<JsonpeRepresentative[]> {
   return cachedFetch(`representatives:${ruc}`, () =>
-    factilizaFetch<FactilizaRepresentative[]>(`/ruc/representante/${ruc}`),
+    apiPost<JsonpeRepresentative[]>('/ruc/representantes', { ruc }),
   );
 }
 
 /**
  * Obtiene información de un DNI
- * @param dni - DNI de 8 dígitos
- * @returns FactilizaDniInfo
+ * POST /api/dni  { "dni": "..." }
  */
-export async function getDniInfo(dni: string): Promise<FactilizaDniInfo> {
-  return cachedFetch(`dni:${dni}`, () => factilizaFetch<FactilizaDniInfo>(`/dni/info/${dni}`));
+export async function getDniInfo(dni: string): Promise<JsonpeDniInfo> {
+  return cachedFetch(`dni:${dni}`, () => apiPost<JsonpeDniInfo>('/dni', { dni }));
 }
 
 /**
  * Genera un código OTP criptográfico de 6 dígitos
- * @returns string (ej. "123456")
  */
 export function generateOTP(): string {
-  // crypto.getRandomValues para mayor seguridad que Math.random
   const bytes = new Uint8Array(6);
   crypto.getRandomValues(bytes);
-  // Convertir bytes a un número de 6 dígitos
   let otp = '';
   for (let i = 0; i < 6; i++) {
     otp += (bytes[i] % 10).toString();
