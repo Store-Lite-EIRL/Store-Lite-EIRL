@@ -2,7 +2,7 @@
 // KYB SERVER ACTIONS (Re-export)
 // =====================================================
 // Description: Barrel file to maintain import path '@/app/actions/kyb'
-// Actual implementation lives in src/features/kyb/kybActions.ts
+// Actual implementation lives in src/features/business/actions/kybActions.ts
 // =====================================================
 
 export {
