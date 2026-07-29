@@ -22,6 +22,8 @@ export const env = {
   twilioAccountSid: process.env.TWILIO_ACCOUNT_SID!,
   twilioAuthToken: process.env.TWILIO_AUTH_TOKEN!,
   twilioWhatsAppNumber: process.env.TWILIO_WHATSAPP_NUMBER!,
+  // Twilio Verify Service SID for OTP verification (WhatsApp)
+  twilioServiceSid: process.env.TWILIO_SERVICE_SID!,
   // JSON.pe SMS — order notifications to customers
   jsonpeSmsToken: process.env.JSONPE_SMS_TOKEN!,
   // Culqi — al activar esta flag, solo se aceptan llaves _live (producción).
@@ -49,6 +51,9 @@ if (!env.supabaseUrl || !env.supabaseAnonKey) {
 // Twilio validation
 if (!env.twilioAccountSid || !env.twilioAuthToken || !env.twilioWhatsAppNumber) {
   console.warn('Twilio environment variables are missing. WhatsApp OTP will not work.');
+}
+if (!env.twilioServiceSid) {
+  console.warn('TWILIO_SERVICE_SID is missing. OTP verification via Twilio Verify will not work.');
 }
 
 // Resend validation

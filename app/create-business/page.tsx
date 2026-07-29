@@ -187,6 +187,10 @@ export default function CreateBusinessPage() {
           newErrors.taxId = 'El RUC de persona jurídica debe tener entre 11 y 20 dígitos.';
           isValid = false;
         }
+        if (!isRucVerified) {
+          newErrors.taxId = 'Debe verificar el RUC con SUNAT antes de continuar.';
+          isValid = false;
+        }
         break;
       case 1:
         if (!formData.sector) {
@@ -209,6 +213,10 @@ export default function CreateBusinessPage() {
         }
         if (!formData.distrito) {
           newErrors.distrito = 'El DISTRITO es obligatorio.';
+          isValid = false;
+        }
+        if (!formData.address || formData.address.length < 5) {
+          newErrors.address = 'La dirección es obligatoria (mín. 5 caracteres).';
           isValid = false;
         }
         if (!formData.email || !formData.email.includes('@')) {

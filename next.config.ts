@@ -27,7 +27,7 @@ const nextConfig: NextConfig = {
               "base-uri 'self'",
               "frame-ancestors 'none'",
               "form-action 'self'",
-              "img-src 'self' data: https:",
+              "img-src 'self' data: https: blob:",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.culqi.com https://*.culqi.com https://*.posthog.com",
               "worker-src 'self' blob:",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",

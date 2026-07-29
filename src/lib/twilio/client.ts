@@ -11,27 +11,75 @@ export interface TwilioMessageResponse {
   body: string;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// TWILIO VERIFY (recomendado para producción)
+// ─────────────────────────────────────────────────────────────────────────────
+
 /**
- * Sends OTP via WhatsApp using Twilio (Official Meta WhatsApp Business Cloud API)
- * @param phone - Destination phone number (format: "+51999999999" or "51999999999")
- * @param code - 6-digit OTP code
- * @returns Promise<TwilioMessageResponse>
+ * Sends OTP via WhatsApp using Twilio Verify
+ * Verify handles template approval, expiration, and delivery automatically.
+ *
+ * @param phone - Phone in E.164 format: "+51999999999"
+ * @returns Verification SID and status
+ */
+export async function sendOtpViaVerify(phone: string): Promise<{ sid: string; status: string }> {
+  const service = client.verify.v2.services(env.twilioServiceSid);
+
+  const verification = await service.verifications.create({
+    to: phone,
+    channel: 'whatsapp',
+  });
+
+  console.log(
+    `[Twilio Verify] OTP sent to ${phone}. SID: ${verification.sid}, Status: ${verification.status}`,
+  );
+
+  return { sid: verification.sid, status: verification.status };
+}
+
+/**
+ * Checks an OTP code using Twilio Verify
+ *
+ * @param phone - Phone in E.164 format
+ * @param code - 6-digit code entered by the user
+ * @returns Object with valid flag and verification SID
+ */
+export async function checkOtpViaVerify(
+  phone: string,
+  code: string,
+): Promise<{ valid: boolean; sid?: string }> {
+  const service = client.verify.v2.services(env.twilioServiceSid);
+
+  const check = await service.verificationChecks.create({
+    to: phone,
+    code,
+  });
+
+  console.log(`[Twilio Verify] Check for ${phone}. Status: ${check.status}, SID: ${check.sid}`);
+
+  return { valid: check.status === 'approved', sid: check.sid };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TWILIO MESSAGES API (legacy — usar Verify para producción)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Sends OTP via WhatsApp using Twilio Messages API
+ * @deprecated Usar sendOtpViaVerify en su lugar. Esta función requiere
+ *             templates aprobados por Meta para producción.
  */
 export async function sendOtpWhatsApp(phone: string, code: string): Promise<TwilioMessageResponse> {
-  // Ensure phone has WhatsApp prefix and proper format
   let to = phone.trim();
 
-  // Add '+' if not present (required for international format)
   if (!to.startsWith('+')) {
     to = `+${to}`;
   }
 
-  // Add WhatsApp prefix if not present
   if (!to.startsWith('whatsapp:')) {
     to = `whatsapp:${to}`;
   }
 
-  // From number (Twilio WhatsApp number / Sandbox)
   const from = env.twilioWhatsAppNumber;
 
   console.log(`[Twilio] Sending OTP via WhatsApp to ${to} from ${from}`);
