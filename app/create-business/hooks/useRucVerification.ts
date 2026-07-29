@@ -32,12 +32,10 @@ export function useRucVerification({
   const [pjRepData, setPjRepData] = useState({ dni: '', fullName: '' });
   const [isValidatingRep, setIsValidatingRep] = useState(false);
 
-  // State to hold Factiliza verification result
-  // For Natural: FactilizaRucInfo (no representatives)
-  // For PJ: FactilizaRucWithRepresentatives (includes representatives)
+  // State to hold RUC verification result
   const [verificationResult, setVerificationResult] = useState<any | null>(null);
 
-  // Handle RUC verification with Factiliza
+  // Handle RUC verification via API
   const handleVerifyRuc = async () => {
     if (!formData.taxId || formData.taxId.length !== 11) return;
 

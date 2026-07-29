@@ -14,8 +14,9 @@ export const env = {
   //   Desarrollo: `.localhost`
   //   null/empty → cookies host-only (comportamiento default, no cross-subdominio)
   sharedCookieDomain: process.env.SHARED_COOKIE_DOMAIN || null,
-  // Factiliza API Configuration (Server-side only)
+  // JSON.pe API Configuration (Server-side only) — consulta RUC, DNI, representantes
   jsonToken: process.env.JSON_TOKEN!,
+  jsonpeApiBaseUrl: process.env.JSONPE_API_BASE_URL || 'https://api.json.pe/api',
   jsonWspInstance: process.env.JSON_WSP_INSTANCE!,
   // Twilio WhatsApp OTP Configuration (Server-side only)
   twilioAccountSid: process.env.TWILIO_ACCOUNT_SID!,
