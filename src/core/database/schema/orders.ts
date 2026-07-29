@@ -11,6 +11,7 @@ import {
   index,
   integer,
   jsonb,
+  pgSequence,
   pgTable,
   text,
   timestamp,
@@ -215,6 +216,18 @@ export const sellerPayoutAccounts = pgTable(
     sellerUserIdIdx: index('idx_payout_accounts_seller_user_id').on(table.sellerUserId),
   }),
 );
+
+// =====================================================
+// SEQUENCE: Correlativo automático para tickets SUNAT (B001)
+// =====================================================
+
+export const planPaymentSeq = pgSequence('seq_plan_payment_b001', {
+  start: 1,
+  increment: 1,
+  minValue: 1,
+  maxValue: 2147483647,
+  cache: 1,
+});
 
 // =====================================================
 // TABLE: plan_payments
