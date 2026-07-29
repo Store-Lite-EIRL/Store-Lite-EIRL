@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
@@ -8,7 +8,7 @@ import {
   RequestOtpSchema,
   VerifyIdentitySchema,
   VerifyOtpSchema,
-} from '@/features/kyb/kybSchemas';
+} from '@/features/business/actions/kybSchemas';
 import { generateOTP, getRucInfo, getRucRepresentatives } from '@/lib/factiliza/client';
 import { sendOtpWhatsApp } from '@/lib/twilio/client';
 import { and, eq, gt, lte, sql } from 'drizzle-orm';
