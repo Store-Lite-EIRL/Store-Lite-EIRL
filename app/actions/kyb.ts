@@ -10,4 +10,4 @@ export {
   requestOtpAction,
   verifyIdentityAction,
   verifyOtpAction,
-} from '@/features/kyb/kybActions';
+} from '@/features/business/actions/kybActions';
