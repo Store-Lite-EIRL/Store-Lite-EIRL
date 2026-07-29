@@ -65,6 +65,7 @@ export type RequestOtpInput = z.infer<typeof RequestOtpSchema>;
 export const VerifyOtpSchema = z.object({
   identifier: z.string(),
   code: z.string().length(6, 'OTP must be 6 digits'),
+  countryPrefix: z.string().default('+51'),
 });
 
 export type VerifyOtpInput = z.infer<typeof VerifyOtpSchema>;
