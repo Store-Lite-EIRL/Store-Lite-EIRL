@@ -18,9 +18,9 @@ export function reportWebVitals(): void {
     });
 
     if (navigator.sendBeacon) {
-      navigator.sendBeacon('/monitoring', body);
+      navigator.sendBeacon('/api/vitals', body);
     } else {
-      fetch('/monitoring', { method: 'POST', body, keepalive: true });
+      fetch('/api/vitals', { method: 'POST', body, keepalive: true });
     }
   };
 

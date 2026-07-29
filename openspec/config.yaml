@@ -26,8 +26,8 @@ testing:
       available: true
       tool: '@playwright/test 1.59 (Chromium)'
   coverage:
-    available: false
-    command: null
+    available: true
+    command: pnpm test:coverage
   quality:
     linter:
       available: true

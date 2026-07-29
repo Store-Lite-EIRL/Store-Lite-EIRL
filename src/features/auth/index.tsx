@@ -211,8 +211,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [supabase]);
 
+  const AUTH_ORIGIN =
+    process.env.NEXT_PUBLIC_AUTH_ORIGIN ||
+    (typeof window !== 'undefined' ? window.location.origin : '');
+
   const signInWithGoogle = async () => {
-    const redirectUrl = `${window.location.origin}/auth/callback`;
+    const redirectUrl = `${AUTH_ORIGIN}/auth/callback`;
     console.warn('🔗 Redirecting to:', redirectUrl);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -228,7 +232,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signInWithGoogleForChat = async (slug: string) => {
     // Usa un callback DEDICADO que NO crea profiles ni verifica businesses
-    const redirectUrl = `${window.location.origin}/auth/chat-callback?slug=${slug}`;
+    const redirectUrl = `${AUTH_ORIGIN}/auth/chat-callback?slug=${slug}`;
     console.warn('🔗 Redirecting to (chat callback):', redirectUrl);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',

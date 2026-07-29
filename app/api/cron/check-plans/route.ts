@@ -4,6 +4,7 @@
 // Notifica a sellers sobre expiración de planes
 // ──────────────────────────────────────────
 
+import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businessSubscriptions, notifications } from '@/core/database/schema';
 import { notifyPlanExpired, notifyPlanExpiring } from '@/lib/notifications';
@@ -11,7 +12,18 @@ import { and, eq, gte, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 // Vercel Cron: 0 8 * * *  (todos los días a las 8am)
-export async function GET() {
+// Triggered via Supabase pg_cron → HTTP POST to storelite.app/api/cron/check-plans
+export async function GET(request: Request) {
+  // Auth: requires CRON_SECRET via ?token= or Authorization: Bearer header
+  const url = new URL(request.url);
+  const token =
+    url.searchParams.get('token') ||
+    request.headers.get('authorization')?.replace('Bearer ', '') ||
+    '';
+  if (!token || token !== env.cronSecret) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   console.log('[Cron] check-plans: starting');
 
   try {

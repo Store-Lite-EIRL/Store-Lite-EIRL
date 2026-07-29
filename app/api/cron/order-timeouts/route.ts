@@ -4,11 +4,23 @@
 // Processes expired orders (seller inactivity, customer auto-approve, auto-complete)
 // ──────────────────────────────────────────
 
+import { env } from '@/config/env';
 import { processTimeouts } from '@/core/orders/orderTimeouts';
 import { NextResponse } from 'next/server';
 
 // Vercel Cron: */15 * * * *
-export async function GET() {
+// Triggered via Supabase pg_cron → HTTP POST to storelite.app/api/cron/order-timeouts
+export async function GET(request: Request) {
+  // Auth: requires CRON_SECRET via ?token= or Authorization: Bearer header
+  const url = new URL(request.url);
+  const token =
+    url.searchParams.get('token') ||
+    request.headers.get('authorization')?.replace('Bearer ', '') ||
+    '';
+  if (!token || token !== env.cronSecret) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   console.log('[Cron] order-timeouts: starting');
 
   try {

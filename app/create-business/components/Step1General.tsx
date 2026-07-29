@@ -82,7 +82,7 @@ export default function Step1General({
           }}
           error={!!errors.taxId}
           errorText={errors.taxId}
-          supportingText={isRucVerified ? 'Verificado con Factiliza' : 'Ingrese 11 dígitos (RUC)'}
+          supportingText={isRucVerified ? 'Verificado con SUNAT' : 'Ingrese 11 dígitos (RUC)'}
         />
         <Button
           variant={isRucVerified ? 'tonal' : 'filled'}

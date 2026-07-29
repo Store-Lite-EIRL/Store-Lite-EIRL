@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { ThemeToggle } from '../../app/[slug]/components/ThemeToggle';
+import { ThemeToggle } from '../../app/[slug]/(app)/components/ThemeToggle';
 
 describe('ThemeToggle', () => {
   describe('icon rendering', () => {

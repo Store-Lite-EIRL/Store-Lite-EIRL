@@ -4,7 +4,7 @@
 
 import { render, screen } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
-import PhaseContent from '../../app/[slug]/dashboard/components/PhaseContent';
+import PhaseContent from '../../app/[slug]/(app)/dashboard/components/PhaseContent';
 
 // ── Mocks ────────────────────────────────────────────
 
@@ -22,17 +22,21 @@ vi.mock('next/link', () => ({
 
 vi.mock('lucide-react', () => ({
   AlertCircle: () => <span>AlertCircle</span>,
+  AlertTriangle: () => <span>AlertTriangle</span>,
   Calendar: () => <span>Calendar</span>,
   CheckCircle: () => <span>CheckCircle</span>,
   Clock: () => <span>Clock</span>,
   CreditCard: () => <span>CreditCard</span>,
   ExternalLink: () => <span>ExternalLink</span>,
+  FileText: () => <span>FileText</span>,
+  Home: () => <span>Home</span>,
   IdCard: () => <span>IdCard</span>,
   MapPin: () => <span>MapPin</span>,
   Package: () => <span>Package</span>,
   Phone: () => <span>Phone</span>,
   Receipt: () => <span>Receipt</span>,
   RefreshCw: () => <span>RefreshCw</span>,
+  Search: () => <span>Search</span>,
   ShoppingBag: () => <span>ShoppingBag</span>,
   Store: () => <span>Store</span>,
   Truck: () => <span>Truck</span>,
@@ -64,7 +68,7 @@ vi.mock('@/shared/utils/url', () => ({
   getBusinessPath: (slug: string, path: string) => `/${slug}${path}`,
 }));
 
-vi.mock('../../app/[slug]/dashboard/components/ShippingSection', () => ({
+vi.mock('../../app/[slug]/(app)/dashboard/components/ShippingSection', () => ({
   default: ({ order }: any) => (
     <div data-testid="shipping-section">
       {order?.courierName && <span>{order.courierName}</span>}
@@ -74,7 +78,7 @@ vi.mock('../../app/[slug]/dashboard/components/ShippingSection', () => ({
   ),
 }));
 
-vi.mock('../../app/[slug]/dashboard/components/TicketSection', () => ({
+vi.mock('../../app/[slug]/(app)/dashboard/components/TicketSection', () => ({
   default: () => (
     <div data-testid="ticket-section">
       <span>Validación de Ticket</span>

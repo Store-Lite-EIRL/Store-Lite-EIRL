@@ -9,7 +9,7 @@ vi.mock('@/hooks/useNotifications', () => ({
 import type { NotificationWithMeta } from '@/hooks/useNotifications';
 import { useNotifications } from '@/hooks/useNotifications';
 import type { Mock } from 'vitest';
-import NotificationsClient from '../../app/[slug]/notifications/NotificationsClient';
+import NotificationsClient from '../../app/[slug]/(app)/notifications/NotificationsClient';
 
 // ── Fixtures ──────────────────────────────────────────────
 

@@ -4,7 +4,7 @@
 
 import { render, screen } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
-import PhaseReadySection from '../../app/[slug]/dashboard/components/PhaseReadySection';
+import PhaseReadySection from '../../app/[slug]/(app)/dashboard/components/PhaseReadySection';
 
 // ── Mocks ────────────────────────────────────────────
 

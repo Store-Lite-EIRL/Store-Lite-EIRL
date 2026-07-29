@@ -23,7 +23,24 @@ export default function Step3Contact({
 
   return (
     <>
-      {/* ALL location fields are ALWAYS READ-ONLY - data comes from SUNAT */}
+      {/* Warning if RUC not verified — location fields depend on SUNAT data */}
+      {!isRucVerified && (
+        <div
+          style={{
+            padding: '12px 16px',
+            backgroundColor: 'var(--md-sys-color-error-container)',
+            color: 'var(--md-sys-color-on-error-container)',
+            borderRadius: '12px',
+            fontSize: '0.875rem',
+            marginBottom: '8px',
+          }}
+        >
+          <strong>Validación pendiente:</strong> Para continuar, primero verificá tu RUC en el paso
+          anterior (Datos Generales). Los datos de ubicación se cargan automáticamente desde SUNAT.
+        </div>
+      )}
+
+      {/* ALL location fields are ALWAYS READ-ONLY — data comes from SUNAT */}
       <div className="flex-responsive-row gap-md">
         <TextField
           label="DEPARTAMENTO"
@@ -88,6 +105,29 @@ export default function Step3Contact({
           error={!!errors.city}
           errorText={errors.city}
         />
+      </div>
+
+      {/* Street address — pre-filled from SUNAT if RUC was verified */}
+      <div style={{ marginTop: '16px' }}>
+        <TextField
+          label="Dirección"
+          placeholder="Av. Principal 123, Urbanización Los Olivos"
+          variant="outlined"
+          style={{ width: '100%' }}
+          value={formData.address}
+          onInput={(e: React.FormEvent<HTMLElement>) => {
+            onChange('address', getFieldValue(e));
+          }}
+          error={!!errors.address}
+          errorText={errors.address}
+          supportingText={
+            formData.address && isRucVerified
+              ? 'Cargado desde SUNAT — podés editarlo si es necesario'
+              : 'Dirección fiscal o comercial'
+          }
+        >
+          <Icon slot="trailing-icon">home</Icon>
+        </TextField>
       </div>
 
       <div className="flex-responsive-row gap-md" style={{ marginTop: '16px' }}>

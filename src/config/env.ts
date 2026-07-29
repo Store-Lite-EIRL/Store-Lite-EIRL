@@ -14,13 +14,16 @@ export const env = {
   //   Desarrollo: `.localhost`
   //   null/empty → cookies host-only (comportamiento default, no cross-subdominio)
   sharedCookieDomain: process.env.SHARED_COOKIE_DOMAIN || null,
-  // Factiliza API Configuration (Server-side only)
+  // JSON.pe API Configuration (Server-side only) — consulta RUC, DNI, representantes
   jsonToken: process.env.JSON_TOKEN!,
+  jsonpeApiBaseUrl: process.env.JSONPE_API_BASE_URL || 'https://api.json.pe/api',
   jsonWspInstance: process.env.JSON_WSP_INSTANCE!,
   // Twilio WhatsApp OTP Configuration (Server-side only)
   twilioAccountSid: process.env.TWILIO_ACCOUNT_SID!,
   twilioAuthToken: process.env.TWILIO_AUTH_TOKEN!,
   twilioWhatsAppNumber: process.env.TWILIO_WHATSAPP_NUMBER!,
+  // Twilio Verify Service SID for OTP verification (WhatsApp)
+  twilioServiceSid: process.env.TWILIO_SERVICE_SID!,
   // JSON.pe SMS — order notifications to customers
   jsonpeSmsToken: process.env.JSONPE_SMS_TOKEN!,
   // Culqi — al activar esta flag, solo se aceptan llaves _live (producción).
@@ -35,6 +38,9 @@ export const env = {
   // En producción, debe ser un string aleatorio fuerte. Si no se configura,
   // se usa un fallback para dev — pero OJO, no es seguro para producción.
   otpHashSecret: process.env.OTP_HASH_SECRET || 'dev-fallback-otp-secret-not-for-production',
+  // CRON_SECRET / cron_secret — protege los endpoints cron contra acceso público.
+  //   Las llamadas desde Supabase pg_cron deben incluir este token.
+  cronSecret: process.env.CRON_SECRET || process.env.cron_secret || '',
 } as const;
 
 // Optional: Add validation here to throw early if vars are missing
@@ -45,6 +51,9 @@ if (!env.supabaseUrl || !env.supabaseAnonKey) {
 // Twilio validation
 if (!env.twilioAccountSid || !env.twilioAuthToken || !env.twilioWhatsAppNumber) {
   console.warn('Twilio environment variables are missing. WhatsApp OTP will not work.');
+}
+if (!env.twilioServiceSid) {
+  console.warn('TWILIO_SERVICE_SID is missing. OTP verification via Twilio Verify will not work.');
 }
 
 // Resend validation

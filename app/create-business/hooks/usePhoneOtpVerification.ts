@@ -117,6 +117,7 @@ export function usePhoneOtpVerification({
       const formDataObj = new FormData();
       formDataObj.append('identifier', formData.phone.trim());
       formDataObj.append('code', code);
+      formDataObj.append('countryPrefix', formData.countryPrefix || '+51');
 
       const result = await verifyOtpAction(formDataObj);
 

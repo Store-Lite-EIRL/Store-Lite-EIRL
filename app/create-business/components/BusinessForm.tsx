@@ -1,4 +1,4 @@
-﻿import { Button, Icon } from '@/shared/components/ui';
+import { Button, Icon } from '@/shared/components/ui';
 import type { BusinessData, FormErrors } from '../types';
 import { Step1General, Step2Economic, Step3Contact, Step4Legal } from './BusinessFormSteps';
 
