@@ -88,8 +88,9 @@ export function useRucVerification({
         onChange('departamento', verificationData.departamento || '');
         onChange('provincia', verificationData.provincia || '');
         onChange('distrito', verificationData.distrito || '');
-        const fullAddress = `${verificationData.departamento || ''}, ${verificationData.provincia || ''}, ${verificationData.distrito || ''}`;
-        onChange('address', fullAddress);
+        // Use the street address from SUNAT directly (rucInfo.direccion),
+        // NOT a concatenation of departamento/provincia/distrito
+        onChange('address', verificationData.address || '');
       }
 
       // Reset validation fields - user MUST type them manually
