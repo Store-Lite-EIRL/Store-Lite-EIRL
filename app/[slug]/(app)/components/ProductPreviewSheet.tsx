@@ -35,6 +35,8 @@ interface ProductPreviewSheetProps {
   visibleExtraColumns?: string[];
   /** Notifies the parent so the client-side product copy does not keep stale metadata. */
   onPublicMetadataChange?: (productId: string, publicKeys: string[]) => void;
+  /** Override the sheet DOM id — use when two instances coexist on the same page */
+  sheetId?: string;
 }
 
 type SheetElement = HTMLDivElement & { show?: () => void; close?: () => void };
@@ -58,7 +60,9 @@ export default function ProductPreviewSheet({
   initialImageIndex = 0,
   visibleExtraColumns,
   onPublicMetadataChange,
+  sheetId,
 }: ProductPreviewSheetProps) {
+  const id = sheetId ?? SHEET_ID;
   const { isInCart, toggleCartItem } = useCart();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -122,14 +126,14 @@ export default function ProductPreviewSheet({
 
   const handleAction = (action?: () => void) => {
     if (!action) return;
-    const node = document.getElementById(SHEET_ID) as SheetElement | null;
+    const node = document.getElementById(id) as SheetElement | null;
     node?.close?.();
     action();
   };
 
   useEffect(() => {
     if (!product) return;
-    const node = document.getElementById(SHEET_ID) as SheetElement | null;
+    const node = document.getElementById(id) as SheetElement | null;
     node?.show?.();
     // Clamp el índice para que nunca quede out of bounds
     const maxIndex = Math.max(0, (product.media?.length ?? 1) - 1);
@@ -151,7 +155,7 @@ export default function ProductPreviewSheet({
   }, [product, openSignal, initialImageIndex, slug]);
 
   if (!product) {
-    return <Sheet id={SHEET_ID} title="Vista previa" direction="bottom" className={styles.sheet} />;
+    return <Sheet id={id} title="Vista previa" direction="bottom" className={styles.sheet} />;
   }
 
   const mainImage = product.media?.[0]?.mediaUrl || '';
@@ -164,12 +168,7 @@ export default function ProductPreviewSheet({
 
   return (
     <>
-      <Sheet
-        id={SHEET_ID}
-        title="Vista previa del producto"
-        direction="bottom"
-        className={styles.sheet}
-      >
+      <Sheet id={id} title="Vista previa del producto" direction="bottom" className={styles.sheet}>
         <div className={styles.content}>
           <div className={styles.media}>
             {product.media && product.media.length > 0 ? (

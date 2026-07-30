@@ -1,13 +1,15 @@
 'use client';
 
+import type { ProductWithRelations } from '@/features/products/types/productTypes';
 import { useCart } from '@/features/storage/context/CartContext';
 import type { Product } from '@/features/storage/data';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import type { Business } from '@/types/business';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { BasicContactDialog } from '../../../components/BasicContactDialog';
 import Checkout from '../../../components/Checkout';
+import ProductPreviewSheet from '../../../components/ProductPreviewSheet';
 import LikeSection from './LikeSection';
 import styles from './ProductDetail.module.css';
 
@@ -22,6 +24,50 @@ interface PurchaseActionsProps {
   hasLiked: boolean;
   productId: string;
   businessSlug: string;
+}
+
+/** Convierte un Product del storage al formato ProductWithRelations que espera el PreviewSheet */
+function toPreviewProduct(sp: Product): ProductWithRelations {
+  const media: { mediaUrl: string; displayOrder: number }[] = [];
+  if (sp.image) {
+    media.push({ mediaUrl: sp.image, displayOrder: 0 });
+  }
+  if (sp.images) {
+    sp.images.forEach((url, i) => {
+      const exists = media.some((m) => m.mediaUrl === url);
+      if (!exists) {
+        media.push({ mediaUrl: url, displayOrder: media.length + i });
+      }
+    });
+  }
+
+  return {
+    id: sp.id,
+    title: sp.name,
+    description: sp.description ?? null,
+    price: sp.price,
+    secondPrice: sp.secondPrice ?? null,
+    stock: sp.stock,
+    currency: sp.currency,
+    isAvailable: sp.status === 'ACTIVO',
+    brand: sp.brand ?? null,
+    tags: sp.tags ?? null,
+    shippingInfo: sp.shippingInfo ?? null,
+    saleStatus: (sp.saleStatus ?? 'NORMAL') as 'MAS_VENDIDO' | 'NUEVO_PRODUCTO' | 'NORMAL',
+    slug: sp.seoTitle ?? null,
+    seoTitle: sp.seoTitle ?? null,
+    seoDescription: sp.seoDescription ?? null,
+    stars: 0,
+    externalCode: null,
+    displayOrder: 0,
+    metadata: sp.metadata ?? null,
+    businessId: '',
+    categoryId: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    category: sp.category ? { id: '', name: sp.category, businessId: '' } : null,
+    media,
+  } as unknown as ProductWithRelations;
 }
 
 export default function PurchaseActions({
@@ -40,6 +86,9 @@ export default function PurchaseActions({
   const [isAdding, setIsAdding] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
+
+  const [previewSignal, setPreviewSignal] = useState(0);
+  const previewProduct = useMemo(() => toPreviewProduct(product), [product]);
 
   const handleAddToCart = async () => {
     setIsAdding(true);
@@ -72,23 +121,36 @@ export default function PurchaseActions({
   // ── Owner view: no puede comprar su propio producto ──
   if (isOwner) {
     return (
-      <div className={styles.purchaseActions}>
-        <div className={styles.mainActionRow}>
+      <>
+        <div className={styles.purchaseActions}>
           <Button
             variant="filled"
             className={styles.buyNowButton}
-            onClick={() => router.push(`/${businessSlug}/storage`)}
+            onClick={() => setPreviewSignal((p) => p + 1)}
           >
-            Ir al inventario
+            Vista previa
           </Button>
-          <LikeSection
-            productId={productId}
-            businessSlug={businessSlug}
-            initialLikesCount={likesCount}
-            initialHasLiked={hasLiked}
-          />
         </div>
-      </div>
+
+        {previewSignal > 0 && (
+          <ProductPreviewSheet
+            slug={businessSlug}
+            product={previewProduct}
+            openSignal={previewSignal}
+            isOwner={true}
+            hasPaymentGateway={hasPaymentGateway}
+            culqiPublicKey={culqiPublicKey}
+            businessId={business.id}
+            businessName={business.name}
+            businessAddress={business.address ?? undefined}
+            businessCity={business.city ?? undefined}
+            businessLogoUrl={business.logoUrl ?? undefined}
+            onEdit={() => router.push(`/${businessSlug}/storage`)}
+            onDelete={() => router.push(`/${businessSlug}/storage`)}
+            sheetId="product-preview-sheet-detail"
+          />
+        )}
+      </>
     );
   }
 
