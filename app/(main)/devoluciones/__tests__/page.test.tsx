@@ -40,11 +40,12 @@ describe('DevolucionesPage', () => {
   });
 
   it('uses the sibling legal-page layout and indexable metadata', () => {
+    const robots = metadata.robots as { index?: boolean; follow?: boolean } | undefined;
     const { container } = render(<DevolucionesPage />);
     expect(container.firstChild).toHaveClass('legal-page');
     expect(metadata.title).toContain('Reembolsos');
     expect(metadata.description).toContain('reembolso');
-    expect(metadata.robots?.index).toBe(true);
-    expect(metadata.robots?.follow).toBe(true);
+    expect(robots?.index).toBe(true);
+    expect(robots?.follow).toBe(true);
   });
 });

@@ -34,9 +34,10 @@ describe('ComplaintBookPage (platform)', () => {
   });
 
   it('exposes indexable metadata', () => {
+    const robots = metadata.robots as { index?: boolean; follow?: boolean } | undefined;
     expect(metadata.title).toContain('Libro de Reclamaciones');
     expect(metadata.description).toContain('reclamo');
-    expect(metadata.robots?.index).toBe(true);
-    expect(metadata.robots?.follow).toBe(true);
+    expect(robots?.index).toBe(true);
+    expect(robots?.follow).toBe(true);
   });
 });
