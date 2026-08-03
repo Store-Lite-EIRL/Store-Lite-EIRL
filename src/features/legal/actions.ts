@@ -105,7 +105,171 @@ function addBusinessDays(date: Date, days: number): Date {
 }
 
 // =====================================================
-// T5: submitComplaint
+// Shared complaint-record creation
+// =====================================================
+// Single source of truth for validation, honeypot, 24h
+// rate-limit, ticket generation, persistence and the
+// non-blocking confirmation email. Shared by the per-store
+// path (submitComplaint) and the platform path
+// (submitPlatformComplaint).
+
+// Resolves the seeded platform business (migrations/0032) used as the
+// storage target for the platform-level Libro de Reclamaciones.
+const PLATFORM_BUSINESS_SLUG = 'devkittop';
+
+async function createComplaintRecord(
+  business: { id: string; name: string | null },
+  formData: z.infer<typeof complaintFormSchema>,
+): Promise<ActionState & { ticketNumber?: string; emailFailed?: boolean }> {
+  const parsed = complaintFormSchema.safeParse(formData);
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of parsed.error.issues) {
+      const field = issue.path.join('.');
+      if (!fieldErrors[field]) {
+        fieldErrors[field] = issue.message;
+      }
+    }
+    return {
+      success: false,
+      error: 'Corregí los errores en el formulario.',
+    };
+  }
+
+  const data = parsed.data;
+
+  // 🕵️ Honeypot check: si el campo oculto tiene valor, es un bot →
+  //     devolvemos éxito falso para no alertarlo
+  if (data.fax) {
+    return {
+      success: true,
+      ticketNumber: 'LR-0000-00000000-0000',
+      emailFailed: false,
+    };
+  }
+
+  const businessId = business.id;
+  const businessName = business.name ?? 'Tienda';
+
+  // ⏱️ Rate limiting: máximo 1 reclamo por email cada 24h
+  const recentCount = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(complaintBookRecords)
+    .where(
+      and(
+        eq(complaintBookRecords.businessId, businessId),
+        eq(complaintBookRecords.consumerEmail, data.consumerEmail),
+        sql`${complaintBookRecords.createdAt} > NOW() - INTERVAL '24 hours'`,
+      ),
+    );
+
+  if (Number(recentCount[0]?.count ?? 0) > 0) {
+    return {
+      success: false,
+      error:
+        'Ya registraste un reclamo con este correo en las últimas 24 horas. Esperá antes de enviar otro.',
+    };
+  }
+
+  // Generate ticket number: LR-{year}-{businessIdShort}-{seq}
+  const year = new Date().getFullYear();
+  const businessIdShort = businessId.replace(/-/g, '').slice(0, 8);
+
+  const lastRecord = await db
+    .select({ maxSeq: sql<string>`COALESCE(MAX(seq), '0')` })
+    .from(complaintBookRecords)
+    .where(
+      and(
+        eq(complaintBookRecords.businessId, businessId),
+        sql`EXTRACT(YEAR FROM ${complaintBookRecords.createdAt}) = ${year}`,
+      ),
+    )
+    .limit(1)
+    .then((rows) => rows[0]?.maxSeq ?? '0');
+
+  const nextSeq = String(Number(lastRecord) + 1).padStart(4, '0');
+  const ticketNumber = `LR-${year}-${businessIdShort}-${nextSeq}`;
+
+  // Calculate SLA deadline (15 business days)
+  const slaDeadline = addBusinessDays(new Date(), 15);
+
+  // Insert complaint record (exclude fax que es honeypot)
+  const { fax: _fax, ...insertData } = data;
+  const [record] = await db
+    .insert(complaintBookRecords)
+    .values({
+      businessId,
+      ticketNumber,
+      consumerLastName: insertData.consumerLastName,
+      consumerFirstName: insertData.consumerFirstName,
+      consumerDocType: insertData.consumerDocumentType,
+      consumerDocId: insertData.consumerDocumentId,
+      consumerAddress: insertData.consumerAddress,
+      consumerPhone: insertData.consumerPhone,
+      consumerEmail: insertData.consumerEmail,
+      minorAge: insertData.minorAge,
+      guardianName: insertData.guardianName ?? null,
+      contractDescription: insertData.contractDescription,
+      claimedAmount: insertData.claimedAmount ? String(insertData.claimedAmount) : null,
+      claimDescription: insertData.claimDescription,
+      consumerRequest: insertData.consumerRequest,
+      slaDeadline,
+      status: 'pending',
+    })
+    .returning();
+
+  // Attempt to send confirmation email (non-blocking)
+  let emailFailed = false;
+  try {
+    const { render } = await import('@react-email/components');
+    const { ComplaintConfirmationEmail } = await import('@/emails/ComplaintConfirmationEmail');
+    const { sendEmail } = await import('@/lib/email/resend');
+
+    const emailHtml = await render(
+      ComplaintConfirmationEmail({
+        businessName,
+        ticketNumber,
+        date: new Date().toLocaleDateString('es-PE', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }),
+        consumerName: `${data.consumerFirstName} ${data.consumerLastName}`,
+        claimDescription: data.claimDescription,
+        claimedAmount: data.claimedAmount ?? undefined,
+        slaDeadline: slaDeadline.toLocaleDateString('es-PE', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }),
+      }),
+    );
+
+    await sendEmail({
+      to: data.consumerEmail,
+      subject: `Libro de Reclamaciones — Ticket ${ticketNumber}`,
+      html: emailHtml,
+    });
+
+    // Mark email as sent
+    await db
+      .update(complaintBookRecords)
+      .set({ emailSentAt: new Date() })
+      .where(eq(complaintBookRecords.id, record.id));
+  } catch (emailError) {
+    console.warn('[legal] Failed to send complaint confirmation email:', emailError);
+    emailFailed = true;
+  }
+
+  return {
+    success: true,
+    ticketNumber,
+    emailFailed,
+  };
+}
+
+// =====================================================
+// T5: submitComplaint (per-store)
 // =====================================================
 
 export async function submitComplaint(
@@ -113,34 +277,6 @@ export async function submitComplaint(
   formData: z.infer<typeof complaintFormSchema>,
 ): Promise<ActionState & { ticketNumber?: string; emailFailed?: boolean }> {
   try {
-    const parsed = complaintFormSchema.safeParse(formData);
-    if (!parsed.success) {
-      const fieldErrors: Record<string, string> = {};
-      for (const issue of parsed.error.issues) {
-        const field = issue.path.join('.');
-        if (!fieldErrors[field]) {
-          fieldErrors[field] = issue.message;
-        }
-      }
-      return {
-        success: false,
-        error: 'Corregí los errores en el formulario.',
-      };
-    }
-
-    const data = parsed.data;
-
-    // 🕵️ Honeypot check: si el campo oculto tiene valor, es un bot →
-    //     devolvemos éxito falso para no alertarlo
-    if (data.fax) {
-      return {
-        success: true,
-        ticketNumber: 'LR-0000-00000000-0000',
-        emailFailed: false,
-      };
-    }
-
-    // Resolve business from slug
     const business = await db.query.businesses.findFirst({
       where: eq(businesses.slug, slug),
       columns: { id: true, name: true },
@@ -150,126 +286,40 @@ export async function submitComplaint(
       return { success: false, error: 'Tienda no encontrada.' };
     }
 
-    const businessId = business.id;
-    const businessName = business.name ?? 'Tienda';
+    return createComplaintRecord(business, formData);
+  } catch (error) {
+    console.error('[legal] Error submitting complaint:', error);
+    return { success: false, error: 'Error al registrar el reclamo. Intentalo de nuevo.' };
+  }
+}
 
-    // ⏱️ Rate limiting: máximo 1 reclamo por email cada 24h
-    const recentCount = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(complaintBookRecords)
-      .where(
-        and(
-          eq(complaintBookRecords.businessId, businessId),
-          eq(complaintBookRecords.consumerEmail, data.consumerEmail),
-          sql`${complaintBookRecords.createdAt} > NOW() - INTERVAL '24 hours'`,
-        ),
-      );
+// =====================================================
+// submitPlatformComplaint (platform / public LR)
+// =====================================================
+// Slug-free platform submission. Resolves the fixed platform
+// business (PLATFORM_BUSINESS_SLUG) and delegates the shared
+// createComplaintRecord helper. Public path → generic errors
+// (no internal platform details leaked).
 
-    if (Number(recentCount[0]?.count ?? 0) > 0) {
+export async function submitPlatformComplaint(
+  formData: z.infer<typeof complaintFormSchema>,
+): Promise<ActionState & { ticketNumber?: string; emailFailed?: boolean }> {
+  try {
+    const business = await db.query.businesses.findFirst({
+      where: eq(businesses.slug, PLATFORM_BUSINESS_SLUG),
+      columns: { id: true, name: true },
+    });
+
+    if (!business) {
       return {
         success: false,
-        error:
-          'Ya registraste un reclamo con este correo en las últimas 24 horas. Esperá antes de enviar otro.',
+        error: 'Ocurrió un error al registrar tu reclamo. Intentalo de nuevo.',
       };
     }
 
-    // Generate ticket number: LR-{year}-{businessIdShort}-{seq}
-    const year = new Date().getFullYear();
-    const businessIdShort = businessId.replace(/-/g, '').slice(0, 8);
-
-    const lastRecord = await db
-      .select({ maxSeq: sql<string>`COALESCE(MAX(seq), '0')` })
-      .from(complaintBookRecords)
-      .where(
-        and(
-          eq(complaintBookRecords.businessId, businessId),
-          sql`EXTRACT(YEAR FROM ${complaintBookRecords.createdAt}) = ${year}`,
-        ),
-      )
-      .limit(1)
-      .then((rows) => rows[0]?.maxSeq ?? '0');
-
-    const nextSeq = String(Number(lastRecord) + 1).padStart(4, '0');
-    const ticketNumber = `LR-${year}-${businessIdShort}-${nextSeq}`;
-
-    // Calculate SLA deadline (15 business days)
-    const slaDeadline = addBusinessDays(new Date(), 15);
-
-    // Insert complaint record (excluir fax que es honeypot)
-    const { fax: _fax, ...insertData } = data;
-    const [record] = await db
-      .insert(complaintBookRecords)
-      .values({
-        businessId,
-        ticketNumber,
-        consumerLastName: insertData.consumerLastName,
-        consumerFirstName: insertData.consumerFirstName,
-        consumerDocType: insertData.consumerDocumentType,
-        consumerDocId: insertData.consumerDocumentId,
-        consumerAddress: insertData.consumerAddress,
-        consumerPhone: insertData.consumerPhone,
-        consumerEmail: insertData.consumerEmail,
-        minorAge: insertData.minorAge,
-        guardianName: insertData.guardianName ?? null,
-        contractDescription: insertData.contractDescription,
-        claimedAmount: insertData.claimedAmount ? String(insertData.claimedAmount) : null,
-        claimDescription: insertData.claimDescription,
-        consumerRequest: insertData.consumerRequest,
-        slaDeadline,
-        status: 'pending',
-      })
-      .returning();
-
-    // Attempt to send confirmation email (non-blocking)
-    let emailFailed = false;
-    try {
-      const { render } = await import('@react-email/components');
-      const { ComplaintConfirmationEmail } = await import('@/emails/ComplaintConfirmationEmail');
-      const { sendEmail } = await import('@/lib/email/resend');
-
-      const emailHtml = await render(
-        ComplaintConfirmationEmail({
-          businessName: `Tienda`,
-          ticketNumber,
-          date: new Date().toLocaleDateString('es-PE', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
-          consumerName: `${data.consumerFirstName} ${data.consumerLastName}`,
-          claimDescription: data.claimDescription,
-          claimedAmount: data.claimedAmount ?? undefined,
-          slaDeadline: slaDeadline.toLocaleDateString('es-PE', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
-        }),
-      );
-
-      await sendEmail({
-        to: data.consumerEmail,
-        subject: `Libro de Reclamaciones — Código: ${ticketNumber}`,
-        html: emailHtml,
-      });
-
-      // Mark email as sent
-      await db
-        .update(complaintBookRecords)
-        .set({ emailSentAt: new Date() })
-        .where(eq(complaintBookRecords.id, record.id));
-    } catch (emailError) {
-      console.warn('[legal] Failed to send complaint confirmation email:', emailError);
-      emailFailed = true;
-    }
-
-    return {
-      success: true,
-      ticketNumber,
-      emailFailed,
-    };
+    return await createComplaintRecord(business, formData);
   } catch (error) {
-    console.error('[legal] Error submitting complaint:', error);
+    console.error('[legal] Error submitting platform complaint:', error);
     return { success: false, error: 'Error al registrar el reclamo. Intentalo de nuevo.' };
   }
 }
