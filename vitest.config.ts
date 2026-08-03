@@ -10,6 +10,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: [
+      // @app/* → ./app/* (matches tsconfig paths)
+      { find: /^@app\//, replacement: path.resolve(__dirname, './app/') + '/' },
       // @/app/* → ./app/* (Next.js app dir at project root)
       { find: /^@\/app\//, replacement: path.resolve(__dirname, './app/') + '/' },
       // @/* → ./src/* (matches tsconfig paths)

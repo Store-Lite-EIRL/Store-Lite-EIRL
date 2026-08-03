@@ -32,13 +32,20 @@ export default function ProductCard({
   const mainImage = product.media?.[0]?.mediaUrl || 'https://via.placeholder.com/220';
   const categoryName = product.category?.name || 'Producto';
 
-  // Pricing logic
-  const price = Number(product.price);
-  const metadata = (product.metadata as Record<string, unknown>) || {};
-  const originalPrice = metadata.originalPrice ? Number(metadata.originalPrice) : null;
-  const discount = originalPrice
-    ? Math.round(((originalPrice - price) / originalPrice) * 100)
-    : null;
+  // Pricing logic: if secondPrice exists and differs from price,
+  // it's the discounted offer price (shown as the current price),
+  // and the original price (product.price) is shown as strikethrough.
+  const hasOffer =
+    product.secondPrice !== null &&
+    product.secondPrice !== undefined &&
+    String(product.secondPrice) !== '' &&
+    Number(product.secondPrice) !== Number(product.price);
+  const price = hasOffer ? Number(product.secondPrice) : Number(product.price);
+  const originalPrice = hasOffer ? Number(product.price) : null;
+  const discount =
+    originalPrice && price < originalPrice
+      ? Math.round(((originalPrice - price) / originalPrice) * 100)
+      : null;
 
   return (
     <article

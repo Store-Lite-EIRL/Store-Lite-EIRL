@@ -252,8 +252,58 @@ export const ProductTable = ({
                       product.stock
                     )}
                   </td>
-                  <td className="secondary-text">
-                    {formatPrice(parsePriceValue(product.price), currencySymbol)}
+                  <td>
+                    <span
+                      style={{
+                        position: 'relative',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        minHeight: '1.8rem',
+                        paddingLeft: '3.2rem',
+                        gap: 8,
+                      }}
+                    >
+                      {product.secondPrice && (
+                        <span
+                          style={{
+                            position: 'absolute',
+                            left: 0,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            backgroundColor: '#dc2626',
+                            color: '#fff',
+                            fontSize: '0.7rem',
+                            fontWeight: 800,
+                            padding: '1px 5px',
+                            borderRadius: 4,
+                            lineHeight: '1.4',
+                          }}
+                        >
+                          -
+                          {Math.round(
+                            ((parsePriceValue(product.price) -
+                              parsePriceValue(product.secondPrice)) /
+                              parsePriceValue(product.price)) *
+                              100,
+                          )}
+                          %
+                        </span>
+                      )}
+                      <strong style={{ fontSize: '0.95rem', fontWeight: 600 }}>
+                        {formatPrice(
+                          parsePriceValue(product.secondPrice ?? product.price),
+                          currencySymbol,
+                        )}
+                      </strong>
+                      {product.secondPrice && (
+                        <span
+                          className="secondary-text"
+                          style={{ textDecoration: 'line-through', fontSize: '0.8rem' }}
+                        >
+                          {formatPrice(parsePriceValue(product.price), currencySymbol)}
+                        </span>
+                      )}
+                    </span>
                   </td>
                   <td>
                     <span
