@@ -61,6 +61,8 @@ function StorageContent({ businessId }: { businessId: string }) {
     deleteProduct,
     saveProductBackground,
     isLoading,
+    hasError,
+    refreshProducts,
   } = useStorage();
 
   const extraColumns = useExtraColumns(slug, allFilteredProducts);
@@ -70,6 +72,17 @@ function StorageContent({ businessId }: { businessId: string }) {
       <div className="storage-loading-container">
         <div className="spinner-large" />
         <p>Cargando almacén...</p>
+      </div>
+    );
+  }
+
+  if (hasError && products.length === 0) {
+    return (
+      <div className="storage-loading-container">
+        <p>No pudimos cargar los productos.</p>
+        <button type="button" className="page-btn" onClick={() => refreshProducts()}>
+          Reintentar
+        </button>
       </div>
     );
   }
