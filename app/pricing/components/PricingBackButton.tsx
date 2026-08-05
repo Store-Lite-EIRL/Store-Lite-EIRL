@@ -1,6 +1,6 @@
 'use client';
 
-import BackButton from 'app/[slug]/(app)/product/[productId]/components/BackButton';
+import { Icon, IconButton } from '@/shared/components/ui';
 import { useRouter } from 'next/navigation';
 
 export function PricingBackButton() {
@@ -16,12 +16,14 @@ export function PricingBackButton() {
   };
 
   return (
-    // <Button variant="text" onClick={handleBack} className="pricing-back-button">
-    //   <Icon size={21}>
-    //     arrow_back
-    //   </Icon>
-    //   Volver
-    // </Button>
-    <BackButton href="/list-business" style={{ position: 'absolute', top: 50 }} />
+    <IconButton
+      variant="filled-tonal"
+      aria-label="Volver"
+      onClick={handleBack}
+      style={{ position: 'absolute', top: 50 }}
+      suppressHydrationWarning
+    >
+      <Icon>arrow_back</Icon>
+    </IconButton>
   );
 }
