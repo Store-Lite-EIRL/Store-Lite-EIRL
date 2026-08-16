@@ -362,8 +362,8 @@ export default async function ProductDetailContent({
               )}
               {product.tags && product.tags.length > 0 && (
                 <div className={styles.tagsRow}>
-                  {product.tags.map((tag) => (
-                    <span key={tag} className={styles.tagChip}>
+                  {product.tags.map((tag, idx) => (
+                    <span key={`${tag}-${idx}`} className={styles.tagChip}>
                       #{tag}
                     </span>
                   ))}
@@ -399,7 +399,7 @@ export default async function ProductDetailContent({
             </div>
           )}
 
-          {product.stock > 0 ? (
+          {product.stock > 0 || isOwner ? (
             <PurchaseActions
               product={product}
               business={businessDetail}
@@ -519,7 +519,9 @@ export default async function ProductDetailContent({
         </div>
       </section>
 
-      {!isModal && <RelatedProductsSection slug={slug} products={relatedProductsData} />}
+      {!isModal && (
+        <RelatedProductsSection slug={slug} products={relatedProductsData} isOwner={isOwner} />
+      )}
 
       {/* BEGIN: How to Buy Section */}
       <section className={styles.purchaseProcessSection}>

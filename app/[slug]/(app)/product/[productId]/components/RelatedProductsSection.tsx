@@ -29,9 +29,18 @@ interface RelatedProductItem {
 interface RelatedProductsSectionProps {
   slug: string;
   products: RelatedProductItem[];
+  isOwner?: boolean;
 }
 
-function RelatedProductCard({ product, slug }: { product: RelatedProductItem; slug: string }) {
+function RelatedProductCard({
+  product,
+  slug,
+  isOwner,
+}: {
+  product: RelatedProductItem;
+  slug: string;
+  isOwner: boolean;
+}) {
   const { isInCart, toggleCartItem } = useCart();
   const {
     likesCount,
@@ -63,6 +72,7 @@ function RelatedProductCard({ product, slug }: { product: RelatedProductItem; sl
           image: product.image,
           images: product.images,
           description: product.description,
+          secondPrice: product.secondPrice ?? null,
         }),
       );
     },
@@ -114,37 +124,47 @@ function RelatedProductCard({ product, slug }: { product: RelatedProductItem; sl
         </div>
       </div>
 
-      <div className={styles.cardActions}>
-        <button
-          type="button"
-          className={`${styles.actionBtn} ${styles.cartBtn}`}
-          onClick={handleToggleCart}
-          disabled={product.stock === 0}
-          aria-label={
-            product.stock === 0 ? 'Sin stock' : inCart ? 'Quitar del carrito' : 'Agregar al carrito'
-          }
-        >
-          <Icon size={18}>{inCart ? 'remove_shopping_cart' : 'add_shopping_cart'}</Icon>
-        </button>
+      {!isOwner && (
+        <div className={styles.cardActions}>
+          <button
+            type="button"
+            className={`${styles.actionBtn} ${styles.cartBtn}`}
+            onClick={handleToggleCart}
+            disabled={product.stock === 0}
+            aria-label={
+              product.stock === 0
+                ? 'Sin stock'
+                : inCart
+                  ? 'Quitar del carrito'
+                  : 'Agregar al carrito'
+            }
+          >
+            <Icon size={18}>{inCart ? 'remove_shopping_cart' : 'add_shopping_cart'}</Icon>
+          </button>
 
-        <button
-          type="button"
-          className={`${styles.actionBtn} ${styles.likeBtn}`}
-          onClick={handleToggleLike}
-          disabled={isTogglingLike}
-          aria-label={hasLiked ? 'Quitar like' : 'Dar like'}
-        >
-          <Icon size={18} className={hasLiked ? styles.likeActive : styles.likeInactive}>
-            {isTogglingLike ? 'hourglass_empty' : hasLiked ? 'favorite' : 'favorite_border'}
-          </Icon>
-          <span className={styles.likeCount}>{likesCount}</span>
-        </button>
-      </div>
+          <button
+            type="button"
+            className={`${styles.actionBtn} ${styles.likeBtn}`}
+            onClick={handleToggleLike}
+            disabled={isTogglingLike}
+            aria-label={hasLiked ? 'Quitar like' : 'Dar like'}
+          >
+            <Icon size={18} className={hasLiked ? styles.likeActive : styles.likeInactive}>
+              {isTogglingLike ? 'hourglass_empty' : hasLiked ? 'favorite' : 'favorite_border'}
+            </Icon>
+            <span className={styles.likeCount}>{likesCount}</span>
+          </button>
+        </div>
+      )}
     </Link>
   );
 }
 
-export default function RelatedProductsSection({ slug, products }: RelatedProductsSectionProps) {
+export default function RelatedProductsSection({
+  slug,
+  products,
+  isOwner = false,
+}: RelatedProductsSectionProps) {
   if (products.length === 0) return null;
 
   return (
@@ -152,7 +172,7 @@ export default function RelatedProductsSection({ slug, products }: RelatedProduc
       <h2 className={styles.title}>Productos Relacionados</h2>
       <div className={styles.grid}>
         {products.map((product) => (
-          <RelatedProductCard key={product.id} product={product} slug={slug} />
+          <RelatedProductCard key={product.id} product={product} slug={slug} isOwner={isOwner} />
         ))}
       </div>
     </section>
