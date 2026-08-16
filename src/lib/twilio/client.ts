@@ -16,8 +16,12 @@ export interface TwilioMessageResponse {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Sends OTP via WhatsApp using Twilio Verify
- * Verify handles template approval, expiration, and delivery automatically.
+ * Sends OTP via SMS using Twilio Verify
+ * Verify handles expiration and delivery automatically.
+ *
+ * NOTE: WhatsApp channel is currently disabled because the verify_auto_created
+ * templates are rejected (see Twilio ticket #28998565). Switch back to
+ * 'whatsapp' once the templates are approved (cheaper in Peru: ~$0.05 vs ~$0.30).
  *
  * @param phone - Phone in E.164 format: "+51999999999"
  * @returns Verification SID and status
@@ -27,7 +31,7 @@ export async function sendOtpViaVerify(phone: string): Promise<{ sid: string; st
 
   const verification = await service.verifications.create({
     to: phone,
-    channel: 'whatsapp',
+    channel: 'sms',
   });
 
   console.log(

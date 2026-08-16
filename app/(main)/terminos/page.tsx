@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Términos de Servicio - Store.Lite',
   description:
-    'Términos y condiciones de uso de la plataforma Store.Lite, un servicio SaaS de Devkittop SAC para la creación y gestión de tiendas online.',
+    'Términos y condiciones de uso de la plataforma Store.Lite, un servicio SaaS de Devkittop (MAMANI TACORA ERNESTO ALONSO, RUC 10741399852, persona natural con negocio) para la creación y gestión de tiendas online.',
   robots: { index: true, follow: true },
 };
 
@@ -41,8 +41,9 @@ const sections = [
           <li>Mantener la confidencialidad de su cuenta y credenciales.</li>
         </ul>
         <p>
-          Ud. es responsable de todas las actividades que ocurran bajo su cuenta. Devkittop SAC no
-          será responsable por pérdidas derivadas del uso no autorizado de su cuenta.
+          Ud. es responsable de todas las actividades que ocurran bajo su cuenta. Devkittop, marca
+          de MAMANI TACORA ERNESTO ALONSO, persona natural con negocio, RUC 10741399852 no será
+          responsable por pérdidas derivadas del uso no autorizado de su cuenta.
         </p>
       </>
     ),
@@ -57,9 +58,12 @@ const sections = [
         </p>
         <ul>
           <li>Los pagos se procesan a través de nuestro proveedor de pagos Culqi.</li>
-          <li>Las suscripciones se renuevan automáticamente salvo cancelación previa.</li>
+          <li>
+            Los planes se pagan de forma manual cada mes, sin renovación automática ni cobro
+            recurrente: cada pago mensual se inicia expresamente por el cliente.
+          </li>
           <li>Los reembolsos se rigen por nuestra Política de Reembolsos.</li>
-          <li>Devkittop SAC se reserva el derecho de modificar los precios con previo aviso.</li>
+          <li>Devkittop se reserva el derecho de modificar los precios con previo aviso.</li>
         </ul>
       </>
     ),
@@ -70,8 +74,9 @@ const sections = [
       <>
         <p>
           La plataforma Store.Lite, incluyendo su código, diseño, logotipos y contenido original, es
-          propiedad de Devkittop SAC y está protegida por las leyes de propiedad intelectual
-          peruanas e internacionales.
+          propiedad de Devkittop, marca de MAMANI TACORA ERNESTO ALONSO, persona natural con
+          negocio, RUC 10741399852 y está protegida por las leyes de propiedad intelectual peruanas
+          e internacionales.
         </p>
         <p>
           El contenido que Ud. publique en su tienda (productos, imágenes, descripciones) es de su
@@ -104,9 +109,10 @@ const sections = [
     title: '7. Limitación de responsabilidad',
     content: (
       <p>
-        En la medida máxima permitida por la ley, Devkittop SAC no será responsable por daños
-        indirectos, incidentales, especiales o consecuentes derivados del uso o la imposibilidad de
-        usar la plataforma. La plataforma se proporciona &laquo;tal cual&raquo; y &laquo;según
+        En la medida máxima permitida por la ley, Devkittop, marca de MAMANI TACORA ERNESTO ALONSO,
+        persona natural con negocio, RUC 10741399852 no será responsable por daños indirectos,
+        incidentales, especiales o consecuentes derivados del uso o la imposibilidad de usar la
+        plataforma. La plataforma se proporciona &laquo;tal cual&raquo; y &laquo;según
         disponibilidad&raquo;, sin garantías de ningún tipo, expresas o implícitas.
       </p>
     ),
@@ -117,7 +123,8 @@ const sections = [
       <>
         <p>
           Ud. puede cancelar su cuenta en cualquier momento desde la configuración de la plataforma.
-          Devkittop SAC se reserva el derecho de suspender o cancelar cuentas que violen estos
+          Devkittop, marca de MAMANI TACORA ERNESTO ALONSO, persona natural con negocio, RUC
+          10741399852 se reserva el derecho de suspender o cancelar cuentas que violen estos
           Términos.
         </p>
         <p>
@@ -131,7 +138,8 @@ const sections = [
     title: '9. Modificaciones de los Términos',
     content: (
       <p>
-        Devkittop SAC se reserva el derecho de modificar estos Términos en cualquier momento. Le
+        Devkittop, marca de MAMANI TACORA ERNESTO ALONSO, persona natural con negocio, RUC
+        10741399852 se reserva el derecho de modificar estos Términos en cualquier momento. Le
         notificaremos sobre cambios significativos a través de la plataforma o por correo
         electrónico. El uso continuado de la plataforma después de dichas modificaciones constituye
         su aceptación de los nuevos Términos.
@@ -162,8 +170,8 @@ const sections = [
           devkittopsac@gmail.com
         </a>{' '}
         o al teléfono{' '}
-        <a href="tel:+51978775813" target="_blank" rel="noopener noreferrer">
-          +51 978 775 813
+        <a href="tel:+51958119418" target="_blank" rel="noopener noreferrer">
+          958 119 418
         </a>
         .
       </p>
