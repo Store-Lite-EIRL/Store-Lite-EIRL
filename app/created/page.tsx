@@ -91,7 +91,7 @@ export default async function CreatedPage({ searchParams }: CreatedPageProps) {
           }}
         >
           <Link
-            href={`/admin/${name}`}
+            href={`/${name}/dashboard`}
             className="md-button md-button--filled"
             style={{
               display: 'flex',
