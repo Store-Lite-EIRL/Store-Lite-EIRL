@@ -102,3 +102,5 @@ tareas_prs_prioritizadas.md
 # using a suffix not matching .md (e.g. .task or .private) and add patterns
 # here as needed.
 .env.local
+send-test-email.ts
+.env.current
