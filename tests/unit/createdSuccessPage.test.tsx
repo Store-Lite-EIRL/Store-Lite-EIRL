@@ -94,7 +94,7 @@ describe('CreatedPage — success confirmation page', () => {
       // Admin dashboard link
       const adminLink = screen.getByRole('link', { name: /ir al panel/i });
       expect(adminLink).toBeInTheDocument();
-      expect(adminLink).toHaveAttribute('href', '/admin/mi-tienda');
+      expect(adminLink).toHaveAttribute('href', '/mi-tienda/dashboard');
 
       // Pricing link
       const pricingLink = screen.getByRole('link', { name: /ver planes/i });

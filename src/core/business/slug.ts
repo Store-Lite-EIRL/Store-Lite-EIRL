@@ -9,6 +9,23 @@ export interface ResolvedBusinessSlug {
   matchedAlias: boolean;
 }
 
+// =====================================================
+// Reserved slugs — platform-owned paths/businesses that
+// sellers must never claim:
+//  - 'libro-reclamaciones'  → platform complaint book route (app/(main))
+//  - 'devkittop'            → platform business (storage target for
+//                             complaint_book_records, migrations/0032)
+// =====================================================
+
+export const RESERVED_BUSINESS_SLUGS: ReadonlySet<string> = new Set([
+  'devkittop',
+  'libro-reclamaciones',
+]);
+
+export function isReservedBusinessSlug(slug: string): boolean {
+  return RESERVED_BUSINESS_SLUGS.has(slug);
+}
+
 export async function resolveBusinessSlug(slug: string): Promise<ResolvedBusinessSlug | null> {
   const directBusiness = await db.query.businesses.findFirst({
     where: eq(businesses.slug, slug),
@@ -46,6 +63,11 @@ export async function isBusinessSlugTaken(
   slug: string,
   options?: { excludeBusinessId?: string },
 ): Promise<boolean> {
+  // Platform-owned slugs are always taken (never assignable to sellers).
+  if (isReservedBusinessSlug(slug)) {
+    return true;
+  }
+
   const businessConflict = await db.query.businesses.findFirst({
     where: options?.excludeBusinessId
       ? and(eq(businesses.slug, slug), ne(businesses.id, options.excludeBusinessId))

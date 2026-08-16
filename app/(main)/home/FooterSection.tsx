@@ -19,10 +19,14 @@ export default function FooterSection() {
                 <span className="material-symbols-outlined">mail</span>
                 devkittopsac@gmail.com
               </a>
-              <a href="tel:+51978775813" className="contact-item">
+              <a href="tel:+51958119418" className="contact-item">
                 <span className="material-symbols-outlined">call</span>
-                +51 978 775 813
+                958 119 418
               </a>
+              <span className="contact-item">
+                <span className="material-symbols-outlined">place</span>
+                Arequipa, Arequipa, Ciudad de Dios
+              </span>
             </div>
           </div>
 
@@ -43,7 +47,8 @@ export default function FooterSection() {
               <h4>Legal</h4>
               <Link href="/terminos">Términos de servicio</Link>
               <Link href="/privacidad">Política de privacidad</Link>
-              <Link href="#">Política de reembolsos</Link>
+              <Link href="/devoluciones">Política de reembolsos</Link>
+              <Link href="/libro-reclamaciones">Libro de Reclamaciones</Link>
             </div>
           </div>
         </div>
