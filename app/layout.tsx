@@ -4,42 +4,51 @@ import { WebVitalsReporter } from '@/shared/components/WebVitalsReporter';
 import { ThemeProvider } from '@/shared/context/ThemeContext';
 import { CSPostHogProvider } from '@/shared/providers/PostHogProvider';
 import type { Metadata } from 'next';
-import { Google_Sans_Flex, Inter, Poppins, Roboto, Roboto_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 import Script from 'next/script';
 import './globals.css';
 
-const google_sans_flex = Google_Sans_Flex({
-  subsets: ['latin'],
+const google_sans_flex = localFont({
+  src: './fonts/google-sans-flex.woff2',
   display: 'swap',
   variable: '--font-google-sans-flex',
   adjustFontFallback: false,
   fallback: ['system-ui', 'sans-serif'],
-  weight: 'variable',
+  weight: '1 1000',
 });
 
-const roboto_mono = Roboto_Mono({
-  subsets: ['latin'],
+const roboto_mono = localFont({
+  src: './fonts/roboto-mono.woff2',
   display: 'swap',
   variable: '--font-roboto-mono',
+  weight: '100 700',
 });
 
-const inter = Inter({
-  subsets: ['latin'],
+const inter = localFont({
+  src: './fonts/inter.woff2',
   display: 'swap',
   variable: '--font-storefront-inter',
+  weight: '100 900',
 });
 
-const roboto = Roboto({
-  subsets: ['latin'],
+const roboto = localFont({
+  src: [
+    { path: './fonts/roboto-400.woff2', weight: '400', style: 'normal' },
+    { path: './fonts/roboto-500.woff2', weight: '500', style: 'normal' },
+    { path: './fonts/roboto-700.woff2', weight: '700', style: 'normal' },
+  ],
   display: 'swap',
-  weight: ['400', '500', '700'],
   variable: '--font-storefront-roboto',
 });
 
-const poppins = Poppins({
-  subsets: ['latin'],
+const poppins = localFont({
+  src: [
+    { path: './fonts/poppins-400.woff2', weight: '400', style: 'normal' },
+    { path: './fonts/poppins-500.woff2', weight: '500', style: 'normal' },
+    { path: './fonts/poppins-600.woff2', weight: '600', style: 'normal' },
+    { path: './fonts/poppins-700.woff2', weight: '700', style: 'normal' },
+  ],
   display: 'swap',
-  weight: ['400', '500', '600', '700'],
   variable: '--font-storefront-poppins',
 });
 
