@@ -1,6 +1,7 @@
 import { db } from '@/core/database/client';
 import { planPayments } from '@/core/database/schema';
 import { requireOwnedBusinessById } from '@/features/storage/actions/authz';
+import { sendPlanPurchaseConfirmationEmail } from '@/lib/email/planEmails';
 import { createClient } from '@/lib/supabase/server';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
@@ -55,6 +56,12 @@ export async function POST(req: Request) {
     if (!result) {
       return NextResponse.json({ error: 'Pago de plan no encontrado' }, { status: 404 });
     }
+
+    // Fire-and-forget: notify the buyer that the boleta is ready.
+    // The email includes the ticket link, so it never blocks the response.
+    sendPlanPurchaseConfirmationEmail(result, result.businessId).catch((err) => {
+      console.error('[update-plan-ticket] Plan purchase email error:', err);
+    });
 
     return NextResponse.json({
       success: true,

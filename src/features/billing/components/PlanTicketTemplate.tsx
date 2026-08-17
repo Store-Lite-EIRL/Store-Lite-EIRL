@@ -67,17 +67,32 @@ export function PlanTicketTemplate({
 
   const formatDate = (d: Date | string) => {
     const date = typeof d === 'string' ? new Date(d) : d;
-    return date.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return date.toLocaleDateString('es-PE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      timeZone: 'America/Lima',
+    });
   };
 
   const formatFullDate = (d: Date | string) => {
     const date = typeof d === 'string' ? new Date(d) : d;
-    return date.toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' });
+    return date.toLocaleDateString('es-PE', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'America/Lima',
+    });
   };
 
   const formatTime = (d: Date | string) => {
     const date = typeof d === 'string' ? new Date(d) : d;
-    return date.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return date.toLocaleTimeString('es-PE', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'America/Lima',
+    });
   };
 
   const planLabel = PLAN_LABELS[planType] || planType.toUpperCase();
