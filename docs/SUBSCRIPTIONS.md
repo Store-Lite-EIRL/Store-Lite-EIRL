@@ -11,9 +11,11 @@ Para monetizar la plataforma y ofrecer características avanzadas, los negocios 
 | Plan              | Precio (Mensual) | Estado Inicial | Descripción                                          |
 | :---------------- | :--------------- | :------------- | :--------------------------------------------------- |
 | **Básico**        | S/ 0 (Gratis)    | `inactive`     | Funciones esenciales para micro-negocios.            |
-| **Emprendedor**   | S/ 30            | `active`       | Herramientas avanzadas para negocios en crecimiento. |
-| **Business Pro**  | S/ 55            | `active`       | Soporte prioritario y acceso multi-usuario.          |
-| **Enterprise AI** | S/ 90            | `active`       | Automatización con IA y soluciones personalizadas.   |
+| **Emprendedor**   | S/ 59            | `active`       | Herramientas avanzadas para negocios en crecimiento. |
+| **Business Pro**  | S/ 99            | `active`       | Soporte prioritario y acceso multi-usuario.          |
+| **Enterprise AI** | S/ 149           | `active`       | Automatización con IA y soluciones personalizadas.   |
+
+> Los precios mostrados son el **precio final, IGV incluido** (18%). La fuente única de verdad de los precios es `src/shared/billing/planPrices.ts` (en céntimos).
 
 ## Estructura de Datos (Tabla `businesses`)
 

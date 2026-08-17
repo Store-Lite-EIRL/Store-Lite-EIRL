@@ -24,12 +24,22 @@ export interface PurchasePlanData {
   buyerAddress?: string;
 }
 
+export interface PurchasePlanIssuer {
+  ruc: string;
+  name: string;
+  address: string;
+  district: string;
+  province: string;
+  department: string;
+}
+
 export interface PurchasePlanResult {
   planPaymentId: string;
   ticketNumber: string;
   planActivatedUntil: string;
   amountTotal: number;
   ticketUrl?: string;
+  issuer?: PurchasePlanIssuer;
 }
 
 export function usePurchasePlan() {

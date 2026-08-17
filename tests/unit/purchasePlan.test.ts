@@ -95,10 +95,15 @@ describe('POST /api/billing/purchase-plan', () => {
 
     // Default mock setup — SaaS issuer exists
     mockSaasIssuerFindFirst.mockResolvedValue({
-      id: 'issuer_1',
-      businessName: 'Store Lite',
-      documentType: 'RUC',
-      documentNumber: '20123456789',
+      id: 1,
+      ruc: '10741399852',
+      razonSocial: 'MAMANI TACORA ERNESTO ALONSO',
+      direccion: 'ASC. CIUDAD DE DIOS ZN. 4 COM',
+      distrito: 'YURA',
+      provincia: 'AREQUIPA',
+      departamento: 'AREQUIPA',
+      ubigeo: '040128',
+      igvRate: '0.18',
     });
 
     // Default mock setup — DB insert returns a payment
@@ -141,6 +146,29 @@ describe('POST /api/billing/purchase-plan', () => {
     // (nextval of seq_plan_payment_b001) fills it.
     const planPaymentValues = mockValues.mock.calls[0][0];
     expect(planPaymentValues).not.toHaveProperty('ticketCorrelative');
+  });
+
+  test('returns issuer fiscal data in the response for the client ticket', async () => {
+    const { POST } = await import('@/app/api/billing/purchase-plan/route');
+
+    const request = new Request('http://localhost/api/billing/purchase-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(createValidPayload()),
+    });
+
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.issuer).toEqual({
+      ruc: '10741399852',
+      name: 'MAMANI TACORA ERNESTO ALONSO',
+      address: 'ASC. CIUDAD DE DIOS ZN. 4 COM',
+      district: 'YURA',
+      province: 'AREQUIPA',
+      department: 'AREQUIPA',
+    });
   });
 
   // ============================================================
