@@ -1,10 +1,11 @@
+import { formatSoles, PLAN_PRICES } from '@/shared/billing/planPrices';
 import Link from 'next/link';
 
 export default function PricingSection() {
   const plans = [
     {
       name: 'Emprendedor',
-      price: '30',
+      price: formatSoles(PLAN_PRICES.emprendedor.monthly),
       period: 'mes',
       description:
         'Perfecto para vos que arrancás. Tené tu tienda online lista en minutos, sin complicaciones técnicas ni costos ocultos.',
@@ -21,7 +22,7 @@ export default function PricingSection() {
     },
     {
       name: 'Business Pro',
-      price: '55',
+      price: formatSoles(PLAN_PRICES.business_pro.monthly),
       period: 'mes',
       badge: 'Más elegido',
       description:
@@ -41,7 +42,7 @@ export default function PricingSection() {
     },
     {
       name: 'Enterprise AI',
-      price: '90',
+      price: formatSoles(PLAN_PRICES.enterprise_ai.monthly),
       period: 'mes',
       description:
         'La versión completa con inteligencia artificial. Para marcas que necesitan el máximo rendimiento y soporte.',

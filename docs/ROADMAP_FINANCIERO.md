@@ -10,7 +10,7 @@
 ### Planes de Suscripción (ACTUAL)
 
 - **Modelo**: Pago mensual/anual por usar la plataforma
-- **Planes**: Básico (S/29), Emprendedor (S/59), Business Pro (S/99), Enterprise AI
+- **Planes**: Básico (Gratis), Emprendedor (S/59), Business Pro (S/99), Enterprise AI (S/149) — precios finales con IGV incluido
 - **Gestión**: Desde base de datos, fecha de vigencia + vencimiento
 - **Tecnología**: Sin Culqi Subscriptions - se maneja manualmente
 - **Status**: ✅ Funcionando
