@@ -305,6 +305,14 @@ export async function POST(request: Request) {
       ticketNumber,
       planActivatedUntil: planEndDate.toISOString(),
       amountTotal: totalSoles,
+      issuer: {
+        ruc: issuer.ruc,
+        name: issuer.razonSocial,
+        address: issuer.direccion,
+        district: issuer.distrito,
+        province: issuer.provincia,
+        department: issuer.departamento,
+      },
     });
   } catch (error) {
     console.error('[purchase-plan] Error inesperado:', error);

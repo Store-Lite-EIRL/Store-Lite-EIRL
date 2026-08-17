@@ -120,8 +120,6 @@ export function PricingCard({
     selectedBusinessData?.planType && selectedBusinessData.planType !== 'basico';
 
   const handleCulqiToken = async (token: string) => {
-    console.log('✅ Token recibido en PricingCard:', token);
-
     let planEnum: 'basico' | 'emprendedor' | 'business_pro' | 'enterprise_ai' = 'basico';
     if (title.toLowerCase().includes('emprendedor')) planEnum = 'emprendedor';
     if (title.toLowerCase().includes('business pro')) planEnum = 'business_pro';
@@ -851,12 +849,24 @@ export function PricingCard({
         <div ref={ticketRef}>
           {(result || capturingData) && (
             <PlanTicketTemplate
-              issuerRuc="10741399852"
-              issuerName="STORE LITE E.I.R.L"
-              issuerAddress="JR. LAS FLORES 123"
-              issuerDistrict="SAN ISIDRO"
-              issuerProvince="LIMA"
-              issuerDepartment="LIMA"
+              issuerRuc={result?.issuer?.ruc || capturingData?.issuer?.ruc || '10741399852'}
+              issuerName={
+                result?.issuer?.name ||
+                capturingData?.issuer?.name ||
+                'MAMANI TACORA ERNESTO ALONSO'
+              }
+              issuerAddress={
+                result?.issuer?.address ||
+                capturingData?.issuer?.address ||
+                'ASC. CIUDAD DE DIOS ZN. 4 COM'
+              }
+              issuerDistrict={result?.issuer?.district || capturingData?.issuer?.district || 'YURA'}
+              issuerProvince={
+                result?.issuer?.province || capturingData?.issuer?.province || 'AREQUIPA'
+              }
+              issuerDepartment={
+                result?.issuer?.department || capturingData?.issuer?.department || 'AREQUIPA'
+              }
               ticketNumber={result?.ticketNumber || capturingData?.ticketNumber || ''}
               ticketIssuedAt={new Date()}
               buyerEmail={buyerEmail}
