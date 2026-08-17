@@ -6,7 +6,7 @@
  *
  * Flujo:
  *  1. Valida request
- *  2. Calcula montos: subtotal (sin IGV) + IGV 18% + total
+ *  2. Calcula montos: total (INCLUYE IGV) y desglosa subtotal + IGV 18%
  *  3. Cobra en Culqi (claves del SaaS, no del merchant)
  *  4. INSERT plan_payments (correlativo B001 automático por secuencia)
  *  5. UPSERT business_subscriptions (activa/renueva el plan)
@@ -23,17 +23,9 @@ import {
 } from '@/core/database/schema';
 import { requireOwnedBusinessById } from '@/features/storage/actions/authz';
 import { createClient } from '@/lib/supabase/server';
+import { PLAN_PRICES, splitIgv } from '@/shared/billing/planPrices';
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
-
-// ─── Precios de planes (sin IGV) en céntimos para Culqi ─────────────────────
-// Actualizar aquí cuando cambien los precios. En el futuro pueden venir de BD.
-const PLAN_PRICES: Record<SubscriptionPlan, { monthly: number; annual: number; label: string }> = {
-  basico: { monthly: 0, annual: 0, label: 'Básico' },
-  emprendedor: { monthly: 5900, annual: 59000, label: 'Emprendedor' }, // S/ 59.00 / S/ 590.00
-  business_pro: { monthly: 9900, annual: 99000, label: 'Business Pro' }, // S/ 99.00 / S/ 990.00
-  enterprise_ai: { monthly: 14900, annual: 149000, label: 'Enterprise AI' }, // S/ 149.00 / S/ 1490.00
-};
 
 // Duración de cada período en días
 const PERIOD_DAYS: Record<'monthly' | 'annual', number> = {
@@ -66,10 +58,6 @@ interface CulqiChargeResponse {
   outcome?: { type: string; user_message: string; merchant_message: string };
   reference_code?: string;
   creation_date?: number;
-}
-
-function roundTwo(n: number): number {
-  return Math.round(n * 100) / 100;
 }
 
 export async function POST(request: Request) {
@@ -132,10 +120,11 @@ export async function POST(request: Request) {
     }
 
     // ── Calcular montos (en soles, con 2 decimales) ───────────────────────────
-    const subtotalSoles = priceInCentimos / 100;
-    const igvSoles = roundTwo(subtotalSoles * 0.18);
-    const totalSoles = roundTwo(subtotalSoles + igvSoles);
-    const totalCentimos = Math.round(totalSoles * 100); // Para Culqi
+    // El precio en céntimos es el TOTAL FINAL que se cobra (incluye IGV).
+    // Desglosamos subtotal e IGV para la boleta SUNAT.
+    const totalSoles = priceInCentimos / 100;
+    const { subtotalSoles, igvSoles } = splitIgv(totalSoles);
+    const totalCentimos = priceInCentimos; // Para Culqi — sin agregar IGV encima
 
     // ── Obtener datos del emisor ──────────────────────────────────────────────
     const issuer = await db.query.saasIssuerConfig.findFirst();
@@ -316,6 +305,14 @@ export async function POST(request: Request) {
       ticketNumber,
       planActivatedUntil: planEndDate.toISOString(),
       amountTotal: totalSoles,
+      issuer: {
+        ruc: issuer.ruc,
+        name: issuer.razonSocial,
+        address: issuer.direccion,
+        district: issuer.distrito,
+        province: issuer.provincia,
+        department: issuer.departamento,
+      },
     });
   } catch (error) {
     console.error('[purchase-plan] Error inesperado:', error);

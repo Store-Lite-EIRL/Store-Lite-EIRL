@@ -1,6 +1,7 @@
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businesses } from '@/core/database/schema';
+import { formatSoles, PLAN_PRICES } from '@/shared/billing/planPrices';
 import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
@@ -56,7 +57,7 @@ export default async function PricingPage({
       title: 'Plan Emprendedor',
       description:
         'La base sólida e inteligente para formalizar y despegar tu primer gran proyecto.',
-      price: '30',
+      price: formatSoles(PLAN_PRICES.emprendedor.monthly),
       period: 'mes',
       buttonText: 'Comenzar ahora',
       buttonVariant: 'outlined',
@@ -70,7 +71,7 @@ export default async function PricingPage({
     {
       title: 'Plan Business Pro',
       description: 'Escala sin límites con herramientas avanzadas de personalización y equipo.',
-      price: '55',
+      price: formatSoles(PLAN_PRICES.business_pro.monthly),
       period: 'mes',
       buttonText: 'Impulsar mi negocio',
       buttonVariant: 'filled',
@@ -90,9 +91,8 @@ export default async function PricingPage({
       title: 'Plan Enterprise AI',
       description:
         'La solución definitiva con potencia de Inteligencia Artificial y datos masivos.',
-      price: '90',
+      price: formatSoles(PLAN_PRICES.enterprise_ai.monthly),
       period: 'mes',
-      originalPrice: '100',
       buttonText: 'Obtener máxima potencia',
       buttonVariant: 'tonal',
       badgeText: 'Edición Limitada',

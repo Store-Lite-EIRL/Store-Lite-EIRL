@@ -3,6 +3,7 @@
 import { CulqiCheckout } from '@/features/billing/components/CulqiCheckout';
 import { PlanTicketTemplate } from '@/features/billing/components/PlanTicketTemplate';
 import { usePurchasePlan } from '@/features/billing/hooks/usePurchasePlan';
+import { splitIgv } from '@/shared/billing/planPrices';
 import { Dialog, Select } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { Icon } from '@/shared/components/ui/data-display';
@@ -119,8 +120,6 @@ export function PricingCard({
     selectedBusinessData?.planType && selectedBusinessData.planType !== 'basico';
 
   const handleCulqiToken = async (token: string) => {
-    console.log('✅ Token recibido en PricingCard:', token);
-
     let planEnum: 'basico' | 'emprendedor' | 'business_pro' | 'enterprise_ai' = 'basico';
     if (title.toLowerCase().includes('emprendedor')) planEnum = 'emprendedor';
     if (title.toLowerCase().includes('business pro')) planEnum = 'business_pro';
@@ -156,6 +155,11 @@ export function PricingCard({
     business_pro: 'Business Pro',
     enterprise_ai: 'Enterprise AI',
   };
+
+  // El precio mostrado es el TOTAL FINAL (incluye IGV 18%).
+  // Desglosamos subtotal e IGV para Culqi y la boleta.
+  const totalSoles = Number(price);
+  const { subtotalSoles, igvSoles } = splitIgv(totalSoles);
 
   return (
     <>
@@ -583,8 +587,8 @@ export function PricingCard({
                             marginTop: '0.5rem',
                           }}
                         >
-                          Tus datos están protegidos y cifrados. Al pagar se agregará el 18% de IGV
-                          al total.
+                          Tus datos están protegidos y cifrados. El precio mostrado ya incluye el
+                          18% de IGV.
                         </p>
                         {error && (
                           <div
@@ -830,7 +834,7 @@ export function PricingCard({
         <CulqiCheckout
           planId={title}
           planName={title}
-          amount={Math.round(Number(price) * 1.18 * 100)} // Sumar 18% de IGV al cargar ventana de pago (precio mostrado es SUB-TOTAL)
+          amount={Math.round(Number(price) * 100)} // Monto en céntimos — el precio mostrado es el TOTAL FINAL (incluye IGV)
           businessName={selectedBusinessName}
           period={period}
           onTokenSuccess={handleCulqiToken}
@@ -845,12 +849,24 @@ export function PricingCard({
         <div ref={ticketRef}>
           {(result || capturingData) && (
             <PlanTicketTemplate
-              issuerRuc="10741399852"
-              issuerName="STORE LITE E.I.R.L"
-              issuerAddress="JR. LAS FLORES 123"
-              issuerDistrict="SAN ISIDRO"
-              issuerProvince="LIMA"
-              issuerDepartment="LIMA"
+              issuerRuc={result?.issuer?.ruc || capturingData?.issuer?.ruc || '10741399852'}
+              issuerName={
+                result?.issuer?.name ||
+                capturingData?.issuer?.name ||
+                'MAMANI TACORA ERNESTO ALONSO'
+              }
+              issuerAddress={
+                result?.issuer?.address ||
+                capturingData?.issuer?.address ||
+                'ASC. CIUDAD DE DIOS ZN. 4 COM'
+              }
+              issuerDistrict={result?.issuer?.district || capturingData?.issuer?.district || 'YURA'}
+              issuerProvince={
+                result?.issuer?.province || capturingData?.issuer?.province || 'AREQUIPA'
+              }
+              issuerDepartment={
+                result?.issuer?.department || capturingData?.issuer?.department || 'AREQUIPA'
+              }
               ticketNumber={result?.ticketNumber || capturingData?.ticketNumber || ''}
               ticketIssuedAt={new Date()}
               buyerEmail={buyerEmail}
@@ -865,9 +881,9 @@ export function PricingCard({
                   result?.planActivatedUntil || capturingData?.planActivatedUntil || new Date(),
                 )
               }
-              amountSubtotal={Number(price)}
-              amountIgv={Number(price) * 0.18}
-              amountTotal={result?.amountTotal || Number(price) * 1.18}
+              amountSubtotal={subtotalSoles}
+              amountIgv={igvSoles}
+              amountTotal={result?.amountTotal || totalSoles}
               paymentMethod="Online (Culqi)"
             />
           )}

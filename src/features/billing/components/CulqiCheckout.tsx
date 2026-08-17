@@ -69,7 +69,6 @@ export function CulqiCheckout({
     window.culqi = function () {
       if (window.Culqi?.token) {
         const token = window.Culqi.token.id;
-        console.log('✅ Token de Culqi recibido exitosamente:', token, 'para el plan:', planId);
         window.Culqi.close();
         onTokenSuccess(token);
       } else if (window.Culqi?.error) {
