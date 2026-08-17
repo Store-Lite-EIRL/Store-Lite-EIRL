@@ -161,6 +161,15 @@ export function PricingCard({
   const totalSoles = Number(price);
   const { subtotalSoles, igvSoles } = splitIgv(totalSoles);
 
+  const planEndDateLabel = result?.planActivatedUntil
+    ? new Date(result.planActivatedUntil).toLocaleDateString('es-PE', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: 'America/Lima',
+      })
+    : '';
+
   return (
     <>
       <div className={cardClassName}>
@@ -720,6 +729,20 @@ export function PricingCard({
                       S/ {price} ({period})
                     </span>
                   </div>
+                  {planEndDateLabel && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '0.875rem',
+                      }}
+                    >
+                      <span style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
+                        Plan activo hasta:
+                      </span>
+                      <span style={{ fontWeight: '500' }}>{planEndDateLabel}</span>
+                    </div>
+                  )}
                   <div
                     style={{
                       display: 'flex',
@@ -742,7 +765,8 @@ export function PricingCard({
                   <div
                     style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)' }}
                   >
-                    El comprobante ({result?.ticketNumber}) fue enviado a tu correo.
+                    Tu boleta ({result?.ticketNumber}) fue enviada a tu correo y también está
+                    disponible abajo.
                   </div>
                   {result?.ticketUrl && (
                     <div style={{ marginTop: '1rem' }}>
