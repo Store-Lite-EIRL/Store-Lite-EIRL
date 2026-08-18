@@ -327,6 +327,20 @@
   font-weight: 600;
 }
 
+/* Email/password form (below divider) */
+.passwordForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* space-y-4 */
+}
+
+.errorText {
+  color: #f87171; /* red-400, readable on the dark card */
+  font-size: 0.875rem; /* text-sm */
+  text-align: center;
+  margin: 0;
+}
+
 .termsText {
   color: #64748b; /* text-slate-500 */
   font-size: 0.75rem; /* text-xs */

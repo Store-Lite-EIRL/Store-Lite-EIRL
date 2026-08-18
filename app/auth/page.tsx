@@ -3,9 +3,11 @@
 import { useAuth } from '@/features/auth';
 import ConsentCheckbox from '@/features/auth/ConsentCheckbox';
 import { clearBusinessSessionData } from '@/hooks/useBusinessSession';
+import { Button } from '@/shared/components/ui/buttons/Button';
+import { TextField } from '@/shared/components/ui/inputs/TextField';
 import Link from 'next/link';
 // Space Grotesk removed to use project default font (Google Sans)
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import styles from './page.module.css';
 
 /**
@@ -13,9 +15,12 @@ import styles from './page.module.css';
  * Strict implementation of the Future.io design template.
  */
 export default function AuthPage() {
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, signInWithEmail } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [consented, setConsented] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   // Clean stale business data from previous sessions (defense layer C)
   useEffect(() => {
@@ -28,6 +33,26 @@ export default function AuthPage() {
       await signInWithGoogle();
     } catch (error) {
       console.error('Sign in failed', error);
+      setIsLoading(false);
+    }
+  };
+
+  const handlePasswordSignIn = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isLoading || !consented) return;
+
+    setPasswordError(null);
+    setIsLoading(true);
+    try {
+      const { error } = await signInWithEmail(email, password);
+      if (error) {
+        setPasswordError(error);
+        setIsLoading(false);
+      }
+      // On success signInWithEmail navigates to /onboarding (page unmounts).
+    } catch (error) {
+      console.error('Password sign in failed', error);
+      setPasswordError('No se pudo iniciar sesión. Inténtalo de nuevo.');
       setIsLoading(false);
     }
   };
@@ -156,6 +181,33 @@ export default function AuthPage() {
               <span className={styles.dividerText}>INSTANT ACCESS</span>
               <div className={styles.dividerLine} />
             </div>
+
+            <form className={styles.passwordForm} onSubmit={handlePasswordSignIn}>
+              <TextField
+                label="Correo electrónico"
+                type="email"
+                name="email"
+                value={email}
+                required
+                onChange={(event: ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)}
+              />
+              <TextField
+                label="Contraseña"
+                type="password"
+                name="password"
+                value={password}
+                required
+                onChange={(event: ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)}
+              />
+              {passwordError ? (
+                <p role="alert" className={styles.errorText}>
+                  {passwordError}
+                </p>
+              ) : null}
+              <Button type="submit" disabled={isLoading || !consented}>
+                {isLoading ? 'Ingresando…' : 'Iniciar sesión'}
+              </Button>
+            </form>
           </div>
         </div>
 
