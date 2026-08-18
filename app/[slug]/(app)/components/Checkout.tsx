@@ -108,6 +108,7 @@ export default function Checkout({
 
   // Payment State
   const [email, setEmail] = useState('');
+  const [customerName, setCustomerName] = useState('');
 
   // ─── Penalty status warning ───
   const [penaltyStatus, setPenaltyStatus] = useState<{
@@ -289,6 +290,7 @@ export default function Checkout({
     cartItems,
     shippingInfo,
     email,
+    customerName,
     customerAuth,
     finalTotal,
     slug,
@@ -589,6 +591,8 @@ export default function Checkout({
               finalTotal={finalTotal}
               email={email}
               onEmailChange={setEmail}
+              customerName={customerName}
+              onCustomerNameChange={setCustomerName}
               customerAuth={customerAuth}
               isCheckingSession={isCheckingSession}
               isAwaitingAuth={isAwaitingAuth}

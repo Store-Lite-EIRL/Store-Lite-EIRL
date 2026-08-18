@@ -10,6 +10,7 @@ import { businesses, businessSettings, paymentOrders } from '@/core/database/sch
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { completeIdempotencyKey, reserveIdempotencyKey } from '@/core/payments/idempotency';
 import { createClient } from '@/lib/supabase/server';
+import { splitFullName } from '@/shared/payments/fullName';
 import { decrypt } from '@/utils/crypto';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
@@ -21,7 +22,7 @@ interface CulqiOrderResponse {
   currency_code: string;
   payment_method: string;
   order_number: string;
-  client_details: { email: string; phone?: string };
+  client_details: { email: string; phone?: string; first_name?: string; last_name?: string };
   expiration_date: number; // unix timestamp
   status: string;
   metadata?: Record<string, unknown>;
@@ -61,7 +62,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { amount, currency, email, phone, businessId, productId, description } =
+    const { amount, currency, email, phone, customerName, businessId, productId, description } =
       validationResult.data;
 
     const idempotencyReservation = await reserveIdempotencyKey(idempotencyKey);
@@ -149,6 +150,7 @@ export async function POST(request: Request) {
       client_details: {
         email,
         ...(phone ? { phone } : {}),
+        ...splitFullName(customerName),
       },
       expiration_date: Math.floor(expirationDate.getTime() / 1000),
       confirm: false,

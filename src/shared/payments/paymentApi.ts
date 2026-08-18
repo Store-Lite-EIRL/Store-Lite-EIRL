@@ -14,6 +14,7 @@ export interface ChargePaymentParams {
   currency?: string;
   email?: string;
   phone?: string | null;
+  customerName?: string;
   businessId: string;
   productId: string;
   customerAuth?: {
@@ -40,6 +41,7 @@ export interface CreateOrderParams {
   currency?: string;
   email: string;
   phone?: string | null;
+  customerName?: string;
   businessId: string;
   productId?: string;
   description?: string;
@@ -78,6 +80,7 @@ export async function chargePayment(params: ChargePaymentParams): Promise<Charge
       currency: params.currency || 'PEN',
       email: params.email,
       phone: params.phone ?? undefined,
+      ...(params.customerName ? { customerName: params.customerName } : {}),
       businessId: params.businessId,
       productId: params.productId,
       ...(params.customerAuth
@@ -122,6 +125,7 @@ export async function createOrder(params: CreateOrderParams): Promise<CreateOrde
       currency: params.currency || 'PEN',
       email: params.email,
       phone: params.phone ?? undefined,
+      ...(params.customerName ? { customerName: params.customerName } : {}),
       businessId: params.businessId,
       ...(params.productId ? { productId: params.productId } : {}),
       ...(params.description ? { description: params.description } : {}),

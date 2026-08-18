@@ -93,6 +93,10 @@ async function fillCheckoutAndGoToPay() {
   const dniInput = await screen.findByPlaceholderText(/DNI/i);
   await user.type(dniInput, '12345678');
 
+  // Fill customer full name
+  const nameInput = screen.getByPlaceholderText(/Nombre completo/i);
+  await user.type(nameInput, 'Juan Perez');
+
   // Fill email
   const emailInput = screen.getByPlaceholderText(/correo/i) as HTMLInputElement;
   await user.clear(emailInput);

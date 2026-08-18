@@ -24,6 +24,7 @@ import {
 import { requireOwnedBusinessById } from '@/features/storage/actions/authz';
 import { createClient } from '@/lib/supabase/server';
 import { PLAN_PRICES, splitIgv } from '@/shared/billing/planPrices';
+import { splitFullName } from '@/shared/payments/fullName';
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
@@ -161,6 +162,10 @@ export async function POST(request: Request) {
           email: buyerEmail,
           source_id: token,
           description: `Plan ${planConfig.label} ${period === 'monthly' ? 'Mensual' : 'Anual'} - Store Lite`,
+          antifraud_details: {
+            email: buyerEmail,
+            ...splitFullName(buyerFullName),
+          },
           metadata: {
             businessId,
             planType,

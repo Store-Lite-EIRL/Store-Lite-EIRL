@@ -24,6 +24,7 @@ describe('paymentApi', () => {
         amount: 5000,
         currency: 'PEN',
         email: 'buyer@test.com',
+        customerName: 'Juan Perez',
         businessId: '550e8400-e29b-41d4-a716-446655440000',
         productId: '660e8400-e29b-41d4-a716-446655440001',
         metadata: { orderNumber: 'ORD-ABC', cartItems: [] },
@@ -48,6 +49,7 @@ describe('paymentApi', () => {
         culqiOrderId: 'ord_123',
         amount: 5000,
         currency: 'PEN',
+        customerName: 'Juan Perez',
       });
 
       expect(result).toEqual({ success: true, payment: { id: 'pay_123' } });
@@ -137,7 +139,10 @@ describe('paymentApi', () => {
       const result = await createOrder({
         amount: 5000,
         email: 'buyer@test.com',
+        customerName: 'Juan Perez',
+        phone: '999888777',
         businessId: '550e8400-e29b-41d4-a716-446655440000',
+        productId: '660e8400-e29b-41d4-a716-446655440001',
         description: 'Compra - 3 productos',
       });
 
@@ -154,6 +159,9 @@ describe('paymentApi', () => {
       expect(bodyArg).toMatchObject({
         amount: 5000,
         email: 'buyer@test.com',
+        customerName: 'Juan Perez',
+        phone: '999888777',
+        productId: '660e8400-e29b-41d4-a716-446655440001',
         businessId: '550e8400-e29b-41d4-a716-446655440000',
         description: 'Compra - 3 productos',
       });

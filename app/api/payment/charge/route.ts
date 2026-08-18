@@ -21,6 +21,7 @@ import { sendOrderConfirmationEmail } from '@/lib/email/orderEmails';
 import { notifyLowStock, notifyNewOrder, notifyOutOfStock } from '@/lib/notifications';
 import { createClient } from '@/lib/supabase/server';
 import { sendOrderStatusSms } from '@/lib/twilio/orderSms';
+import { splitFullName } from '@/shared/payments/fullName';
 import type { CulqiChargeResponse } from '@/types/culqi';
 import { decrypt } from '@/utils/crypto';
 import { eq, sql } from 'drizzle-orm';
@@ -96,6 +97,8 @@ interface ExecuteCulqiChargeParams {
   amount: number;
   currency: string;
   email?: string;
+  customerName?: string;
+  phone?: string | null;
   productTitle?: string;
   businessId: string;
   productId: string;
@@ -107,6 +110,8 @@ async function executeCulqiCharge({
   amount,
   currency,
   email,
+  customerName,
+  phone,
   productTitle,
   businessId,
   productId,
@@ -114,6 +119,14 @@ async function executeCulqiCharge({
   culqiData: CulqiChargeResponse;
   error: NextResponse | null;
 }> {
+  // Culqi charges identify the buyer via antifraud_details — this is what
+  // populates the "Cliente" section in the CulqiPanel (first/last name).
+  const antifraud_details = {
+    ...(email ? { email } : {}),
+    ...(phone ? { phone_number: phone } : {}),
+    ...splitFullName(customerName),
+  };
+
   const response = await fetch('https://api.culqi.com/v2/charges', {
     method: 'POST',
     headers: {
@@ -126,6 +139,7 @@ async function executeCulqiCharge({
       email: email || 'cliente@culqi.com',
       source_id: token,
       description: `Compra: ${productTitle || 'Producto'} - Store Lite`,
+      antifraud_details,
       metadata: { businessId, productId, platform: 'store-lite' },
     }),
   });
@@ -177,8 +191,11 @@ export async function POST(request: Request) {
       productId,
       currency = 'PEN',
       customerAuth,
+      customerName,
       metadata = {},
     } = validationResult.data;
+
+    const rawShipping = (metadata?.shippingInfo || {}) as ShippingInfoData;
 
     // ─── Rate Limit Check ──────────────────────────────────────────
     if (!paymentRateLimiter.check(`${businessId}:${productId}`)) {
@@ -253,6 +270,8 @@ export async function POST(request: Request) {
         amount,
         currency,
         email,
+        customerName,
+        phone: rawShipping.phone ?? null,
         productTitle: undefined, // product title not needed for charge
         businessId,
         productId,
@@ -296,7 +315,6 @@ export async function POST(request: Request) {
       // eslint-disable-next-line complexity
       async (tx) => {
         // 4. Guardar Pago
-        const rawShipping = (metadata?.shippingInfo || {}) as ShippingInfoData;
 
         // Mapear tipo de courier
         let shippingType: 'agencia' | 'domicilio' | 'recojo';
@@ -379,7 +397,7 @@ export async function POST(request: Request) {
     // Fire-and-forget: no fallar si la notificación falla
     notifyNewOrder(businessId, {
       orderId: result.id,
-      customerName: email || 'cliente@culqi.com',
+      customerName: customerName || email || 'cliente@culqi.com',
       amount: amount / 100,
       itemsCount: (metadata?.cartItems as { id: string; quantity: number }[])?.length || 1,
     }).catch((notifyErr) => {
