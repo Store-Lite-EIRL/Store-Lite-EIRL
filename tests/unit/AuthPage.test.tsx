@@ -100,6 +100,18 @@ describe('AuthPage — password form rendering', () => {
   });
 });
 
+describe('AuthPage — always-dark MD3 tokens (theme fix regression guard)', () => {
+  it('applies the global `dark` token class to the root container so MD3 fields/buttons inherit dark tokens', () => {
+    const { container } = render(<AuthPage />);
+
+    // The MD3 components (md-outlined-text-field, md-filled-button) read their
+    // tokens from the .dark class in src/styles/material-design/dark.css. The
+    // layout boot script only sets light/dark on <body> from the saved/system
+    // theme, so /auth (dark by design) must force the token class itself.
+    expect(container.firstElementChild?.classList.contains('dark')).toBe(true);
+  });
+});
+
 describe('AuthPage — consent gating (auth-consent.r5)', () => {
   it('disables the submit button until consent is given and does not sign in', () => {
     const { container } = render(<AuthPage />);

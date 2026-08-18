@@ -58,7 +58,11 @@ export default function AuthPage() {
   };
 
   return (
-    <div className={styles.container}>
+    // `dark` is the global MD3 token class from src/styles/material-design/dark.css.
+    // The layout boot script only sets light/dark on <body> from the saved/system
+    // theme, so /auth (dark by design) forces the token class here so the MD3
+    // fields and submit button inside inherit dark tokens in both themes.
+    <div className={`${styles.container} dark`}>
       {/* Background Decorative Elements */}
       <div className={styles.backgroundWrapper}>
         {/* Floating Glow Orbs */}

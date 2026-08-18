@@ -334,6 +334,22 @@
   gap: 1rem; /* space-y-4 */
 }
 
+/* Submit button on the always-dark card: full width like the Google button.
+   MD3's default disabled tokens render on-surface at 12%/38% opacity, which is
+   practically invisible on this dark glass card. The installed @material/web
+   reads the -disabled-* token variants for the disabled state, so the opacity
+   overrides are required to keep the rgba colors actually visible. */
+.passwordForm md-filled-button {
+  width: 100%;
+}
+
+.passwordForm md-filled-button[disabled] {
+  --md-filled-button-disabled-container-color: rgba(255, 255, 255, 0.08);
+  --md-filled-button-disabled-container-opacity: 1;
+  --md-filled-button-disabled-label-text-color: rgba(255, 255, 255, 0.45);
+  --md-filled-button-disabled-label-text-opacity: 1;
+}
+
 .errorText {
   color: #f87171; /* red-400, readable on the dark card */
   font-size: 0.875rem; /* text-sm */
