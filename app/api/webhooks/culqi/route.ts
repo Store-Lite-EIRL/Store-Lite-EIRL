@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { db } from '@/core/database/client';
-import { paymentOrders, payments } from '@/core/database/schema';
+import { paymentOrders, payments, planPayments } from '@/core/database/schema';
 import type { OrderStatus } from '@/types/order';
 import { eq } from 'drizzle-orm';
 import { createHmac, timingSafeEqual } from 'node:crypto';
@@ -86,6 +86,45 @@ function verifyCulqiSignature(rawBody: string, signatureHeader: string | null) {
   return { ok: true as const, timestamp: parsed.timestamp ?? null };
 }
 
+/**
+ * Resolves the charge id for a refund event. The canonical field is
+ * `data.charge_id` (chr_...); `data.id` is the refund id (ref_...) and is only
+ * used as a last-resort fallback for legacy integrations.
+ */
+function resolveRefundChargeId(
+  eventType: string,
+  data: { charge_id?: string; id?: string } | undefined,
+): string | undefined {
+  const chargeId = data?.charge_id ?? data?.id;
+  if (chargeId && !data?.charge_id) {
+    console.warn(
+      `[culqi-webhook] Refund event ${eventType} missing charge_id; falling back to data.id`,
+    );
+  }
+  return chargeId;
+}
+
+/**
+ * Marks a charge as refunded/failed on BOTH payment tables. Plan purchases
+ * (plan_payments, S/59/99/149) are charged with the platform's own Culqi key,
+ * so refund webhooks must update them too — otherwise plan refunds silently no-op.
+ *
+ * Status mapping: `refund.creation.succeeded` → 'refunded' (terminal, present in
+ * both payment_status and plan_payment_status). `refund.creation.failed` → 'failed'
+ * (the only sensible terminal in both enums; plan_payment_status has no
+ * 'refund_requested', and the refund never completed).
+ */
+async function applyRefundStatus(chargeId: string, status: 'refunded' | 'failed') {
+  await db
+    .update(payments)
+    .set({ status, updatedAt: new Date() })
+    .where(eq(payments.culqiChargeId, chargeId));
+  await db
+    .update(planPayments)
+    .set({ status, updatedAt: new Date() })
+    .where(eq(planPayments.culqiChargeId, chargeId));
+}
+
 export async function POST(request: Request) {
   const rawBody = await request.text();
   if (!rawBody) {
@@ -110,6 +149,7 @@ export async function POST(request: Request) {
     type?: string;
     data?: {
       id?: string;
+      charge_id?: string;
       reference_code?: string;
       status?: string;
       outcome?: { type?: string };
@@ -117,7 +157,9 @@ export async function POST(request: Request) {
   };
 
   const eventType = event.type;
-  const chargeId = event.data?.id;
+  // For charge events, `data.id` IS the charge id (chr_...). For refund events,
+  // `data.id` is the REFUND id (ref_...) and the charge id lives in `data.charge_id`.
+  const chargeId = event.data?.charge_id ?? event.data?.id;
 
   if (!eventType || !chargeId) {
     return NextResponse.json({ received: true });
@@ -147,11 +189,19 @@ export async function POST(request: Request) {
           .where(eq(payments.culqiChargeId, chargeId));
         break;
       }
+      // Canonical Culqi event: refund.creation.succeeded. 'refund.created' kept
+      // as a backward-compatible alias for legacy integrations.
+      case 'refund.creation.succeeded':
       case 'refund.created': {
-        await db
-          .update(payments)
-          .set({ status: 'refund_requested', updatedAt: new Date() })
-          .where(eq(payments.culqiChargeId, chargeId));
+        const refundChargeId = resolveRefundChargeId(eventType, event.data);
+        if (!refundChargeId) break;
+        await applyRefundStatus(refundChargeId, 'refunded');
+        break;
+      }
+      case 'refund.creation.failed': {
+        const refundChargeId = resolveRefundChargeId(eventType, event.data);
+        if (!refundChargeId) break;
+        await applyRefundStatus(refundChargeId, 'failed');
         break;
       }
       case 'order.status.changed': {

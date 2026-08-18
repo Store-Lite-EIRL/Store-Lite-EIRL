@@ -211,4 +211,88 @@ describe('POST /api/webhooks/culqi — order.status.changed', () => {
 
     warnSpy.mockRestore();
   });
+
+  // ============================================================
+  // GREEN: refund.creation.succeeded → payments AND plan_payments refunded
+  // ============================================================
+
+  test('marks payments and plan_payments as refunded on refund.creation.succeeded', async () => {
+    const { POST } = await import('@/app/api/webhooks/culqi/route');
+
+    const response = await POST(
+      createWebhookRequest({
+        id: 'test-event-refund-success',
+        type: 'refund.creation.succeeded',
+        data: {
+          id: 'ref_culqi_abc123',
+          charge_id: 'chr_charge_xyz',
+          amount: 5900,
+          reason: 'solicitud_comprador',
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual({ received: true });
+
+    // applyRefundStatus updates BOTH tables with status 'refunded'
+    expect(mockSet).toHaveBeenCalledTimes(2);
+    expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({ status: 'refunded' }));
+    expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({ status: 'refunded' }));
+    // Two WHERE lookups happen (payments + plan_payments); the exact SQL object
+    // from drizzle eq() is opaque, but both must exist.
+    expect(mockWhere).toHaveBeenCalledTimes(2);
+  });
+
+  // ============================================================
+  // GREEN: legacy alias refund.created → still refunds both tables
+  // ============================================================
+
+  test('handles legacy refund.created alias with charge_id lookup', async () => {
+    const { POST } = await import('@/app/api/webhooks/culqi/route');
+
+    const response = await POST(
+      createWebhookRequest({
+        id: 'test-event-refund-legacy',
+        type: 'refund.created',
+        data: {
+          id: 'ref_culqi_legacy',
+          charge_id: 'chr_charge_legacy',
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual({ received: true });
+
+    expect(mockSet).toHaveBeenCalledTimes(2);
+    expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({ status: 'refunded' }));
+    expect(mockWhere).toHaveBeenCalledTimes(2);
+  });
+
+  // ============================================================
+  // GREEN: refund.creation.failed → both tables status failed
+  // ============================================================
+
+  test('marks both tables as failed on refund.creation.failed', async () => {
+    const { POST } = await import('@/app/api/webhooks/culqi/route');
+
+    const response = await POST(
+      createWebhookRequest({
+        id: 'test-event-refund-failed',
+        type: 'refund.creation.failed',
+        data: {
+          id: 'ref_culqi_failed',
+          charge_id: 'chr_charge_failed',
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockSet).toHaveBeenCalledTimes(2);
+    expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({ status: 'failed' }));
+    expect(mockWhere).toHaveBeenCalledTimes(2);
+  });
 });
