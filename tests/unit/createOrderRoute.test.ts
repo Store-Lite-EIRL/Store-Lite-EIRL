@@ -299,6 +299,47 @@ describe('POST /api/payment/create-order', () => {
     expect(body.paymentCode).toBeNull();
   });
 
+  test('sends client_details with first_name/last_name when customerName is provided', async () => {
+    const { POST } = await import('@/app/api/payment/create-order/route');
+
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => createCulqiOrderResponse(),
+    });
+
+    mockReturning.mockResolvedValue([
+      {
+        id: 'order-uuid-3',
+        culqiOrderId: 'ord_culqi_abc123',
+        status: 'pending',
+        paymentCode: null,
+        qrUrl: null,
+        expirationDate: new Date(Date.now() + 259200000),
+      },
+    ]);
+
+    const request = new Request('http://localhost/api/payment/create-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(
+        createValidPayload({ customerName: 'Juan Carlos Perez Gomez', phone: '999888777' }),
+      ),
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(200);
+
+    // Inspeccionar el body enviado a Culqi
+    const culqiFetchCall = mockFetch.mock.calls[0];
+    const culqiBody = JSON.parse(culqiFetchCall[1].body as string);
+    expect(culqiBody.client_details).toMatchObject({
+      email: 'buyer@test.com',
+      phone: '999888777',
+      first_name: 'Juan',
+      last_name: 'Carlos Perez Gomez',
+    });
+  });
+
   // ============================================================
   // Culqi API failure
   // ============================================================

@@ -16,6 +16,11 @@ export const chargeRequestSchema = z
     currency: z.string().default('PEN'),
     email: z.string().email('Email no válido').optional().or(z.literal('')),
     phone: z.string().optional().nullable(),
+    customerName: z
+      .string()
+      .trim()
+      .min(3, 'El nombre del cliente debe tener al menos 3 caracteres')
+      .optional(),
     businessId: z.string().uuid('ID de negocio inválido'),
     productId: z.string().uuid('ID de producto inválido'),
     customerAuth: customerAuthSchema.optional(),
@@ -57,6 +62,11 @@ export const createOrderRequestSchema = z.object({
   currency: z.string().default('PEN'),
   email: z.string().email('Email no válido'),
   phone: z.string().optional().nullable(),
+  customerName: z
+    .string()
+    .trim()
+    .min(3, 'El nombre del cliente debe tener al menos 3 caracteres')
+    .optional(),
   businessId: z.string().uuid('ID de negocio inválido'),
   productId: z.string().uuid('ID de producto inválido').optional(),
   description: z.string().optional(),

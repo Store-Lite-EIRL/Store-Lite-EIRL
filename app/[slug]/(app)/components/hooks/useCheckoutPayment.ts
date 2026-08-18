@@ -23,6 +23,7 @@ export interface UsePaymentGatewayOptions {
   cartItems: [CartItem, ...CartItem[]];
   shippingInfo: ShippingInfo;
   email: string;
+  customerName: string;
   customerAuth: CustomerAuth | null;
   finalTotal: number;
   slug: string;
@@ -53,6 +54,7 @@ export function useCheckoutPayment({
   cartItems,
   shippingInfo,
   email,
+  customerName,
   customerAuth,
   finalTotal,
   slug,
@@ -89,6 +91,7 @@ export function useCheckoutPayment({
     businessId,
     cartItems,
     email,
+    customerName,
     shippingInfo,
     businessAddress,
     businessCity,
@@ -117,6 +120,13 @@ export function useCheckoutPayment({
       return;
     }
 
+    // Nombre completo: requerido, mínimo 3 caracteres, solo letras y espacios
+    const trimmedName = customerName.trim();
+    if (trimmedName.length < 3 || !/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(trimmedName)) {
+      onError('Por favor, ingresá tu nombre completo (mínimo 3 letras).');
+      return;
+    }
+
     if (!window.Culqi || !culqiReady) {
       onError('Cargando pasarela de pagos...');
       return;
@@ -139,7 +149,10 @@ export function useCheckoutPayment({
           const orderData = await createOrder({
             amount: Math.round(finalTotal * 100),
             email: email || 'cliente@store-lite.com',
+            customerName: customerName.trim(),
+            phone: shippingInfo.phone || null,
             businessId,
+            productId: cartItems[0]?.id,
             description: `Compra - ${cartItems.length} productos`,
           });
           orderId = orderData.culqiOrderId;
@@ -182,7 +195,17 @@ export function useCheckoutPayment({
       paymentGuardRef.current = false;
       setIsCulqiProcessing(false);
     }
-  }, [culqiReady, finalTotal, businessId, businessName, cartItems, email, shippingInfo, onError]);
+  }, [
+    culqiReady,
+    finalTotal,
+    businessId,
+    businessName,
+    cartItems,
+    email,
+    customerName,
+    shippingInfo,
+    onError,
+  ]);
 
   return {
     culqiReady,

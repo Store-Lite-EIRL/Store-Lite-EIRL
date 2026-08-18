@@ -171,6 +171,28 @@ describe('POST /api/billing/purchase-plan', () => {
     });
   });
 
+  test('sends buyer identity in antifraud_details of the Culqi charge', async () => {
+    const { POST } = await import('@/app/api/billing/purchase-plan/route');
+
+    const request = new Request('http://localhost/api/billing/purchase-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(createValidPayload({ buyerFullName: 'Maria Fernanda Quispe' })),
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(200);
+
+    // Inspeccionar el body enviado a Culqi
+    const culqiFetchCall = mockFetch.mock.calls[0];
+    const culqiBody = JSON.parse(culqiFetchCall[1].body as string);
+    expect(culqiBody.antifraud_details).toMatchObject({
+      email: 'test@example.com',
+      first_name: 'Maria',
+      last_name: 'Fernanda Quispe',
+    });
+  });
+
   // ============================================================
   // EDGE CASES
   // ============================================================

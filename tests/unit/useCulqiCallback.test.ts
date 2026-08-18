@@ -52,6 +52,7 @@ function createDefaultOptions(overrides: Record<string, unknown> = {}) {
       typeof createMockCartItem extends (...args: unknown[]) => infer R ? R : never,
     ],
     email: 'test@example.com',
+    customerName: 'Juan Perez',
     shippingInfo: {
       courier: 'recojo',
       department: '',
@@ -131,7 +132,7 @@ describe('useCulqiCallback', () => {
     });
 
     expect(mockChargePayment).toHaveBeenCalledWith(
-      expect.objectContaining({ token: 'tok_test_abc' }),
+      expect.objectContaining({ token: 'tok_test_abc', customerName: 'Juan Perez' }),
     );
     await waitFor(() => {
       expect(options.onOrderPaid).toHaveBeenCalledWith(
@@ -252,7 +253,7 @@ describe('useCulqiCallback', () => {
 
     await waitFor(() => {
       expect(mockChargePayment).toHaveBeenCalledWith(
-        expect.objectContaining({ culqiOrderId: 'ord_culqi_paid' }),
+        expect.objectContaining({ culqiOrderId: 'ord_culqi_paid', customerName: 'Juan Perez' }),
       );
     });
     await waitFor(() => {

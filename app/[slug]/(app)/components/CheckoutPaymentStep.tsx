@@ -21,6 +21,8 @@ interface CheckoutPaymentStepProps {
   finalTotal: number;
   email: string;
   onEmailChange: (email: string) => void;
+  customerName: string;
+  onCustomerNameChange: (name: string) => void;
   customerAuth: CustomerAuth | null;
   isCheckingSession: boolean;
   isAwaitingAuth: boolean;
@@ -35,6 +37,8 @@ export function CheckoutPaymentStep({
   finalTotal,
   email,
   onEmailChange,
+  customerName,
+  onCustomerNameChange,
   customerAuth,
   isCheckingSession,
   isAwaitingAuth,
@@ -95,6 +99,25 @@ export function CheckoutPaymentStep({
             if (value.length <= 8) onShippingInfoChange((prev) => ({ ...prev, dni: value }));
           }}
           className={`${styles.input} ${shippingInfo.dni.length > 0 && shippingInfo.dni.length !== 8 ? styles.inputError : ''}`}
+          disabled={loading}
+          required
+        />
+      </div>
+
+      {/* ─── Nombre completo (datos del comprador) ─── */}
+      <div className={styles.formGroup}>
+        <input
+          type="text"
+          placeholder="Nombre completo"
+          value={customerName}
+          onChange={(e) => onCustomerNameChange(e.target.value)}
+          className={`${styles.input} ${
+            customerName.trim().length > 0 &&
+            (customerName.trim().length < 3 ||
+              !/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(customerName.trim()))
+              ? styles.inputError
+              : ''
+          }`}
           disabled={loading}
           required
         />

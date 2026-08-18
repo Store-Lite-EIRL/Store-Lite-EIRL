@@ -43,6 +43,7 @@ export interface UseCulqiCallbackOptions {
   businessId: string;
   cartItems: [CartItem, ...CartItem[]];
   email: string;
+  customerName: string;
   shippingInfo: ShippingInfo;
   businessAddress?: string;
   businessCity?: string;
@@ -124,6 +125,7 @@ export function useCulqiCallback({
   businessId,
   cartItems,
   email,
+  customerName,
   shippingInfo,
   businessAddress,
   businessCity,
@@ -159,6 +161,7 @@ export function useCulqiCallback({
           currency: 'PEN',
           email,
           phone: shippingInfo.phone,
+          customerName,
           businessId,
           productId: primaryProduct.id,
           ...buildCustomerAuthPayload(customerAuth),
@@ -230,6 +233,7 @@ export function useCulqiCallback({
         currency: 'PEN',
         email,
         phone: shippingInfo.phone,
+        customerName,
         businessId,
         productId: primaryProduct.id,
         ...buildCustomerAuthPayload(customerAuth),
@@ -349,6 +353,7 @@ export function useCulqiCallback({
     businessId,
     cartItems,
     email,
+    customerName,
     shippingInfo,
     businessAddress,
     businessCity,

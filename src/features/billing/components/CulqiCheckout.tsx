@@ -1,6 +1,7 @@
 'use client';
 
 import { loadCulqiScript } from '@/shared/payments/culqiScript';
+import { splitFullName } from '@/shared/payments/fullName';
 import React, { useCallback, useEffect, useState } from 'react';
 
 interface CulqiCheckoutProps {
@@ -9,6 +10,8 @@ interface CulqiCheckoutProps {
   amount: number; // Monto en céntimos (ej. 10.00 = 1000)
   businessName?: string; // Nombre del negocio seleccionado
   period?: string; // "mes" | "año" etc.
+  customerName?: string; // Nombre del comprador para prefill del modal Culqi
+  customerEmail?: string; // Email del comprador para prefill del modal Culqi
   disabled?: boolean;
   onTokenSuccess: (token: string) => void;
   onOpening?: () => void;
@@ -21,6 +24,8 @@ export function CulqiCheckout({
   amount,
   businessName,
   period = 'mes',
+  customerName,
+  customerEmail,
   disabled = false,
   onTokenSuccess,
   onOpening,
@@ -37,12 +42,19 @@ export function CulqiCheckout({
       const businessLabel = businessName ? ` · ${businessName}` : '';
       const description = `Plan ${planName}${businessLabel} — por ${period}`;
 
-      window.Culqi.settings({
+      // Prefill del modal Culqi: solo campos no vacíos para no romper settings()
+      const { first_name, last_name } = splitFullName(customerName);
+      const settingsPayload: Record<string, unknown> = {
         title: `Store Lite | ${planName}`,
         currency: 'PEN',
         description,
         amount,
-      });
+        ...(first_name ? { first_name } : {}),
+        ...(last_name ? { last_name } : {}),
+        ...(customerEmail?.trim() ? { email: customerEmail.trim() } : {}),
+      };
+
+      window.Culqi.settings(settingsPayload);
 
       window.Culqi.options({
         lang: 'auto',
@@ -55,7 +67,7 @@ export function CulqiCheckout({
       });
       setIsCulqiReady(true);
     }
-  }, [amount, planName, businessName, period]);
+  }, [amount, planName, businessName, period, customerName, customerEmail]);
 
   // Re-inicializar si las props cambian pero el script ya había cargado
   useEffect(() => {

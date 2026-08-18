@@ -861,6 +861,8 @@ export function PricingCard({
           amount={Math.round(Number(price) * 100)} // Monto en céntimos — el precio mostrado es el TOTAL FINAL (incluye IGV)
           businessName={selectedBusinessName}
           period={period}
+          customerName={buyerFullName}
+          customerEmail={buyerEmail}
           onTokenSuccess={handleCulqiToken}
           disabled={isProcessing}
         >

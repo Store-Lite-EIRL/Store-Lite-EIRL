@@ -9,6 +9,7 @@ import { db } from '@/core/database/client';
 import { businesses, businessSettings, penalties } from '@/core/database/schema';
 import { requireOwnedBusinessById } from '@/features/storage/actions/authz';
 import { createClient } from '@/lib/supabase/server';
+import { splitFullName } from '@/shared/payments/fullName';
 import type { CulqiChargeResponse } from '@/types/culqi';
 import { decrypt } from '@/utils/crypto';
 import { and, eq, inArray, sql } from 'drizzle-orm';
@@ -93,6 +94,19 @@ export async function POST(request: Request) {
 
     const secretKey = decrypt(settings.culqiSecretKey);
 
+    // ── Buyer identity: el dueño del negocio paga sus multas ──────────
+    // Usamos el email del usuario autenticado (Supabase) en lugar del
+    // email hardcodeado de soporte. Si el email del dueño falta, abortamos
+    // en vez de cobrar con un email falso.
+    if (!user.email) {
+      return NextResponse.json(
+        { error: 'No se pudo obtener el email de tu cuenta para procesar el pago' },
+        { status: 400 },
+      );
+    }
+    const ownerEmail = user.email;
+    const ownerName = user.user_metadata?.full_name as string | undefined;
+
     // ── Execute Culqi charge ────────────────────────────────
     const response = await fetch('https://api.culqi.com/v2/charges', {
       method: 'POST',
@@ -103,9 +117,13 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         amount: totalAmountCents,
         currency_code: 'PEN',
-        email: 'soporte@storelite.com',
+        email: ownerEmail,
         source_id: culqiToken,
         description: `Pago de ${pendingPenalties.length} multa(s) - Store Lite`,
+        antifraud_details: {
+          email: ownerEmail,
+          ...splitFullName(ownerName),
+        },
         metadata: {
           businessId,
           penaltyCount: pendingPenalties.length,
