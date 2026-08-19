@@ -18,3 +18,22 @@ test('should load customer auth popup', async ({ page }) => {
   const response = await page.goto('/auth/customer');
   expect(response?.status()).toBeLessThan(500);
 });
+
+test('should render email/password form with submit disabled until consent', async ({ page }) => {
+  await page.goto('/auth');
+
+  // Email and password fields render (email-password-login.r3)
+  await expect(page.locator('md-outlined-text-field[type="email"]')).toBeVisible();
+  await expect(page.locator('md-outlined-text-field[type="password"]')).toBeVisible();
+
+  // Submit control renders disabled until consent (auth-consent.r5, email-password-login.r4).
+  // MD3 custom elements don't expose a `disabled` IDL property, so Playwright's
+  // toBeDisabled() reads it as enabled — assert the rendered attribute instead.
+  const submit = page.locator('md-filled-button[type="submit"]');
+  await expect(submit).toBeVisible();
+  await expect(submit).toHaveAttribute('disabled');
+
+  // Checking consent enables the submit control (email-password-login.r4)
+  await page.getByLabel('Accept terms and conditions').check();
+  await expect(submit).not.toHaveAttribute('disabled');
+});
