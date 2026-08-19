@@ -145,11 +145,36 @@ pnpm culqi:create-test-user --email=usuario@ejemplo.com --password='...'
 > ⚠️ Las credenciales NUNCA se escriben en el repositorio: solo se pasan por
 > variables de entorno o argumentos de CLI, nunca se commitean.
 
+### 🏪 Tienda demo con `--with-store`
+
+Para que el revisor de Culqi entre y tenga un storefront funcional al instante
+(sin fricción de onboarding), el script puede además provisionar una tienda
+demo completa con el flag `--with-store`:
+
+```bash
+pnpm culqi:create-test-user --email=usuario@ejemplo.com --password='...' --with-store
+```
+
+Esto crea (o actualiza, en re-ejecución — el script es idempotente):
+
+- **Negocio**: `Tienda Demo Culqi` con slug único (`tienda-demo-culqi-store-*`),
+  activo, con datos de contacto de Perú.
+- **Ajustes de tienda**: theme y layout por defecto del storefront.
+- **Suscripción**: plan `basico` con estado `active` (si el revisor ya
+  upgradeara el plan, no se toca).
+- **Producto demo**: `Curso Demo de Tienda Online` (S/ 49.90), disponible, con
+  stock, listo para probar el checkout.
+
+Los datos demo (nombres, slug, precio) son fixtures de prueba y viven como
+constantes en el script; no son secretos. Al finalizar imprime la URL de la
+tienda (`NEXT_PUBLIC_APP_URL` o `http://localhost:3000`).
+
 Checklist operativa antes de la revisión de Culqi:
 
 - [ ] `CULQI_ENFORCE_LIVE_KEYS=true` en producción
 - [ ] Llaves live (`pk_live_*` / `sk_live_*`) configuradas en el negocio de prueba
-- [ ] Un producto demo creado en el negocio de prueba
+      (el revisor las pega en Ajustes → Pagos; el script no las setea a propósito)
+- [ ] Tienda demo provisionada con `--with-store` (negocio + producto demo)
 
 ---
 
