@@ -52,12 +52,34 @@ function getForm(container: HTMLElement): HTMLFormElement | null {
   return container.querySelector('form');
 }
 
-/** Checks consent and fills valid credentials on the password form */
+/**
+ * The discreet expand/collapse toggle for the email/password form. Identified
+ * by its aria-controls target, which is stable across both states (the visible
+ * label switches between expand/collapse wording, so name-based queries would
+ * break after the first click).
+ */
+function getToggleButton(container: HTMLElement): HTMLElement | null {
+  return (
+    Array.from(container.querySelectorAll('button')).find(
+      (button) => button.getAttribute('aria-controls') === 'password-sign-in',
+    ) ?? null
+  );
+}
+
+/** Expands the (hidden by default) email/password form via the toggle */
+function clickToggle(container: HTMLElement) {
+  const toggle = getToggleButton(container);
+  if (!toggle) throw new Error('Auth toggle button not rendered');
+  fireEvent.click(toggle);
+}
+
+/** Expands the hidden form, checks consent and fills valid credentials */
 function fillAndConsent(
   container: HTMLElement,
   email = 'admin@store-lite.com',
   password = 'correct-horse-battery-staple',
 ) {
+  clickToggle(container);
   fireEvent.click(screen.getByRole('checkbox'));
   setFieldValue(getEmailField(container), email);
   setFieldValue(getPasswordField(container), password);
@@ -83,9 +105,57 @@ beforeEach(() => {
 
 // ── Tests ────────────────────────────────────────────
 
+describe('AuthPage — email/password form toggle (hidden by default)', () => {
+  it('keeps the form hidden initially — only the toggle, Google button and consent render', () => {
+    const { container } = render(<AuthPage />);
+
+    // Form (divider + fields + submit) is NOT in the DOM until expanded
+    expect(getEmailField(container)).toBeNull();
+    expect(getPasswordField(container)).toBeNull();
+    expect(getSubmitButton(container)).toBeNull();
+    expect(getForm(container)).toBeNull();
+    expect(screen.queryByText(/INSTANT ACCESS/i)).not.toBeInTheDocument();
+
+    // The discreet toggle is present, collapsed, and wired to the form container
+    const toggle = getToggleButton(container);
+    expect(toggle).not.toBeNull();
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveAttribute('aria-controls', 'password-sign-in');
+    expect(toggle).toHaveTextContent(/correo electrónico/i);
+  });
+
+  it('reveals the email and password fields when the toggle is expanded', () => {
+    const { container } = render(<AuthPage />);
+
+    clickToggle(container);
+
+    expect(getEmailField(container)).not.toBeNull();
+    expect(getPasswordField(container)).not.toBeNull();
+    expect(getPasswordField(container)).toHaveAttribute('type', 'password');
+    expect(getSubmitButton(container)).not.toBeNull();
+    expect(screen.getByText(/INSTANT ACCESS/i)).toBeInTheDocument();
+    expect(getToggleButton(container)).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('collapses again on a second click and removes the fields from the DOM', () => {
+    const { container } = render(<AuthPage />);
+    expect(getToggleButton(container)).toHaveAttribute('aria-expanded', 'false');
+
+    clickToggle(container);
+    expect(getToggleButton(container)).toHaveAttribute('aria-expanded', 'true');
+
+    clickToggle(container);
+    expect(getToggleButton(container)).toHaveAttribute('aria-expanded', 'false');
+    expect(getEmailField(container)).toBeNull();
+    expect(getSubmitButton(container)).toBeNull();
+    expect(screen.queryByText(/INSTANT ACCESS/i)).not.toBeInTheDocument();
+  });
+});
+
 describe('AuthPage — password form rendering', () => {
   it('renders email and password inputs plus submit, without signup or reset links', () => {
     const { container } = render(<AuthPage />);
+    clickToggle(container);
 
     const emailField = getEmailField(container);
     const passwordField = getPasswordField(container);
@@ -115,6 +185,7 @@ describe('AuthPage — always-dark MD3 tokens (theme fix regression guard)', () 
 describe('AuthPage — consent gating (auth-consent.r5)', () => {
   it('disables the submit button until consent is given and does not sign in', () => {
     const { container } = render(<AuthPage />);
+    clickToggle(container);
 
     const submitButton = getSubmitButton(container)!;
     expect(submitButton).toHaveAttribute('disabled');
@@ -126,10 +197,10 @@ describe('AuthPage — consent gating (auth-consent.r5)', () => {
 
   it('enables the submit button after consent and signs in with the form values', () => {
     const { container } = render(<AuthPage />);
-    const submitButton = getSubmitButton(container)!;
 
     fillAndConsent(container);
 
+    const submitButton = getSubmitButton(container)!;
     expect(submitButton).not.toHaveAttribute('disabled');
     fireEvent.submit(getForm(container)!);
 
