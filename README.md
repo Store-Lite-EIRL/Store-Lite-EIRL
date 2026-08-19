@@ -127,6 +127,30 @@ pnpm dev
 pnpm drizzle-kit generate
 ```
 
+## 🔐 Usuario de Validación Culqi (Email + Contraseña)
+
+Para la revisión de llaves live de Culqi se usa una cuenta de validación que
+inicia sesión con email y contraseña en `/auth`. La cuenta se provisiona con un
+script idempotente (crea el usuario si no existe, o actualiza sus credenciales si
+ya existe):
+
+```bash
+# Vía variables de entorno
+CULQI_TEST_EMAIL=usuario@ejemplo.com CULQI_TEST_PASSWORD='...' pnpm culqi:create-test-user
+
+# O vía CLI (los argumentos tienen prioridad sobre el entorno)
+pnpm culqi:create-test-user --email=usuario@ejemplo.com --password='...'
+```
+
+> ⚠️ Las credenciales NUNCA se escriben en el repositorio: solo se pasan por
+> variables de entorno o argumentos de CLI, nunca se commitean.
+
+Checklist operativa antes de la revisión de Culqi:
+
+- [ ] `CULQI_ENFORCE_LIVE_KEYS=true` en producción
+- [ ] Llaves live (`pk_live_*` / `sk_live_*`) configuradas en el negocio de prueba
+- [ ] Un producto demo creado en el negocio de prueba
+
 ---
 
 _Store Lite v1.0 - Enfocado en robustez técnica y agilidad._
