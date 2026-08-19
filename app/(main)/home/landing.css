@@ -4659,6 +4659,10 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    /* Consumes free space so the cluster packs flush-right next to the
+       toggle; without it space-between distributes the leftover space
+       evenly around the actions (empty column between logo and toggle). */
+    margin-left: auto;
   }
 
   .login-link {
