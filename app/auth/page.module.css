@@ -327,6 +327,29 @@
   font-weight: 600;
 }
 
+/* Discreet toggle that reveals the email/password form (hidden by default so
+   the card reads Google-first). Button reset + muted slate link styling,
+   consistent with .link/.footerLink on this page. */
+.toggleLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.875rem; /* text-sm */
+  color: #94a3b8; /* text-slate-400 */
+  text-decoration: underline;
+  text-decoration-color: #334155; /* decoration-slate-700 */
+  text-underline-offset: 4px;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: color 150ms;
+  align-self: center;
+}
+
+.toggleLink:hover {
+  color: #135bec; /* hover:text-primary */
+}
+
 /* Email/password form (below divider) */
 .passwordForm {
   display: flex;

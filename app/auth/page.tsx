@@ -21,6 +21,8 @@ export default function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  // Email/password form is hidden by default behind a discreet toggle.
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
 
   // Clean stale business data from previous sessions (defense layer C)
   useEffect(() => {
@@ -180,38 +182,58 @@ export default function AuthPage() {
               )}
             </button>
 
-            <div className={styles.divider}>
-              <div className={styles.dividerLine} />
-              <span className={styles.dividerText}>INSTANT ACCESS</span>
-              <div className={styles.dividerLine} />
-            </div>
+            {/* Discreet toggle revealing the email/password form. The form stays
+                out of the DOM until expanded so the card reads Google-first. */}
+            <button
+              type="button"
+              className={styles.toggleLink}
+              aria-expanded={showPasswordForm}
+              aria-controls="password-sign-in"
+              onClick={() => setShowPasswordForm((visible) => !visible)}
+            >
+              {showPasswordForm ? 'Ocultar' : '¿Acceso con correo electrónico?'}
+            </button>
 
-            <form className={styles.passwordForm} onSubmit={handlePasswordSignIn}>
-              <TextField
-                label="Correo electrónico"
-                type="email"
-                name="email"
-                value={email}
-                required
-                onChange={(event: ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)}
-              />
-              <TextField
-                label="Contraseña"
-                type="password"
-                name="password"
-                value={password}
-                required
-                onChange={(event: ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)}
-              />
-              {passwordError ? (
-                <p role="alert" className={styles.errorText}>
-                  {passwordError}
-                </p>
-              ) : null}
-              <Button type="submit" disabled={isLoading || !consented}>
-                {isLoading ? 'Ingresando…' : 'Iniciar sesión'}
-              </Button>
-            </form>
+            {showPasswordForm ? (
+              <div id="password-sign-in">
+                <div className={styles.divider}>
+                  <div className={styles.dividerLine} />
+                  <span className={styles.dividerText}>INSTANT ACCESS</span>
+                  <div className={styles.dividerLine} />
+                </div>
+
+                <form className={styles.passwordForm} onSubmit={handlePasswordSignIn}>
+                  <TextField
+                    label="Correo electrónico"
+                    type="email"
+                    name="email"
+                    value={email}
+                    required
+                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                      setEmail(event.target.value)
+                    }
+                  />
+                  <TextField
+                    label="Contraseña"
+                    type="password"
+                    name="password"
+                    value={password}
+                    required
+                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                      setPassword(event.target.value)
+                    }
+                  />
+                  {passwordError ? (
+                    <p role="alert" className={styles.errorText}>
+                      {passwordError}
+                    </p>
+                  ) : null}
+                  <Button type="submit" disabled={isLoading || !consented}>
+                    {isLoading ? 'Ingresando…' : 'Iniciar sesión'}
+                  </Button>
+                </form>
+              </div>
+            ) : null}
           </div>
         </div>
 
