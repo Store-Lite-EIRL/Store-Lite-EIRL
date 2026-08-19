@@ -4636,7 +4636,9 @@ body {
   .landing-nav-logo {
     min-width: 0;
     gap: 0.625rem;
-    flex: 1;
+    /* flex: 1 made the logo absorb all leftover space, leaving an empty
+       clickable dead zone between the logo and the right-side actions. */
+    flex: 0 1 auto;
   }
 
   .logo-box-landing {
@@ -4657,6 +4659,10 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    /* Consumes free space so the cluster packs flush-right next to the
+       toggle; without it space-between distributes the leftover space
+       evenly around the actions (empty column between logo and toggle). */
+    margin-left: auto;
   }
 
   .login-link {
@@ -4767,6 +4773,15 @@ body {
   }
 
   .dashboard-preview-container {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  /* On very narrow screens the CTA crowds the navbar next to the logo and
+     the hamburger toggle. Hide it here; it stays reachable inside the
+     hamburger menu (mobile-only-actions). */
+  .landing-nav-actions .nav-cta {
     display: none;
   }
 }
