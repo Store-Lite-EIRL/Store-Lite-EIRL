@@ -39,7 +39,7 @@ export default function HeroLanding() {
           lista para vender desde el día uno
         </h1>
         <p className="hero-subtitle">
-          <span className="spotlight-name">Store.Lite</span> te da todo lo que necesitas para que tu
+          <span className="spotlight-name">Store Lite</span> te da todo lo que necesitas para que tu
           marca se vea profesional desde el primer click.
         </p>
 

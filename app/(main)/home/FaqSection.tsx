@@ -12,7 +12,7 @@ export default function FaqSection() {
     {
       question: '¿Necesito conocimientos técnicos?',
       answer:
-        'No. Store.Lite está diseñado para que cualquier persona pueda crear su tienda. No sabes código? No hay problema. En minutos tienes tu tienda lista.',
+        'No. Store Lite está diseñado para que cualquier persona pueda crear su tienda. No sabes código? No hay problema. En minutos tienes tu tienda lista.',
     },
     {
       question: '¿Cómo recibo mis ventas?',
