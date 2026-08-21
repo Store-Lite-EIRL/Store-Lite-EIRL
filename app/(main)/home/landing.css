@@ -4762,6 +4762,28 @@ body {
     grid-template-columns: 1fr;
   }
 
+  /* Footer: collapse the two-column layout and tighten padding so the
+     container never overflows its parent on small screens. Grid items
+     need min-width: 0 or their min-content (long email, link labels)
+     forces tracks wider than the viewport. */
+  .footer-container {
+    padding: 2rem 1.25rem;
+  }
+
+  .footer-main {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .footer-main > * {
+    min-width: 0;
+  }
+
+  .footer-links-wrapper {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
   .spotlight-card,
   .footer-bottom {
     flex-direction: column;
