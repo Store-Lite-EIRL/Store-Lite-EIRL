@@ -11,7 +11,7 @@ export default function FooterSection() {
               <StoreLogo size={36} variant="white" />
             </div>
             <p className="footer-tagline">
-              La plataforma que hace crecer tu negocio. Creá tu tienda online en minutos y empezá a
+              La plataforma que hace crecer tu negocio. Crea tu tienda online en minutos y empieza a
               vender.
             </p>
             <div className="footer-contact">

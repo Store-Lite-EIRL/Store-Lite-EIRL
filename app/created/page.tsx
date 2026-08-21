@@ -76,8 +76,8 @@ export default async function CreatedPage({ searchParams }: CreatedPageProps) {
             maxWidth: '360px',
           }}
         >
-          Tu negocio <strong>{name}</strong> está listo. Ya podés gestionar productos, pedidos y más
-          desde tu panel de administración.
+          Tu negocio <strong>{name}</strong> está listo. Ya puedes gestionar productos, pedidos y
+          más desde tu panel de administración.
         </p>
 
         {/* CTAs */}

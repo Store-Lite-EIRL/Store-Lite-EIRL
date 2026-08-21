@@ -61,7 +61,7 @@ export async function toggleProductStatus(
         if (activeCount >= entitlements.maxProducts) {
           return {
             success: false,
-            error: `Has alcanzado el límite de ${entitlements.maxProducts} productos activos para tu plan actual. Desactivá otros productos o mejorá tu plan para activar este.`,
+            error: `Has alcanzado el límite de ${entitlements.maxProducts} productos activos para tu plan actual. Desactiva otros productos o mejora tu plan para activar este.`,
           };
         }
       }

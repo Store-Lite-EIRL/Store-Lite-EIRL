@@ -56,7 +56,7 @@ export async function importProductsBatch(
         if (existingCount + incomingCount > entitlements.maxProducts) {
           return {
             success: false,
-            error: `No podés importar ${incomingCount} producto(s). Tu plan actual permite hasta ${entitlements.maxProducts} productos activos y ya tenés ${existingCount}. Reducí la cantidad a importar o mejorá tu plan.`,
+            error: `No puedes importar ${incomingCount} producto(s). Tu plan actual permite hasta ${entitlements.maxProducts} productos activos y ya tienes ${existingCount}. Reduce la cantidad a importar o mejora tu plan.`,
           };
         }
       }

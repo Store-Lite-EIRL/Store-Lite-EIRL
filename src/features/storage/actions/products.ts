@@ -364,7 +364,7 @@ export async function updateProduct(
           return {
             success: false,
             productId: null,
-            error: `Has alcanzado el límite de productos activos de tu plan (${entitlements.maxProducts}). Desactivá otros productos o mejorá tu plan.`,
+            error: `Has alcanzado el límite de productos activos de tu plan (${entitlements.maxProducts}). Desactiva otros productos o mejora tu plan.`,
           };
         }
       }

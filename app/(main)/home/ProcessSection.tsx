@@ -3,10 +3,10 @@ export default function ProcessSection() {
     {
       number: '01',
       icon: 'bolt',
-      eyebrow: 'ARRANCÁ',
+      eyebrow: 'EMPIEZA',
       title: 'Tu cuenta en 30 segundos',
       description:
-        'Entrá con Google. Sin formularios largos ni verificación complicate. Listo para usar.',
+        'Entra con Google. Sin formularios largos ni verificación complicada. Listo para usar.',
       highlight: 'fast',
     },
     {
@@ -15,25 +15,25 @@ export default function ProcessSection() {
       eyebrow: 'TU MARCA',
       title: 'Tu tienda, tu estilo',
       description:
-        'Subí tu logo, elegí colores y cargá tu catálogo. Tus productos online en minutos.',
+        'Sube tu logo, elige colores y carga tu catálogo. Tus productos online en minutos.',
       highlight: 'style',
     },
     {
       number: '03',
       icon: 'campaign',
-      eyebrow: 'VENDÉ',
-      title: 'Compartí y empezá a vender',
+      eyebrow: 'VENDE',
+      title: 'Comparte y empieza a vender',
       description:
-        'Tu link listo. Integralo con Instagram o compartilo directo. Tus clientes compran sin fricción.',
+        'Tu link listo. Intégralo con Instagram o compártelo directo. Tus clientes compran sin fricción.',
       highlight: 'sell',
     },
     {
       number: '04',
       icon: 'account_balance_wallet',
-      eyebrow: 'COBRÁ',
+      eyebrow: 'COBRA',
       title: 'Pagos seguros con Culqi',
       description:
-        'El comprador paga. El dinero se retiene seguro. Entregamos al vendedor. Vos cobrás tu comisión.',
+        'El comprador paga. El dinero se retiene seguro. Entregamos al vendedor. Cobras tu comisión.',
       highlight: 'money',
     },
   ];
@@ -45,7 +45,7 @@ export default function ProcessSection() {
           <span className="section-eyebrow">Proceso</span>
           <h2 className="section-title-landing">Tu tienda online en 4 pasos</h2>
           <p className="section-description">
-            Arrancá minutos. Olvidate dePapers. Vos vendé, que nosotros nos encargamos del resto.
+            Empieza en minutos. Vende tú, que nosotros nos encargamos del resto.
           </p>
         </div>
 
@@ -72,7 +72,7 @@ export default function ProcessSection() {
         <div className="process-bottom-cta">
           <p className="process-trust-note">
             <span className="material-symbols-outlined">verified</span>
-            Pagos protegidos con Culqi · Configuración gratis · Sin permanence
+            Pagos protegidos con Culqi · Configuración gratis · Sin permanencia
           </p>
         </div>
       </div>
