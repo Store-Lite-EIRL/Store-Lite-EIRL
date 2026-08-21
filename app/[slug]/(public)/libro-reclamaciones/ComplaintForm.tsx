@@ -100,7 +100,7 @@ export function ComplaintForm({ slug }: ComplaintFormProps) {
         setFieldErrors(errors);
         setFeedback({
           open: true,
-          description: 'Corregí los errores en el formulario.',
+          description: 'Corrige los errores en el formulario.',
           color: 'error',
         });
         return;
@@ -204,14 +204,14 @@ export function ComplaintForm({ slug }: ComplaintFormProps) {
           >
             <p style={{ fontSize: '0.875rem', color: '#854d0e', margin: 0 }}>
               No se pudo enviar el correo de confirmación, pero tu reclamo quedó registrado con
-              éxito. Guardá el código para hacer seguimiento.
+              éxito. Guarda el código para hacer seguimiento.
             </p>
           </div>
         )}
 
         <p style={{ fontSize: '0.875rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
-          La empresa tiene 15 días hábiles para responder. Si no recibís respuesta, podés escalar al
-          INDECOPI.
+          La empresa tiene 15 días hábiles para responder. Si no recibes respuesta, puedes escalar
+          al INDECOPI.
         </p>
       </Card>
     );

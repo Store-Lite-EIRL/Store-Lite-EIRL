@@ -28,13 +28,13 @@ export default function SolutionsSection() {
     },
     {
       icon: 'inventory_2',
-      problem: 'Perdés productos y stock en hojas de cálculo',
+      problem: 'Pierdes productos y stock en hojas de cálculo',
       solution: 'Tu catálogo siempre al día y sin esfuerzo.',
       badge: 'STOCK',
     },
     {
       icon: 'trending_up',
-      problem: 'No sabés qué está funcionando y qué no',
+      problem: 'No sabes qué está funcionando y qué no',
       solution: 'Datos reales. Decisiones basadas en info, no en intuición.',
       badge: 'DATOS',
     },
@@ -85,12 +85,12 @@ export default function SolutionsSection() {
         <div className="section-heading">
           <span className="section-eyebrow">¿Te suena conocido?</span>
           <h2 className="section-title-landing">
-            Dejá de complicarte.
-            <br /> Enfocáte en vender.
+            Deja de complicarte.
+            <br /> Enfócate en vender.
           </h2>
           <p className="section-description">
             Crear y mantener un e-commerce no debería ser un proyecto de ingeniería. Store Lite te
-            da lo que necesitás, sin lo que no necesitás.
+            da lo que necesitas, sin lo que no necesitas.
           </p>
         </div>
 
@@ -118,8 +118,8 @@ export default function SolutionsSection() {
         <div className="integrations-section">
           <div className="integrations-header">
             <span className="section-eyebrow">Integraciones</span>
-            <h3>Todo lo que necesitás, conectado</h3>
-            <p>Herramientas que ya usás, ahora integradas en tu tienda.</p>
+            <h3>Todo lo que necesitas, conectado</h3>
+            <p>Herramientas que ya usas, ahora integradas en tu tienda.</p>
           </div>
 
           <div className="integrations-grid">
@@ -138,8 +138,8 @@ export default function SolutionsSection() {
           </div>
 
           <p className="integrations-note">
-            <span className="material-symbols-outlined">add_circle</span>+ Más integraciones coming
-            soon
+            <span className="material-symbols-outlined">add_circle</span>+ Más integraciones
+            próximamente
           </p>
         </div>
 
@@ -147,7 +147,7 @@ export default function SolutionsSection() {
           <div className="spotlight-content">
             <span className="spotlight-label">Tu próximo paso</span>
             <h3>Tu tienda lista para vender, sin esperar</h3>
-            <p>Todo lo que acabás de ver, disponible ahora mismo. Creá tu cuenta y arrancá hoy.</p>
+            <p>Todo lo que acabas de ver, disponible ahora mismo. Crea tu cuenta y arranca hoy.</p>
           </div>
           <div className="spotlight-actions">
             <Link href="/auth" className="btn-primary-glow">

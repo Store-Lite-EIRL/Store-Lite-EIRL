@@ -7,32 +7,32 @@ export default function FaqSection() {
     {
       question: '¿Es realmente gratis?',
       answer:
-        'Sí, puedes crear tu tienda gratis y usar todas las funciones básicas sin pagar nada. Solo pagás cuando vendés y elegís un plan superior. No hay costos ocultos ni letras chiquitas.',
+        'Sí, puedes crear tu tienda gratis y usar todas las funciones básicas sin pagar nada. Solo pagas cuando vendes y eliges un plan superior. No hay costos ocultos ni letras chiquitas.',
     },
     {
       question: '¿Necesito conocimientos técnicos?',
       answer:
-        'No. Store Lite está diseñado para que qualquer persona pueda crear su tienda. No sabés código? No hay problema. En minutos tenés tu tienda lista.',
+        'No. Store Lite está diseñado para que cualquier persona pueda crear su tienda. No sabes código? No hay problema. En minutos tienes tu tienda lista.',
     },
     {
       question: '¿Cómo recibo mis ventas?',
       answer:
-        'Culqi Procesa los pagos directamente a tu cuenta. El dinero llega en 24-48 horas. Vos cobrás y el cliente recibe su producto. Todo automático.',
+        'Culqi Procesa los pagos directamente a tu cuenta. El dinero llega en 24-48 horas. Cobras y el cliente recibe su producto. Todo automático.',
     },
     {
       question: '¿Puedo cambiar de plan después?',
       answer:
-        'Claro. Arrancá gratis y subí cuando quieras. Sin penalidades ni procesos complicate. El plan se adapta a tu negocio.',
+        'Claro. Empieza gratis y sube cuando quieras. Sin penalidades ni procesos complicados. El plan se adapta a tu negocio.',
     },
     {
       question: '¿Qué pasa con mis productos?',
       answer:
-        'Sonetos. Tu catálogo queda guardado y podés usarlo cuando actives un plan de pago. No Perdés nada de lo que cargaste.',
+        'Tranquilo. Tu catálogo queda guardado y puedes usarlo cuando actives un plan de pago. No pierdes nada de lo que cargaste.',
     },
     {
       question: '¿Hay soporte en español?',
       answer:
-        'Sí, todo el soporte es en español y dirigido por nuestro equipo. Te ayudamos con lo que necesites, sin Bots ni colas complicate.',
+        'Sí, todo el soporte es en español y dirigido por nuestro equipo. Te ayudamos con lo que necesites, sin Bots ni colas complicadas.',
     },
   ];
 

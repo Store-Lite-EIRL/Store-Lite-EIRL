@@ -69,8 +69,6 @@ export async function uploadTicketAndUpdatePayment(
   imageBase64: string,
   businessId: string,
 ): Promise<UploadTicketResult> {
-  console.log('[uploadTicket] Starting — paymentId:', paymentId, 'businessId:', businessId);
-
   try {
     // 1. Obtener datos del pago para validar y pasar preconditions
     const [existingPayment] = await db
@@ -175,7 +173,6 @@ export async function uploadTicketAndUpdatePayment(
       }
     }
 
-    console.log('[uploadTicket] Success — ticket uploaded for payment:', paymentId);
     return { success: true, ticketImageUrl, trackingToken: existingPayment.trackingToken };
   } catch (error) {
     console.error('[uploadTicket] Error:', error instanceof Error ? error.message : String(error));
@@ -258,7 +255,6 @@ export async function notifyDelivery(
       }
     }
 
-    console.log('[notifyDelivery] Success — delivery notified for payment:', paymentId);
     return { success: true };
   } catch (error) {
     console.error(

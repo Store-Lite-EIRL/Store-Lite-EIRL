@@ -66,12 +66,7 @@ export async function verifyIdentityAction(formData: FormData) {
     const parsed = VerifyIdentitySchema.parse(rawData);
     const documentNumber = parsed.documentNumber;
 
-    console.log(`[KYB] Verifying document: ${documentNumber}`);
-
     const rucInfo = await getRucInfo(documentNumber);
-
-    // Debug: log what the API returned
-    console.log(`[KYB] API response for ${documentNumber}:`, JSON.stringify(rucInfo, null, 2));
 
     // Check if we got valid data
     // JSON.pe returns field 'ruc' (not 'numero')
@@ -97,10 +92,7 @@ export async function verifyIdentityAction(formData: FormData) {
 
     if (personType === 'juridica') {
       // For PJ: Fetch legal representatives
-      console.log(`[KYB] Fetching representatives for PJ RUC: ${documentNumber}`);
       const representatives = await getRucRepresentatives(documentNumber);
-
-      console.log(`[KYB] Representatives found:`, JSON.stringify(representatives, null, 2));
 
       if (!Array.isArray(representatives) || representatives.length === 0) {
         return {
@@ -157,8 +149,6 @@ export async function requestOtpAction(formData: FormData) {
     const parsed = RequestOtpSchema.parse(rawData);
     const { identifier, type, countryPrefix } = parsed;
 
-    console.log(`[KYB] Requesting OTP for ${identifier} via ${type}`);
-
     // ── Rate limiting ──────────────────────────────────────────────
     const rateCheck = await checkOtpRateLimit(identifier);
     if (!rateCheck.allowed) {
@@ -178,7 +168,6 @@ export async function requestOtpAction(formData: FormData) {
       .limit(1);
 
     if (existingVerified.length > 0) {
-      console.log(`[KYB] Phone ${identifier} already registered, rejecting`);
       return {
         error: 'Este número ya está registrado en el sistema. Use un número diferente.',
       };
@@ -195,13 +184,9 @@ export async function requestOtpAction(formData: FormData) {
       expiresAt: farFuture,
     });
 
-    console.log(`[KYB] Tracking record created for ${identifier}`);
-
     // ── Enviar OTP via Twilio Verify ───────────────────────────────
     if (type === 'phone') {
       const phone = `${countryPrefix}${identifier.trim()}`;
-
-      console.log(`[KYB] Sending OTP via Twilio Verify to ${phone}`);
 
       try {
         const result = await sendOtpViaVerify(phone);
@@ -212,8 +197,6 @@ export async function requestOtpAction(formData: FormData) {
             error: `No se pudo enviar el código. Verifica que el número sea válido y tenga WhatsApp activo.`,
           };
         }
-
-        console.log(`[KYB] OTP sent via Twilio Verify. SID: ${result.sid}`);
       } catch (verifyError: unknown) {
         console.error(`[KYB] Twilio Verify error:`, verifyError);
         return {
@@ -242,8 +225,6 @@ export async function verifyOtpAction(formData: FormData) {
     const parsed = VerifyOtpSchema.parse(rawData);
     const { identifier, code, countryPrefix } = parsed;
 
-    console.log(`[KYB] Verifying OTP for ${identifier}`);
-
     // Combine prefix + local number to get E.164 format for Verify
     const phone = `${countryPrefix}${identifier}`;
 
@@ -251,7 +232,6 @@ export async function verifyOtpAction(formData: FormData) {
     const result = await checkOtpViaVerify(phone, code);
 
     if (!result.valid) {
-      console.log(`[KYB] Invalid or expired OTP for ${identifier}`);
       return { error: 'Código inválido o expirado. Solicita un nuevo código.' };
     }
 
@@ -269,8 +249,6 @@ export async function verifyOtpAction(formData: FormData) {
         .set({ verified: true })
         .where(eq(verificationOtps.id, otpRecord[0].id));
     }
-
-    console.log(`[KYB] OTP verified successfully for ${identifier}`);
 
     return { success: true, message: 'Código verificado exitosamente' };
   } catch (error: unknown) {
@@ -291,8 +269,6 @@ export async function createVerifiedBusinessAction(formData: FormData) {
   try {
     const rawData = Object.fromEntries(formData.entries());
     const parsed = CreateVerifiedBusinessSchema.parse(rawData);
-
-    console.log(`[KYB] Creating verified business for owner: ${parsed.ownerId}`);
 
     // Business creation logic pending:
     // 1. Verify all KYB steps are completed

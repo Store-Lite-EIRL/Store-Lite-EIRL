@@ -148,7 +148,9 @@ const eslintConfig = defineConfig([
       'import/order': 'off', // Handled by Prettier plugin
 
       // General
-      'no-console': ['warn', { allow: ['warn', 'error', 'log'] }],
+      // Production hygiene: no console.log/debug/info in committed code.
+      // console.warn / console.error are allowed.
+      'no-console': ['error', { allow: ['warn', 'error'] }],
       'no-debugger': 'error',
       eqeqeq: ['error', 'always'],
       '@typescript-eslint/no-empty-function': 'off',
@@ -216,6 +218,14 @@ const eslintConfig = defineConfig([
           ],
         },
       ],
+    },
+  },
+
+  // Developer tooling: CLI scripts where console output IS the interface.
+  {
+    files: ['migrations/**/*.ts', 'sendTestEmail.ts'],
+    rules: {
+      'no-console': 'off',
     },
   },
 ]);

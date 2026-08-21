@@ -3,7 +3,7 @@ import Link from 'next/link';
 const proofCards = [
   {
     title: 'Setup simple',
-    description: 'Publicá tu negocio y empezá a cobrar sin una curva absurda.',
+    description: 'Publica tu negocio y empieza a cobrar sin una curva absurda.',
     icon: 'bolt',
     accentClass: 'accent-blue-dark',
   },
@@ -32,14 +32,14 @@ export default function HeroLanding() {
         <div className="spotlight-fixture">
           <span className="spotlight-light" />
         </div>
-        <div className="hero-eyebrow">Escalá tu negocio sin pelearte con herramientas rotas</div>
+        <div className="hero-eyebrow">Escala tu negocio sin pelearte con herramientas rotas</div>
         <h1 className="hero-title">
           Tu vitrina digital,
           <br />
           lista para vender desde el día uno
         </h1>
         <p className="hero-subtitle">
-          <span className="spotlight-name">Store Lite</span> te da todo lo que necesitás para que tu
+          <span className="spotlight-name">Store Lite</span> te da todo lo que necesitas para que tu
           marca se vea profesional desde el primer click.
         </p>
 

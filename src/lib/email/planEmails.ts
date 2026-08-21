@@ -33,7 +33,6 @@ export async function sendPlanPurchaseConfirmationEmail(
   businessId: string,
 ): Promise<void> {
   if (!planPayment.buyerEmail) {
-    console.log('[PlanEmails] No buyer email — skipping plan purchase confirmation');
     return;
   }
 

@@ -157,7 +157,7 @@ export const useCreateProductForm = ({
     } catch (error) {
       if (error instanceof Error && error.message.includes('Body exceeded')) {
         setFileAlert(
-          'El tamaño total de las imágenes supera el límite del servidor. Reducí el peso o usá menos imágenes.',
+          'El tamaño total de las imágenes supera el límite del servidor. Reduce el peso o usa menos imágenes.',
         );
       }
       console.error('Error in handleSave catch block:', error);

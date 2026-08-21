@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: ComplaintPageProps): Promise<
 
   return {
     title: `Libro de Reclamaciones — ${business.name}`,
-    description: 'Presentá un reclamo o queja formal según el DS 011-2011-PCM.',
+    description: 'Presenta un reclamo o queja formal según el DS 011-2011-PCM.',
     robots: { index: true, follow: true },
   };
 }
@@ -60,7 +60,7 @@ export default async function ComplaintBookPage({ params }: ComplaintPageProps) 
           lineHeight: '1.5',
         }}
       >
-        Completá el formulario con tus datos y los detalles del reclamo. La empresa tiene 15 días
+        Completa el formulario con tus datos y los detalles del reclamo. La empresa tiene 15 días
         hábiles para responder, según lo establecido por el DS 011-2011-PCM y la Ley 29571.
       </p>
 
@@ -70,7 +70,7 @@ export default async function ComplaintBookPage({ params }: ComplaintPageProps) 
           style={{ padding: '1rem', marginBottom: '24px', backgroundColor: '#f0f9ff' }}
         >
           <p style={{ margin: 0, fontSize: '0.875rem', color: '#1e40af' }}>
-            <strong>Contacto directo:</strong> Si preferís, también podés comunicarte directamente
+            <strong>Contacto directo:</strong> Si prefieres, también puedes comunicarte directamente
             al{' '}
             <a href={`mailto:${complaintContactEmail}`} style={{ color: '#1e40af' }}>
               {complaintContactEmail}

@@ -1,3 +1,4 @@
+import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businesses, products } from '@/core/database/schema';
 import { OrderCompletedEmail } from '@/emails/OrderCompletedEmail';
@@ -58,7 +59,6 @@ export async function sendOrderConfirmationEmail(
   businessId: string,
 ): Promise<void> {
   if (!payment.buyerEmail) {
-    console.log('[OrderEmails] No buyer email — skipping confirmation');
     return;
   }
 
@@ -78,7 +78,7 @@ export async function sendOrderConfirmationEmail(
     if (product) productTitle = product.title;
   }
 
-  const trackingUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/${business.slug}/order/${payment.trackingToken || payment.id}`;
+  const trackingUrl = `${env.nextPublicAppUrl}/${business.slug}/order/${payment.trackingToken || payment.id}`;
   const date = formatDate(payment.createdAt);
   const total = formatTotal(payment.amount);
   const displayOrderNumber = payment.orderNumber || payment.id.slice(0, 8).toUpperCase();
@@ -124,7 +124,6 @@ export async function sendOrderCompletedEmail(
   businessId: string,
 ): Promise<void> {
   if (!payment.buyerEmail) {
-    console.log('[OrderEmails] No buyer email — skipping completion email');
     return;
   }
 
@@ -134,7 +133,7 @@ export async function sendOrderCompletedEmail(
   });
   if (!business) return;
 
-  const trackingUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/${business.slug}/order/${payment.trackingToken || payment.id}`;
+  const trackingUrl = `${env.nextPublicAppUrl}/${business.slug}/order/${payment.trackingToken || payment.id}`;
   const date = formatDate(payment.createdAt);
   const displayOrderNumber = payment.orderNumber || payment.id.slice(0, 8).toUpperCase();
 

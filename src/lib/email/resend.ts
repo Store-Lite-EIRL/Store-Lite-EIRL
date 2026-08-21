@@ -34,7 +34,7 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
   }
 
   try {
-    const { data, error } = await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: env.resendFromEmail,
       to: params.to,
       subject: params.subject,
@@ -43,8 +43,6 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
 
     if (error) {
       console.error('[Resend] API error:', error);
-    } else {
-      console.log(`[Resend] Email sent to ${params.to}, id: ${data?.id}`);
     }
   } catch (err) {
     console.error('[Resend] Network/HTTP error:', err);

@@ -47,7 +47,6 @@ function ChatOAuthPopupContent() {
               window.location.origin,
             );
           } else {
-            console.info('[ChatPopup] Auth successful, notifying parent');
             // Notify parent that auth succeeded
             // The BroadcastChannel in Supabase client will handle
             // syncing the session to the parent window automatically

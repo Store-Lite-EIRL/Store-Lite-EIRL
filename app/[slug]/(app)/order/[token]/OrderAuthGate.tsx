@@ -109,7 +109,6 @@ export default function OrderAuthGate({
       // If there's a logout intent matching this token, SKIP auto-link.
       // Checks both sessionStorage (same-tab) and localStorage (cross-tab).
       if (hasLogoutIntent()) {
-        console.log('[OrderAuthGate] Logout intent present, skipping Google auto-link');
         return;
       }
 
@@ -144,23 +143,12 @@ export default function OrderAuthGate({
 
   useEffect(() => {
     const checkAuth = () => {
-      console.log(
-        '[OrderAuthGate] Checking auth. pathname:',
-        pathname,
-        'token:',
-        token,
-        'storageKey:',
-        storageKey,
-      );
-      console.log('[OrderAuthGate] searchParams:', Object.fromEntries(searchParams.entries()));
-
       // 0. Server-side pre-auth: if page.tsx verified the user matches
       //    the order's Google identity, skip client gate. BUT check for
       //    logout intent first — explicit logout overrides serverPreAuth.
       //    Uses hasLogoutIntent() which checks both sessionStorage and
       //    localStorage (cross-tab persistence).
       if (serverPreAuth && !hasLogoutIntent()) {
-        console.log('[OrderAuthGate] Server pre-auth active, bypassing gate');
         setIsAuthenticated(true);
         return;
       }
@@ -168,24 +156,19 @@ export default function OrderAuthGate({
       // If there was a logout intent that matches THIS token, clear it
       // and fall through to the full auth check below
       if (hasLogoutIntent()) {
-        console.log('[OrderAuthGate] Logout intent found, clearing');
         clearLogoutIntent();
       }
 
       // 1. Verificar si hay sesión válida en LocalStorage
       const stored = localStorage.getItem(storageKey);
-      console.log('[OrderAuthGate] localStorage.getItem result:', stored ? 'FOUND' : 'NOT_FOUND');
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
-          console.log('[OrderAuthGate] parsed session:', parsed);
           const { expiresAt } = parsed;
           if (Date.now() < expiresAt) {
-            console.log('[OrderAuthGate] Session valid, authenticated!');
             setIsAuthenticated(true);
             return;
           } else {
-            console.log('[OrderAuthGate] Session expired, removing');
             localStorage.removeItem(storageKey);
           }
         } catch (e) {
@@ -224,7 +207,6 @@ export default function OrderAuthGate({
         return;
       }
 
-      console.log('[OrderAuthGate] No session found, showing verification form');
       setIsAuthenticated(false);
     };
 

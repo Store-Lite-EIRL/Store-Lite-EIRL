@@ -137,7 +137,7 @@ describe('toggleProductStatus', () => {
     expect(result).toEqual({
       success: false,
       error:
-        'Has alcanzado el límite de 10 productos activos para tu plan actual. Desactivá otros productos o mejorá tu plan para activar este.',
+        'Has alcanzado el límite de 10 productos activos para tu plan actual. Desactiva otros productos o mejora tu plan para activar este.',
     });
 
     // Should NOT have proceeded with update
@@ -158,7 +158,7 @@ describe('toggleProductStatus', () => {
     expect(result).toEqual({
       success: false,
       error:
-        'Has alcanzado el límite de 10 productos activos para tu plan actual. Desactivá otros productos o mejorá tu plan para activar este.',
+        'Has alcanzado el límite de 10 productos activos para tu plan actual. Desactiva otros productos o mejora tu plan para activar este.',
     });
 
     // Should NOT have proceeded with update
