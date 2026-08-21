@@ -36,8 +36,6 @@ function normalizePhoneToE164(phone: string): string {
 export async function sendSms(phone: string, message: string): Promise<void> {
   const number = normalizePhoneToE164(phone);
 
-  console.log(`[JSON.pe] Sending SMS to ${number}`);
-
   try {
     const response = await fetch(API_URL, {
       method: 'POST',
@@ -50,9 +48,7 @@ export async function sendSms(phone: string, message: string): Promise<void> {
 
     const data = await response.json();
 
-    if (data.success) {
-      console.log(`[JSON.pe] SMS sent. ID: ${data.message_id}`);
-    } else {
+    if (!data.success) {
       console.error(`[JSON.pe] API error: ${data.message}`);
     }
   } catch (error) {

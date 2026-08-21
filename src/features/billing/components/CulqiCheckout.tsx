@@ -103,7 +103,6 @@ export function CulqiCheckout({
       if (onOpening) onOpening();
       culqi.open();
     } else {
-      console.log('🔄 Culqi no detectado, intentando cargar manualmente...');
       try {
         await loadCulqiScript(process.env.NEXT_PUBLIC_CULQI_PK || '');
         initCulqi();

@@ -33,7 +33,6 @@ export async function sendPlanPurchaseConfirmationEmail(
   businessId: string,
 ): Promise<void> {
   if (!planPayment.buyerEmail) {
-    console.log('[PlanEmails] No buyer email — skipping plan purchase confirmation');
     return;
   }
 
@@ -62,7 +61,7 @@ export async function sendPlanPurchaseConfirmationEmail(
 
     await sendEmail({
       to: planPayment.buyerEmail,
-      subject: 'Tu boleta de compra de plan Store.Lite',
+      subject: 'Tu boleta de compra de plan Store Lite',
       html,
     });
   } catch (error) {

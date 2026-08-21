@@ -136,9 +136,7 @@ export default function OrderChatSection({
           });
         },
       )
-      .subscribe((status: string, err?: Error) => {
-        console.log('[OrderChat] Realtime status:', { sessionId, status, error: err?.message });
-      });
+      .subscribe();
 
     // ── Polling fallback cada 5s (igual que ChatClient) ──
     const pollMessages = async () => {

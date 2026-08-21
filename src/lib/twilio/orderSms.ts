@@ -56,13 +56,11 @@ export async function sendOrderStatusSms(params: SendOrderSmsParams): Promise<vo
   const { toStatus, buyerPhone, businessName, businessSlug, trackingToken } = params;
 
   if (!buyerPhone) {
-    console.log(`[OrderSms] No buyer phone — skipping SMS for status ${toStatus}`);
     return;
   }
 
   const template = STATUS_MESSAGES[toStatus];
   if (!template) {
-    console.log(`[OrderSms] No SMS template for status ${toStatus} — skipping`);
     return;
   }
 
@@ -71,7 +69,6 @@ export async function sendOrderStatusSms(params: SendOrderSmsParams): Promise<vo
 
   try {
     await sendSms(buyerPhone, message);
-    console.log(`[OrderSms] SMS sent for ${toStatus} to ${buyerPhone}`);
   } catch (error) {
     console.error(`[OrderSms] Failed to send SMS for ${toStatus}:`, error);
   }

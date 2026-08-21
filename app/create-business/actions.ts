@@ -130,7 +130,6 @@ export async function createBusinessAction(formData: FormData) {
   if (!personType && taxId && taxId.length === 11) {
     // Detect from RUC prefix: "20" = juridica, else = natural
     personType = taxId.startsWith('20') ? 'juridica' : 'natural';
-    console.log('[createBusinessAction] Auto-detected personType:', personType);
   }
 
   if (!personType) {

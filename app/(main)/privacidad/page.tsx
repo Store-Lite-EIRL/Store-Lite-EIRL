@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidad - Store.Lite',
+  title: 'Política de Privacidad - Store Lite',
   description:
-    'Política de privacidad de Store.Lite conforme a la Ley 29733 de Protección de Datos Personales en Perú.',
+    'Política de privacidad de Store Lite conforme a la Ley 29733 de Protección de Datos Personales en Perú.',
   robots: { index: true, follow: true },
 };
 
@@ -15,7 +15,7 @@ const sections = [
         <p>
           <strong>Devkittop SAC</strong> (en adelante, &laquo;Devkittop&raquo; o &laquo;el
           responsable&raquo;) es el responsable del tratamiento de los datos personales recabados a
-          través de la plataforma Store.Lite.
+          través de la plataforma Store Lite.
         </p>
         <ul>
           <li>
@@ -77,7 +77,7 @@ const sections = [
       <>
         <p>Sus datos personales serán tratados con las siguientes finalidades:</p>
         <ul>
-          <li>Operar, mantener y mejorar la plataforma Store.Lite.</li>
+          <li>Operar, mantener y mejorar la plataforma Store Lite.</li>
           <li>Autenticar su identidad mediante proveedores OAuth (Google).</li>
           <li>Procesar pagos y gestionar suscripciones.</li>
           <li>Brindar soporte técnico y atención al cliente.</li>

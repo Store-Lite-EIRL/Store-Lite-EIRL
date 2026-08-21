@@ -54,13 +54,6 @@ function formatDate(date: Date | string | null): string {
 export default async function OrderTrackingPage({ params }: OrderTrackingPageProps) {
   const { token, slug } = await params;
 
-  // 🐛 DEBUG: server-side logging to trace redirect to /auth
-  console.log('[OrderTrackingPage:RENDER]', {
-    token,
-    slug,
-    timestamp: new Date().toISOString(),
-  });
-
   if (!token || token.length < 5) notFound();
 
   let order;
@@ -83,12 +76,6 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  console.log('[OrderTrackingPage:SUPABASE]', {
-    hasUser: !!user,
-    userId: user?.id ?? null,
-    timestamp: new Date().toISOString(),
-  });
 
   if (user) {
     // Check if user is the owner
@@ -453,16 +440,6 @@ export default async function OrderTrackingPage({ params }: OrderTrackingPagePro
         { label: 'Confirmación', icon: 'package_2' },
         { label: 'Finalizado', icon: 'verified' },
       ];
-
-  console.log('[OrderTrackingPage:RENDER_UI]', {
-    status: order.status,
-    step: currentStep,
-    isPickup,
-    hasPickupCode: !!order.pickupCode,
-    pickupCode: order.pickupCode,
-    orderFlowV2: env.orderFlowV2,
-    timestamp: new Date().toISOString(),
-  });
 
   return (
     <OrderAuthGate

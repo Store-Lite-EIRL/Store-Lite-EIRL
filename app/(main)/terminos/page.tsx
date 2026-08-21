@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Términos de Servicio - Store.Lite',
+  title: 'Términos de Servicio - Store Lite',
   description:
-    'Términos y condiciones de uso de la plataforma Store.Lite, un servicio SaaS de Devkittop (MAMANI TACORA ERNESTO ALONSO, RUC 10741399852, persona natural con negocio) para la creación y gestión de tiendas online.',
+    'Términos y condiciones de uso de la plataforma Store Lite, un servicio SaaS de Devkittop (MAMANI TACORA ERNESTO ALONSO, RUC 10741399852, persona natural con negocio) para la creación y gestión de tiendas online.',
   robots: { index: true, follow: true },
 };
 
@@ -12,7 +12,7 @@ const sections = [
     title: '1. Aceptación de los términos',
     content: (
       <p>
-        Al acceder o utilizar la plataforma Store.Lite (&laquo;la plataforma&raquo;), Ud. acepta los
+        Al acceder o utilizar la plataforma Store Lite (&laquo;la plataforma&raquo;), Ud. acepta los
         presentes Términos de Servicio (&laquo;los Términos&raquo;) y nuestra Política de
         Privacidad. Si no está de acuerdo con estos Términos, no debe utilizar la plataforma.
       </p>
@@ -22,7 +22,7 @@ const sections = [
     title: '2. Descripción del servicio',
     content: (
       <p>
-        Store.Lite es una plataforma SaaS (Software as a Service) que permite a los usuarios crear,
+        Store Lite es una plataforma SaaS (Software as a Service) que permite a los usuarios crear,
         administrar y operar tiendas online para la venta de productos virtuales y físicos. El
         servicio incluye herramientas de gestión de inventario, procesamiento de pagos, chat con
         clientes y funcionalidades administrativas.
@@ -73,7 +73,7 @@ const sections = [
     content: (
       <>
         <p>
-          La plataforma Store.Lite, incluyendo su código, diseño, logotipos y contenido original, es
+          La plataforma Store Lite, incluyendo su código, diseño, logotipos y contenido original, es
           propiedad de Devkittop, marca de MAMANI TACORA ERNESTO ALONSO, persona natural con
           negocio, RUC 10741399852 y está protegida por las leyes de propiedad intelectual peruanas
           e internacionales.

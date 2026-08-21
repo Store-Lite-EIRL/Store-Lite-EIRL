@@ -65,7 +65,7 @@ export default function LandingNav() {
   return (
     <nav className={`landing-nav ${isScrolled ? 'scrolled' : ''} ${isMenuOpen ? 'menu-open' : ''}`}>
       <div className="landing-nav-inner">
-        <Link href="/" className="landing-nav-logo" aria-label="Ir al inicio de Store.Lite">
+        <Link href="/" className="landing-nav-logo" aria-label="Ir al inicio de Store Lite">
           <StoreLogo size={32} variant="white" />
         </Link>
 

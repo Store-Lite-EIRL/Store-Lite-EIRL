@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import { ComplaintForm } from './ComplaintForm';
 
 export const metadata: Metadata = {
-  title: 'Libro de Reclamaciones - Store.Lite',
+  title: 'Libro de Reclamaciones - Store Lite',
   description:
-    'Libro de Reclamaciones de Store.Lite: presente un reclamo o queja formal según el DS 011-2011-PCM. Respuesta en 15 días hábiles.',
+    'Libro de Reclamaciones de Store Lite: presente un reclamo o queja formal según el DS 011-2011-PCM. Respuesta en 15 días hábiles.',
   robots: { index: true, follow: true },
 };
 
