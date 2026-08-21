@@ -34,10 +34,6 @@ export async function sendOtpViaVerify(phone: string): Promise<{ sid: string; st
     channel: 'sms',
   });
 
-  console.log(
-    `[Twilio Verify] OTP sent to ${phone}. SID: ${verification.sid}, Status: ${verification.status}`,
-  );
-
   return { sid: verification.sid, status: verification.status };
 }
 
@@ -58,8 +54,6 @@ export async function checkOtpViaVerify(
     to: phone,
     code,
   });
-
-  console.log(`[Twilio Verify] Check for ${phone}. Status: ${check.status}, SID: ${check.sid}`);
 
   return { valid: check.status === 'approved', sid: check.sid };
 }
@@ -86,16 +80,12 @@ export async function sendOtpWhatsApp(phone: string, code: string): Promise<Twil
 
   const from = env.twilioWhatsAppNumber;
 
-  console.log(`[Twilio] Sending OTP via WhatsApp to ${to} from ${from}`);
-
   try {
     const message = await client.messages.create({
       body: `🛍️ *Store Lite* - Tu código de verificación es: *${code}*\nVálido por 5 minutos. No compartas este código con nadie.`,
       from,
       to,
     });
-
-    console.log(`[Twilio] OTP sent successfully. SID: ${message.sid}, Status: ${message.status}`);
 
     return {
       sid: message.sid,

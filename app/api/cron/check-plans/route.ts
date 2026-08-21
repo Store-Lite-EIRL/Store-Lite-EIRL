@@ -24,8 +24,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  console.log('[Cron] check-plans: starting');
-
   try {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -110,10 +108,6 @@ export async function GET(request: Request) {
         errors++;
       }
     }
-
-    console.log(
-      `[Cron] check-plans: done — ${notified} notified, ${skipped} skipped, ${errors} errors`,
-    );
 
     return NextResponse.json({
       success: true,

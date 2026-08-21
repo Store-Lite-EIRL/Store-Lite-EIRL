@@ -168,7 +168,6 @@ export async function processTimeouts(): Promise<{
 
             if (result.success) {
               processed++;
-              console.log(`[Timeouts] ${rule.label}: ${order.id} → ${rule.toStatus}`);
             } else {
               errors++;
               console.error(`[Timeouts] ${rule.label}: ${order.id} failed — ${result.error}`);
@@ -256,9 +255,6 @@ async function handlePenalty(
     .limit(1);
 
   if (existing) {
-    console.log(
-      `[Timeouts] ${rule.label}: ${order.id} → penalty already exists (${existing.id}), skipping`,
-    );
     return; // skip — NOT an error, NOT counted as processed
   }
 
@@ -274,21 +270,18 @@ async function handlePenalty(
   }
 
   // ── Insert penalty record ──
-  const [penalty] = await db
-    .insert(penalties)
-    .values({
-      businessId: order.businessId,
-      orderId: order.id,
-      penaltyType,
-      title,
-      description,
-      amount: penaltyAmount,
-      percentage: String(percentage),
-      productValue: order.amount,
-      status: 'pending',
-      orderNumber: order.orderNumber,
-    })
-    .returning({ id: penalties.id });
+  await db.insert(penalties).values({
+    businessId: order.businessId,
+    orderId: order.id,
+    penaltyType,
+    title,
+    description,
+    amount: penaltyAmount,
+    percentage: String(percentage),
+    productValue: order.amount,
+    status: 'pending',
+    orderNumber: order.orderNumber,
+  });
 
   // ── Update business ──
   if (penaltyType === PenaltyType.INCUMPLIMIENTO_PLAZO_PREPARACION) {
@@ -312,8 +305,4 @@ async function handlePenalty(
       })
       .where(eq(businesses.id, order.businessId));
   }
-
-  console.log(
-    `[Timeouts] ${rule.label}: ${order.id} → penalty ${penalty.id} created (${penaltyAmount})`,
-  );
 }

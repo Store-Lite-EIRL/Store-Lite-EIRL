@@ -21,13 +21,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  console.log('[Cron] order-timeouts: starting');
-
   try {
     const result = await processTimeouts();
-    console.log(
-      `[Cron] order-timeouts: done — ${result.processed} processed, ${result.errors} errors`,
-    );
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {

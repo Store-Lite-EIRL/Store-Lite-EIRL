@@ -5,6 +5,7 @@ import { onCLS, onFCP, onINP, onLCP, onTTFB } from 'web-vitals';
 export function reportWebVitals(): void {
   const handler = (metric: { name: string; value: number; rating: string }): void => {
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console -- dev-only diagnostics; PROD sends to /api/vitals below
       console.log(`[Web Vitals] ${metric.name}: ${metric.value} (${metric.rating})`);
       return;
     }
