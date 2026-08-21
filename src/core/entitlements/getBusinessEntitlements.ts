@@ -59,12 +59,7 @@ export async function getBusinessEntitlements(businessId: string): Promise<Busin
 
   // Safety net: ensure product count is within plan limits on degradation
   if (previousPlan !== null && previousPlan !== plan) {
-    const disabled = await enforceProductLimit(businessId, PLAN_ENTITLEMENTS[plan].maxProducts);
-    if (disabled > 0) {
-      console.log(
-        `[Entitlements] Auto-disabled ${disabled} products for business ${businessId} (plan: ${plan})`,
-      );
-    }
+    await enforceProductLimit(businessId, PLAN_ENTITLEMENTS[plan].maxProducts);
   }
 
   const isPaymentConfigured = Boolean(settings?.culqiPublicKey && settings?.culqiSecretKey);

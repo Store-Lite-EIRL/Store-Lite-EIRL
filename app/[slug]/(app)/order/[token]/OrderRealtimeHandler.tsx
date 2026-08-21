@@ -21,7 +21,6 @@ export default function OrderRealtimeHandler({ orderId }: { orderId: string }) {
           filter: `id=eq.${orderId}`,
         },
         () => {
-          console.log('[Realtime] Payment updated, refreshing...');
           router.refresh();
         },
       )

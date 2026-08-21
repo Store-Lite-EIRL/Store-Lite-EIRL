@@ -58,20 +58,6 @@ describe('sendSms', () => {
     );
   });
 
-  test('logs success with message_id on API success', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        json: () => Promise.resolve({ success: true, message_id: 'msg-abc' }),
-      }),
-    );
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-    await sendSms('51999999999', 'Success test');
-
-    expect(logSpy).toHaveBeenCalledWith('[JSON.pe] SMS sent. ID: msg-abc');
-  });
-
   test('logs API error message when JSON.pe returns success: false', async () => {
     vi.stubGlobal(
       'fetch',

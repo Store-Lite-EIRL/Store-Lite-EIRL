@@ -190,8 +190,6 @@ export function useNotifications({
       return () => {};
     }
 
-    console.log('[useNotifications] Creating channel for businessId:', businessId);
-
     const channelName = `notifications:${businessId}-${hookId}`;
 
     const newChannel = supabase
@@ -205,7 +203,6 @@ export function useNotifications({
           filter: `business_id=eq.${businessId}`,
         },
         (payload: RealtimePostgresInsertPayload<Notification>) => {
-          console.log('[useNotifications] 🎉 Realtime event received:', payload.new);
           const newNotification = payload.new as Notification;
 
           const notificationWithMeta: NotificationWithMeta = {
@@ -231,14 +228,7 @@ export function useNotifications({
           }, 5000);
         },
       )
-      .subscribe((status: string, err?: Error) => {
-        console.log('[useNotifications] Realtime status:', {
-          businessId,
-          channel: channelName,
-          status,
-          error: err?.message,
-        });
-      });
+      .subscribe();
 
     // FALLBACK OPTIMIZADO: Polling silencioso cada 30 seg (sin spinner)
     const pollingInterval = setInterval(() => {

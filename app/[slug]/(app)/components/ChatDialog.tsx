@@ -449,7 +449,6 @@ export function ChatDialog({
       if (event.origin !== AUTH_ORIGIN) return;
 
       if (event.data?.type === 'AUTH_SUCCESS' && event.data?.slug === slug) {
-        console.info('[ChatDialog] Auth tokens received from popup');
         setIsAwaitingAuth(false);
         supabase.auth
           .setSession({

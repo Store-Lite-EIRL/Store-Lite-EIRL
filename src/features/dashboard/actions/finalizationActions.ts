@@ -82,8 +82,6 @@ export async function requestFinalization(
   businessId: string,
 ): Promise<FinalizationActionResult> {
   try {
-    console.log('[requestFinalization] Starting for payment:', paymentId);
-
     // 1. Fetch the payment and validate ownership + status
     const [payment] = await db
       .select()
@@ -127,11 +125,6 @@ export async function requestFinalization(
     const now = new Date();
     const deadline = new Date(now);
     deadline.setDate(deadline.getDate() + DAYS_FOR_CUSTOMER_TO_CONFIRM);
-
-    console.log(
-      '[requestFinalization] Updating payment to not_delivered (waiting for confirmation), deadline:',
-      deadline,
-    );
 
     // 6. Update payment — V2 path uses OrderService, legacy uses inline
     const expectedVersion = (payment as { version?: number }).version ?? 0;
@@ -216,8 +209,6 @@ Recuerda que si no respondes en 3 días (${deadline.toLocaleDateString('es-PE')}
       revalidatePath(`/${slug}/order/${payment.trackingToken}`, 'page');
     }
 
-    console.log('[requestFinalization] Success! Payment updated to esperando_confirmacion');
-
     return {
       success: true,
       data: {
@@ -247,8 +238,6 @@ export async function confirmFinalization(
   token: string,
 ): Promise<FinalizationActionResult> {
   try {
-    console.log('[confirmFinalization] Starting for payment:', paymentId);
-
     // 1. Fetch payment and validate token + status
     const [payment] = await db
       .select()
@@ -271,8 +260,6 @@ export async function confirmFinalization(
     }
 
     const now = new Date();
-
-    console.log('[confirmFinalization] Confirming finalization...');
 
     // 2. Update payment — V2 path uses OrderService, legacy uses inline
     const expectedVersion = (payment as { version?: number }).version ?? 0;
@@ -346,8 +333,6 @@ export async function confirmFinalization(
     revalidatePath(`/${slug}/dashboard`, 'page');
     revalidatePath(`/${slug}/order/${token}`, 'page');
 
-    console.log('[confirmFinalization] Success! Payment finalized.');
-
     return {
       success: true,
       data: {
@@ -377,8 +362,6 @@ export async function rejectFinalization(
   reason: string,
 ): Promise<FinalizationActionResult> {
   try {
-    console.log('[rejectFinalization] Starting for payment:', paymentId);
-
     // 1. Fetch payment and validate token + status
     const [payment] = await db
       .select()
@@ -398,8 +381,6 @@ export async function rejectFinalization(
         error: `El pedido no está en estado de espera de confirmación. Estado actual: ${payment.status}`,
       };
     }
-
-    console.log('[rejectFinalization] Rejecting with reason:', reason);
 
     // 2. Update payment — V2 path uses OrderService (→ ISSUE_REPORTED), legacy uses inline (→ disputed)
     // Legacy also clears completedAt if it was previously set (P17)
@@ -476,8 +457,6 @@ export async function rejectFinalization(
     revalidatePath(`/${slug}/dashboard`, 'page');
     revalidatePath(`/${slug}/order/${token}`, 'page');
 
-    console.log('[rejectFinalization] Success! Payment marked as reporte.');
-
     return {
       success: true,
       data: {
@@ -507,13 +486,10 @@ export async function autoFinalizeExpiredPayments(): Promise<{
 }> {
   // V2: timeouts are handled by dedicated processor (T11/T16)
   if (env.orderFlowV2) {
-    console.log('[autoFinalize] V2 active — skipping legacy auto-finalization');
     return { success: true, processedCount: 0 };
   }
 
   try {
-    console.log('[autoFinalize] Starting auto-finalization check...');
-
     const now = new Date();
 
     // 1. Find payments in 'not_delivered' with expired deadlines
@@ -532,8 +508,6 @@ export async function autoFinalizeExpiredPayments(): Promise<{
           lt(payments.finalizationDeadline, now), // Deadline has passed
         ),
       );
-
-    console.log(`[autoFinalize] Found ${expiredPayments.length} expired payments`);
 
     if (expiredPayments.length === 0) {
       return { success: true, processedCount: 0 };
@@ -582,15 +556,12 @@ export async function autoFinalizeExpiredPayments(): Promise<{
         }
 
         processedCount++;
-        console.log(`[autoFinalize] Auto-finalized payment ${payment.id}`);
       } catch (err) {
         console.error(`[autoFinalize] Error processing payment ${payment.id}:`, err);
       }
     }
 
     revalidatePath(`/[slug]/dashboard`, 'page');
-
-    console.log(`[autoFinalize] Success! Processed ${processedCount} payments.`);
 
     return { success: true, processedCount };
   } catch (error) {
