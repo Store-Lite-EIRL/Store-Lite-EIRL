@@ -131,7 +131,7 @@ export default function Hero({
               <div className={styles.emptyStateIcon}>
                 <Icon size={48}>add_photo_alternate</Icon>
               </div>
-              <p className={styles.emptyStateTitle}>Agregá una portada</p>
+              <p className={styles.emptyStateTitle}>Agrega una portada</p>
               <p className={styles.emptyStateSubtitle}>
                 Las portadas hacen que tu negocio se vea más profesional. Puedes subir hasta 3
                 imágenes

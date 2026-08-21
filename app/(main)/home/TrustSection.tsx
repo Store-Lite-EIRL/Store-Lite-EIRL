@@ -18,7 +18,7 @@ export default function TrustSection() {
     {
       icon: 'restore',
       title: 'Sin permanencia',
-      description: 'Cancelá cuando quieras',
+      description: 'Cancela cuando quieras',
     },
   ];
 
@@ -27,9 +27,9 @@ export default function TrustSection() {
       <div className="section-container">
         <div className="trust-content">
           <div className="trust-text">
-            <h3>Confiá tranquilo</h3>
+            <h3>Confía tranquilo</h3>
             <p>
-              Tu negocio y tus clientes están protegidos. Usamos estándares de seguridad bancários y
+              Tu negocio y tus clientes están protegidos. Usamos estándares de seguridad bancarios y
               cumplimos con la ley.
             </p>
           </div>

@@ -104,7 +104,7 @@ export default function OnboardingPage() {
             </h2>
             <p className={styles.optionDescription}>
               {hasBusinesses
-                ? 'Sumá un nuevo negocio a tu panel y gestioná todas tus tiendas desde un solo lugar.'
+                ? 'Suma un nuevo negocio a tu panel y gestiona todas tus tiendas desde un solo lugar.'
                 : 'Lanza tu propia tienda virtual y comienza a vender productos digitales.'}
             </p>
             <Button

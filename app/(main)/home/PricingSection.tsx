@@ -8,7 +8,7 @@ export default function PricingSection() {
       price: formatSoles(PLAN_PRICES.emprendedor.monthly),
       period: 'mes',
       description:
-        'Perfecto para vos que arrancás. Tené tu tienda online lista en minutos, sin complicaciones técnicas ni costos ocultos.',
+        'Perfecto para ti que empiezas. Ten tu tienda online lista en minutos, sin complicaciones técnicas ni costos ocultos.',
       features: [
         '🌐 Tu dominio personalizado (tutienda.com)',
         '📦 Hasta 150 productos en tu catálogo',
@@ -47,7 +47,7 @@ export default function PricingSection() {
       description:
         'La versión completa con inteligencia artificial. Para marcas que necesitan el máximo rendimiento y soporte.',
       features: [
-        '🤖 IA que sugerir productos trending',
+        '🤖 IA que sugiere productos en tendencia',
         '📊 Dashboard inteligente con análisis',
         '👥 Hasta 5 usuarios en tu equipo',
         '💰 Productos ilimitados',
@@ -66,9 +66,9 @@ export default function PricingSection() {
       <div className="section-container">
         <div className="section-heading">
           <span className="section-eyebrow">Planes</span>
-          <h2 className="section-title-landing">Encontrá el plan que hace crecer tu negocio</h2>
+          <h2 className="section-title-landing">Encuentra el plan que hace crecer tu negocio</h2>
           <p className="section-description">
-            Precios claros. Sin letras chiquitas. Arrancá gratis y escalá cuando quieras.
+            Precios claros. Sin letras chiquitas. Empieza gratis y escala cuando quieras.
           </p>
         </div>
 

@@ -189,7 +189,7 @@ describe('importProductsBatch', () => {
     expect(result).toEqual({
       success: false,
       error:
-        'No podés importar 2 producto(s). Tu plan actual permite hasta 10 productos activos y ya tenés 9. Reducí la cantidad a importar o mejorá tu plan.',
+        'No puedes importar 2 producto(s). Tu plan actual permite hasta 10 productos activos y ya tienes 9. Reduce la cantidad a importar o mejora tu plan.',
     });
 
     // Should NOT have proceeded with categories or insert
