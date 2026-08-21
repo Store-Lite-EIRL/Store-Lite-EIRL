@@ -66,7 +66,7 @@ describe('sendPlanPurchaseConfirmationEmail', () => {
     const params = mockSendEmail.mock.calls[0][0];
     expect(params.to).toBe('buyer@example.com');
     expect(params.subject).toContain('boleta');
-    expect(params.subject).toContain('Store.Lite');
+    expect(params.subject).toContain('Store Lite');
   });
 
   test('renders ticket number, formatted amount and plan name in the html', async () => {

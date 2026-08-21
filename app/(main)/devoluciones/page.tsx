@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Política de Reembolsos - Store.Lite',
+  title: 'Política de Reembolsos - Store Lite',
   description:
-    'Política de reembolsos de Store.Lite: plazo de 7 días calendario por pago de plan, reembolso por el mismo método de pago y solicitudes por WhatsApp.',
+    'Política de reembolsos de Store Lite: plazo de 7 días calendario por pago de plan, reembolso por el mismo método de pago y solicitudes por WhatsApp.',
   robots: { index: true, follow: true },
 };
 

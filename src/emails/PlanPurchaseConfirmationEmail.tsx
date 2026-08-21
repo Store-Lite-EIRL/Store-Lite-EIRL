@@ -26,7 +26,7 @@ export function PlanPurchaseConfirmationEmail({
   customerDocumentNumber,
 }: PlanPurchaseConfirmationEmailProps) {
   return (
-    <Layout previewText="Tu boleta de compra de plan Store.Lite" businessName={businessName}>
+    <Layout previewText="Tu boleta de compra de plan Store Lite" businessName={businessName}>
       <Heading
         style={{
           fontSize: '20px',

@@ -89,7 +89,7 @@ export default function SolutionsSection() {
             <br /> Enfocáte en vender.
           </h2>
           <p className="section-description">
-            Crear y mantener un e-commerce no debería ser un proyecto de ingeniería. Store.Lite te
+            Crear y mantener un e-commerce no debería ser un proyecto de ingeniería. Store Lite te
             da lo que necesitás, sin lo que no necesitás.
           </p>
         </div>

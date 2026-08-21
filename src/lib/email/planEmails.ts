@@ -62,7 +62,7 @@ export async function sendPlanPurchaseConfirmationEmail(
 
     await sendEmail({
       to: planPayment.buyerEmail,
-      subject: 'Tu boleta de compra de plan Store.Lite',
+      subject: 'Tu boleta de compra de plan Store Lite',
       html,
     });
   } catch (error) {
