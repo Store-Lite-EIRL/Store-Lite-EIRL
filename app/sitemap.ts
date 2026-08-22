@@ -6,6 +6,43 @@ import { getCanonicalBusinessUrl } from '@/shared/utils/url';
 import { eq } from 'drizzle-orm';
 import type { MetadataRoute } from 'next';
 
+// Static marketing/legal routes — always crawlable regardless of DB state.
+function staticSitemap(baseUrl: string): MetadataRoute.Sitemap {
+  const now = new Date();
+  return [
+    {
+      url: `${baseUrl}/pricing`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/terminos`,
+      lastModified: now,
+      changeFrequency: 'yearly',
+      priority: 0.4,
+    },
+    {
+      url: `${baseUrl}/privacidad`,
+      lastModified: now,
+      changeFrequency: 'yearly',
+      priority: 0.4,
+    },
+    {
+      url: `${baseUrl}/devoluciones`,
+      lastModified: now,
+      changeFrequency: 'yearly',
+      priority: 0.4,
+    },
+    {
+      url: `${baseUrl}/libro-reclamaciones`,
+      lastModified: now,
+      changeFrequency: 'yearly',
+      priority: 0.4,
+    },
+  ];
+}
+
 function fallbackSitemap(baseUrl: string): MetadataRoute.Sitemap {
   return [
     {
@@ -14,6 +51,7 @@ function fallbackSitemap(baseUrl: string): MetadataRoute.Sitemap {
       changeFrequency: 'daily',
       priority: 1,
     },
+    ...staticSitemap(baseUrl),
   ];
 }
 
@@ -107,6 +145,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'daily',
       priority: 1,
     },
+    ...staticSitemap(baseUrl),
     ...businessUrls,
     ...productUrls,
   ];

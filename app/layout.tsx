@@ -1,3 +1,4 @@
+import { env } from '@/config/env';
 import { AuthProvider } from '@/features/auth';
 import { MaterialWebInit } from '@/lib/material-design/MaterialWebInit';
 import { WebVitalsReporter } from '@/shared/components/WebVitalsReporter';
@@ -82,8 +83,20 @@ const themeBootScript = `
 `;
 
 export const metadata: Metadata = {
-  title: 'Store Lite',
+  metadataBase: new URL(env.nextPublicAppUrl),
+  title: {
+    default: 'Store Lite',
+    template: '%s | Store Lite',
+  },
   description: 'Gestiona tus negocios de forma sencilla y eficiente.',
+  openGraph: {
+    type: 'website',
+    siteName: 'Store Lite',
+    locale: 'es_PE',
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
   icons: {
     icon: '/img/icon.png',
   },
