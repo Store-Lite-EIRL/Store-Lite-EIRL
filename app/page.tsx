@@ -1,41 +1,32 @@
-'use client';
-
-import { useAuth } from '@/features/auth';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import type { Metadata } from 'next';
 
 // Landing Components
 import FaqSection from './(main)/home/FaqSection';
 import FooterSection from './(main)/home/FooterSection';
 import HeroLanding from './(main)/home/HeroLanding';
-import './(main)/home/landing.css';
+// Server-rendered landing: crawlers always get real HTML, never an empty shell.
 import LandingNav from './(main)/home/LandingNav';
+import LandingSessionRedirect from './(main)/home/LandingSessionRedirect';
 import PricingSection from './(main)/home/PricingSection';
 import ProcessSection from './(main)/home/ProcessSection';
 import SolutionsSection from './(main)/home/SolutionsSection';
 import StatsSection from './(main)/home/StatsSection';
 import TrustSection from './(main)/home/TrustSection';
+import './(main)/home/landing.css';
 
+export const metadata: Metadata = {
+  description:
+    'Crea tu tienda online en minutos con Store Lite: inventario, pedidos y pagos en un solo lugar.',
+  alternates: { canonical: '/' },
+};
+
+// Vista exclusiva para NO AUTENTICADOS (La leading page).
+// La sesión se resuelve en cliente vía LandingSessionRedirect: si hay usuario,
+// redirige a /onboarding sin ocultar el contenido estático del server.
 export default function HomePage() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    // Si el usuario ya está logueado, lo mandamos a onboarding
-    // (ahí elige qué hacer: crear negocio, unirse a equipo, ir a lista)
-    if (!loading && user) {
-      router.replace('/onboarding');
-    }
-  }, [user, loading, router]);
-
-  // Si está cargando o ya hay usuario (y estamos en medio del redireccionamiento)
-  if (loading || user) {
-    return null;
-  }
-
-  // Vista exclusiva para NO AUTHENTICADOS (La leading page)
   return (
     <div className="landing-page-root">
+      <LandingSessionRedirect />
       <LandingNav />
       <main>
         <HeroLanding />
