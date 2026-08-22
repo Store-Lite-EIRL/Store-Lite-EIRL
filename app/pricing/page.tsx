@@ -4,11 +4,20 @@ import { businesses } from '@/core/database/schema';
 import { formatSoles, PLAN_PRICES } from '@/shared/billing/planPrices';
 import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
+import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { PricingBackButton } from './components/PricingBackButton';
 import type { PricingCardProps } from './components/PricingCard';
 import { PricingCard } from './components/PricingCard';
 import './pricing.css';
+
+export const metadata: Metadata = {
+  title: 'Planes y precios',
+  description:
+    'Crea tu tienda online en minutos y elige el plan ideal para tu negocio. Acepta pagos con tarjetas vía Culqi y haz crecer tu marca en Perú.',
+  robots: { index: true, follow: true },
+  alternates: { canonical: '/pricing' },
+};
 
 export default async function PricingPage({
   searchParams,
