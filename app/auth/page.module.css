@@ -151,20 +151,32 @@
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1160px;
   padding: 0 1.5rem; /* px-6 */
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-/* Branding */
-.branding {
-  margin-bottom: 3rem; /* mb-12 */
+/* Branding inside the auth card */
+.cardBranding {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 1rem; /* gap-4 */
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  margin-bottom: 2.5rem;
+}
+
+.cardBranding .logoBox {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.875rem;
+}
+
+.cardBranding .logoImage {
+  width: 1.875rem;
+  height: 1.875rem;
 }
 
 .logoBox {
@@ -179,16 +191,17 @@
   box-shadow: 0 0 20px rgba(19, 91, 236, 0.3);
 }
 
-.logoSvg {
+.logoImage {
   width: 2.5rem; /* size-10 */
   height: 2.5rem;
-  color: #135bec; /* text-primary */
+  object-fit: contain;
 }
 
 .brandText {
-  font-size: 2.375rem; /* text-3xl */
+  margin: 0;
+  font-size: 1.5rem;
   font-weight: 700;
-  letter-spacing: -0.0025em;
+  letter-spacing: 0;
 }
 
 .brandAccent {
@@ -198,10 +211,11 @@
 /* Glass Card */
 .card {
   width: 100%;
-  max-width: 28rem; /* max-w-md */
-  border-radius: 1rem; /* rounded-2xl */
-  padding: 2rem; /* p-8 */
+  max-width: 68rem;
+  border-radius: 1.5rem;
+  padding: 0;
   position: relative;
+  overflow: hidden;
 
   /* .glass-card styles */
   background: rgba(255, 255, 255, 0.03);
@@ -213,8 +227,204 @@
 
 @media (min-width: 768px) {
   .card {
-    padding: 3rem; /* md:p-12 */
+    padding: 0;
   }
+}
+
+.cardContent {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  min-height: 38rem;
+  overflow: hidden;
+  background: transparent;
+}
+
+.formPanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding: 3.5rem clamp(2rem, 5vw, 5rem);
+  background: transparent;
+}
+
+.insightPanel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  overflow: hidden;
+  padding: clamp(3rem, 6vw, 6rem);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.columnDivider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 45%;
+  z-index: 2;
+  width: 1px;
+  height: auto;
+  margin: 0;
+  border: 0;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.insightPanel::before,
+.insightPanel::after {
+  content: '';
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.insightPanel::before {
+  width: 22rem;
+  height: 22rem;
+  right: -8rem;
+  bottom: -11rem;
+}
+
+.insightPanel::after {
+  width: 14rem;
+  height: 14rem;
+  right: 3rem;
+  bottom: -7rem;
+}
+
+.formEyebrow,
+.insightEyebrow {
+  margin: 0;
+  color: #60a5fa;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.insightCopy {
+  position: relative;
+  z-index: 1;
+  max-width: 26rem;
+}
+
+.insightEyebrow {
+  color: #c4b5fd;
+}
+
+.insightTitle {
+  max-width: 24rem;
+  margin: 0.875rem 0 1rem;
+  color: #fff;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+}
+
+.insightDescription {
+  max-width: 25rem;
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.insightVisual {
+  position: relative;
+  z-index: 1;
+  min-height: 11rem;
+  margin: 2rem 0;
+}
+
+.visualTile {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 1rem;
+  padding: 1rem;
+  background: rgba(8, 12, 20, 0.46);
+  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(16px);
+}
+
+.visualTile span {
+  width: fit-content;
+  color: #93c5fd;
+  font-size: 1.75rem;
+}
+
+.visualTile strong {
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.visualTile small {
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
+.visualTilePrimary {
+  top: 0;
+  left: 4%;
+  width: 12rem;
+  transform: rotate(-5deg);
+}
+
+.visualTileSecondary {
+  right: 4%;
+  bottom: 0;
+  width: 10rem;
+  transform: rotate(6deg);
+}
+
+.visualTileSecondary span {
+  color: #d8b4fe;
+}
+
+.visualLine {
+  position: absolute;
+  top: 5.25rem;
+  left: 20%;
+  width: 58%;
+  height: 1px;
+  background: linear-gradient(90deg, #60a5fa, #c084fc);
+  transform: rotate(-14deg);
+  opacity: 0.7;
+}
+
+.visualDot {
+  position: absolute;
+  top: 4.9rem;
+  left: 19%;
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 2px solid #bfdbfe;
+  border-radius: 50%;
+  background: #135bec;
+  box-shadow: 0 0 1.5rem rgba(96, 165, 250, 0.8);
+}
+
+.insightFooter {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #dbeafe;
+  font-size: 0.8rem;
+}
+
+.insightFooter span:first-child {
+  color: #86efac;
+  font-size: 1.25rem;
 }
 
 .cardHighlight {
@@ -228,7 +438,7 @@
 
 .cardHeader {
   text-align: center;
-  margin-bottom: 2.5rem; /* mb-10 */
+  margin-bottom: 2rem;
   /* space-y-4 equivalent */
   display: flex;
   flex-direction: column;
@@ -236,23 +446,18 @@
 }
 
 .cardTitle {
-  font-size: 2.25rem; /* text-4xl */
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
   font-weight: 700;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.015em;
   color: white;
   margin: 0;
   line-height: 1.1;
 }
 
-@media (min-width: 768px) {
-  .cardTitle {
-    font-size: 3rem; /* md:text-5xl */
-  }
-}
-
 .cardSubtitle {
   color: #94a3b8; /* text-slate-400 */
   font-size: 1.125rem; /* text-lg */
+  line-height: 1.5;
   margin: 0;
 }
 
@@ -400,33 +605,6 @@
   color: #135bec; /* hover:text-primary */
 }
 
-/* Footer Links */
-.footer {
-  margin-top: 3rem; /* mt-12 */
-  display: flex;
-  gap: 2rem; /* gap-8 */
-  color: #64748b; /* text-slate-500 */
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 500;
-}
-
-.footerLink {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem; /* gap-2 */
-  transition: color 150ms;
-  text-decoration: none;
-  color: inherit;
-}
-
-.footerLink:hover {
-  color: white;
-}
-
-.footerIcon {
-  font-size: 1.125rem; /* text-lg */
-}
-
 /* Floating Clean Layout Particles (bottom of body in template) */
 .particleWrapper {
   position: absolute;
@@ -479,4 +657,88 @@
   height: 0.5rem;
   background-color: #ec4899;
   opacity: 0.3;
+}
+
+@media (max-width: 899px) {
+  .container {
+    overflow-y: auto;
+  }
+
+  .main {
+    padding: 1rem;
+  }
+
+  .card {
+    padding: 0;
+    border-radius: 1.25rem;
+  }
+
+  .cardBranding {
+    margin: 0 0 1.5rem;
+  }
+
+  .cardContent {
+    display: flex;
+    flex-direction: column;
+    min-height: 38rem;
+  }
+
+  .formPanel,
+  .insightPanel {
+    padding: 2.5rem 1.5rem;
+  }
+
+  .columnDivider {
+    top: auto;
+    right: 2rem;
+    bottom: auto;
+    left: 2rem;
+    width: auto;
+    height: 1px;
+    margin: 0;
+  }
+
+  .insightPanel {
+    min-height: 25rem;
+  }
+
+  .insightTitle {
+    font-size: 2.25rem;
+  }
+
+  .insightVisual {
+    min-height: 9rem;
+  }
+
+  .visualTilePrimary {
+    left: 0;
+  }
+
+  .visualTileSecondary {
+    right: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .main {
+    padding: 0.75rem;
+  }
+
+  .card {
+    padding: 0;
+  }
+
+  .formPanel,
+  .insightPanel {
+    padding: 2rem 1rem;
+  }
+
+  .googleButton {
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+
+  .googleButtonText {
+    font-size: 0.9rem;
+  }
 }
