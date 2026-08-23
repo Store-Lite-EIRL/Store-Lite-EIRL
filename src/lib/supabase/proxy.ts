@@ -84,7 +84,7 @@ export async function updateProxy(request: NextRequest) {
     const isOrderTracking = pathSegments.length === 3 && pathSegments[1] === 'order';
     const isLegalPage =
       pathSegments.length === 2 &&
-      ['terminos', 'devoluciones', 'libro-reclamaciones'].includes(pathSegments[1]);
+      ['terminos', 'devoluciones', 'libro-reclamaciones', 'privacidad'].includes(pathSegments[1]);
     const isPublicStorefront =
       isStorefrontBase || isProductDetail || isOrderTracking || isLegalPage;
 
@@ -113,7 +113,16 @@ export async function updateProxy(request: NextRequest) {
     const isRootPage = pathname === '/';
 
     // Handle unauthenticated users
-    if (!user && !isAuthPage && !isPublicStorefront && !isRootPage && !isApiRoute) {
+    // /pricing is public: it carries the platform's commercial metadata
+    // and must be crawlable without a session (see sitemap + SEO batch).
+    if (
+      !user &&
+      !isAuthPage &&
+      !isPublicStorefront &&
+      !isRootPage &&
+      !isApiRoute &&
+      !isPricingPage
+    ) {
       const url = request.nextUrl.clone();
       url.pathname = '/auth';
       return redirectWithCookies(url);
