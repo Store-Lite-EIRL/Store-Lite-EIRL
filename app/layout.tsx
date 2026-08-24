@@ -4,6 +4,7 @@ import { MaterialWebInit } from '@/lib/material-design/MaterialWebInit';
 import { WebVitalsReporter } from '@/shared/components/WebVitalsReporter';
 import { ThemeProvider } from '@/shared/context/ThemeContext';
 import { CSPostHogProvider } from '@/shared/providers/PostHogProvider';
+import { buildSiteJsonLd, SITE_DESCRIPTION, SITE_NAME } from '@/shared/utils/siteJsonLd';
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import Script from 'next/script';
@@ -82,16 +83,19 @@ const themeBootScript = `
 })();
 `;
 
+// Site-level JSON-LD knowledge graph — built once, rendered on every page.
+const siteJsonLd = buildSiteJsonLd(env.nextPublicAppUrl);
+
 export const metadata: Metadata = {
   metadataBase: new URL(env.nextPublicAppUrl),
   title: {
-    default: 'Store Lite',
-    template: '%s | Store Lite',
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`,
   },
-  description: 'Gestiona tus negocios de forma sencilla y eficiente.',
+  description: SITE_DESCRIPTION,
   openGraph: {
     type: 'website',
-    siteName: 'Store Lite',
+    siteName: SITE_NAME,
     locale: 'es_PE',
   },
   twitter: {
@@ -127,6 +131,11 @@ export default function RootLayout({
         />
       </head>
       <body suppressHydrationWarning className="antialiased">
+        {/* Site-level structured data: Organization + WebSite knowledge graph */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
+        />
         <CSPostHogProvider>
           <ThemeProvider>
             <AuthProvider>
