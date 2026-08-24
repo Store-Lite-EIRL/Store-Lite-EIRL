@@ -70,11 +70,29 @@ async function syncUserProfile(supabase: SupabaseClient, user: User) {
     .eq('id', user.id)
     .single();
 
+  // Extract avatar URL from different providers
+  const getAvatarUrl = (metadata: Record<string, unknown>, provider: string): string | null => {
+    if (provider === 'facebook') {
+      // Facebook: picture.data.url or picture
+      const picture = metadata.picture as { data?: { url?: string } } | undefined;
+      return picture?.data?.url ?? (picture as string) ?? null;
+    }
+    // Google: avatar_url or picture
+    return (metadata.avatar_url as string) ?? (metadata.picture as string) ?? null;
+  };
+
+  const provider = user.app_metadata?.provider ?? 'email';
+  const avatarUrl = getAvatarUrl(user.user_metadata ?? {}, provider);
+
   const profileData = {
     email: user.email!,
-    full_name: user.user_metadata.full_name || user.email?.split('@')[0] || 'User',
-    avatar_url: user.user_metadata.avatar_url || null,
-    provider_id: 'google',
+    full_name:
+      user.user_metadata.full_name ??
+      user.user_metadata.name ??
+      user.email?.split('@')[0] ??
+      'User',
+    avatar_url: avatarUrl,
+    provider_id: provider,
   };
 
   // Create profile if it doesn't exist
