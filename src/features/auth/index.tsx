@@ -258,6 +258,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const signInWithFacebook = async () => {
+    // DEBUG: log exact origin resolution
+    const envOrigin = process.env.NEXT_PUBLIC_AUTH_ORIGIN;
+    const windowOrigin = typeof window !== 'undefined' ? window.location.origin : 'SSR';
+    console.warn('🔍 [FB Debug] NEXT_PUBLIC_AUTH_ORIGIN:', envOrigin);
+    console.warn('🔍 [FB Debug] window.location.origin:', windowOrigin);
+    console.warn('🔍 [FB Debug] AUTH_ORIGIN resolved:', AUTH_ORIGIN);
+
+    const redirectUrl = `${AUTH_ORIGIN}/auth/callback`;
+    console.warn('🔗 [FB Debug] Final redirectUrl sent to Supabase:', redirectUrl);
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'facebook',
+      options: {
+        redirectTo: redirectUrl,
+      },
+    });
+    if (error) {
+      console.error('Facebook login error:', error);
+      throw error;
+    }
+  };
+
   const signInWithEmail = async (email: string, password: string): Promise<{ error?: string }> => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
@@ -284,6 +307,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         loading,
         signInWithGoogle,
         signInWithGoogleForChat,
+        signInWithFacebook,
         signInWithEmail,
         signOut,
       }}
@@ -307,6 +331,9 @@ export const useAuth = () => {
       },
       signInWithGoogleForChat: async () => {
         console.warn('[useAuth] signInWithGoogleForChat called outside AuthProvider');
+      },
+      signInWithFacebook: async () => {
+        console.warn('[useAuth] signInWithFacebook called outside AuthProvider');
       },
       signInWithEmail: async (): Promise<{ error?: string }> => {
         console.warn('[useAuth] signInWithEmail called outside AuthProvider');

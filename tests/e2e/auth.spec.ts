@@ -5,7 +5,7 @@ test('should load auth/login page', async ({ page }) => {
   await expect(page).toHaveTitle(/Store Lite/i);
 
   // Auth page should show the sign-in section
-  await expect(page.locator('h1')).toContainText(/Tu tienda global comienza aquí/i);
+  await expect(page.locator('h1')).toContainText(/Tu tienda, lista para vender/i);
 });
 
 test('should load auth callback page without error', async ({ page }) => {

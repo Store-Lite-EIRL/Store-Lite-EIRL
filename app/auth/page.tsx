@@ -15,7 +15,7 @@ import styles from './page.module.css';
  * Strict implementation of the Future.io design template.
  */
 export default function AuthPage() {
-  const { signInWithGoogle, signInWithEmail } = useAuth();
+  const { signInWithGoogle, signInWithFacebook, signInWithEmail } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [consented, setConsented] = useState(false);
   const [email, setEmail] = useState('');
@@ -35,6 +35,16 @@ export default function AuthPage() {
       await signInWithGoogle();
     } catch (error) {
       console.error('Sign in failed', error);
+      setIsLoading(false);
+    }
+  };
+
+  const handleFacebookSignIn = async () => {
+    try {
+      setIsLoading(true);
+      await signInWithFacebook();
+    } catch (error) {
+      console.error('Facebook sign in failed', error);
       setIsLoading(false);
     }
   };
@@ -131,12 +141,12 @@ export default function AuthPage() {
               </div>
 
               <div className={styles.cardHeader}>
-                <p className={styles.formEyebrow}>Bienvenido de nuevo</p>
+                <p className={styles.formEyebrow}>Bienvenido a Store Lite</p>
                 <h1 id="auth-title" className={styles.cardTitle}>
-                  Tu tienda global comienza aquí.
+                  Tu tienda, lista para vender.
                 </h1>
                 <p className={styles.cardSubtitle}>
-                  Lanza tus productos virtuales en cuestion de segundos.
+                  Publica tus productos y recibe pagos en minutos.
                 </p>
               </div>
 
@@ -174,6 +184,42 @@ export default function AuthPage() {
                     </>
                   )}
                 </button>
+
+                {/* Facebook OAuth — enabled via Supabase provider */}
+                <div className={styles.upcomingProvider}>
+                  <button
+                    type="button"
+                    className={styles.googleButton}
+                    onClick={handleFacebookSignIn}
+                    disabled={!consented || isLoading}
+                  >
+                    <svg className={styles.googleIcon} viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+                        fill="#1877F2"
+                      />
+                    </svg>
+                    <span className={styles.googleButtonText}>Continuar con Facebook</span>
+                  </button>
+                </div>
+
+                <div className={styles.upcomingProvider}>
+                  <button
+                    type="button"
+                    className={styles.googleButton}
+                    disabled
+                    title="Disponible próximamente"
+                  >
+                    <span
+                      className={`material-symbols-rounded ${styles.providerIcon}`}
+                      aria-hidden="true"
+                    >
+                      sms
+                    </span>
+                    <span className={styles.googleButtonText}>Continuar con teléfono</span>
+                  </button>
+                  <span className={styles.soonBadge}>Próximamente</span>
+                </div>
 
                 <button
                   type="button"
@@ -240,23 +286,47 @@ export default function AuthPage() {
               </div>
 
               <div className={styles.insightVisual} aria-hidden="true">
-                <div className={`${styles.visualTile} ${styles.visualTilePrimary}`}>
+                <div className={`${styles.visualTile} ${styles.visualTile1}`}>
                   <span className="material-symbols-rounded">storefront</span>
                   <strong>Tu tienda</strong>
                   <small>Lista para vender</small>
                 </div>
-                <div className={`${styles.visualTile} ${styles.visualTileSecondary}`}>
+                <div className={`${styles.visualTile} ${styles.visualTile2}`}>
                   <span className="material-symbols-rounded">payments</span>
                   <strong>Pagos simples</strong>
                 </div>
-                <div className={styles.visualLine} />
-                <div className={styles.visualDot} />
+                <div className={`${styles.visualTile} ${styles.visualTile3}`}>
+                  <span className="material-symbols-rounded">inventory_2</span>
+                  <strong>Inventario</strong>
+                  <small>Siempre al día</small>
+                </div>
+                <div className={`${styles.visualTile} ${styles.visualTile4}`}>
+                  <span className="material-symbols-rounded">receipt_long</span>
+                  <strong>Pedidos</strong>
+                  <small>Bajo control</small>
+                </div>
               </div>
 
-              <div className={styles.insightFooter}>
-                <span className="material-symbols-rounded">verified</span>
-                <span>Una experiencia simple para empezar.</span>
-              </div>
+              <ul className={styles.benefitList}>
+                <li className={styles.benefitRow}>
+                  <span className="material-symbols-rounded" aria-hidden="true">
+                    check_circle
+                  </span>
+                  Empieza gratis y crece a tu ritmo
+                </li>
+                <li className={styles.benefitRow}>
+                  <span className="material-symbols-rounded" aria-hidden="true">
+                    cloud_done
+                  </span>
+                  Tus datos, desde cualquier dispositivo
+                </li>
+                <li className={styles.benefitRow}>
+                  <span className="material-symbols-rounded" aria-hidden="true">
+                    verified
+                  </span>
+                  Una experiencia simple para empezar.
+                </li>
+              </ul>
             </aside>
           </div>
         </div>
