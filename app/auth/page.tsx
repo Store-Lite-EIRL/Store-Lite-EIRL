@@ -16,7 +16,9 @@ import styles from './page.module.css';
  */
 export default function AuthPage() {
   const { signInWithGoogle, signInWithFacebook, signInWithEmail } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [facebookLoading, setFacebookLoading] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
   const [consented, setConsented] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,41 +33,41 @@ export default function AuthPage() {
 
   const handleGoogleSignIn = async () => {
     try {
-      setIsLoading(true);
+      setGoogleLoading(true);
       await signInWithGoogle();
     } catch (error) {
       console.error('Sign in failed', error);
-      setIsLoading(false);
+      setGoogleLoading(false);
     }
   };
 
   const handleFacebookSignIn = async () => {
     try {
-      setIsLoading(true);
+      setFacebookLoading(true);
       await signInWithFacebook();
     } catch (error) {
       console.error('Facebook sign in failed', error);
-      setIsLoading(false);
+      setFacebookLoading(false);
     }
   };
 
   const handlePasswordSignIn = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (isLoading || !consented) return;
+    if (emailLoading || !consented) return;
 
     setPasswordError(null);
-    setIsLoading(true);
+    setEmailLoading(true);
     try {
       const { error } = await signInWithEmail(email, password);
       if (error) {
         setPasswordError(error);
-        setIsLoading(false);
+        setEmailLoading(false);
       }
       // On success signInWithEmail navigates to /onboarding (page unmounts).
     } catch (error) {
       console.error('Password sign in failed', error);
       setPasswordError('No se pudo iniciar sesión. Inténtalo de nuevo.');
-      setIsLoading(false);
+      setEmailLoading(false);
     }
   };
 
@@ -156,9 +158,9 @@ export default function AuthPage() {
                 <button
                   className={styles.googleButton}
                   onClick={handleGoogleSignIn}
-                  disabled={!consented || isLoading}
+                  disabled={!consented || googleLoading}
                 >
-                  {isLoading ? (
+                  {googleLoading ? (
                     <span className="material-symbols-rounded">progress_activity</span>
                   ) : (
                     <>
@@ -191,24 +193,31 @@ export default function AuthPage() {
                     type="button"
                     className={styles.googleButton}
                     onClick={handleFacebookSignIn}
-                    disabled={!consented || isLoading}
+                    disabled={!consented || facebookLoading}
                   >
-                    <svg className={styles.googleIcon} viewBox="0 0 24 24" aria-hidden="true">
-                      <path
-                        d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
-                        fill="#1877F2"
-                      />
-                    </svg>
-                    <span className={styles.googleButtonText}>Continuar con Facebook</span>
+                    {facebookLoading ? (
+                      <span className="material-symbols-rounded">progress_activity</span>
+                    ) : (
+                      <>
+                        <svg className={styles.googleIcon} viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+                            fill="#1877F2"
+                          />
+                        </svg>
+                        <span className={styles.googleButtonText}>Continuar con Facebook</span>
+                      </>
+                    )}
                   </button>
                 </div>
 
                 <div className={styles.upcomingProvider}>
                   <button
                     type="button"
-                    className={styles.googleButton}
+                    className={`${styles.googleButton} ${styles.phoneButton}`}
                     disabled
                     title="Disponible próximamente"
+                    aria-disabled="true"
                   >
                     <span
                       className={`material-symbols-rounded ${styles.providerIcon}`}
@@ -265,8 +274,8 @@ export default function AuthPage() {
                           {passwordError}
                         </p>
                       ) : null}
-                      <Button type="submit" disabled={isLoading || !consented}>
-                        {isLoading ? 'Ingresando…' : 'Iniciar sesión'}
+                      <Button type="submit" disabled={emailLoading || !consented}>
+                        {emailLoading ? 'Ingresando…' : 'Iniciar sesión'}
                       </Button>
                     </form>
                   </div>

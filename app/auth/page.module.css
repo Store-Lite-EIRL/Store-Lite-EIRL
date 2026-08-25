@@ -574,6 +574,28 @@
   white-space: nowrap;
 }
 
+/* Phone button - visually distinct (disabled/muted) */
+.phoneButton {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+}
+
+.phoneButton:hover {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  transform: none !important;
+}
+
+.phoneButton .providerIcon {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.phoneButton .googleButtonText {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
 .divider {
   display: flex;
   align-items: center;
