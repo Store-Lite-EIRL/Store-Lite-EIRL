@@ -1,0 +1,472 @@
+/* ============================================
+   Sidebar Component - Material Design 3 Tokenized
+   Phase 1: Foundation tokens and base styles
+   ============================================ */
+
+/* ============================================
+   CSS-001 to CSS-012: Design Tokens
+   ============================================ */
+:root {
+  /* CSS-001: Sidebar width (collapsed) */
+  --sidebar-width-collapsed: 72px;
+
+  /* CSS-002: Sidebar width (expanded) */
+  --sidebar-width-expanded: 280px;
+
+  /* CSS-003: Sidebar width (mobile) */
+  --sidebar-width-mobile: 320px;
+
+  /* CSS-004: Transition duration */
+  --sidebar-transition-duration: 250ms;
+
+  /* CSS-005: Transition easing */
+  --sidebar-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* CSS-006: Header height */
+  --sidebar-header-height: 64px;
+
+  /* CSS-007: Item height */
+  --sidebar-item-height: 48px;
+
+  /* CSS-008: Item border radius */
+  --sidebar-item-radius: 12px;
+
+  /* CSS-009: Item horizontal padding */
+  --sidebar-item-padding-x: 16px;
+
+  /* CSS-010: Icon size */
+  --sidebar-icon-size: 24px;
+
+  /* CSS-011: Label font size */
+  --sidebar-label-font-size: 0.9375rem; /* 15px */
+
+  /* CSS-012: Badge size */
+  --sidebar-badge-size: 20px;
+
+  /* Z-index layers */
+  --sidebar-z-index: 1000;
+  --sidebar-backdrop-z-index: 999;
+  --sidebar-mobile-z-index: 1100;
+
+  /* Breakpoint */
+  --sidebar-mobile-breakpoint: 768px;
+}
+
+/* ============================================
+   Light Theme (default) - MD3 Token References
+   ============================================ */
+:root {
+  /* Surface colors */
+  --sidebar-bg: var(--md-sys-color-surface-container-low);
+  --sidebar-border: var(--md-sys-color-outline-variant);
+
+  /* Item colors */
+  --sidebar-item-color: var(--md-sys-color-on-surface-variant);
+  --sidebar-item-hover-bg: var(--md-sys-color-surface-container-highest);
+  --sidebar-item-hover-color: var(--md-sys-color-on-surface);
+
+  /* Active item colors */
+  --sidebar-item-active-bg: var(--md-sys-color-primary-container);
+  --sidebar-item-active-color: var(--md-sys-color-on-primary-container);
+  --sidebar-item-active-icon-color: var(--md-sys-color-on-primary-container);
+
+  /* Badge colors */
+  --sidebar-badge-bg: var(--md-sys-color-error);
+  --sidebar-badge-color: var(--md-sys-color-on-error);
+
+  /* Divider */
+  --sidebar-divider-color: var(--md-sys-color-outline-variant);
+
+  /* Backdrop */
+  --sidebar-backdrop-bg: rgba(0, 0, 0, 0.32);
+
+  /* Text */
+  --sidebar-header-color: var(--md-sys-color-on-surface);
+  --sidebar-footer-color: var(--md-sys-color-on-surface-variant);
+
+  /* Shadow */
+  --sidebar-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* ============================================
+   Dark Theme via body.dark (MD3 auto-adapts)
+   ============================================ */
+body.dark {
+  /* Surface colors */
+  --sidebar-bg: var(--md-sys-color-surface-container-low);
+  --sidebar-border: var(--md-sys-color-outline-variant);
+
+  /* Item colors */
+  --sidebar-item-color: var(--md-sys-color-on-surface-variant);
+  --sidebar-item-hover-bg: var(--md-sys-color-surface-container-highest);
+  --sidebar-item-hover-color: var(--md-sys-color-on-surface);
+
+  /* Active item colors */
+  --sidebar-item-active-bg: var(--md-sys-color-primary-container);
+  --sidebar-item-active-color: var(--md-sys-color-on-primary-container);
+  --sidebar-item-active-icon-color: var(--md-sys-color-on-primary-container);
+
+  /* Badge colors */
+  --sidebar-badge-bg: var(--md-sys-color-error);
+  --sidebar-badge-color: var(--md-sys-color-on-error);
+
+  /* Divider */
+  --sidebar-divider-color: var(--md-sys-color-outline-variant);
+
+  /* Backdrop */
+  --sidebar-backdrop-bg: rgba(0, 0, 0, 0.48);
+
+  /* Text */
+  --sidebar-header-color: var(--md-sys-color-on-surface);
+  --sidebar-footer-color: var(--md-sys-color-on-surface-variant);
+
+  /* Shadow */
+  --sidebar-shadow: 0 4px 24px rgba(0, 0, 0, 0.24);
+}
+
+/* ============================================
+   Base Component Styles
+   ============================================ */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: var(--sidebar-width-collapsed);
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  z-index: var(--sidebar-z-index);
+  box-shadow: var(--sidebar-shadow);
+  transition:
+    width var(--sidebar-transition-duration) var(--sidebar-transition-easing),
+    transform var(--sidebar-transition-duration) var(--sidebar-transition-easing);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* No layout shift on SSR */
+[data-ssr] .sidebar {
+  transition: none;
+}
+
+/* Expanded state */
+.sidebar--expanded {
+  width: var(--sidebar-width-expanded);
+}
+
+/* Collapsed state (default) */
+.sidebar--collapsed {
+  width: var(--sidebar-width-collapsed);
+}
+
+/* Mobile open state */
+.sidebar--mobile-open {
+  width: var(--sidebar-width-mobile);
+  transform: translateX(0);
+  box-shadow: var(--sidebar-shadow);
+}
+
+/* Mobile closed (hidden off-screen) */
+.sidebar:not(.sidebar--mobile-open) {
+  @media (max-width: 768px) {
+    transform: translateX(-100%);
+  }
+}
+
+/* ============================================
+   Header
+   ============================================ */
+.sidebar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--sidebar-header-height);
+  padding: 0 var(--sidebar-item-padding-x);
+  border-bottom: 1px solid var(--sidebar-divider-color);
+  flex-shrink: 0;
+}
+
+.sidebar__header-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--sidebar-header-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ============================================
+   Divider
+   ============================================ */
+.sidebar__divider {
+  height: 1px;
+  background-color: var(--sidebar-divider-color);
+  margin: 8px var(--sidebar-item-padding-x);
+}
+
+/* ============================================
+   Navigation Items
+   ============================================ */
+.sidebar__nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.sidebar__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% - 2 * var(--sidebar-item-padding-x));
+  margin: 4px var(--sidebar-item-padding-x);
+  height: var(--sidebar-item-height);
+  padding: 0 var(--sidebar-item-padding-x);
+  border: none;
+  border-radius: var(--sidebar-item-radius);
+  background-color: transparent;
+  color: var(--sidebar-item-color);
+  font-size: var(--sidebar-label-font-size);
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background-color var(--sidebar-transition-duration) var(--sidebar-transition-easing),
+    color var(--sidebar-transition-duration) var(--sidebar-transition-easing);
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.sidebar__item:hover {
+  background-color: var(--sidebar-item-hover-bg);
+  color: var(--sidebar-item-hover-color);
+}
+
+.sidebar__item:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}
+
+/* Active state */
+.sidebar__item--active {
+  background-color: var(--sidebar-item-active-bg);
+  color: var(--sidebar-item-active-color);
+}
+
+.sidebar__item--active:hover {
+  background-color: var(--sidebar-item-active-bg);
+  filter: brightness(1.05);
+}
+
+/* Icon wrapper */
+.sidebar__item-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sidebar-icon-size);
+  height: var(--sidebar-icon-size);
+  flex-shrink: 0;
+}
+
+.sidebar__item-icon {
+  font-family: 'Material Symbols Rounded', sans-serif !important;
+  font-size: var(--sidebar-icon-size);
+  width: var(--sidebar-icon-size);
+  height: var(--sidebar-icon-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  transition: color var(--sidebar-transition-duration) var(--sidebar-transition-easing);
+}
+
+.sidebar__item--active .sidebar__item-icon {
+  color: var(--sidebar-item-active-icon-color);
+  font-variation-settings: 'FILL' 1;
+}
+
+/* Label */
+.sidebar__item-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity var(--sidebar-transition-duration) var(--sidebar-transition-easing);
+}
+
+/* Collapsed state: hide labels */
+.sidebar--collapsed .sidebar__item-label {
+  opacity: 0;
+  width: 0;
+  pointer-events: none;
+}
+
+/* Expanded state: show labels */
+.sidebar--expanded .sidebar__item-label {
+  opacity: 1;
+  width: auto;
+}
+
+/* ============================================
+   Badge
+   ============================================ */
+.sidebar__badge {
+  position: absolute;
+  top: 50%;
+  right: var(--sidebar-item-padding-x);
+  transform: translateY(-50%);
+  min-width: var(--sidebar-badge-size);
+  height: var(--sidebar-badge-size);
+  padding: 0 6px;
+  border-radius: 999px;
+  background-color: var(--sidebar-badge-bg);
+  color: var(--sidebar-badge-color);
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 700;
+  line-height: var(--sidebar-badge-size);
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Adjust badge position in collapsed state */
+.sidebar--collapsed .sidebar__badge {
+  right: calc(50% - var(--sidebar-badge-size) / 2);
+  transform: translate(50%, -50%);
+}
+
+/* ============================================
+   Footer / User Section
+   ============================================ */
+.sidebar__footer {
+  padding: 8px var(--sidebar-item-padding-x);
+  border-top: 1px solid var(--sidebar-divider-color);
+  flex-shrink: 0;
+}
+
+.sidebar__user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: var(--sidebar-item-radius);
+  color: var(--sidebar-footer-color);
+  transition: background-color var(--sidebar-transition-duration) var(--sidebar-transition-easing);
+}
+
+.sidebar__user-info:hover {
+  background-color: var(--sidebar-item-hover-bg);
+  color: var(--sidebar-item-hover-color);
+}
+
+.sidebar__user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.sidebar__user-details {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.sidebar__user-name {
+  font-size: var(--sidebar-label-font-size);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar__user-plan {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================
+   Mobile Backdrop
+   ============================================ */
+.sidebar__backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: var(--sidebar-backdrop-bg);
+  z-index: var(--sidebar-backdrop-z-index);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--sidebar-transition-duration) var(--sidebar-transition-easing),
+    visibility var(--sidebar-transition-duration) var(--sidebar-transition-easing);
+}
+
+.sidebar__backdrop--visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ============================================
+   Responsive Override at 768px Breakpoint
+   ============================================ */
+@media (max-width: 768px) {
+  .sidebar {
+    width: var(--sidebar-width-mobile);
+    transform: translateX(-100%);
+    border-right: none;
+    border-radius: 0;
+  }
+
+  .sidebar--mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar--expanded,
+  .sidebar--collapsed {
+    width: var(--sidebar-width-mobile);
+  }
+
+  /* Hide collapsed/expanded distinction on mobile */
+  .sidebar--collapsed .sidebar__item-label,
+  .sidebar--expanded .sidebar__item-label {
+    opacity: 1;
+    width: auto;
+  }
+
+  /* Full height items on mobile */
+  .sidebar__item {
+    height: 56px;
+  }
+}
+
+/* ============================================
+   Reduced Motion Support
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .sidebar__item,
+  .sidebar__backdrop {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* No transition on first render (SSR) */
+.sidebar--no-transition {
+  transition: none !important;
+}
