@@ -166,8 +166,8 @@ export function Sidebar({
         {/* Navigation */}
         <nav
           ref={(el) => {
-            navContainerRef.current = el;
-            focusTrapRef.current = el;
+            navContainerRef.current = el as HTMLDivElement | null;
+            focusTrapRef.current = el as HTMLDivElement | null;
           }}
           className="sidebar__nav"
           data-nav-container

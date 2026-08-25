@@ -3,7 +3,9 @@ export { default as Navbar } from './Navbar';
 export { NavItem } from './NavItem';
 export { NavSection } from './NavSection';
 export { Sidebar } from './Sidebar';
+export { SidebarHeader } from './SidebarHeader';
 export { UserMenu } from './UserMenu';
+export { WorkspaceSelector } from './WorkspaceSelector';
 
 // Types
 export type {
