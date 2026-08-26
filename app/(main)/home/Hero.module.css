@@ -1,6 +1,6 @@
 .heroContainer {
   width: 100%;
-  height: 520px;
+  height: 560px; /* Aumentado de 520 a 560 para más espacio en portada */
   background-color: var(--md-sys-color-surface-variant); /* Gray placeholder */
   background-size: cover;
   background-position: center;
@@ -364,12 +364,16 @@
 
 @media (max-width: 600px) {
   .heroContainer {
-    height: 320px;
+    height: 360px; /* Aumentado de 320 a 360 */
     border-radius: var(--md-sys-shape-corner-large);
   }
 
+  .heroContainer.noImages {
+    height: 460px; /* Aumentado de 420 a 460 */
+  }
+
   .heroContent {
-    padding: 1.25rem;
+    padding: 1.5rem; /* Más padding bottom para bajar logo/título */
   }
 
   .logo {
@@ -384,11 +388,15 @@
 
 @media (max-width: 380px) {
   .heroContainer {
-    height: 280px;
+    height: 320px; /* Aumentado de 280 a 320 */
+  }
+
+  .heroContainer.noImages {
+    height: 420px; /* Aumentado de 380 a 420 */
   }
 
   .heroContent {
-    padding: 1rem 0.75rem;
+    padding: 1.25rem 0.75rem;
   }
 
   .logo {

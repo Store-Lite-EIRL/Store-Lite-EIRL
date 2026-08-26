@@ -22,11 +22,11 @@
 }
 
 .content-wrapper--expanded {
-  margin-left: var(--navbar-expanded-width);
+  margin-left: calc(var(--navbar-expanded-width) + 1rem);
 }
 
 .content-wrapper--collapsed {
-  margin-left: var(--navbar-width);
+  margin-left: calc(var(--navbar-width) + 1rem);
 }
 
 .content-wrapper--hidden {

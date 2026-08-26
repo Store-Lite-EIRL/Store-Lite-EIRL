@@ -27,6 +27,34 @@ function cleanupSeenEvents(now: number) {
   }
 }
 
+/**
+ * Verify webhook authenticity via Basic Auth (CulqiPanel webhook configuration).
+ * CulqiPanel uses username/password authentication instead of HMAC signatures.
+ */
+function verifyBasicAuth(request: Request): boolean {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Basic ')) {
+    return false;
+  }
+
+  const expectedUser = process.env.CULQI_WEBHOOK_USER;
+  const expectedPass = process.env.CULQI_WEBHOOK_PASS;
+
+  // If no credentials configured, reject in production, allow in development
+  if (!expectedUser || !expectedPass) {
+    return process.env.NODE_ENV !== 'production';
+  }
+
+  const decoded = Buffer.from(authHeader.slice(6), 'base64').toString('utf-8');
+  const [user, pass] = decoded.split(':');
+
+  // Timing-safe comparison
+  const userMatch = safeTimingEquals(user ?? '', expectedUser);
+  const passMatch = safeTimingEquals(pass ?? '', expectedPass);
+
+  return userMatch && passMatch;
+}
+
 function parseSignatureHeader(signatureHeader: string | null) {
   if (!signatureHeader) return null;
 
@@ -131,10 +159,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
   }
 
-  const signatureHeader = request.headers.get('Culqi-Signature');
-  const verification = verifyCulqiSignature(rawBody, signatureHeader);
-  if (!verification.ok) {
-    return NextResponse.json({ error: verification.reason }, { status: 401 });
+  // Authentication: try Basic Auth first (CulqiPanel), then HMAC signature (API)
+  const hasBasicAuth = request.headers.get('Authorization')?.startsWith('Basic ');
+  const hasSignatureHeader = request.headers.get('Culqi-Signature');
+
+  if (hasBasicAuth) {
+    // CulqiPanel webhook authentication
+    if (!verifyBasicAuth(request)) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    }
+  } else if (hasSignatureHeader) {
+    // HMAC signature authentication (API-created webhooks)
+    const verification = verifyCulqiSignature(rawBody, hasSignatureHeader);
+    if (!verification.ok) {
+      return NextResponse.json({ error: verification.reason }, { status: 401 });
+    }
+  } else {
+    // No authentication provided
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json({ error: 'Missing authentication' }, { status: 401 });
+    }
+    // Allow in development for testing
   }
 
   let body: Record<string, unknown>;
