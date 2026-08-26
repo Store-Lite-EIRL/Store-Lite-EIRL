@@ -80,7 +80,7 @@ export function UserMenu({ state, onCloseStore, onLogout }: UserMenuProps) {
   // Handle open/close effects
   useEffect(() => {
     const handleKeyDownNative = (event: KeyboardEvent) => {
-      handleKeyDown(event as React.KeyboardEvent);
+      handleKeyDown(event as unknown as React.KeyboardEvent);
     };
 
     if (isOpen) {
