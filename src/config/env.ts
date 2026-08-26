@@ -30,6 +30,9 @@ export const env = {
   //   false/omit → acepta cualquier key pk_/sk_ (desarrollo).
   //   true       → fuerza pk_live_ / sk_live_ al guardar credenciales.
   enforceLiveCulqiKeys: process.env.CULQI_ENFORCE_LIVE_KEYS === 'true',
+  // Culqi webhook authentication (CulqiPanel uses basic auth)
+  culqiWebhookUser: process.env.CULQI_WEBHOOK_USER || '',
+  culqiWebhookPass: process.env.CULQI_WEBHOOK_PASS || '',
   // Resend — transactional emails (Server-side only)
   resendApiKey: process.env.RESEND_API_KEY!,
   resendFromEmail: process.env.RESEND_FROM_EMAIL!,

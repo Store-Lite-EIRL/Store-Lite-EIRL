@@ -108,6 +108,8 @@ export default async function AppGroupLayout({ children, modal, params }: AppLay
         showNavbarByDefault={isAdminView}
         navbarPlanName={navbarPlanName}
         navbarBusinessId={business.id}
+        navbarBusinessName={business.name}
+        navbarBusinessLogoUrl={business.logoUrl ?? undefined}
       >
         {children}
         {modal}

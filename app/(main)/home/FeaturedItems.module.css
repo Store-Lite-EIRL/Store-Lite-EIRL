@@ -1,5 +1,10 @@
 .sectionContainer {
   margin-bottom: 2.5rem;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
 .header {
@@ -54,28 +59,19 @@
 
 .itemsContainer {
   display: flex;
-  gap: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.875rem;
   padding: 0.5rem 0.25rem 1.5rem 0.25rem;
-  justify-content: center; /* Center items when there are few */
-  overflow-x: auto;
-}
-
-/* Hide scrollbar for cleaner look but keep functionality */
-.itemsContainer::-webkit-scrollbar {
-  height: 6px;
-}
-.itemsContainer::-webkit-scrollbar-thumb {
-  background-color: var(--md-sys-color-outline-variant);
-  border-radius: 3px;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 .itemCard {
-  min-width: 140px;
-  max-width: 220px;
-  height: 280px;
+  flex: 0 0 auto;
+  width: 180px;
+  height: 220px;
   background-color: var(--md-sys-color-surface-container-high);
   border-radius: var(--md-sys-shape-corner-large);
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -255,39 +251,23 @@
   opacity: 0;
 }
 
-@media (max-width: 900px) {
-  .itemsContainer {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    overflow-x: visible;
-    justify-content: center;
+@media (max-width: 1200px) {
+  .itemCard {
+    width: 160px;
+    height: 200px;
   }
 }
 
 @media (max-width: 768px) {
   .itemCard {
-    height: 200px;
-    min-width: unset;
-    max-width: unset;
-  }
-}
-
-@media (max-width: 600px) {
-  .itemsContainer {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    overflow-x: visible;
-  }
-  .itemCard {
+    width: 140px;
     height: 180px;
   }
 }
 
-@media (max-width: 400px) {
-  .itemsContainer {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 480px) {
   .itemCard {
-    height: 240px;
+    width: 130px;
+    height: 160px;
   }
 }

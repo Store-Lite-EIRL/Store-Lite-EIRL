@@ -15,6 +15,8 @@ interface AppLayoutProps {
   showNavbarByDefault?: boolean;
   navbarPlanName?: string;
   navbarBusinessId?: string;
+  navbarBusinessName?: string;
+  navbarBusinessLogoUrl?: string;
 }
 
 export default function AppLayout({
@@ -22,6 +24,8 @@ export default function AppLayout({
   showNavbarByDefault = false,
   navbarPlanName,
   navbarBusinessId,
+  navbarBusinessName,
+  navbarBusinessLogoUrl,
 }: AppLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -96,6 +100,8 @@ export default function AppLayout({
             onToggle={toggleNavbar}
             planName={navbarPlanName}
             businessId={navbarBusinessId}
+            businessName={navbarBusinessName}
+            businessLogoUrl={navbarBusinessLogoUrl}
           />
         )}
 
