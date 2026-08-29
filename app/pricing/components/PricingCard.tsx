@@ -120,10 +120,10 @@ export function PricingCard({
     selectedBusinessData?.planType && selectedBusinessData.planType !== 'basico';
 
   const handleCulqiToken = async (token: string) => {
-    let planEnum: 'basico' | 'emprendedor' | 'business_pro' | 'enterprise_ai' = 'basico';
+    let planEnum: 'basico' | 'emprendedor' | 'business_pro' | 'enterprise_pro' = 'basico';
     if (title.toLowerCase().includes('emprendedor')) planEnum = 'emprendedor';
     if (title.toLowerCase().includes('business pro')) planEnum = 'business_pro';
-    if (title.toLowerCase().includes('enterprise')) planEnum = 'enterprise_ai';
+    if (title.toLowerCase().includes('enterprise')) planEnum = 'enterprise_pro';
 
     setIsPaymentDialogOpen(true); // Asegurarse de que el modal siga abierto
     setStep('payment');
@@ -153,7 +153,7 @@ export function PricingCard({
   const planLabels: Record<string, string> = {
     emprendedor: 'Emprendedor',
     business_pro: 'Business Pro',
-    enterprise_ai: 'Enterprise AI',
+    enterprise_pro: 'Enterprise Pro',
   };
 
   // El precio mostrado es el TOTAL FINAL (incluye IGV 18%).

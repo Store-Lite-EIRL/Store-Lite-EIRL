@@ -86,7 +86,7 @@ export const subscriptionPlanEnum = pgEnum('subscription_plan', [
   'basico',
   'emprendedor',
   'business_pro',
-  'enterprise_ai',
+  'enterprise_pro',
 ]);
 export const subscriptionStatusEnum = pgEnum('subscription_status', [
   'active',

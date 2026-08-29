@@ -20,7 +20,6 @@ export function PricingBackButton() {
       variant="filled-tonal"
       aria-label="Volver"
       onClick={handleBack}
-      style={{ position: 'absolute', top: 50 }}
       suppressHydrationWarning
     >
       <Icon>arrow_back</Icon>

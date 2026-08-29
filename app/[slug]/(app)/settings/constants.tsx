@@ -125,10 +125,10 @@ export const PLAN_CONFIG: Record<
     label: 'Business Pro',
     color: '#fff',
   },
-  enterprise_ai: {
+  enterprise_pro: {
     gradient: 'linear-gradient(135deg, #7b2ff7, #4a148c)',
     icon: 'auto_awesome',
-    label: 'Enterprise AI',
+    label: 'Enterprise Pro',
     color: '#fff',
   },
 };

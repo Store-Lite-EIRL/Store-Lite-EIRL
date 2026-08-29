@@ -26,7 +26,7 @@ export function PlanStatusBar({
   const categoryUsage =
     maxCategories > 0 ? Math.min((currentCategories / maxCategories) * 100, 100) : 0;
 
-  const showUpgrade = entitlements.plan !== 'enterprise_ai';
+  const showUpgrade = entitlements.plan !== 'enterprise_pro';
 
   const formatDate = (dateStr?: string | null) => {
     if (!dateStr) return null;
