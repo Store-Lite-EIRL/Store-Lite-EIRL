@@ -24,7 +24,7 @@ describe('buildNavItems', () => {
       'chat',
       'notifications',
       'storage',
-      'soporte',
+      'feedback',
       'dashboard',
       'settings',
     ]);
@@ -113,12 +113,12 @@ describe('buildNavItems', () => {
     expect(items.find((i) => i.id === 'dashboard')).toBeUndefined();
   });
 
-  it('always shows home, soporte, settings', () => {
+  it('always shows home, ayuda, settings', () => {
     const permissions: Permission[] = [];
     const items = buildNavItems({ slug: mockSlug, planName: 'pro', permissions, isOwner: false });
 
     expect(items.find((i) => i.id === 'home')).toBeDefined();
-    expect(items.find((i) => i.id === 'soporte')).toBeDefined();
+    expect(items.find((i) => i.id === 'feedback')).toBeDefined();
     expect(items.find((i) => i.id === 'settings')).toBeDefined();
   });
 
@@ -205,7 +205,7 @@ describe('getAllNavItems', () => {
       'chat',
       'notifications',
       'storage',
-      'soporte',
+      'feedback',
       'dashboard',
       'settings',
     ]);
