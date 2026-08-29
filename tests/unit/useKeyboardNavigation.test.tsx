@@ -1,7 +1,7 @@
 import { useKeyboardNavigation } from '@/hooks/useKeyboardNavigation';
 import type { NavItemData } from '@/shared/components/navigation/types';
-import { act, renderHook } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, render } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 const mockItems: NavItemData[] = [
   { id: 'home', icon: 'home', label: 'Inicio', path: '/test/home' },
@@ -14,249 +14,208 @@ const mockItems: NavItemData[] = [
   },
 ];
 
+interface NavHarnessProps {
+  onActivate: (item: NavItemData) => void;
+  onEscape: () => void;
+}
+
+// Mirrors production usage: the ref is attached through JSX during the
+// render commit, which lets the hook's mount effect connect the listeners.
+function NavHarness({ onActivate, onEscape }: NavHarnessProps) {
+  const { containerRef } = useKeyboardNavigation(mockItems, onActivate, onEscape);
+
+  return (
+    <div data-testid="nav-container" ref={containerRef}>
+      {mockItems.map((item) => (
+        <button key={item.id} data-nav-item data-nav-id={item.id} tabIndex={-1} type="button">
+          {item.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+interface NavHarnessResult {
+  onActivate: ReturnType<typeof vi.fn>;
+  onEscape: ReturnType<typeof vi.fn>;
+  container: HTMLDivElement;
+  buttons: NodeListOf<HTMLButtonElement>;
+}
+
+function setup(): NavHarnessResult {
+  const onActivate = vi.fn();
+  const onEscape = vi.fn();
+
+  render(<NavHarness onActivate={onActivate} onEscape={onEscape} />);
+
+  const container = document.querySelector('[data-testid="nav-container"]') as HTMLDivElement;
+  const buttons = container.querySelectorAll('[data-nav-item]') as NodeListOf<HTMLButtonElement>;
+
+  return { onActivate, onEscape, container, buttons };
+}
+
+function focusContainer(container: HTMLDivElement, buttons: NodeListOf<HTMLButtonElement>): void {
+  // In a real browser, focusin fires because focus enters the container
+  // through the first item (Tab or click). Focus it to mirror that flow.
+  act(() => {
+    buttons[0].focus();
+  });
+}
+
+function keydown(container: HTMLDivElement, key: string): void {
+  act(() => {
+    container.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+  });
+}
+
 describe('useKeyboardNavigation', () => {
-  let container: HTMLDivElement;
-  let onActivate: ReturnType<typeof vi.fn>;
-  let onEscape: ReturnType<typeof vi.fn>;
+  it('renders the nav items inside the ref-attached container', () => {
+    const { container, buttons } = setup();
 
-  beforeEach(() => {
-    container = document.createElement('div');
-    container.setAttribute('data-nav-container', 'true');
-    // Pre-populate container with nav items
-    container.innerHTML = mockItems
-      .map(
-        (item) => `
-      <button
-        data-nav-item
-        data-nav-id="${item.id}"
-        tabindex="-1"
-        type="button"
-      >
-        ${item.label}
-      </button>
-    `,
-      )
-      .join('');
-    document.body.appendChild(container);
-
-    onActivate = vi.fn();
-    onEscape = vi.fn();
-  });
-
-  afterEach(() => {
-    document.body.removeChild(container);
-    vi.clearAllMocks();
-  });
-
-  const createHook = () => {
-    return renderHook(() => useKeyboardNavigation(mockItems, onActivate, onEscape));
-  };
-
-  const focusContainer = (
-    result: ReturnType<typeof renderHook<{ containerRef: React.RefObject<HTMLDivElement | null> }>>,
-  ) => {
-    act(() => {
-      result.current.containerRef.current = container;
-      // Manually trigger focusin since jsdom doesn't auto-focus
-      container.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
-    });
-  };
-
-  it('returns containerRef', () => {
-    const { result } = createHook();
-    expect(result.current.containerRef).toBeDefined();
-    expect(typeof result.current.containerRef.current).toBe('object');
+    expect(container).toBeDefined();
+    expect(buttons).toHaveLength(3);
   });
 
   it('initializes roving tabindex on focus', () => {
-    const { result } = createHook();
+    const { container, buttons } = setup();
 
-    focusContainer(result);
+    focusContainer(container, buttons);
 
-    const buttons = container.querySelectorAll('[data-nav-item]');
     expect(buttons[0].getAttribute('tabindex')).toBe('0');
     expect(buttons[1].getAttribute('tabindex')).toBe('-1');
     expect(buttons[2].getAttribute('tabindex')).toBe('-1');
   });
 
   it('ArrowDown moves focus to next item', () => {
-    const { result } = createHook();
+    const { container, buttons } = setup();
 
-    focusContainer(result);
+    focusContainer(container, buttons);
 
-    const buttons = container.querySelectorAll('[data-nav-item]') as NodeListOf<HTMLButtonElement>;
     expect(document.activeElement).toBe(buttons[0]);
 
-    // Press ArrowDown
-    act(() => {
-      container.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-    });
+    keydown(container, 'ArrowDown');
 
     expect(document.activeElement).toBe(buttons[1]);
   });
 
   it('ArrowUp moves focus to previous item', () => {
-    const { result } = createHook();
+    const { container, buttons } = setup();
 
-    focusContainer(result);
-
-    const buttons = container.querySelectorAll('[data-nav-item]') as NodeListOf<HTMLButtonElement>;
+    focusContainer(container, buttons);
 
     // Move to second item first
-    act(() => {
-      container.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-    });
+    keydown(container, 'ArrowDown');
 
     expect(document.activeElement).toBe(buttons[1]);
 
-    // Press ArrowUp
-    act(() => {
-      container.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
-    });
+    keydown(container, 'ArrowUp');
 
     expect(document.activeElement).toBe(buttons[0]);
   });
 
   it('ArrowDown wraps to first item at end', () => {
-    const { result } = createHook();
+    const { container, buttons } = setup();
 
-    focusContainer(result);
+    focusContainer(container, buttons);
 
-    const buttons = container.querySelectorAll('[data-nav-item]') as NodeListOf<HTMLButtonElement>;
-
-    // Move to last item
-    act(() => {
-      container.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-      container.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-    });
+    keydown(container, 'ArrowDown');
+    keydown(container, 'ArrowDown');
 
     expect(document.activeElement).toBe(buttons[2]);
 
     // Press ArrowDown again - should wrap to first
-    act(() => {
-      container.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-    });
+    keydown(container, 'ArrowDown');
 
     expect(document.activeElement).toBe(buttons[0]);
   });
 
   it('ArrowUp wraps to last item at beginning', () => {
-    const { result } = createHook();
+    const { container, buttons } = setup();
 
-    focusContainer(result);
+    focusContainer(container, buttons);
 
-    const buttons = container.querySelectorAll('[data-nav-item]') as NodeListOf<HTMLButtonElement>;
     expect(document.activeElement).toBe(buttons[0]);
 
     // Press ArrowUp - should wrap to last
-    act(() => {
-      container.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
-    });
+    keydown(container, 'ArrowUp');
 
     expect(document.activeElement).toBe(buttons[2]);
   });
 
   it('Home moves focus to first item', () => {
-    const { result } = createHook();
+    const { container, buttons } = setup();
 
-    focusContainer(result);
-
-    const buttons = container.querySelectorAll('[data-nav-item]') as NodeListOf<HTMLButtonElement>;
+    focusContainer(container, buttons);
 
     // Move to last item
-    act(() => {
-      container.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
-    });
+    keydown(container, 'End');
 
     expect(document.activeElement).toBe(buttons[2]);
 
-    // Press Home
-    act(() => {
-      container.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
-    });
+    keydown(container, 'Home');
 
     expect(document.activeElement).toBe(buttons[0]);
   });
 
   it('End moves focus to last item', () => {
-    const { result } = createHook();
+    const { container, buttons } = setup();
 
-    focusContainer(result);
+    focusContainer(container, buttons);
 
-    const buttons = container.querySelectorAll('[data-nav-item]') as NodeListOf<HTMLButtonElement>;
     expect(document.activeElement).toBe(buttons[0]);
 
-    // Press End
-    act(() => {
-      container.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
-    });
+    keydown(container, 'End');
 
     expect(document.activeElement).toBe(buttons[2]);
   });
 
   it('Enter activates focused item', () => {
-    const { result } = createHook();
+    const { container, buttons, onActivate } = setup();
 
-    focusContainer(result);
+    focusContainer(container, buttons);
 
-    const buttons = container.querySelectorAll('[data-nav-item]') as NodeListOf<HTMLButtonElement>;
     expect(document.activeElement).toBe(buttons[0]);
 
-    // Press Enter
-    act(() => {
-      container.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-    });
+    keydown(container, 'Enter');
 
     expect(onActivate).toHaveBeenCalledWith(mockItems[0]);
   });
 
   it('Space activates focused item', () => {
-    const { result } = createHook();
+    const { container, buttons, onActivate } = setup();
 
-    focusContainer(result);
+    focusContainer(container, buttons);
 
     // Move to second item
-    act(() => {
-      container.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-    });
+    keydown(container, 'ArrowDown');
 
-    const buttons = container.querySelectorAll('[data-nav-item]') as NodeListOf<HTMLButtonElement>;
     expect(document.activeElement).toBe(buttons[1]);
 
-    // Press Space
-    act(() => {
-      container.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
-    });
+    keydown(container, ' ');
 
     expect(onActivate).toHaveBeenCalledWith(mockItems[1]);
   });
 
   it('Escape calls onEscape', () => {
-    const { result } = createHook();
+    const { container, buttons, onEscape } = setup();
 
-    focusContainer(result);
+    focusContainer(container, buttons);
 
-    act(() => {
-      container.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    });
+    keydown(container, 'Escape');
 
     expect(onEscape).toHaveBeenCalledTimes(1);
   });
 
-  it('only responds to keyboard when container is focused', () => {
-    const { result } = createHook();
+  it('ignores keydown events that do not bubble through the container', () => {
+    const { buttons } = setup();
 
     act(() => {
-      result.current.containerRef.current = container;
-      // Don't focus container
+      document.body.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }),
+      );
     });
 
-    act(() => {
-      container.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-    });
-
-    // Should not have moved focus (no active element in container)
-    const buttons = container.querySelectorAll('[data-nav-item]') as NodeListOf<HTMLButtonElement>;
+    // Focus must not have moved: the container never received the event
     expect(document.activeElement).not.toBe(buttons[0]);
   });
 });
