@@ -5,6 +5,8 @@ import { db } from '@/core/database/client';
 import { businessSettings, productCategories } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import {
+  buildStorefrontThemeStyleTag,
+  createDefaultStorefrontTheme,
   getStorefrontLayoutFromPreferences,
   getStorefrontThemeFromPreferences,
   hasCustomStorefrontTheme,
@@ -12,6 +14,7 @@ import {
 import { getMemberPermissions } from '@/lib/permissions';
 import { createClient } from '@/lib/supabase/server';
 import { getCanonicalBusinessUrl } from '@/shared/utils/url';
+import type { Business } from '@/types/business';
 import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
@@ -19,6 +22,49 @@ import BusinessPageContent from '../BusinessPageContent';
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+function buildBusinessJsonLd(business: Business, seoEnabled: boolean) {
+  if (!seoEnabled) {
+    return null;
+  }
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: business.name,
+    description: business.seoDescription || business.description,
+    url: getCanonicalBusinessUrl(business.slug),
+    logo: business.logoUrl,
+    image: business.coverImageUrl,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: business.address,
+      addressLocality: business.city,
+      addressCountry: business.country || 'PE',
+    },
+    geo:
+      business.latitude && business.longitude
+        ? {
+            '@type': 'GeoCoordinates',
+            latitude: business.latitude,
+            longitude: business.longitude,
+          }
+        : undefined,
+    telephone: business.whatsappNumber,
+  };
+}
+
+function buildBusinessGeoMeta(business: Business) {
+  return {
+    ...(business.geoRegion && { 'geo.region': business.geoRegion }),
+    ...(business.geoPlacename && { 'geo.placename': business.geoPlacename }),
+    ...(business.city && !business.geoPlacename && { 'geo.placename': business.city }),
+    ...(business.latitude &&
+      business.longitude && {
+        'geo.position': `${business.latitude};${business.longitude}`,
+        ICBM: `${business.latitude}, ${business.longitude}`,
+      }),
+  };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -64,16 +110,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: 'website',
       ...(business.logoUrl && { images: [{ url: business.logoUrl }] }),
     },
-    other: {
-      ...(business.geoRegion && { 'geo.region': business.geoRegion }),
-      ...(business.geoPlacename && { 'geo.placename': business.geoPlacename }),
-      ...(business.city && !business.geoPlacename && { 'geo.placename': business.city }),
-      ...(business.latitude &&
-        business.longitude && {
-          'geo.position': `${business.latitude};${business.longitude}`,
-          ICBM: `${business.latitude}, ${business.longitude}`,
-        }),
-    },
+    other: buildBusinessGeoMeta(business),
   };
 }
 
@@ -116,34 +153,9 @@ export default async function BusinessPage({ params }: Props) {
   const isStaff = isOwner || permissions.length > 0;
 
   const entitlements = await getBusinessEntitlements(business.id);
-  const { hasPaymentGateway, chatEnabled, seoEnabled, plan } = entitlements;
+  const { hasPaymentGateway, chatEnabled, seoEnabled } = entitlements;
 
-  const jsonLd = seoEnabled
-    ? {
-        '@context': 'https://schema.org',
-        '@type': 'LocalBusiness',
-        name: business.name,
-        description: business.seoDescription || business.description,
-        url: getCanonicalBusinessUrl(business.slug),
-        logo: business.logoUrl,
-        image: business.coverImageUrl,
-        address: {
-          '@type': 'PostalAddress',
-          streetAddress: business.address,
-          addressLocality: business.city,
-          addressCountry: business.country || 'PE',
-        },
-        geo:
-          business.latitude && business.longitude
-            ? {
-                '@type': 'GeoCoordinates',
-                latitude: business.latitude,
-                longitude: business.longitude,
-              }
-            : undefined,
-        telephone: business.whatsappNumber,
-      }
-    : null;
+  const jsonLd = buildBusinessJsonLd(business, seoEnabled);
 
   const allProducts = await db.query.products.findMany({
     where: (p, { and, eq }) => {
@@ -164,6 +176,10 @@ export default async function BusinessPage({ params }: Props) {
     ? getStorefrontThemeFromPreferences(settings?.preferences)
     : undefined;
 
+  const defaultScheme = settings?.themeMode ?? 'light';
+  const effectiveStorefrontTheme = savedStorefrontTheme ?? createDefaultStorefrontTheme();
+  const ssrThemeStyleTag = buildStorefrontThemeStyleTag(effectiveStorefrontTheme, defaultScheme);
+
   return (
     <>
       {jsonLd && (
@@ -172,6 +188,7 @@ export default async function BusinessPage({ params }: Props) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}
+      <style dangerouslySetInnerHTML={{ __html: ssrThemeStyleTag }} />
       <BusinessPageContent
         business={business}
         isOwner={isOwner}

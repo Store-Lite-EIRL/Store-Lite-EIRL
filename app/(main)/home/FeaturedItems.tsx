@@ -15,11 +15,12 @@ interface CategoryItemProps {
   id: string;
   name?: string;
   imageUrl?: string | null;
-  isEmpty?: boolean;
+  isAddButton?: boolean;
   isOwner?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
   onAdd?: () => void;
+  onSelect?: () => void;
 }
 
 function CategoryCardContent({
@@ -37,67 +38,65 @@ function CategoryCardContent({
 }) {
   return (
     <>
-      {imageUrl ? (
-        <div className={styles.itemImageContainer}>
+      <div className={styles.itemAvatarContainer}>
+        {imageUrl ? (
           <Image
             src={imageUrl}
             alt={name || 'Category'}
             fill
-            className={styles.itemImage}
-            sizes="(max-width: 480px) 50vw, (max-width: 768px) 33vw, 180px"
+            className={styles.itemAvatarImage}
+            sizes="40px"
             priority={false}
           />
-        </div>
-      ) : (
-        <div className={styles.itemIconContainer}>
-          <svg
-            className={styles.itemIcon}
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 -960 960 960"
-            fill="currentColor"
-          >
-            <path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z" />
-          </svg>
-        </div>
-      )}
-
-      {isOwner && onDelete && (
-        <button
-          type="button"
-          className={styles.deleteBtn}
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          aria-label={`Eliminar categoría ${name}`}
-          title={`Eliminar ${name}`}
-        >
-          <Icon>close</Icon>
-        </button>
-      )}
-
-      {isOwner && onEdit && (
-        <div
-          className={styles.editOverlay}
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit();
-          }}
-        >
-          <svg
-            className={styles.editOverlayIcon}
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 -960 960 960"
-            fill="currentColor"
-          >
-            <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
-          </svg>
-        </div>
-      )}
-
-      <div className={imageUrl ? styles.itemOverlay : styles.itemOverlayNoImage}>
-        <span className={imageUrl ? styles.itemName : styles.itemNameNoImage}>{name}</span>
+        ) : (
+          <div className={styles.itemAvatarIconContainer}>
+            <svg
+              className={styles.itemAvatarIcon}
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 -960 960 960"
+              fill="currentColor"
+            >
+              <path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z" />
+            </svg>
+          </div>
+        )}
       </div>
+
+      <span className={styles.itemName}>{name}</span>
+
+      {isOwner && (
+        <div className={styles.ownerActions}>
+          {onEdit && (
+            <button
+              type="button"
+              className={`${styles.actionBtn} ${styles.editBtn}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+              aria-label={`Editar categoría ${name}`}
+              title={`Editar ${name}`}
+            >
+              <Icon>edit</Icon>
+            </button>
+          )}
+
+          {onDelete && (
+            <button
+              type="button"
+              className={`${styles.actionBtn} ${styles.deleteBtn}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              aria-label={`Eliminar categoría ${name}`}
+              title={`Eliminar ${name}`}
+            >
+              <Icon>close</Icon>
+            </button>
+          )}
+        </div>
+      )}
     </>
   );
 }
@@ -106,18 +105,34 @@ function CategoryItem({
   _id,
   name,
   imageUrl,
-  isEmpty,
+  isAddButton,
   isOwner,
   onEdit,
   onDelete,
   onAdd,
+  onSelect,
 }: CategoryItemProps & { _id?: string }) {
   return (
     <div
-      className={`${styles.itemCard} ${isEmpty ? styles.empty : ''}`}
-      style={{ cursor: isEmpty ? 'default' : 'pointer' }}
+      className={`${styles.itemCard} ${isAddButton ? styles.addButtonCard : ''}`}
+      onClick={() => {
+        if (isAddButton && onAdd) {
+          onAdd();
+        } else if (onSelect) {
+          onSelect();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (isAddButton && onAdd) onAdd();
+          else if (onSelect) onSelect();
+        }
+      }}
     >
-      {!isEmpty ? (
+      {!isAddButton ? (
         <CategoryCardContent
           name={name}
           imageUrl={imageUrl}
@@ -126,27 +141,12 @@ function CategoryItem({
           onDelete={onDelete}
         />
       ) : (
-        <>
-          <div className={styles.itemPlaceholder}>Vacio</div>
-          {isOwner && onAdd && (
-            <div
-              className={styles.addOverlay}
-              onClick={(e) => {
-                e.stopPropagation();
-                onAdd();
-              }}
-            >
-              <svg
-                className={styles.addOverlayIcon}
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 -960 960 960"
-                fill="currentColor"
-              >
-                <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
-              </svg>
-            </div>
-          )}
-        </>
+        <div className={styles.itemPlaceholder}>
+          <div className={styles.addIconCircle}>
+            <Icon>add</Icon>
+          </div>
+          <span>Nueva Categoría</span>
+        </div>
       )}
     </div>
   );
@@ -157,33 +157,16 @@ const EMPTY_CATEGORIES: ProductCategory[] = [];
 export default function FeaturedItems({
   isOwner = false,
   categories = EMPTY_CATEGORIES,
+  onCategorySelect,
 }: {
   isOwner?: boolean;
   categories?: ProductCategory[];
+  onCategorySelect?: (categoryId: string) => void;
 }) {
   const params = useParams();
   const businessSlug = params.slug as string;
 
-  const getInitialItems = (cats: ProductCategory[]) => {
-    const displayItems: (ProductCategory & { isEmpty?: boolean })[] = [...cats];
-    if (displayItems.length < 7) {
-      const remaining = 7 - displayItems.length;
-      for (let i = 0; i < remaining; i++) {
-        displayItems.push({
-          id: `empty-${i}`,
-          name: '',
-          businessId: '',
-          displayOrder: 999,
-          isEmpty: true,
-        } as unknown as ProductCategory & { isEmpty?: boolean });
-      }
-    }
-    return displayItems;
-  };
-
-  const [items, setItems] = useState<(ProductCategory & { isEmpty?: boolean })[]>(() =>
-    getInitialItems(categories),
-  );
+  const [items, setItems] = useState<ProductCategory[]>(() => categories);
   const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<ProductCategory | null>(null);
@@ -195,7 +178,7 @@ export default function FeaturedItems({
   }>({ open: false, description: '', color: 'error', icon: 'error' });
 
   useEffect(() => {
-    setItems(getInitialItems(categories));
+    setItems(categories);
   }, [categories]);
 
   const handleSaveCategory = async (id: string, newName: string, imageFile: File | null) => {
@@ -231,7 +214,7 @@ export default function FeaturedItems({
       setEditingCategory(null);
     } catch (error) {
       console.error('Error saving category:', error);
-      setItems(getInitialItems(categories));
+      setItems(categories);
       window.alert(
         'Error en el servidor: ' + (error instanceof Error ? error.message : String(error)),
       );
@@ -258,27 +241,15 @@ export default function FeaturedItems({
         throw new Error(result.error || 'Error al crear la categoría');
       }
 
-      const newCategory: ProductCategory & { isEmpty?: boolean } = {
+      const newCategory: ProductCategory = {
         id: result.category?.id || `new-${Date.now()}`,
         name: newName,
         businessId: '',
         imageUrl: finalImageUrl,
-        displayOrder: items.filter((i) => !i.isEmpty).length,
-        isEmpty: false,
-      } as unknown as ProductCategory & { isEmpty?: boolean };
+        displayOrder: items.length,
+      } as unknown as ProductCategory;
 
-      setItems((prev) => {
-        const firstEmptyIdx = prev.findIndex((i) => i.isEmpty);
-        if (firstEmptyIdx !== -1) {
-          const newItems = [...prev];
-          newItems[firstEmptyIdx] = {
-            ...newCategory,
-            id: result.category?.id || newCategory.id,
-          } as unknown as ProductCategory & { isEmpty?: boolean };
-          return newItems;
-        }
-        return [...prev, { ...newCategory, id: result.category?.id || newCategory.id }];
-      });
+      setItems((prev) => [...prev, { ...newCategory, id: result.category?.id || newCategory.id }]);
 
       setIsAddingCategory(false);
     } catch (error) {
@@ -321,22 +292,27 @@ export default function FeaturedItems({
 
   return (
     <section className={styles.sectionContainer}>
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>Categorías</h2>
+      </div>
+
       <div className={styles.itemsContainer}>
-        {items.map((item: ProductCategory & { isEmpty?: boolean }) => (
+        {items.map((item: ProductCategory) => (
           <CategoryItem
             key={item.id}
             id={item.id}
             name={item.name}
             imageUrl={item.imageUrl}
-            isEmpty={item.isEmpty}
+            isAddButton={false}
             isOwner={isOwner}
-            onEdit={!item.isEmpty ? () => setEditingCategory(item as ProductCategory) : undefined}
-            onDelete={
-              !item.isEmpty ? () => handleDeleteCategory(item as ProductCategory) : undefined
-            }
-            onAdd={item.isEmpty ? () => setIsAddingCategory(true) : undefined}
+            onEdit={() => setEditingCategory(item)}
+            onDelete={() => handleDeleteCategory(item)}
+            onSelect={() => onCategorySelect && onCategorySelect(item.id)}
           />
         ))}
+        {isOwner && (
+          <CategoryItem id="add-new" isAddButton={true} onAdd={() => setIsAddingCategory(true)} />
+        )}
       </div>
 
       <EditCategoryModal
