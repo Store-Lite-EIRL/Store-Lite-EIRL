@@ -11,6 +11,20 @@ describe('useMobileDrawer', () => {
   beforeEach(() => {
     onClose = vi.fn();
 
+    // jsdom schedules requestAnimationFrame on a real timer that sync act()
+    // never flushes, so focus-trap timing tests would be flaky. Invoke the
+    // callback synchronously instead, which act() covers deterministically.
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      callback(0);
+      return 0;
+    });
+
+    // jsdom performs no layout, so offset sizes and client rects are always
+    // zero/empty and the hook's visibility filter would exclude every element.
+    // Simulate rendered geometry so the focus trap sees the buttons.
+    vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(10);
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(10);
+
     // Reset body styles
     document.body.style.overflow = '';
     document.body.style.paddingRight = '';
@@ -36,6 +50,8 @@ describe('useMobileDrawer', () => {
     document.body.removeChild(drawerContainer);
     document.body.style.overflow = '';
     document.body.style.paddingRight = '';
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
     vi.clearAllMocks();
   });
 
