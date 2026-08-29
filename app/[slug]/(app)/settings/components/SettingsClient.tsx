@@ -1541,7 +1541,7 @@ export function SettingsClient({
               hasAccess = permissions.includes('business.edit');
               break;
             case 'payments': {
-              const isPremiumPlan = ['business_pro', 'enterprise_ai'].includes(entitlements.plan);
+              const isPremiumPlan = ['business_pro', 'enterprise_pro'].includes(entitlements.plan);
               hasAccess = isPremiumPlan && permissions.includes('business.edit');
               break;
             }

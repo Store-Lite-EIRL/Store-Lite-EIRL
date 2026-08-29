@@ -8,7 +8,7 @@ import { revalidatePath } from 'next/cache';
 
 export async function upgradeBusinessPlan(businessId: string, planType: string) {
   try {
-    const validPlans = ['basico', 'emprendedor', 'business_pro', 'enterprise_ai'] as const;
+    const validPlans = ['basico', 'emprendedor', 'business_pro', 'enterprise_pro'] as const;
     if (!validPlans.includes(planType as (typeof validPlans)[number])) {
       return { success: false, error: 'Plan no valido' };
     }

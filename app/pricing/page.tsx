@@ -2,6 +2,7 @@ import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businesses } from '@/core/database/schema';
 import { formatSoles, PLAN_PRICES } from '@/shared/billing/planPrices';
+import { Icon } from '@/shared/components/ui/data-display';
 import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
@@ -97,10 +98,10 @@ export default async function PricingPage({
       ],
     },
     {
-      title: 'Plan Enterprise AI',
+      title: 'Plan Enterprise Pro',
       description:
         'La solución definitiva con potencia de Inteligencia Artificial y datos masivos.',
-      price: formatSoles(PLAN_PRICES.enterprise_ai.monthly),
+      price: formatSoles(PLAN_PRICES.enterprise_pro.monthly),
       period: 'mes',
       buttonText: 'Obtener máxima potencia',
       buttonVariant: 'tonal',
@@ -143,6 +144,37 @@ export default async function PricingPage({
             preselectedBusinessId={preselectedBusinessId}
           />
         ))}
+      </div>
+
+      {/* ── Sobre los pagos con Culqi ── */}
+      <div className="pricing-culqi-note" role="note">
+        <p className="pricing-culqi-note-title">
+          <Icon>credit_card</Icon>
+          Sobre los pagos con Culqi
+        </p>
+        <ul className="pricing-culqi-note-list">
+          <li>
+            <strong>Culqi</strong> es la pasarela de pagos que procesa los cobros de su tienda:
+            tarjetas de crédito y débito (Visa, Mastercard, American Express), Yape, Plin,
+            billeteras móviles, Cuotéalo BCP y PagoEfectivo.
+          </li>
+          <li>
+            Está incluida en los planes <strong>Business Pro</strong> y{' '}
+            <strong>Enterprise Pro</strong>.
+          </li>
+          <li>
+            Antes de activar pagos reales,{' '}
+            <strong>Culqi valida su comercio de forma independiente</strong>: su tienda debe cumplir
+            requisitos (al menos 5 productos con imagen, precio y descripción, Términos y
+            Condiciones, Políticas de Devoluciones, Libro de Reclamaciones, datos de contacto y
+            redes sociales).
+          </li>
+        </ul>
+        <p className="pricing-culqi-note-warning">
+          ⚠️ La validación de Culqi demora entre 1 y 3 días hábiles. Tenga en cuenta este tiempo al
+          elegir la duración de su plan. Puede preparar su tienda con el checklist de requisitos en
+          Configuración → Pagos, incluso antes de suscribirse.
+        </p>
       </div>
     </div>
   );

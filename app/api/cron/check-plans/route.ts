@@ -129,7 +129,7 @@ function getPlanLabel(planType: string): string {
     basico: 'Básico',
     emprendedor: 'Emprendedor',
     business_pro: 'Business Pro',
-    enterprise_ai: 'Enterprise AI',
+    enterprise_pro: 'Enterprise Pro',
   };
   return labels[planType] ?? planType;
 }

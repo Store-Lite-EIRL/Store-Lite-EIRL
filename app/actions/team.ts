@@ -157,7 +157,7 @@ export async function generateInvitationCode(
 
   const userId = ownership.userId!;
 
-  // 2. Check entitlements (must be business_pro or enterprise_ai)
+  // 2. Check entitlements (must be business_pro or enterprise_pro)
   const entitlements = await getBusinessEntitlements(businessId);
   if (entitlements.maxTeamMembers <= 1) {
     return {
