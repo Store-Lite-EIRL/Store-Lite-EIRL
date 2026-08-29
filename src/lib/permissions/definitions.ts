@@ -30,7 +30,10 @@ export type Permission =
   | 'plan.change'
   | 'contact.edit'
   | 'legal.edit'
-  | 'notifications.view';
+  | 'notifications.view'
+  | 'feedback.submit'
+  | 'feedback.view'
+  | 'feedback.respond';
 
 export type Role = 'owner' | 'admin' | 'member';
 
@@ -66,6 +69,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'contact.edit',
     'legal.edit',
     'notifications.view',
+    'feedback.submit',
+    'feedback.view',
+    'feedback.respond',
   ],
 
   admin: [
@@ -89,6 +95,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'team.manage',
     'team.invite',
     'notifications.view',
+    'feedback.submit',
+    'feedback.view',
+    'feedback.respond',
   ],
 
   member: [
@@ -109,6 +118,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     // NO storage.delete
     'home.edit',
     'notifications.view',
+    'feedback.submit',
+    'feedback.view',
+    // NO feedback.respond — only owners and admins can respond
   ],
 };
 
@@ -189,6 +201,11 @@ export const PERMISSION_GROUPS: Record<
     icon: 'notifications',
     permissions: ['notifications.view'],
   },
+  feedback: {
+    label: 'Feedback',
+    icon: 'feedback',
+    permissions: ['feedback.submit', 'feedback.view', 'feedback.respond'],
+  },
 };
 
 /**
@@ -238,6 +255,18 @@ export const PERMISSION_LABELS: Record<Permission, { label: string; description:
   'notifications.view': {
     label: 'Ver notificaciones',
     description: 'Puede ver el centro de notificaciones',
+  },
+  'feedback.submit': {
+    label: 'Enviar feedback',
+    description: 'Puede enviar feedback y sugerencias',
+  },
+  'feedback.view': {
+    label: 'Ver feedback',
+    description: 'Puede ver historial de feedback',
+  },
+  'feedback.respond': {
+    label: 'Responder feedback',
+    description: 'Puede responder a tickets de feedback',
   },
 };
 
