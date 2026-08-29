@@ -27,25 +27,24 @@ function getContentWrapperClass(
   showNavbar: boolean,
   useSidebarV2: boolean,
   sidebarState: ReturnType<typeof useSidebarState>['state'],
+  legacyCollapsed: boolean,
 ): string {
   if (!showNavbar) return 'content-wrapper--hidden';
 
   if (useSidebarV2) {
     switch (sidebarState) {
       case 'expanded':
-        return 'content-wrapper--expanded';
+        return 'content-wrapper--v2-expanded';
       case 'collapsed':
-        return 'content-wrapper--collapsed';
+        return 'content-wrapper--v2-collapsed';
       case 'mobile-open':
-        return 'content-wrapper--mobile-open';
+        return 'content-wrapper--v2-mobile-open';
       default:
-        return 'content-wrapper--collapsed';
+        return 'content-wrapper--v2-collapsed';
     }
   }
 
   // Legacy Navbar path
-  const legacyCollapsed =
-    typeof window !== 'undefined' ? localStorage.getItem('navbarCollapsed') === 'true' : false;
   return legacyCollapsed ? 'content-wrapper--collapsed' : 'content-wrapper--expanded';
 }
 
@@ -56,6 +55,8 @@ function renderSidebar({
   sidebarState,
   toggleSidebar,
   setSidebarState,
+  legacyCollapsed,
+  toggleLegacyCollapsed,
   navbarPlanName,
   navbarBusinessId,
   navbarBusinessName,
@@ -68,6 +69,8 @@ function renderSidebar({
   sidebarState: ReturnType<typeof useSidebarState>['state'];
   toggleSidebar: () => void;
   setSidebarState: (state: ReturnType<typeof useSidebarState>['state']) => void;
+  legacyCollapsed: boolean;
+  toggleLegacyCollapsed: () => void;
   navbarPlanName?: string;
   navbarBusinessId?: string;
   navbarBusinessName?: string;
@@ -95,16 +98,8 @@ function renderSidebar({
   // Legacy Navbar fallback
   return (
     <Navbar
-      isCollapsed={
-        typeof window !== 'undefined' ? localStorage.getItem('navbarCollapsed') === 'true' : false
-      }
-      onToggle={() => {
-        const next =
-          typeof window !== 'undefined' ? localStorage.getItem('navbarCollapsed') !== 'true' : true;
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('navbarCollapsed', String(next));
-        }
-      }}
+      isCollapsed={legacyCollapsed}
+      onToggle={toggleLegacyCollapsed}
       planName={navbarPlanName}
       businessId={navbarBusinessId}
       businessName={navbarBusinessName}
@@ -123,6 +118,41 @@ export default function AppLayout({
 }: AppLayoutProps) {
   // Business session management - only for detecting when session is killed from another tab
   const { sessionKilledFromOtherTab, resetSessionKilledFlag } = useBusinessSession();
+
+  // Legacy Navbar collapsed state management (starts false for hydration safety)
+  const [legacyCollapsed, setLegacyCollapsed] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('navbarCollapsed');
+      if (stored !== null) {
+        setLegacyCollapsed(stored === 'true');
+      }
+    }
+  }, []);
+
+  const toggleLegacyCollapsed = () => {
+    setLegacyCollapsed((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('navbarCollapsed', String(next));
+      }
+      return next;
+    });
+  };
+
+  // Cross-tab sync for legacy navbar state
+  useEffect(() => {
+    if (!USE_SIDEBAR_V2 && typeof window !== 'undefined') {
+      const handleStorage = (e: StorageEvent) => {
+        if (e.key === 'navbarCollapsed' && e.newValue !== null) {
+          setLegacyCollapsed(e.newValue === 'true');
+        }
+      };
+      window.addEventListener('storage', handleStorage);
+      return () => window.removeEventListener('storage', handleStorage);
+    }
+  }, []);
 
   // Sidebar state management with persistence and cross-tab sync
   const {
@@ -156,7 +186,12 @@ export default function AppLayout({
   const showNavbar =
     showNavbarByDefault && pathname !== '/list-business' && !pathname?.startsWith('/auth');
 
-  const contentWrapperClass = getContentWrapperClass(showNavbar, USE_SIDEBAR_V2, sidebarState);
+  const contentWrapperClass = getContentWrapperClass(
+    showNavbar,
+    USE_SIDEBAR_V2,
+    sidebarState,
+    legacyCollapsed,
+  );
 
   // If session was killed from another tab (user closed business there), redirect to list
   useEffect(() => {
@@ -188,6 +223,8 @@ export default function AppLayout({
           sidebarState,
           toggleSidebar,
           setSidebarState,
+          legacyCollapsed,
+          toggleLegacyCollapsed,
           navbarPlanName,
           navbarBusinessId,
           navbarBusinessName,

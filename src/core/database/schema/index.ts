@@ -6,6 +6,7 @@ export * from './businesses';
 export * from './chat';
 export * from './complaints';
 export * from './enums';
+export * from './feedback';
 export * from './imports';
 export * from './notifications';
 export * from './orders';

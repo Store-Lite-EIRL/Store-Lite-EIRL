@@ -76,7 +76,7 @@ export function Sidebar({
       id: 'workspace',
       header: 'Workspace',
       items: navItems.filter((item) =>
-        ['home', 'chat', 'notifications', 'storage', 'soporte'].includes(item.id),
+        ['home', 'chat', 'notifications', 'storage', 'feedback'].includes(item.id),
       ),
     },
     {

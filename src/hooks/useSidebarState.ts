@@ -27,25 +27,23 @@ interface UseSidebarStateReturn {
  * - Returns cleanup function for storage listener
  */
 export function useSidebarState(initialState?: SidebarState): UseSidebarStateReturn {
-  const [state, setStateInternal] = useState<SidebarState>(() => {
-    if (typeof window === 'undefined') {
-      return initialState ?? DEFAULT_STATE;
-    }
+  const [state, setStateInternal] = useState<SidebarState>(initialState ?? DEFAULT_STATE);
 
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed && ['expanded', 'collapsed', 'mobile-open'].includes(parsed.state)) {
-          return parsed.state;
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && ['expanded', 'collapsed', 'mobile-open'].includes(parsed.state)) {
+            setStateInternal(parsed.state);
+          }
         }
+      } catch {
+        // Ignore storage errors
       }
-    } catch {
-      // Ignore parse errors, fall back to default
     }
-
-    return initialState ?? DEFAULT_STATE;
-  });
+  }, []);
 
   const isFirstRender = useRef(true);
   const prefersReducedMotion = useRef(false);

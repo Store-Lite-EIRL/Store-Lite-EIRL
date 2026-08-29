@@ -73,7 +73,7 @@ const allItems: NavItemData[] = [
     path: '/mi-tienda/storage',
     permission: 'products.view',
   },
-  { id: 'soporte', icon: 'support', label: 'Soporte', path: '/mi-tienda/soporte' },
+  { id: 'feedback', icon: 'feedback', label: 'Ayuda', path: '/mi-tienda/ayuda' },
   {
     id: 'dashboard',
     icon: 'dashboard',
@@ -276,7 +276,7 @@ describe('NavSection', () => {
     expect(screen.queryByTestId('nav-item-dashboard')).not.toBeInTheDocument();
   });
 
-  it('always shows home, soporte, settings', () => {
+  it('always shows home, ayuda, settings', () => {
     const permissions: Permission[] = [];
 
     render(
@@ -295,7 +295,7 @@ describe('NavSection', () => {
     );
 
     expect(screen.getByTestId('nav-item-home')).toBeInTheDocument();
-    expect(screen.getByTestId('nav-item-soporte')).toBeInTheDocument();
+    expect(screen.getByTestId('nav-item-feedback')).toBeInTheDocument();
   });
 
   it('owner bypasses all filters including plan', () => {
@@ -423,7 +423,7 @@ describe('NavSection', () => {
     expect(screen.getByTestId('nav-item-chat')).toBeInTheDocument();
     expect(screen.getByTestId('nav-item-notifications')).toBeInTheDocument();
     expect(screen.getByTestId('nav-item-storage')).toBeInTheDocument();
-    expect(screen.getByTestId('nav-item-soporte')).toBeInTheDocument();
+    expect(screen.getByTestId('nav-item-feedback')).toBeInTheDocument();
     expect(screen.getByTestId('nav-item-dashboard')).toBeInTheDocument();
     expect(screen.getByTestId('nav-item-settings')).toBeInTheDocument();
   });

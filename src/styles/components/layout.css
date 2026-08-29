@@ -23,14 +23,23 @@
 
 /* Use sidebar CSS tokens for consistent sizing */
 .content-wrapper--expanded {
-  margin-left: var(--sidebar-width-expanded);
+  margin-left: calc(var(--navbar-expanded-width, 282px) + 2rem);
 }
 
 .content-wrapper--collapsed {
-  margin-left: var(--sidebar-width-collapsed);
+  margin-left: calc(var(--navbar-width, 112px) + 2rem);
 }
 
-.content-wrapper--mobile-open {
+.content-wrapper--v2-expanded {
+  margin-left: var(--sidebar-width-expanded, 280px);
+}
+
+.content-wrapper--v2-collapsed {
+  margin-left: var(--sidebar-width-collapsed, 72px);
+}
+
+.content-wrapper--mobile-open,
+.content-wrapper--v2-mobile-open {
   margin-left: 0;
 }
 

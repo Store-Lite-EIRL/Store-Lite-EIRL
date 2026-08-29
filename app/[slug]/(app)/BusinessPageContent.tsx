@@ -9,9 +9,8 @@ import type {
 } from '@/core/storefront';
 import {
   buildBackgroundCSS,
+  buildStorefrontThemeVars,
   createDefaultStorefrontTheme,
-  getReadableTextColor,
-  getStorefrontColorConfig,
 } from '@/core/storefront';
 import type { BrandFilterOption } from '@/features/products/hooks/useProductFilters';
 import { useProductFilters } from '@/features/products/hooks/useProductFilters';
@@ -172,7 +171,7 @@ function BusinessPageContentUI({
   business,
   isOwner: _isOwner = false,
   isStaff = false,
-  isLoggedIn = false,
+  isLoggedIn: _isLoggedIn = false,
   categories = [],
   products = [],
   hasPaymentGateway = true,
@@ -355,7 +354,29 @@ function BusinessPageContentUI({
       case 'hero':
         return <Hero key={section.id} business={business} isOwner={isStaff} />;
       case 'featured_categories':
-        return <FeaturedItems key={section.id} isOwner={isStaff} categories={categories} />;
+        return (
+          <FeaturedItems
+            key={section.id}
+            isOwner={isStaff}
+            categories={categories}
+            onCategorySelect={(categoryId) => {
+              if (activeTab !== 'products') handleTabChange('products');
+              setSelectedCategories([categoryId]);
+
+              // Scroll to products section smoothly
+              const productsSection = document.getElementById('products-grid');
+              if (productsSection) {
+                const headerOffset = 140;
+                const elementPosition = productsSection.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                window.scrollTo({
+                  top: offsetPosition,
+                  behavior: 'smooth',
+                });
+              }
+            }}
+          />
+        );
       case 'product_grid':
         return (
           <StorefrontProductGridSection
@@ -407,88 +428,8 @@ function BusinessPageContentUI({
     previewScheme,
     defaultScheme ?? (effectiveTheme as StorefrontColorScheme),
   );
-  // Compute background styles before themeStyles so we can detect patterns
-  // and strip them from ::before — only <html> should render them.
-  const _storefrontBg = buildBackgroundCSS(editableTheme[activeScheme].background);
-  const _hasStorefrontBgImage = !!_storefrontBg['--storefront-bg-image'];
-
-  if (_hasStorefrontBgImage) {
-    // The pattern comes exclusively from <html> (set in useEffect).  Strip ALL
-    // background-* and mask vars from ::before so it never paints a second
-    // layer — otherwise the content area shows a doubled/brighter pattern.
-    _storefrontBg['--storefront-bg-image'] = 'none';
-    _storefrontBg['--storefront-bg'] = 'transparent';
-    delete _storefrontBg['--storefront-bg-size'];
-    delete _storefrontBg['--storefront-bg-position'];
-    delete _storefrontBg['--storefront-bg-repeat'];
-    delete _storefrontBg['--storefront-bg-blend-mode'];
-    delete _storefrontBg['--storefront-mask-image'];
-    delete _storefrontBg['--storefront-mask-size'];
-    delete _storefrontBg['--storefront-mask-position'];
-    delete _storefrontBg['--storefront-mask-repeat'];
-    delete _storefrontBg['--storefront-mask-composite'];
-    delete _storefrontBg['--storefront-filter'];
-    delete _storefrontBg['--storefront-opacity'];
-    delete _storefrontBg['--storefront-mix-blend-mode'];
-    delete _storefrontBg['--storefront-animation'];
-    delete _storefrontBg['--storefront-box-shadow'];
-    delete _storefrontBg['--storefront-image-rendering'];
-  }
-
-  const themeStyles = ((): CSSProperties & Record<string, string> => {
-    const palette = getStorefrontColorConfig(editableTheme, activeScheme).palette;
-    const ff =
-      editableTheme.fontFamily === 'google-sans'
-        ? "var(--font-google-sans-flex), 'Google Sans', var(--mio-theme-text-font-family), sans-serif"
-        : editableTheme.fontFamily === 'inter'
-          ? 'var(--font-storefront-inter), var(--mio-theme-text-font-family), sans-serif'
-          : editableTheme.fontFamily === 'roboto'
-            ? 'var(--font-storefront-roboto), var(--mio-theme-text-font-family), sans-serif'
-            : editableTheme.fontFamily === 'poppins'
-              ? 'var(--font-storefront-poppins), var(--mio-theme-text-font-family), sans-serif'
-              : "var(--font-google-sans-flex), 'Google Sans', var(--mio-theme-text-font-family), sans-serif";
-    const isDark = activeScheme === 'dark';
-    return {
-      '--storefront-font-family': ff,
-      '--md-sys-color-primary': palette.primary,
-      '--md-sys-color-on-primary': getReadableTextColor(palette.primary),
-      '--md-sys-color-primary-container': palette.primary,
-      '--md-sys-color-on-primary-container': getReadableTextColor(palette.primary),
-      '--md-sys-color-secondary': palette.secondary,
-      '--md-sys-color-on-secondary': getReadableTextColor(palette.secondary),
-      '--md-sys-color-secondary-container': palette.secondary,
-      '--md-sys-color-on-secondary-container': getReadableTextColor(palette.secondary),
-      '--md-sys-color-tertiary': palette.accent,
-      '--md-sys-color-on-tertiary': getReadableTextColor(palette.accent),
-      '--md-sys-color-tertiary-container': palette.accent,
-      '--md-sys-color-on-tertiary-container': getReadableTextColor(palette.accent),
-      // Opacidades reducidas para que el patrón/degradado del <html>
-      // se vea a través de los componentes (Hero, cards, grid, etc.)
-      '--md-sys-color-surface': isDark ? 'rgba(15, 17, 23, 0.82)' : 'rgba(255, 255, 255, 0.78)',
-      '--md-sys-color-surface-container-lowest': isDark
-        ? 'rgba(18, 20, 32, 0.62)'
-        : 'rgba(252, 252, 253, 0.62)',
-      '--md-sys-color-on-surface': isDark ? '#f3f4f6' : '#111827',
-      '--md-sys-color-surface-variant': isDark
-        ? 'rgba(22, 27, 36, 0.72)'
-        : 'rgba(245, 247, 251, 0.68)',
-      '--md-sys-color-on-surface-variant': isDark ? '#cbd5e1' : '#4b5563',
-      '--md-sys-color-surface-container-low': isDark
-        ? 'rgba(24, 29, 41, 0.68)'
-        : 'rgba(248, 250, 252, 0.66)',
-      '--md-sys-color-surface-container': isDark
-        ? 'rgba(29, 36, 50, 0.72)'
-        : 'rgba(241, 245, 249, 0.70)',
-      '--md-sys-color-surface-container-high': isDark
-        ? 'rgba(36, 45, 61, 0.76)'
-        : 'rgba(233, 238, 246, 0.75)',
-      '--md-sys-color-surface-container-highest': isDark
-        ? 'rgba(45, 55, 72, 0.80)'
-        : 'rgba(223, 230, 241, 0.80)',
-      '--md-sys-color-outline-variant': isDark ? '#475569' : '#cbd5e1',
-      ..._storefrontBg,
-    };
-  })();
+  const themeStyles = buildStorefrontThemeVars(editableTheme, activeScheme) as CSSProperties &
+    Record<string, string>;
 
   // Sync theme CSS vars to document root so parent elements (layout, main-area)
   // can see --storefront-bg, --storefront-bg-image, and all MD colors
@@ -507,7 +448,9 @@ function BusinessPageContentUI({
 
     // 2. Recompute the ORIGINAL background (themeStyles has it stripped so
     //    ::before doesn't double-paint). HTML handles the pattern exclusively.
-    const bgOriginal = buildBackgroundCSS(editableTheme[activeScheme].background);
+    const activeBackground =
+      activeScheme === 'dark' ? editableTheme.dark.background : editableTheme.light.background;
+    const bgOriginal = buildBackgroundCSS(activeBackground);
     const bgImage = bgOriginal['--storefront-bg-image' as keyof typeof bgOriginal] as
       | string
       | undefined;
@@ -563,24 +506,24 @@ function BusinessPageContentUI({
   // Read stored theme preference from localStorage on mount
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('storefront-theme');
+      const stored = localStorage.getItem(`storefront-theme-${business.slug}`);
       if (stored === 'light' || stored === 'dark') {
         setViewerTheme(stored);
       }
     } catch {
       // Safari private mode — no-op
     }
-  }, []);
+  }, [business.slug]);
 
   // Persist viewer theme choice to localStorage whenever it changes
   useEffect(() => {
     if (viewerTheme === null) return;
     try {
-      localStorage.setItem('storefront-theme', viewerTheme);
+      localStorage.setItem(`storefront-theme-${business.slug}`, viewerTheme);
     } catch {
       // Safari private mode — no-op
     }
-  }, [viewerTheme]);
+  }, [viewerTheme, business.slug]);
 
   const handleViewerThemeToggle = useCallback(() => {
     setViewerTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -597,14 +540,14 @@ function BusinessPageContentUI({
   useEffect(() => {
     if (!isStaff) return;
     try {
-      const stored = localStorage.getItem('storefront-preview-scheme');
+      const stored = localStorage.getItem(`storefront-preview-scheme-${business.slug}`);
       if (stored === 'light' || stored === 'dark') {
         setPreviewScheme(stored);
       }
     } catch {
       // Safari private mode — no-op
     }
-  }, []);
+  }, [isStaff, business.slug]);
 
   const handlePreviewSchemeChange = useCallback(
     (scheme: StorefrontColorScheme | undefined) => {
@@ -613,14 +556,14 @@ function BusinessPageContentUI({
         setViewerTheme(scheme);
         setTheme(scheme); // 'light' | 'dark' — same values
         try {
-          localStorage.setItem('storefront-preview-scheme', scheme);
-          localStorage.setItem('storefront-theme', scheme);
+          localStorage.setItem(`storefront-preview-scheme-${business.slug}`, scheme);
+          localStorage.setItem(`storefront-theme-${business.slug}`, scheme);
         } catch {
           // Safari private mode — no-op
         }
       }
     },
-    [setPreviewScheme, setTheme],
+    [business.slug, setTheme],
   );
 
   return (
@@ -645,29 +588,15 @@ function BusinessPageContentUI({
         initialImageIndex={previewImageIndex}
       />{' '}
       {!isStaff && (
-        <>
-          <FloatingCartButton />
-          <CartDrawer
-            hasPaymentGateway={paymentsEnabled}
-            culqiPublicKey={culqiPublicKey}
-            businessId={business.id}
-            businessName={business.name}
-            businessAddress={business.address ?? undefined}
-            businessCity={business.city ?? undefined}
-            businessLogoUrl={business.logoUrl ?? undefined}
-            onContactClick={() => setIsContactDialogOpen(true)}
-          />
-          {chatEnabled && (
-            <FloatingChatFab
-              businessName={business.name}
-              businessId={business.id}
-              slug={business.slug}
-              businessLogo={business.logoUrl}
-            />
-          )}
-          <ThemeToggle currentScheme={activeScheme} onToggle={handleViewerThemeToggle} />
-          <Footer business={business} />
-        </>
+        <CustomerFloatingUi
+          business={business}
+          paymentsEnabled={paymentsEnabled}
+          culqiPublicKey={culqiPublicKey}
+          chatEnabled={chatEnabled}
+          activeScheme={activeScheme}
+          onViewerThemeToggle={handleViewerThemeToggle}
+          onContactClick={() => setIsContactDialogOpen(true)}
+        />
       )}
       <BasicContactDialog
         business={business}
@@ -675,34 +604,26 @@ function BusinessPageContentUI({
         onClose={() => setIsContactDialogOpen(false)}
       />
       {isStaff && (
-        <>
-          <DeleteProductDialog
-            open={isDeleteOpen}
-            product={previewProduct ? mapToStorageProduct(previewProduct) : null}
-            onClose={() => setIsDeleteOpen(false)}
-            onConfirm={handleConfirmDelete}
-          />
-          <CreateProductSheet
-            open={isEditOpen || isCreateOpen}
-            onClose={() => {
-              setIsEditOpen(false);
-              setIsCreateOpen(false);
-            }}
-            onSave={handleSaveProduct}
-            initialProduct={
-              isEditOpen && previewProduct ? mapToStorageProduct(previewProduct) : null
-            }
-          />
-          <StorefrontEditor
-            business={{ id: business.id, slug: business.slug }}
-            storefrontTheme={editableTheme}
-            onThemeChange={setEditableTheme}
-            onPreviewSchemeChange={handlePreviewSchemeChange}
-            detectedColorScheme={effectiveTheme as StorefrontColorScheme}
-            currentScheme={previewScheme}
-            defaultScheme={defaultScheme}
-          />
-        </>
+        <StaffManagementTools
+          business={{ id: business.id, slug: business.slug }}
+          previewProduct={previewProduct}
+          isEditOpen={isEditOpen}
+          isCreateOpen={isCreateOpen}
+          isDeleteOpen={isDeleteOpen}
+          onSheetClose={() => {
+            setIsEditOpen(false);
+            setIsCreateOpen(false);
+          }}
+          onSave={handleSaveProduct}
+          onDeleteClose={() => setIsDeleteOpen(false)}
+          onDeleteConfirm={handleConfirmDelete}
+          editableTheme={editableTheme}
+          onThemeChange={setEditableTheme}
+          onPreviewSchemeChange={handlePreviewSchemeChange}
+          detectedColorScheme={effectiveTheme as StorefrontColorScheme}
+          previewScheme={previewScheme}
+          defaultScheme={defaultScheme}
+        />
       )}
       {isStaff && (
         <AlertSnackbar
@@ -718,6 +639,115 @@ function BusinessPageContentUI({
         onClose={() => setShowLookupModal(false)}
         businessSlug={business.slug}
         businessName={business.name}
+      />
+    </>
+  );
+}
+
+interface CustomerFloatingUiProps {
+  business: Business;
+  paymentsEnabled: boolean;
+  culqiPublicKey?: string;
+  chatEnabled: boolean;
+  activeScheme: StorefrontColorScheme;
+  onViewerThemeToggle: () => void;
+  onContactClick: () => void;
+}
+
+function CustomerFloatingUi({
+  business,
+  paymentsEnabled,
+  culqiPublicKey,
+  chatEnabled,
+  activeScheme,
+  onViewerThemeToggle,
+  onContactClick,
+}: CustomerFloatingUiProps) {
+  return (
+    <>
+      <FloatingCartButton />
+      <CartDrawer
+        hasPaymentGateway={paymentsEnabled}
+        culqiPublicKey={culqiPublicKey}
+        businessId={business.id}
+        businessName={business.name}
+        businessAddress={business.address ?? undefined}
+        businessCity={business.city ?? undefined}
+        businessLogoUrl={business.logoUrl ?? undefined}
+        onContactClick={onContactClick}
+      />
+      {chatEnabled && (
+        <FloatingChatFab
+          businessName={business.name}
+          businessId={business.id}
+          slug={business.slug}
+          businessLogo={business.logoUrl}
+        />
+      )}
+      <ThemeToggle currentScheme={activeScheme} onToggle={onViewerThemeToggle} />
+      <Footer business={business} />
+    </>
+  );
+}
+
+interface StaffManagementToolsProps {
+  business: { id: string; slug: string };
+  previewProduct: ProductWithRelations | null;
+  isEditOpen: boolean;
+  isCreateOpen: boolean;
+  isDeleteOpen: boolean;
+  onSheetClose: () => void;
+  onSave: (...args: OwnerSheetSaveArgs) => Promise<void>;
+  onDeleteClose: () => void;
+  onDeleteConfirm: (id: string) => Promise<void>;
+  editableTheme: StorefrontTheme;
+  onThemeChange: (theme: StorefrontTheme) => void;
+  onPreviewSchemeChange: (scheme: StorefrontColorScheme | undefined) => void;
+  detectedColorScheme: StorefrontColorScheme;
+  previewScheme?: StorefrontColorScheme;
+  defaultScheme?: 'light' | 'dark';
+}
+
+function StaffManagementTools({
+  business,
+  previewProduct,
+  isEditOpen,
+  isCreateOpen,
+  isDeleteOpen,
+  onSheetClose,
+  onSave,
+  onDeleteClose,
+  onDeleteConfirm,
+  editableTheme,
+  onThemeChange,
+  onPreviewSchemeChange,
+  detectedColorScheme,
+  previewScheme,
+  defaultScheme,
+}: StaffManagementToolsProps) {
+  const initialProduct = isEditOpen && previewProduct ? mapToStorageProduct(previewProduct) : null;
+  return (
+    <>
+      <DeleteProductDialog
+        open={isDeleteOpen}
+        product={previewProduct ? mapToStorageProduct(previewProduct) : null}
+        onClose={onDeleteClose}
+        onConfirm={onDeleteConfirm}
+      />
+      <CreateProductSheet
+        open={isEditOpen || isCreateOpen}
+        onClose={onSheetClose}
+        onSave={onSave}
+        initialProduct={initialProduct}
+      />
+      <StorefrontEditor
+        business={business}
+        storefrontTheme={editableTheme}
+        onThemeChange={onThemeChange}
+        onPreviewSchemeChange={onPreviewSchemeChange}
+        detectedColorScheme={detectedColorScheme}
+        currentScheme={previewScheme}
+        defaultScheme={defaultScheme}
       />
     </>
   );
@@ -799,7 +829,6 @@ function StorefrontProductGridSection({
   onShowLookupModal,
 }: StorefrontProductGridSectionProps) {
   const isGridVisible = section.visible;
-  const paymentsEnabled = hasPaymentGateway && isPaymentConfigured;
   const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
   const start = (currentPage - 1) * PAGE_SIZE;
   const paginatedProducts = filteredProducts.slice(start, start + PAGE_SIZE);
@@ -816,50 +845,12 @@ function StorefrontProductGridSection({
 
       {activeTab === 'products' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {/* ── Badge de confianza para el customer ── */}
-          {!isOwner && business.verificationStatus === 'verified' && (
-            <div className={styles.verifiedBadge}>
-              <Icon size={14}>verified</Icon>
-              Verificado
-            </div>
-          )}
-
-          {/* ── Mensajes para el owner ── */}
-          {isOwner && hasPaymentGateway && !isPaymentConfigured && (
-            <div className={`${styles.ownerPrompt} ${styles.ownerPromptWarning}`}>
-              <span className={styles.ownerPromptIcon}>⚠️</span>
-              <span>
-                Configura tus credenciales de pago para empezar a recibir pagos automáticos.
-              </span>
-            </div>
-          )}
-          {isOwner && !hasPaymentGateway && (
-            <div className={`${styles.ownerPrompt} ${styles.ownerPromptInfo}`}>
-              <span className={styles.ownerPromptIcon}>💡</span>
-              <span>
-                Estás en el plan básico. Actualiza tu plan para aceptar pagos automáticos y acceder
-                a más beneficios.
-              </span>
-            </div>
-          )}
-
-          {/* ── Info de pagos para el customer ── */}
-          {!isOwner && !paymentsEnabled && (
-            <div
-              className={styles.paymentBanner}
-              tabIndex={0}
-              role="button"
-              aria-label="Información de pagos"
-            >
-              <span className={styles.paymentBannerIcon}>?</span>
-              <span>Pagos automáticos no disponibles</span>
-              <div className={styles.paymentTooltip}>
-                {hasPaymentGateway
-                  ? 'Este negocio aún no terminó de configurar sus credenciales de pago. Mientras tanto, puedes contactar al negocio para comprar.'
-                  : 'Este negocio necesita un plan premium para habilitar pagos automáticos. Mientras tanto, puedes contactar al negocio para comprar.'}
-              </div>
-            </div>
-          )}
+          <StorefrontNoticeBar
+            isOwner={isOwner}
+            business={business}
+            hasPaymentGateway={hasPaymentGateway}
+            isPaymentConfigured={isPaymentConfigured}
+          />
           {isGridVisible ? (
             <>
               <ProductFiltersTopBar
@@ -899,35 +890,11 @@ function StorefrontProductGridSection({
                 }}
                 brandOptions={brandOptions}
               />
-              {isOwner && (
-                <div className={styles.ownerActionRow}>
-                  <Button
-                    variant="filled"
-                    onClick={onCreateProduct}
-                    className={styles.addProductButton}
-                  >
-                    <Icon slot="icon" size={21}>
-                      add_circle
-                    </Icon>
-                    Agregar Producto
-                  </Button>
-                </div>
-              )}
-
-              {!isOwner && (
-                <div className={styles.ownerActionRow}>
-                  <Button
-                    variant="filled"
-                    onClick={onShowLookupModal}
-                    className={styles.addProductButton}
-                  >
-                    <Icon slot="icon" size={21}>
-                      search
-                    </Icon>
-                    Ver Pedido
-                  </Button>
-                </div>
-              )}
+              <StorefrontOwnerActions
+                isOwner={isOwner}
+                onCreateProduct={onCreateProduct}
+                onShowLookupModal={onShowLookupModal}
+              />
               <Feed
                 products={paginatedProducts}
                 isOwner={isOwner}
@@ -950,91 +917,213 @@ function StorefrontProductGridSection({
               />
             </>
           ) : (
-            <div className={filterStyles.aboutContent}>
-              <div className={filterStyles.infoCard}>
-                <h2 className={filterStyles.infoTitle}>Catálogo oculto</h2>
-                <p className={filterStyles.description}>
-                  El grid de productos está oculto en la configuración del storefront, pero la
-                  navegación principal del negocio sigue disponible.
-                </p>
-                {isOwner && (
-                  <div className={styles.ownerActionRow}>
-                    <Button
-                      variant="filled"
-                      onClick={onCreateProduct}
-                      className={styles.addProductButton}
-                    >
-                      <Icon slot="icon" size={21}>
-                        add_circle
-                      </Icon>
-                      Agregar Producto
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
+            <HiddenCatalogNotice isOwner={isOwner} onCreateProduct={onCreateProduct} />
           )}
         </div>
       )}
 
       {activeTab === 'about' && (
+        <StorefrontAboutSection
+          business={business}
+          storefrontTheme={storefrontTheme}
+          previewCardTheme={previewCardTheme}
+        />
+      )}
+    </>
+  );
+}
+
+interface StorefrontNoticeBarProps {
+  isOwner: boolean;
+  business: Business;
+  hasPaymentGateway: boolean;
+  isPaymentConfigured: boolean;
+}
+
+function StorefrontNoticeBar({
+  isOwner,
+  business,
+  hasPaymentGateway,
+  isPaymentConfigured,
+}: StorefrontNoticeBarProps) {
+  const paymentsEnabled = hasPaymentGateway && isPaymentConfigured;
+  return (
+    <>
+      {/* ── Badge de confianza para el customer ── */}
+      {!isOwner && business.verificationStatus === 'verified' && (
+        <div className={styles.verifiedBadge}>
+          <Icon size={14}>verified</Icon>
+          Verificado
+        </div>
+      )}
+
+      {/* ── Mensajes para el owner ── */}
+      {isOwner && hasPaymentGateway && !isPaymentConfigured && (
+        <div className={`${styles.ownerPrompt} ${styles.ownerPromptWarning}`}>
+          <span className={styles.ownerPromptIcon}>⚠️</span>
+          <span>Configura tus credenciales de pago para empezar a recibir pagos automáticos.</span>
+        </div>
+      )}
+      {isOwner && !hasPaymentGateway && (
+        <div className={`${styles.ownerPrompt} ${styles.ownerPromptInfo}`}>
+          <span className={styles.ownerPromptIcon}>💡</span>
+          <span>
+            Estás en el plan básico. Actualiza tu plan para aceptar pagos automáticos y acceder a
+            más beneficios.
+          </span>
+        </div>
+      )}
+
+      {/* ── Info de pagos para el customer ── */}
+      {!isOwner && !paymentsEnabled && (
         <div
-          className={filterStyles.aboutContent}
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            gap: '2.5rem',
-            justifyContent: 'center',
-            alignItems: 'flex-start',
-            paddingTop: '2rem',
-            maxWidth: '1200px',
-            margin: '0 auto',
-          }}
+          className={styles.paymentBanner}
+          tabIndex={0}
+          role="button"
+          aria-label="Información de pagos"
         >
-          <div className={filterStyles.infoCard} style={{ flex: '1 1 500px', margin: 0 }}>
-            <h2 className={filterStyles.infoTitle}>Sobre nosotros</h2>
-            <p className={filterStyles.description}>
-              {business.description || 'No hay descripción disponible.'}
-            </p>
-
-            <div className={filterStyles.detailsGrid}>
-              {business.address && (
-                <div className={filterStyles.detailItem}>
-                  <strong>Dirección:</strong>
-                  <span>{business.address}</span>
-                </div>
-              )}
-              {business.whatsappNumber && (
-                <div className={filterStyles.detailItem}>
-                  <strong>WhatsApp:</strong>
-                  <span>{business.whatsappNumber}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div style={{ flex: '0 1 440px' }}>
-            <BusinessPreviewCard
-              commercialName={business.name}
-              sector={business.storeType || ''}
-              country={business.country || ''}
-              city={business.city || ''}
-              address={business.address || ''}
-              email={business.email || ''}
-              description={business.description || ''}
-              taxId={business.taxId || ''}
-              legalRepName={business.legalRepName || ''}
-              legalRepRole={business.legalRepRole || ''}
-              logoPreview={business.logoUrl}
-              storefrontTheme={
-                previewCardTheme || storefrontTheme || createDefaultStorefrontTheme()
-              }
-              showDownloadButton={false}
-            />
+          <span className={styles.paymentBannerIcon}>?</span>
+          <span>Pagos automáticos no disponibles</span>
+          <div className={styles.paymentTooltip}>
+            {hasPaymentGateway
+              ? 'Este negocio aún no terminó de configurar sus credenciales de pago. Mientras tanto, puedes contactar al negocio para comprar.'
+              : 'Este negocio necesita un plan premium para habilitar pagos automáticos. Mientras tanto, puedes contactar al negocio para comprar.'}
           </div>
         </div>
       )}
     </>
+  );
+}
+
+interface StorefrontOwnerActionsProps {
+  isOwner: boolean;
+  onCreateProduct: () => void;
+  onShowLookupModal: () => void;
+}
+
+function StorefrontOwnerActions({
+  isOwner,
+  onCreateProduct,
+  onShowLookupModal,
+}: StorefrontOwnerActionsProps) {
+  if (isOwner) {
+    return (
+      <div className={styles.ownerActionRow}>
+        <Button variant="filled" onClick={onCreateProduct} className={styles.addProductButton}>
+          <Icon slot="icon" size={21}>
+            add_circle
+          </Icon>
+          Agregar Producto
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <div className={styles.ownerActionRow}>
+      <Button variant="filled" onClick={onShowLookupModal} className={styles.addProductButton}>
+        <Icon slot="icon" size={21}>
+          search
+        </Icon>
+        Ver Pedido
+      </Button>
+    </div>
+  );
+}
+
+interface HiddenCatalogNoticeProps {
+  isOwner: boolean;
+  onCreateProduct: () => void;
+}
+
+function HiddenCatalogNotice({ isOwner, onCreateProduct }: HiddenCatalogNoticeProps) {
+  return (
+    <div className={filterStyles.aboutContent}>
+      <div className={filterStyles.infoCard}>
+        <h2 className={filterStyles.infoTitle}>Catálogo oculto</h2>
+        <p className={filterStyles.description}>
+          El grid de productos está oculto en la configuración del storefront, pero la navegación
+          principal del negocio sigue disponible.
+        </p>
+        {isOwner && (
+          <div className={styles.ownerActionRow}>
+            <Button variant="filled" onClick={onCreateProduct} className={styles.addProductButton}>
+              <Icon slot="icon" size={21}>
+                add_circle
+              </Icon>
+              Agregar Producto
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface StorefrontAboutSectionProps {
+  business: Business;
+  storefrontTheme: StorefrontTheme | null | undefined;
+  previewCardTheme: StorefrontTheme | null | undefined;
+}
+
+function StorefrontAboutSection({
+  business,
+  storefrontTheme,
+  previewCardTheme,
+}: StorefrontAboutSectionProps) {
+  return (
+    <div
+      className={filterStyles.aboutContent}
+      style={{
+        display: 'flex',
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: '2.5rem',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        paddingTop: '2rem',
+        maxWidth: '1200px',
+        margin: '0 auto',
+      }}
+    >
+      <div className={filterStyles.infoCard} style={{ flex: '1 1 500px', margin: 0 }}>
+        <h2 className={filterStyles.infoTitle}>Sobre nosotros</h2>
+        <p className={filterStyles.description}>
+          {business.description || 'No hay descripción disponible.'}
+        </p>
+
+        <div className={filterStyles.detailsGrid}>
+          {business.address && (
+            <div className={filterStyles.detailItem}>
+              <strong>Dirección:</strong>
+              <span>{business.address}</span>
+            </div>
+          )}
+          {business.whatsappNumber && (
+            <div className={filterStyles.detailItem}>
+              <strong>WhatsApp:</strong>
+              <span>{business.whatsappNumber}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div style={{ flex: '0 1 440px' }}>
+        <BusinessPreviewCard
+          commercialName={business.name}
+          sector={business.storeType || ''}
+          country={business.country || ''}
+          city={business.city || ''}
+          address={business.address || ''}
+          email={business.email || ''}
+          description={business.description || ''}
+          taxId={business.taxId || ''}
+          legalRepName={business.legalRepName || ''}
+          legalRepRole={business.legalRepRole || ''}
+          logoPreview={business.logoUrl}
+          storefrontTheme={previewCardTheme || storefrontTheme || createDefaultStorefrontTheme()}
+          showDownloadButton={false}
+        />
+      </div>
+    </div>
   );
 }

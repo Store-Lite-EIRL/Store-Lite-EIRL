@@ -100,7 +100,7 @@ export const PLAN_ENTITLEMENTS: Record<
     dashboardEnabled: true,
     seoEnabled: true,
     canUseAIAssistant: false,
-    maxTeamMembers: 3,
+    maxTeamMembers: 2, // Owner + 1 invitado
   },
 
   business_pro: {
@@ -113,7 +113,7 @@ export const PLAN_ENTITLEMENTS: Record<
     dashboardEnabled: true,
     seoEnabled: true,
     canUseAIAssistant: true,
-    maxTeamMembers: 2, // Owner + 1 invitado
+    maxTeamMembers: 3, // Owner + 2 invitados
   },
 
   enterprise_pro: {
