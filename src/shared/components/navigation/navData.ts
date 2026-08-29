@@ -54,10 +54,10 @@ export function buildNavItems(options: BuildNavItemsOptions): NavItemData[] {
       permission: 'products.view', // or categories.view
     },
     {
-      id: 'soporte',
-      icon: 'support',
-      label: 'Soporte',
-      path: getBusinessPath(slug, '/soporte'),
+      id: 'feedback',
+      icon: 'feedback',
+      label: 'Ayuda',
+      path: getBusinessPath(slug, '/ayuda'),
     },
     {
       id: 'dashboard',
@@ -98,7 +98,7 @@ export function buildNavItems(options: BuildNavItemsOptions): NavItemData[] {
     }
 
     // 4. Items without permission requirement are always visible
-    // (home, soporte, settings)
+    // (home, feedback, settings)
     return true;
   });
 }
@@ -137,10 +137,10 @@ export function getAllNavItems(slug: string): NavItemData[] {
       permission: 'products.view',
     },
     {
-      id: 'soporte',
-      icon: 'support',
-      label: 'Soporte',
-      path: getBusinessPath(slug, '/soporte'),
+      id: 'feedback',
+      icon: 'feedback',
+      label: 'Ayuda',
+      path: getBusinessPath(slug, '/ayuda'),
     },
     {
       id: 'dashboard',
