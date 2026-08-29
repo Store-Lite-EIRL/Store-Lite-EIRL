@@ -22,13 +22,19 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./tests/setup.ts'],
-    exclude: ['**/node_modules/**', '**/dist/**', 'tests/e2e/**'],
+    exclude: ['**/node_modules/**', '**/dist/**', 'tests/e2e/**', 'tests/visual/**'],
     coverage: {
       enabled: true,
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
       include: ['src/**', 'app/**', 'tests/**'],
-      exclude: ['src/**/*.d.ts', 'src/**/*.test.*', 'app/**/*.test.*', '**/node_modules/**'],
+      exclude: [
+        'src/**/*.d.ts',
+        'src/**/*.test.*',
+        'app/**/*.test.*',
+        '**/node_modules/**',
+        '**/*.md',
+      ],
     },
   },
 });
