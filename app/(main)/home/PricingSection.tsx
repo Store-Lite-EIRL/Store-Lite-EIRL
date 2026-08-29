@@ -41,8 +41,8 @@ export default function PricingSection() {
       popular: true,
     },
     {
-      name: 'Enterprise AI',
-      price: formatSoles(PLAN_PRICES.enterprise_ai.monthly),
+      name: 'Enterprise Pro',
+      price: formatSoles(PLAN_PRICES.enterprise_pro.monthly),
       period: 'mes',
       description:
         'La versión completa con inteligencia artificial. Para marcas que necesitan el máximo rendimiento y soporte.',
