@@ -108,23 +108,29 @@ export default function Navbar({
   // Section configuration with collapsible state
   const SECTIONS_STORAGE_KEY = `navbar_sections_${businessId || 'default'}`;
 
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    principal: true,
+    gestion: true,
+    configuracion: true,
+  });
+
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem(SECTIONS_STORAGE_KEY);
       if (stored) {
         try {
-          return JSON.parse(stored);
+          setExpandedSections(JSON.parse(stored));
         } catch {
-          return {};
+          // Ignore parse errors
         }
       }
     }
-    // Default: all expanded
-    return { principal: true, gestion: true, configuracion: true };
-  });
+  }, [SECTIONS_STORAGE_KEY]);
 
   useEffect(() => {
-    localStorage.setItem(SECTIONS_STORAGE_KEY, JSON.stringify(expandedSections));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(SECTIONS_STORAGE_KEY, JSON.stringify(expandedSections));
+    }
   }, [expandedSections, SECTIONS_STORAGE_KEY]);
 
   const toggleSection = (sectionId: string) => {
@@ -173,10 +179,10 @@ export default function Navbar({
       icon: 'tune',
       items: [
         {
-          id: 'soporte',
-          icon: 'support',
-          label: 'Soporte',
-          path: getBusinessPath(slug, '/soporte'),
+          id: 'feedback',
+          icon: 'feedback',
+          label: 'Ayuda',
+          path: getBusinessPath(slug, '/ayuda'),
         },
         {
           id: 'settings',
@@ -268,6 +274,15 @@ export default function Navbar({
                 >
                   <md-icon>notifications</md-icon>
                   <span>Notificaciones</span>
+                </Link>
+                <Link
+                  href={getBusinessPath(slug, '/ayuda')}
+                  className="navbar__mobile-popup-item"
+                  onClick={() => setIsMobileMoreOpen(false)}
+                  suppressHydrationWarning
+                >
+                  <md-icon>feedback</md-icon>
+                  <span>Ayuda</span>
                 </Link>
               </div>
             )}
@@ -410,9 +425,11 @@ export default function Navbar({
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               title="Cerrar sesión"
             >
-              <Icon size={24} className="navbar__item-icon">
-                power_settings_new
-              </Icon>
+              <span className="navbar__item-icon-wrapper">
+                <Icon size={24} className="navbar__item-icon">
+                  power_settings_new
+                </Icon>
+              </span>
               {!isCollapsed && (
                 <span className="navbar__item-label" suppressHydrationWarning>
                   Cerrar sesión

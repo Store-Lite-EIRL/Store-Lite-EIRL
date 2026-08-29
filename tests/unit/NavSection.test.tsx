@@ -73,7 +73,7 @@ const allItems: NavItemData[] = [
     path: '/mi-tienda/storage',
     permission: 'products.view',
   },
-  { id: 'soporte', icon: 'support', label: 'Soporte', path: '/mi-tienda/soporte' },
+  { id: 'feedback', icon: 'feedback', label: 'Ayuda', path: '/mi-tienda/ayuda' },
   {
     id: 'dashboard',
     icon: 'dashboard',

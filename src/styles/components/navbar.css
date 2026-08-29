@@ -659,6 +659,7 @@ md-menu-item {
     border: 1px solid var(--md-sys-color-outline-variant);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     z-index: 100;
+    overflow: visible;
   }
 
   .navbar__content {
@@ -669,6 +670,7 @@ md-menu-item {
     padding: 0;
     gap: 0;
     overflow: visible;
+    min-width: 0;
   }
 
   /* Make items flow as direct children of navbar__content for even spacing */
@@ -687,30 +689,23 @@ md-menu-item {
   .navbar__account-actions {
     width: auto;
     margin-top: 0;
-    flex: 1;
+    flex: 1 1 0;
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+    min-width: 0;
+    position: relative;
   }
 
-  /* Logout button on mobile - circular, centered */
+  /* Logout button on mobile - same behavior as other items */
   .navbar__item--logout {
-    width: 3.5rem;
-    height: 3.5rem;
-    border-radius: 50%;
-    background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
-    border: none;
-    color: var(--md-sys-color-on-surface-variant);
-    flex: none;
+    flex: 1 1 0;
     margin: 0;
-  }
-
-  .navbar__item--logout .navbar__item-icon {
-    width: 2.5rem;
-    height: 2.5rem;
-    font-size: 1.5rem;
-    color: var(--md-sys-color-on-surface-variant);
+    min-width: 0;
+    background-color: transparent;
+    border: none;
+    color: inherit;
   }
 
   .navbar__item--logout:hover,
@@ -728,14 +723,26 @@ md-menu-item {
   .navbar__item {
     height: 100%;
     width: auto;
-    flex: 1;
+    flex: 1 1 0;
     margin: 0;
     border-radius: 0;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
     padding: 0;
     gap: 0;
+    min-width: 0;
+    overflow: hidden;
     background-color: transparent !important;
+  }
+
+  /* Icon wrapper - ensure full height for vertical centering */
+  .navbar__item-icon-wrapper {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
   }
 
   /* Hide labels completely to save space for icons */
@@ -746,6 +753,7 @@ md-menu-item {
   /* Icons - Size optimized for bottom navigation */
   .navbar__item-icon {
     font-size: 1.5rem;
+    flex-shrink: 0;
     transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
   }
 
