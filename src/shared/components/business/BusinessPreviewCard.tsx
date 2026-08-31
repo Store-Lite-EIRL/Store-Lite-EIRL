@@ -150,6 +150,7 @@ export interface BusinessPreviewCardProps {
   colorScheme?: StorefrontColorScheme;
   onStorefrontThemeChange?: (theme: StorefrontTheme) => void;
   showDownloadButton?: boolean;
+  downloadButtonLabel?: string;
   /**
    * Public profile props (optional, R4): when absent the card renders exactly
    * as before — no badge, no social row, no wa.me link.
@@ -537,6 +538,7 @@ export const BusinessPreviewCard = ({
   colorScheme,
   onStorefrontThemeChange,
   showDownloadButton = true,
+  downloadButtonLabel = 'Descargar tarjeta',
   socialLinks,
   whatsappNumber,
   legalRepPhone,
@@ -760,6 +762,7 @@ export const BusinessPreviewCard = ({
           variant="filled"
           onClick={handleDownload}
           disabled={isDownloading}
+          aria-label={downloadButtonLabel}
           style={{
             position: 'absolute',
             bottom: '-14px',

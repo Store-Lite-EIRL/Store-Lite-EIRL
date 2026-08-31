@@ -169,7 +169,7 @@ export default function BusinessPageContent({
 
 function BusinessPageContentUI({
   business,
-  isOwner: _isOwner = false,
+  isOwner = false,
   isStaff = false,
   isLoggedIn: _isLoggedIn = false,
   categories = [],
@@ -406,7 +406,8 @@ function BusinessPageContentUI({
             onClearFilters={clearFilters}
             currentPage={currentPage}
             onPageChange={setCurrentPage}
-            isOwner={isStaff}
+            isOwner={isOwner}
+            isStaff={isStaff}
             hasPaymentGateway={hasPaymentGateway}
             isPaymentConfigured={isPaymentConfigured}
             culqiPublicKey={culqiPublicKey}
@@ -780,6 +781,7 @@ interface StorefrontProductGridSectionProps {
   currentPage: number;
   onPageChange: (page: number) => void;
   isOwner: boolean;
+  isStaff: boolean;
   hasPaymentGateway: boolean;
   isPaymentConfigured: boolean;
   culqiPublicKey?: string;
@@ -818,6 +820,7 @@ function StorefrontProductGridSection({
   currentPage,
   onPageChange,
   isOwner,
+  isStaff,
   hasPaymentGateway,
   isPaymentConfigured,
   culqiPublicKey,
@@ -846,7 +849,7 @@ function StorefrontProductGridSection({
       {activeTab === 'products' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <StorefrontNoticeBar
-            isOwner={isOwner}
+            isOwner={isStaff}
             business={business}
             hasPaymentGateway={hasPaymentGateway}
             isPaymentConfigured={isPaymentConfigured}
@@ -891,13 +894,13 @@ function StorefrontProductGridSection({
                 brandOptions={brandOptions}
               />
               <StorefrontOwnerActions
-                isOwner={isOwner}
+                isOwner={isStaff}
                 onCreateProduct={onCreateProduct}
                 onShowLookupModal={onShowLookupModal}
               />
               <Feed
                 products={paginatedProducts}
-                isOwner={isOwner}
+                isOwner={isStaff}
                 onProductPreview={onProductPreview}
                 hasPaymentGateway={hasPaymentGateway}
                 isPaymentConfigured={isPaymentConfigured}
@@ -917,7 +920,7 @@ function StorefrontProductGridSection({
               />
             </>
           ) : (
-            <HiddenCatalogNotice isOwner={isOwner} onCreateProduct={onCreateProduct} />
+            <HiddenCatalogNotice isOwner={isStaff} onCreateProduct={onCreateProduct} />
           )}
         </div>
       )}
@@ -927,6 +930,7 @@ function StorefrontProductGridSection({
           business={business}
           storefrontTheme={storefrontTheme}
           previewCardTheme={previewCardTheme}
+          isOwner={isOwner}
         />
       )}
     </>
