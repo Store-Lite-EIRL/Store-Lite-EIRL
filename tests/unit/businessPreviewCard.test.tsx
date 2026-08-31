@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/core/storefront', () => ({
-  normalizeStorefrontColorScheme: () => 'light',
+  normalizeStorefrontColorScheme: (scheme?: string) => (scheme === 'dark' ? 'dark' : 'light'),
   getStorefrontColorConfig: () => ({
     palette: { primary: '#6366f1', secondary: '#a855f7', accent: '#ec4899' },
   }),
@@ -105,5 +105,57 @@ describe('BusinessPreviewCard — public profile props', () => {
 
     const whatsapp = screen.getByRole('link', { name: /WhatsApp/ });
     expect(whatsapp).toHaveAttribute('href', 'https://wa.me/51111222333');
+  });
+});
+
+describe('BusinessPreviewCard — dark color scheme (R5 coverage)', () => {
+  it('applies the dark palette to the verification badge', () => {
+    render(<BusinessPreviewCard {...baseProps} verificationStatus="verified" colorScheme="dark" />);
+
+    const badge = screen.getByRole('status');
+    expect(badge).toHaveAttribute('aria-label', 'Verificado');
+    // colorDark from VERIFICATION_BADGE_META.verified
+    expect(badge).toHaveStyle({ color: '#4ade80' });
+  });
+
+  it('keeps the light palette for the badge without colorScheme', () => {
+    render(<BusinessPreviewCard {...baseProps} verificationStatus="verified" />);
+
+    const badge = screen.getByRole('status');
+    // light color from VERIFICATION_BADGE_META.verified
+    expect(badge).toHaveStyle({ color: '#16a34a' });
+  });
+
+  it('applies the dark palette to social rows keeping the safe-link contract', () => {
+    render(
+      <BusinessPreviewCard
+        {...baseProps}
+        colorScheme="dark"
+        whatsappNumber="+51 999 888 777"
+        socialLinks={{ instagram: 'https://instagram.com/mitienda' }}
+      />,
+    );
+
+    const social = screen.getByRole('link', { name: 'Síguenos en Instagram' });
+    expect(social).toHaveAttribute('href', 'https://instagram.com/mitienda');
+    expect(social).toHaveAttribute('target', '_blank');
+    expect(social).toHaveAttribute('rel', 'noopener noreferrer');
+    // dark background from SocialLinksRow's isDark palette
+    expect(social).toHaveStyle({ backgroundColor: 'rgba(255, 255, 255, 0.14)' });
+
+    const whatsapp = screen.getByRole('link', { name: /WhatsApp/ });
+    expect(whatsapp).toHaveAttribute('href', 'https://wa.me/51999888777');
+  });
+
+  it('keeps the light palette for social rows without colorScheme', () => {
+    render(
+      <BusinessPreviewCard
+        {...baseProps}
+        socialLinks={{ instagram: 'https://instagram.com/mitienda' }}
+      />,
+    );
+
+    const social = screen.getByRole('link', { name: 'Síguenos en Instagram' });
+    expect(social).toHaveStyle({ backgroundColor: 'rgba(255, 255, 255, 0.5)' });
   });
 });
