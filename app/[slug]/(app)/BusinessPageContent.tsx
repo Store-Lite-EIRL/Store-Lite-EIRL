@@ -169,7 +169,7 @@ export default function BusinessPageContent({
 
 function BusinessPageContentUI({
   business,
-  isOwner: _isOwner = false,
+  isOwner = false,
   isStaff = false,
   isLoggedIn: _isLoggedIn = false,
   categories = [],
@@ -406,7 +406,7 @@ function BusinessPageContentUI({
             onClearFilters={clearFilters}
             currentPage={currentPage}
             onPageChange={setCurrentPage}
-            isOwner={isStaff}
+            isOwner={isOwner}
             hasPaymentGateway={hasPaymentGateway}
             isPaymentConfigured={isPaymentConfigured}
             culqiPublicKey={culqiPublicKey}
@@ -927,6 +927,7 @@ function StorefrontProductGridSection({
           business={business}
           storefrontTheme={storefrontTheme}
           previewCardTheme={previewCardTheme}
+          isOwner={isOwner}
         />
       )}
     </>

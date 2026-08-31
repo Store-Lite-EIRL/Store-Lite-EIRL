@@ -1,5 +1,6 @@
 import {
   StorefrontAboutSection,
+  buildGoogleMapsUrl,
   getPersonTypeLabel,
   getVerificationConfig,
 } from '@/app/[slug]/(app)/StorefrontAboutSection';
@@ -65,9 +66,17 @@ const sparseBusiness = {
   verificationStatus: 'unverified',
 } as unknown as Parameters<typeof StorefrontAboutSection>[0]['business'];
 
-const renderSection = (business: Parameters<typeof StorefrontAboutSection>[0]['business']) =>
+const renderSection = (
+  business: Parameters<typeof StorefrontAboutSection>[0]['business'],
+  isOwner = false,
+) =>
   render(
-    <StorefrontAboutSection business={business} storefrontTheme={null} previewCardTheme={null} />,
+    <StorefrontAboutSection
+      business={business}
+      storefrontTheme={null}
+      previewCardTheme={null}
+      isOwner={isOwner}
+    />,
   );
 
 // ─── Section rendering ─────────────────────────────────────────────────────
@@ -201,5 +210,116 @@ describe('getVerificationConfig', () => {
     for (const status of ['pending', 'unverified', 'rejected', null, undefined, 'bogus']) {
       expect(getVerificationConfig(status as string).tone).not.toBe('verified');
     }
+  });
+});
+
+// ─── buildGoogleMapsUrl (pure, unit-tested) ────────────────────────────────
+
+describe('buildGoogleMapsUrl', () => {
+  it('joins all present location parts into a full encoded URL', () => {
+    const url = buildGoogleMapsUrl({
+      address: 'Av. Lima 123',
+      city: 'Lima',
+      departamento: 'Lima',
+      provincia: 'Lima',
+      distrito: 'Cercado',
+      country: 'Perú',
+    } as Parameters<typeof buildGoogleMapsUrl>[0]);
+    expect(url).toBe(
+      'https://www.google.com/maps/search/?api=1&query=Av.%20Lima%20123%2C%20Lima%2C%20Lima%2C%20Lima%2C%20Cercado%2C%20Per%C3%BA',
+    );
+  });
+
+  it('encodes only the parts that are present (city + provincia)', () => {
+    const url = buildGoogleMapsUrl({
+      address: null,
+      city: 'Arequipa',
+      departamento: null,
+      provincia: 'Arequipa',
+      distrito: null,
+      country: null,
+    } as Parameters<typeof buildGoogleMapsUrl>[0]);
+    expect(url).toBe('https://www.google.com/maps/search/?api=1&query=Arequipa%2C%20Arequipa');
+  });
+
+  it('returns empty string when no location parts exist', () => {
+    const url = buildGoogleMapsUrl({
+      address: null,
+      city: null,
+      departamento: null,
+      provincia: null,
+      distrito: null,
+      country: null,
+    } as Parameters<typeof buildGoogleMapsUrl>[0]);
+    expect(url).toBe('');
+  });
+
+  it('trims whitespace and skips blank-only values', () => {
+    const url = buildGoogleMapsUrl({
+      address: '  ',
+      city: 'Trujillo',
+      departamento: '',
+      provincia: null,
+      distrito: null,
+      country: null,
+    } as Parameters<typeof buildGoogleMapsUrl>[0]);
+    expect(url).toBe('https://www.google.com/maps/search/?api=1&query=Trujillo');
+  });
+});
+
+// ─── isOwner gating (R7) ─────────────────────────────────────────────────
+
+describe('StorefrontAboutSection — isOwner gating', () => {
+  it('shows the download button when isOwner is true', () => {
+    renderSection(fullBusiness, true);
+    const downloadBtn = screen.getByLabelText('Descargar tarjeta');
+    expect(downloadBtn).toBeDefined();
+  });
+
+  it('hides the download button when isOwner is false (staff without ownership)', () => {
+    renderSection(fullBusiness, false);
+    const downloadBtn = screen.queryByLabelText('Descargar tarjeta');
+    expect(downloadBtn).toBeNull();
+  });
+
+  it('hides the download button for anonymous visitors (isOwner false)', () => {
+    renderSection(sparseBusiness, false);
+    const downloadBtn = screen.queryByLabelText('Descargar tarjeta');
+    expect(downloadBtn).toBeNull();
+  });
+});
+
+// ─── Maps deep link (R8) ─────────────────────────────────────────────────
+
+describe('StorefrontAboutSection — Google Maps link', () => {
+  it('renders a "Cómo llegar" anchor when location parts are present', () => {
+    render(
+      <StorefrontAboutSection
+        business={fullBusiness}
+        storefrontTheme={null}
+        previewCardTheme={null}
+        isOwner={false}
+      />,
+    );
+    const mapsLink = screen.getByRole('link', { name: 'Cómo llegar' });
+    expect(mapsLink).toHaveAttribute(
+      'href',
+      'https://www.google.com/maps/search/?api=1&query=Av.%20Lima%20123%2C%20Lima%2C%20Per%C3%BA',
+    );
+    expect(mapsLink).toHaveAttribute('target', '_blank');
+    expect(mapsLink).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('renders no Maps link when business has no location parts', () => {
+    render(
+      <StorefrontAboutSection
+        business={sparseBusiness}
+        storefrontTheme={null}
+        previewCardTheme={null}
+        isOwner={false}
+      />,
+    );
+    const mapsLink = screen.queryByRole('link', { name: 'Cómo llegar' });
+    expect(mapsLink).toBeNull();
   });
 });

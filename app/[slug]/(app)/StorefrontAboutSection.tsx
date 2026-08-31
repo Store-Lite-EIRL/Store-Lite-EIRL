@@ -12,6 +12,32 @@ import styles from './storefrontAbout.module.css';
 
 // ─── Pure business-logic helpers (unit-tested) ────────────────────────────
 
+/**
+ * Builds a Google Maps search URL from a business's location parts.
+ * Returns '' when no parts are present.
+ */
+export function buildGoogleMapsUrl(business: {
+  address?: string | null;
+  city?: string | null;
+  departamento?: string | null;
+  provincia?: string | null;
+  distrito?: string | null;
+  country?: string | null;
+}): string {
+  const parts = [
+    business.address,
+    business.city,
+    business.departamento,
+    business.provincia,
+    business.distrito,
+    business.country,
+  ]
+    .filter((p): p is string => !!p && p.trim().length > 0)
+    .map((p) => p.trim());
+  if (parts.length === 0) return '';
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(parts.join(', '))}`;
+}
+
 /** Mapea el tipo de persona a texto amigable (copiado de AboutSection.tsx). */
 export function getPersonTypeLabel(personType: string | null | undefined): string {
   switch (personType) {
@@ -119,6 +145,23 @@ function VerificationBadgeRow({ verification }: { verification: VerificationConf
   );
 }
 
+function MapLinkRow({ url }: { url: string }) {
+  if (!url) return null;
+  return (
+    <div className={styles.detailItem}>
+      <a
+        className={styles.contactLink}
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Cómo llegar"
+      >
+        Cómo llegar
+      </a>
+    </div>
+  );
+}
+
 // ─── Section ──────────────────────────────────────────────────────────────
 
 interface StorefrontAboutSectionProps {
@@ -126,6 +169,7 @@ interface StorefrontAboutSectionProps {
   storefrontTheme: StorefrontTheme | null | undefined;
   previewCardTheme: StorefrontTheme | null | undefined;
   storefrontColorScheme?: StorefrontColorScheme;
+  isOwner: boolean;
 }
 
 /** Sección "Nosotros" del storefront (público). */
@@ -134,6 +178,7 @@ export function StorefrontAboutSection({
   storefrontTheme,
   previewCardTheme,
   storefrontColorScheme,
+  isOwner,
 }: StorefrontAboutSectionProps) {
   const verification = getVerificationConfig(business.verificationStatus);
   const phoneNumber = business.whatsappNumber ?? business.legalRepPhone ?? '';
@@ -152,6 +197,16 @@ export function StorefrontAboutSection({
 
             <div className={styles.detailsGrid}>
               <DireccionRow address={business.address} />
+              <MapLinkRow
+                url={buildGoogleMapsUrl({
+                  address: business.address,
+                  city: business.city,
+                  departamento: business.departamento,
+                  provincia: business.provincia,
+                  distrito: business.distrito,
+                  country: business.country,
+                })}
+              />
               <TipoRow value={typeValue} />
               <CorreoRow email={business.email} />
               <WhatsAppRow phoneNumber={phoneNumber} phoneDigits={phoneDigits} />
@@ -180,7 +235,7 @@ export function StorefrontAboutSection({
             logoPreview={business.logoUrl}
             storefrontTheme={previewCardTheme || storefrontTheme || createDefaultStorefrontTheme()}
             colorScheme={storefrontColorScheme}
-            showDownloadButton={false}
+            showDownloadButton={isOwner}
             socialLinks={business.socialLinks ?? {}}
             whatsappNumber={business.whatsappNumber ?? undefined}
             legalRepPhone={business.legalRepPhone ?? undefined}
