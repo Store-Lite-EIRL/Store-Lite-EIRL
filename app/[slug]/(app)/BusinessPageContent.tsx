@@ -19,7 +19,6 @@ import { DeleteProductDialog } from '@/features/storage/components/DeleteProduct
 import { CreateProductSheet } from '@/features/storage/components/createProduct/CreateProductSheet';
 import { StorageProvider, useStorage } from '@/features/storage/context/StorageContext';
 import type { Product as StorageProduct } from '@/features/storage/data';
-import { BusinessPreviewCard } from '@/shared/components/business/BusinessPreviewCard';
 import { AlertSnackbar } from '@/shared/components/ui';
 import { Button } from '@/shared/components/ui/buttons/Button';
 import { Icon } from '@/shared/components/ui/data-display/Icon';
@@ -47,6 +46,7 @@ import Pagination from '../../(main)/home/Pagination';
 import ProductFiltersTopBar from '../../(main)/home/components/ProductFiltersTopBar';
 import styles from './BusinessPageContent.module.css';
 import { Footer } from './Footer';
+import { StorefrontAboutSection } from './StorefrontAboutSection';
 import { BasicContactDialog } from './components/BasicContactDialog';
 import { CartDrawer } from './components/CartDrawer';
 import { FloatingCartButton } from './components/FloatingCartButton';
@@ -1054,75 +1054,6 @@ function HiddenCatalogNotice({ isOwner, onCreateProduct }: HiddenCatalogNoticePr
             </Button>
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-interface StorefrontAboutSectionProps {
-  business: Business;
-  storefrontTheme: StorefrontTheme | null | undefined;
-  previewCardTheme: StorefrontTheme | null | undefined;
-}
-
-function StorefrontAboutSection({
-  business,
-  storefrontTheme,
-  previewCardTheme,
-}: StorefrontAboutSectionProps) {
-  return (
-    <div
-      className={filterStyles.aboutContent}
-      style={{
-        display: 'flex',
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: '2.5rem',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-        paddingTop: '2rem',
-        maxWidth: '1200px',
-        margin: '0 auto',
-      }}
-    >
-      <div className={filterStyles.infoCard} style={{ flex: '1 1 500px', margin: 0 }}>
-        <h2 className={filterStyles.infoTitle}>Sobre nosotros</h2>
-        <p className={filterStyles.description}>
-          {business.description || 'No hay descripción disponible.'}
-        </p>
-
-        <div className={filterStyles.detailsGrid}>
-          {business.address && (
-            <div className={filterStyles.detailItem}>
-              <strong>Dirección:</strong>
-              <span>{business.address}</span>
-            </div>
-          )}
-          {business.whatsappNumber && (
-            <div className={filterStyles.detailItem}>
-              <strong>WhatsApp:</strong>
-              <span>{business.whatsappNumber}</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div style={{ flex: '0 1 440px' }}>
-        <BusinessPreviewCard
-          commercialName={business.name}
-          sector={business.storeType || ''}
-          country={business.country || ''}
-          city={business.city || ''}
-          address={business.address || ''}
-          email={business.email || ''}
-          description={business.description || ''}
-          taxId={business.taxId || ''}
-          legalRepName={business.legalRepName || ''}
-          legalRepRole={business.legalRepRole || ''}
-          logoPreview={business.logoUrl}
-          storefrontTheme={previewCardTheme || storefrontTheme || createDefaultStorefrontTheme()}
-          showDownloadButton={false}
-        />
       </div>
     </div>
   );

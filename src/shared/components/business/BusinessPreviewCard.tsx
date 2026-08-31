@@ -48,6 +48,20 @@ function EmailIcon({ size = 18, style }: { size?: number; style?: React.CSSPrope
   );
 }
 
+function WhatsAppIcon({ size = 18, style }: { size?: number; style?: React.CSSProperties }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      style={{ flexShrink: 0, ...style }}
+    >
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+    </svg>
+  );
+}
+
 function PersonIcon({ size = 22, style }: { size?: number; style?: React.CSSProperties }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" style={style}>
@@ -118,6 +132,8 @@ const getSafePixelRatio = (width: number, height: number) => {
   return Math.max(1, Math.min(targetRatio, sideRatio, areaRatio));
 };
 
+export type VerificationStatus = 'verified' | 'pending' | 'unverified' | 'rejected';
+
 export interface BusinessPreviewCardProps {
   commercialName: string;
   sector: string;
@@ -134,6 +150,18 @@ export interface BusinessPreviewCardProps {
   colorScheme?: StorefrontColorScheme;
   onStorefrontThemeChange?: (theme: StorefrontTheme) => void;
   showDownloadButton?: boolean;
+  /**
+   * Public profile props (optional, R4): when absent the card renders exactly
+   * as before — no badge, no social row, no wa.me link.
+   */
+  socialLinks?: Record<string, string>;
+  whatsappNumber?: string;
+  legalRepPhone?: string;
+  verificationStatus?: VerificationStatus | null;
+  /** Contract-only field: accepted for API parity, header rendering deferred (D1). */
+  coverImageUrl?: string | null;
+  /** Contract-only field: reserved for the storefront type label (D1). */
+  storeType?: string;
 }
 
 const tokenizeTaxId = (taxId: string) => {
@@ -205,10 +233,12 @@ const PreviewMetadata = ({
   description,
   taxId,
   isDark,
+  showVerifiedStyle,
 }: {
   description: string;
   taxId: string;
   isDark: boolean;
+  showVerifiedStyle: boolean;
 }) => (
   <div className="flex-column gap-sm" style={{ padding: '8px 4px' }}>
     {description && (
@@ -233,10 +263,23 @@ const PreviewMetadata = ({
     )}
 
     <div className="flex-row gap-md flex-align-center">
-      <VerifiedIcon
-        size={18}
-        style={{ color: isDark ? '#FFF' : 'var(--md-sys-color-primary)', opacity: 0.9 }}
-      />
+      {showVerifiedStyle ? (
+        <VerifiedIcon
+          size={18}
+          style={{ color: isDark ? '#FFF' : 'var(--md-sys-color-primary)', opacity: 0.9 }}
+        />
+      ) : (
+        <span
+          aria-hidden="true"
+          style={{
+            width: '18px',
+            height: '18px',
+            borderRadius: '50%',
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.25)',
+            flexShrink: 0,
+          }}
+        />
+      )}
       <span
         className="label-medium"
         style={{
@@ -314,6 +357,170 @@ const PreviewLegalRep = ({
   </div>
 );
 
+// ─── VerificationBadge (inline SVG, html-to-image safe) ─────────────────────────
+
+const VERIFICATION_BADGE_META: Record<
+  VerificationStatus,
+  { label: string; iconPath: string; color: string; colorDark: string; background: string }
+> = {
+  verified: {
+    label: 'Verificado',
+    iconPath:
+      'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z',
+    color: '#16a34a',
+    colorDark: '#4ade80',
+    background: 'rgba(34, 197, 94, 0.14)',
+  },
+  pending: {
+    label: 'En verificación',
+    iconPath:
+      'M6 2v6h.01L6 8.01 10 12l-4 4 .01.01H6V22h12v-5.99h-.01L18 16l-4-4 4-3.99-.01-.01H18V2H6zm10 14.5V20H8v-3.5l4-4 4 4zm-4-5l-4-4V4h8v3.5l-4 4z',
+    color: '#a16207',
+    colorDark: '#facc15',
+    background: 'rgba(234, 179, 8, 0.16)',
+  },
+  unverified: {
+    label: 'Sin verificar',
+    iconPath:
+      'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z',
+    color: 'rgba(0, 0, 0, 0.62)',
+    colorDark: 'rgba(255, 255, 255, 0.78)',
+    background: 'rgba(128, 128, 128, 0.14)',
+  },
+  rejected: {
+    label: 'No verificado',
+    iconPath:
+      'M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z',
+    color: '#b91c1c',
+    colorDark: '#f87171',
+    background: 'rgba(239, 68, 68, 0.14)',
+  },
+};
+
+function VerificationBadge({
+  status,
+  isDark,
+}: {
+  status: VerificationStatus | null | undefined;
+  isDark: boolean;
+}) {
+  const key: VerificationStatus =
+    status === 'verified' || status === 'pending' || status === 'rejected' ? status : 'unverified';
+  const meta = VERIFICATION_BADGE_META[key];
+
+  return (
+    <span
+      role="status"
+      aria-label={meta.label}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '6px 12px',
+        borderRadius: '999px',
+        backgroundColor: meta.background,
+        color: isDark ? meta.colorDark : meta.color,
+        fontSize: '12px',
+        fontWeight: 700,
+        letterSpacing: '0.3px',
+        lineHeight: 1,
+        whiteSpace: 'nowrap',
+        border: isDark ? '1px solid rgba(255, 255, 255, 0.22)' : '1px solid rgba(0, 0, 0, 0.08)',
+      }}
+    >
+      <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d={meta.iconPath} />
+      </svg>
+      {meta.label}
+    </span>
+  );
+}
+
+// ─── SocialLinksRow (exported, single source of brand glyphs) ──────────────────
+
+const SOCIAL_GLYPHS: Record<string, { label: string; path: string }> = {
+  instagram: {
+    label: 'Instagram',
+    path: 'M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z',
+  },
+  facebook: {
+    label: 'Facebook',
+    path: 'M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z',
+  },
+  twitter: {
+    label: 'X / Twitter',
+    path: 'M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z',
+  },
+  tiktok: {
+    label: 'TikTok',
+    path: 'M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z',
+  },
+  youtube: {
+    label: 'YouTube',
+    path: 'M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z',
+  },
+};
+
+const FALLBACK_SOCIAL_GLYPH = {
+  label: 'Red social',
+  path: 'M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z',
+};
+
+/** Fila de enlaces a redes sociales (inline SVG, html-to-image safe). */
+export function SocialLinksRow({
+  links,
+  isDark,
+}: {
+  links?: Record<string, string>;
+  isDark: boolean;
+}) {
+  const entries = Object.entries(links ?? {}).filter(
+    ([, url]) => typeof url === 'string' && url.trim().length > 0,
+  );
+  if (entries.length === 0) return null;
+
+  const foreground = isDark ? 'rgba(255, 255, 255, 0.92)' : 'rgba(0, 0, 0, 0.72)';
+  const background = isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(255, 255, 255, 0.5)';
+  const border = isDark ? '1px solid rgba(255, 255, 255, 0.22)' : '1px solid rgba(0, 0, 0, 0.07)';
+
+  return (
+    <div
+      className="flex-row flex-align-center"
+      style={{ flexWrap: 'wrap', gap: '10px', marginTop: '2px' }}
+    >
+      {entries.map(([key, url]) => {
+        const meta = SOCIAL_GLYPHS[key] ?? FALLBACK_SOCIAL_GLYPH;
+        return (
+          <a
+            key={key}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Síguenos en ${meta.label}`}
+            title={meta.label}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '38px',
+              height: '38px',
+              borderRadius: '50%',
+              backgroundColor: background,
+              color: foreground,
+              border,
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d={meta.path} />
+            </svg>
+          </a>
+        );
+      })}
+    </div>
+  );
+}
+
 export const BusinessPreviewCard = ({
   commercialName,
   sector,
@@ -330,9 +537,16 @@ export const BusinessPreviewCard = ({
   colorScheme,
   onStorefrontThemeChange,
   showDownloadButton = true,
+  socialLinks,
+  whatsappNumber,
+  legalRepPhone,
+  verificationStatus,
 }: BusinessPreviewCardProps) => {
   const captureRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+
+  const waPhoneNumber = whatsappNumber ?? legalRepPhone ?? '';
+  const waHref = waPhoneNumber ? `https://wa.me/${waPhoneNumber.replace(/\D/g, '')}` : undefined;
 
   const resolvedScheme = normalizeStorefrontColorScheme(colorScheme);
   const config = getStorefrontColorConfig(storefrontTheme, resolvedScheme);
@@ -481,7 +695,11 @@ export const BusinessPreviewCard = ({
               >
                 {commercialName || 'Empresa'}
               </h2>
-              <VerifiedIcon size={26} style={{ color: isDark ? '#66BB6A' : '#2E7D32' }} />
+              {verificationStatus !== undefined ? (
+                <VerificationBadge status={verificationStatus} isDark={isDark} />
+              ) : (
+                <VerifiedIcon size={26} style={{ color: isDark ? '#66BB6A' : '#2E7D32' }} />
+              )}
             </div>
             <p className="body-large" style={{ color: subTextColor, fontWeight: 600 }}>
               {sector || 'Sector'} • {country || 'País'}
@@ -507,11 +725,33 @@ export const BusinessPreviewCard = ({
                 {email || 'contacto@empresa.com'}
               </span>
             </div>
+            {waHref && (
+              <div className="flex-row gap-md flex-align-center">
+                <WhatsAppIcon size={18} style={{ color: textColor, opacity: 0.7 }} />
+                <a
+                  className="label-medium"
+                  href={waHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`WhatsApp al ${waPhoneNumber}`}
+                  style={{ color: subTextColor, minWidth: 0, overflowWrap: 'anywhere' }}
+                >
+                  {waPhoneNumber}
+                </a>
+              </div>
+            )}
           </div>
 
-          <PreviewMetadata description={description} taxId={taxId} isDark={isDark} />
+          <PreviewMetadata
+            description={description}
+            taxId={taxId}
+            isDark={isDark}
+            showVerifiedStyle={verificationStatus === undefined}
+          />
 
           <PreviewLegalRep name={legalRepName} role={legalRepRole} isDark={isDark} />
+
+          <SocialLinksRow links={socialLinks} isDark={isDark} />
         </div>
       </div>
 
