@@ -48,7 +48,7 @@ Note: apply-progress reported GREEN "9/9 and 12/12"; actual counts are card 8 / 
 | R3 | Phone link | ✅ | card test L94–108 (wa.me digits); section L92–109 |
 | R4 | New props supplied | ✅ | card test L72–108; StorefrontAboutSection passes all new props L184–189 |
 | R4 | No new props | ✅ | card test L38–51 (unchanged); active callers (create-business BusinessPreview.tsx) pass no new props; tsc clean |
-| R5 | Dark scheme | ⚠️ UNTESTED | badge/social use isDark palette (card L422, L482–484) + dark-safe `--md-sys-*` CSS; no test sets `colorScheme='dark'` |
+| R5 | Dark scheme | ✅ CLOSED (2026-08-30) | See "R5 Closure Addendum" below — dark branch now exercised by `ae9b4d3` |
 | R5 | Capture safety (no Material ligature in card) | ✅ | New badges/social rows use inline SVG; the card's Material `Icon` elements (palette/download) sit OUTSIDE `captureRef` |
 | R6 | Card with new props | ✅ | card test L37–108 (mocks `@/core/storefront` + `@/shared/components/ui`) |
 | R6 | Section derivation logic | ✅ | storefrontAboutSection.test.tsx L154–204 (getPersonTypeLabel/getVerificationConfig pure helpers) |
@@ -93,5 +93,35 @@ None.
 **archive** — all R1–R6 compliant, 21 targeted + 993 full-suite tests pass, non-blocking WARNINGs only. Optionally add a dark-scheme test in a follow-up.
 
 ## Risks
-- R5 dark branch untested could regress silently if tokens change; low risk given static tokens.
+- ~~R5 dark branch untested~~ **CLOSED** (see below); remaining risk is greenfield token drift.
 - `StorefrontAboutSection` complexity creeping toward the lint threshold — watch during future edits.
+
+---
+
+## R5 Closure Addendum (2026-08-30)
+
+**Commit**: `ae9b4d3` — `test(business): cover dark scheme in badge and social rows` (on `feat/business-public-info`).
+**Re-validation**: PASS.
+
+### What was added
+In `tests/unit/businessPreviewCard.test.tsx`, a new block `describe('BusinessPreviewCard — dark color scheme (R5 coverage)')` with 4 tests, plus the mock updated so `normalizeStorefrontColorScheme` returns `'dark'` when `colorScheme === 'dark'` (light default preserved for existing tests):
+1. `verificationStatus="verified"` + `colorScheme="dark"` → badge `color: #4ade80` (verified `colorDark`).
+2. `verificationStatus="verified"` (no scheme) → badge `color: #16a34a` (verified light color) — light branch intact.
+3. `colorScheme="dark"` + socialLinks + whatsapp → social background `rgba(255,255,255,0.14)` (dark) — AND re-asserts the safe-link contract (`target=_blank`, `rel="noopener noreferrer"`, `href`, and wa.me digits).
+4. socialLinks (no scheme) → social background `rgba(255,255,255,0.5)` (light) — light branch intact.
+
+### Why it closes R5
+R5's "Dark scheme" scenario required a test that exercises the card's `isDark=true` branch in **both** `VerificationBadge` and `SocialLinksRow` with the safe-link contract intact. Tests 1 & 3 do exactly that (asserting `colorDark` `#4ade80` badge + dark social background), while tests 2 & 4 confirm the light branch is unchanged — no regression. The contract (R4: optional props, R3: safe links) is preserved.
+
+### Execution evidence (re-validated)
+- Targeted suite: `pnpm vitest run tests/unit/businessPreviewCard.test.tsx tests/unit/storefrontAboutSection.test.tsx` → **25 passed (25)** (card 12 + section 13).
+- `pnpm exec tsc --noEmit` → **exit 0**.
+- Full suite: `pnpm vitest run` → **997 passed / 1002**, 5 fails all in `settingsActions.test.ts` (pre-existing plan-enforcement, unrelated). No regression.
+
+### Remaining findings after R5 closure
+- **WARNING**: `Changed-file coverage not isolated` (project-wide 1.48%, pre-existing config) — informational, not blocking.
+- **SUGGESTION** (non-blocking): `StorefrontAboutSection.tsx:132` lint complexity 23 > 20.
+- **SUGGESTION** (non-blocking): apply-progress GREEN counts "9/9, 12/12" vs actual 8/13 (same 21).
+- **CRITICAL**: none.
+
+**R5 status: ✅ CLOSED / PASS. No open CRITICAL or WARNING remains from this change (only informational coverage + non-blocking suggestions).**
