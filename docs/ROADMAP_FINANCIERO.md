@@ -129,6 +129,27 @@ Generar JSON → Firmar con certificado → Enviar a OSE/SUNAT → CDR (validado
 
 ---
 
+### 5. Dominio Propio + SEO Competitivo (tier premium)
+
+**Descripción**: permitir que cada seller conecte su propio dominio
+(`mitienda.com`) y ofrecer SEO competitivo como add-on pago. El storefront ya
+tiene la base técnica (canonical, sitemap, JSON-LD, OG images) pensada como
+**higiene gratuita para todos**; lo que se vende arriba es la **competitividad**.
+
+**Hallazgo técnico clave**: NO hace falta infra por tienda. Una sola app en
+Vercel soporta custom domains por proyecto; el dominio se resuelve y se
+reescribe en `proxy.ts` al slug correspondiente. El costo real es **operativo**
+(verificación DNS, SSL, soporte al seller), no de hosting.
+
+**Ventaja competitiva**: es el feature que Shopify/Wix cobran caro y el
+escalón que convierte al seller de "probador" a "pagador del tier caro".
+
+**Detalle completo**: ver
+- `docs/roadmap/custom-domains-premium.md`
+- `docs/roadmap/seo-competitivo.md`
+
+---
+
 ## Decisiones Tomadas
 
 | Tema                       | Decisión                              | Fecha    |
@@ -137,6 +158,8 @@ Generar JSON → Firmar con certificado → Enviar a OSE/SUNAT → CDR (validado
 | Split Payments             | ⏳ Postergado para cuando sea empresa | Abr 2026 |
 | Facturación SUNAT          | ⏳ Solo cuando un cliente lo demande  | Abr 2026 |
 | Modelo de ingresos inicial | Solo planes de suscripción            | Abr 2026 |
+| SEO: higiene técnica       | ✅ Gratis para todos (core)           | Ago 2026 |
+| SEO: competitivo + dominio | ⏳ Tier premium futuro               | Ago 2026 |
 
 ---
 
