@@ -2,6 +2,7 @@ import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { products as productsTable } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
+import { buildProductBreadcrumbs } from '@/shared/seo/buildStorefrontBreadcrumbs';
 import { buildProductDescription, buildProductTitle } from '@/shared/seo/buildStorefrontMeta';
 import { getCanonicalBusinessUrl } from '@/shared/utils/url';
 import { and, eq, or } from 'drizzle-orm';
@@ -130,12 +131,20 @@ export default async function ProductDetailPage({ params }: Props) {
       : {}),
   };
 
+  const breadcrumbJsonLd = buildProductBreadcrumbs(businessDetail, product);
+
   return (
     <>
       {jsonLd && (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      {breadcrumbJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
         />
       )}
       <ProductDetailContent

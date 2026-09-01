@@ -13,6 +13,7 @@ import {
 } from '@/core/storefront';
 import { getMemberPermissions } from '@/lib/permissions';
 import { createClient } from '@/lib/supabase/server';
+import { buildHomeBreadcrumbs } from '@/shared/seo/buildStorefrontBreadcrumbs';
 import { buildStoreDescription, buildStoreTitle } from '@/shared/seo/buildStorefrontMeta';
 import { getCanonicalBusinessUrl } from '@/shared/utils/url';
 import type { Business } from '@/types/business';
@@ -140,6 +141,7 @@ export default async function BusinessPage({ params }: Props) {
   const { hasPaymentGateway, chatEnabled } = entitlements;
 
   const jsonLd = buildBusinessJsonLd(business);
+  const breadcrumbJsonLd = buildHomeBreadcrumbs(business);
 
   const allProducts = await db.query.products.findMany({
     where: (p, { and, eq }) => {
@@ -170,6 +172,12 @@ export default async function BusinessPage({ params }: Props) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      {breadcrumbJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
         />
       )}
       <style dangerouslySetInnerHTML={{ __html: ssrThemeStyleTag }} />
