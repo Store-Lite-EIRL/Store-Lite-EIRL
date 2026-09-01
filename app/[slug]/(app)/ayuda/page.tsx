@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: FeedbackPageProps): Promise<M
   const business = (await resolveBusinessSlug(slug))?.business;
 
   return {
-    title: business ? `Feedback — ${business.name}` : 'Feedback | Store Lite',
+    title: business ? `Feedback — ${business.name}` : 'Feedback',
     description: 'Enviá feedback, sugerencias o reportá bugs.',
     robots: { index: false, follow: false },
   };
