@@ -14,6 +14,10 @@ const mockBusinessSettingsFindFirst = vi.fn();
 const mockPaymentsFindFirst = vi.fn();
 const mockProductsFindFirst = vi.fn();
 
+const mockProductsSelectWhere = vi.fn();
+const mockProductsSelectFrom = vi.fn(() => ({ where: mockProductsSelectWhere }));
+const mockProductsSelect = vi.fn(() => ({ from: mockProductsSelectFrom }));
+
 const mockTxReturning = vi.fn();
 const mockTxValues = vi.fn(() => ({ returning: mockTxReturning }));
 const mockTxInsert = vi.fn(() => ({ values: mockTxValues }));
@@ -43,6 +47,7 @@ vi.mock('@/core/database/client', () => ({
       payments: { findFirst: mockPaymentsFindFirst },
       products: { findFirst: mockProductsFindFirst },
     },
+    select: mockProductsSelect,
     transaction: mockTransaction,
   },
 }));
@@ -144,7 +149,18 @@ describe('POST /api/payment/charge', () => {
       id: '660e8400-e29b-41d4-a716-446655440001',
       title: 'Test Product',
       stock: 10,
+      price: '50.00',
+      secondPrice: null,
     });
+
+    // Default mock: validateAmount price query — matches default amount 150000 (S/ 1500.00)
+    mockProductsSelectWhere.mockResolvedValue([
+      {
+        id: '660e8400-e29b-41d4-a716-446655440001',
+        price: '1500.00',
+        secondPrice: null,
+      },
+    ]);
 
     // Default mock: DB insert succeeds
     mockTxReturning.mockResolvedValue([
@@ -227,5 +243,62 @@ describe('POST /api/payment/charge', () => {
     expect(culqiBody.email).toBe('cliente@culqi.com');
     // antifraud_details.email must NOT be set from the fallback
     expect(culqiBody.antifraud_details).not.toHaveProperty('email');
+  });
+
+  // ============================================================
+  // Amount revalidation (fix-price-tampering)
+  // ============================================================
+
+  test('rejects tampered amount that does not match product price (400)', async () => {
+    const { POST } = await import('@/app/api/payment/charge/route');
+
+    // Product price is 50.00 soles = 5000 cents
+    mockProductsSelectWhere.mockResolvedValue([
+      {
+        id: '660e8400-e29b-41d4-a716-446655440001',
+        price: '50.00',
+        secondPrice: null,
+      },
+    ]);
+
+    const request = new Request('http://localhost/api/payment/charge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(createValidPayload({ amount: 1000 })), // tampered lower amount
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(400);
+
+    const body = await response.json();
+    expect(body.error).toBe('El monto no coincide con el precio del producto');
+
+    // Culqi API MUST NOT be called
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  test('accepts correct amount that matches product price (200)', async () => {
+    const { POST } = await import('@/app/api/payment/charge/route');
+
+    // Product price is 50.00 soles = 5000 cents
+    mockProductsSelectWhere.mockResolvedValue([
+      {
+        id: '660e8400-e29b-41d4-a716-446655440001',
+        price: '50.00',
+        secondPrice: null,
+      },
+    ]);
+
+    const request = new Request('http://localhost/api/payment/charge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(createValidPayload({ amount: 5000 })),
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(200);
+
+    // Culqi API WAS called (charge proceeds)
+    expect(mockFetch).toHaveBeenCalled();
   });
 });
