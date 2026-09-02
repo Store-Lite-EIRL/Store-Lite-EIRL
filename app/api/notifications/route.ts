@@ -5,6 +5,7 @@ import {
   notifications,
   notificationTypeEnum,
   type NewNotification,
+  type NotificationCategory,
 } from '@/core/database/schema';
 import { getMemberPermissions } from '@/lib/permissions/checkPermission';
 import { createClient } from '@/lib/supabase/server';
@@ -61,7 +62,7 @@ export async function GET(request: Request) {
   }
 
   // Validar categoría
-  if (category && !notificationCategoryEnum.enumValues.includes(category as any)) {
+  if (category && !notificationCategoryEnum.enumValues.includes(category as NotificationCategory)) {
     return NextResponse.json({ error: 'Categoría inválida' }, { status: 400 });
   }
 
@@ -72,7 +73,7 @@ export async function GET(request: Request) {
   ];
 
   if (category) {
-    conditions.push(eq(notifications.category, category as any));
+    conditions.push(eq(notifications.category, category as NotificationCategory));
   }
 
   if (isReadFilter !== undefined) {
