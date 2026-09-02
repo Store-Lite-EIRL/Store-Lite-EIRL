@@ -11,6 +11,8 @@ import {
   products,
 } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
+import { isValidPaymentStatus } from '@/core/orders/isValidPaymentStatus';
+import type { OrderStatusValue } from '@/core/orders/orderStatus';
 import { and, count, desc, eq, gt, gte, lt, lte, sql, sum } from 'drizzle-orm';
 import { notFound, redirect } from 'next/navigation';
 
@@ -28,6 +30,7 @@ import styles from './dashboard.module.css';
 interface DashboardProps {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{
+    page?: string;
     status?: string;
     search?: string;
     date?: string;
@@ -36,7 +39,7 @@ interface DashboardProps {
 
 export default async function Dashboard({ params, searchParams }: DashboardProps) {
   const { slug } = await params;
-  const { page, status, search, date } = await (searchParams as any);
+  const { page, status, search, date } = await searchParams;
 
   const currentPage = Math.max(1, parseInt(page || '1'));
   const currentLimit = 10; // Fixed limit of 10 orders per page
@@ -80,8 +83,8 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
   const orderFilters = [eq(payments.businessId, business.id)];
 
   // Filter by status
-  if (status && status !== 'all') {
-    orderFilters.push(eq(payments.status, status as any));
+  if (status && status !== 'all' && isValidPaymentStatus(status)) {
+    orderFilters.push(eq(payments.status, status as OrderStatusValue));
   }
 
   // Filter by order number (search)
@@ -439,7 +442,7 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
       amount: order.amount.toString(),
       currency: order.currency,
       paymentMethod: order.paymentMethod,
-      status: order.status as any,
+      status: order.status,
       shippingAddress: order.shippingAddress,
       shippingDistrict: order.shippingDistrict,
       shippingProvince: order.shippingProvince,
