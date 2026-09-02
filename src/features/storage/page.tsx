@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: StoragePageProps): Promise<Me
   const business = (await resolveBusinessSlug(slug))?.business;
 
   return {
-    title: business ? `Almacén — ${business.name}` : 'Almacén | Store Lite',
+    title: business ? `Almacén — ${business.name}` : 'Almacén',
     description: 'Gestión de inventario y productos.',
     robots: { index: false, follow: false },
   };

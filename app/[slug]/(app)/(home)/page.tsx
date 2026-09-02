@@ -13,6 +13,7 @@ import {
 } from '@/core/storefront';
 import { getMemberPermissions } from '@/lib/permissions';
 import { createClient } from '@/lib/supabase/server';
+import { buildStoreDescription, buildStoreTitle } from '@/shared/seo/buildStorefrontMeta';
 import { getCanonicalBusinessUrl } from '@/shared/utils/url';
 import type { Business } from '@/types/business';
 import { eq } from 'drizzle-orm';
@@ -24,10 +25,7 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-function buildBusinessJsonLd(business: Business, seoEnabled: boolean) {
-  if (!seoEnabled) {
-    return null;
-  }
+function buildBusinessJsonLd(business: Business) {
   return {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
@@ -77,22 +75,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  const { seoEnabled } = await getBusinessEntitlements(business.id);
-
-  if (!seoEnabled) {
-    return {
-      title: `${business.name} | Store Lite`,
-      description: business.description || `Welcome to ${business.name}`,
-      robots: { index: false, follow: false },
-    };
-  }
-
-  const title =
-    business.seoTitle || `${business.name} — Tienda en ${business.city || 'Perú'} | Store Lite`;
-  const description =
-    business.seoDescription ||
-    business.description ||
-    `Bienvenido a ${business.name}, tu tienda de confianza.`;
+  const title = buildStoreTitle(business);
+  const description = buildStoreDescription(business);
 
   const canonicalUrl = getCanonicalBusinessUrl(business.slug);
 
@@ -153,9 +137,9 @@ export default async function BusinessPage({ params }: Props) {
   const isStaff = isOwner || permissions.length > 0;
 
   const entitlements = await getBusinessEntitlements(business.id);
-  const { hasPaymentGateway, chatEnabled, seoEnabled } = entitlements;
+  const { hasPaymentGateway, chatEnabled } = entitlements;
 
-  const jsonLd = buildBusinessJsonLd(business, seoEnabled);
+  const jsonLd = buildBusinessJsonLd(business);
 
   const allProducts = await db.query.products.findMany({
     where: (p, { and, eq }) => {

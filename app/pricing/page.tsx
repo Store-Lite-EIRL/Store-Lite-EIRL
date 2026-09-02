@@ -73,7 +73,8 @@ export default async function PricingPage({
       buttonText: 'Comenzar ahora',
       buttonVariant: 'outlined',
       features: [
-        { text: 'Dominio personalizado + SEO' },
+        { text: 'SEO avanzado: controla cómo te encuentra Google' },
+        { text: 'Tu propia tienda en Store Lite (subdominio)' },
         { text: 'Catálogo de hasta 150 productos' },
         { text: 'Gestión de pedidos: Vía WhatsApp y Chat directo' },
         { text: 'Control total: Activa o desactiva tu negocio al instante' },
@@ -91,6 +92,8 @@ export default async function PricingPage({
       badgeText: 'Más popular',
       badgeType: 'primary',
       features: [
+        { text: 'Incluye todo lo del plan Emprendedor' },
+        { text: 'SEO avanzado: controla cómo te encuentra Google' },
         { text: 'Pasarela completa: Pagos digitales y tarjetas bancarias' },
         { text: 'Almacenamiento premium para 300 productos' },
         { text: 'Personalización avanzada: Edición del negocio' },

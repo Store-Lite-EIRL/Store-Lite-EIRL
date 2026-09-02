@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: SettingsPageProps): Promise<M
   const business = (await resolveBusinessSlug(slug))?.business;
 
   return {
-    title: business ? `Ajustes — ${business.name}` : 'Ajustes | Store Lite',
+    title: business ? `Ajustes — ${business.name}` : 'Ajustes',
     description: 'Configuración y preferencias de tu negocio.',
     robots: { index: false, follow: false },
   };
