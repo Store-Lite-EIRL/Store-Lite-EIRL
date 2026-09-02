@@ -17,6 +17,7 @@ import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlem
 import { completeIdempotencyKey, reserveIdempotencyKey } from '@/core/payments/idempotency';
 import { paymentRateLimiter } from '@/core/payments/rateLimiter';
 import { generateTrackingToken } from '@/core/utils/trackingToken';
+import { validateAmount } from '@/features/billing/validateAmount';
 import { sendOrderConfirmationEmail } from '@/lib/email/orderEmails';
 import { notifyLowStock, notifyNewOrder, notifyOutOfStock } from '@/lib/notifications';
 import { createClient } from '@/lib/supabase/server';
@@ -196,6 +197,19 @@ export async function POST(request: Request) {
     } = validationResult.data;
 
     const rawShipping = (metadata?.shippingInfo || {}) as ShippingInfoData;
+
+    // ─── PRICE REVALIDATION (fix-price-tampering) ────────────────
+    // Reject client-supplied amount that doesn't match the authoritative
+    // product price from the DB, before any flow branching or Culqi call.
+    const priceCheck = await validateAmount({
+      productId,
+      businessId,
+      clientAmount: amount,
+      cartItems: metadata?.cartItems,
+    });
+    if (!priceCheck.ok) {
+      return NextResponse.json({ error: priceCheck.error }, { status: 400 });
+    }
 
     // ─── Rate Limit Check ──────────────────────────────────────────
     if (!paymentRateLimiter.check(`${businessId}:${productId}`)) {

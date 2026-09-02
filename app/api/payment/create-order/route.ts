@@ -9,6 +9,7 @@ import { db } from '@/core/database/client';
 import { businesses, businessSettings, paymentOrders } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { completeIdempotencyKey, reserveIdempotencyKey } from '@/core/payments/idempotency';
+import { validateAmount } from '@/features/billing/validateAmount';
 import { createClient } from '@/lib/supabase/server';
 import { splitFullName } from '@/shared/payments/fullName';
 import { decrypt } from '@/utils/crypto';
@@ -64,6 +65,21 @@ export async function POST(request: Request) {
 
     const { amount, currency, email, phone, customerName, businessId, productId, description } =
       validationResult.data;
+
+    // ─── PRICE REVALIDATION (fix-price-tampering) ────────────────
+    // When the order is tied to a product, reject a client-supplied amount
+    // that doesn't match the authoritative price from the DB. Skipped for
+    // generic (non product-tied) orders where productId is absent.
+    if (productId) {
+      const priceCheck = await validateAmount({
+        productId,
+        businessId,
+        clientAmount: amount,
+      });
+      if (!priceCheck.ok) {
+        return NextResponse.json({ error: priceCheck.error }, { status: 400 });
+      }
+    }
 
     const idempotencyReservation = await reserveIdempotencyKey(idempotencyKey);
     if (
