@@ -14,6 +14,19 @@ const mockValues = vi.fn(() => ({ returning: mockReturning }));
 const mockInsert = vi.fn(() => ({ values: mockValues }));
 const mockSelectCulqiBlocked = vi.fn();
 
+// validateAmount query result (product rows for price revalidation)
+let mockValidateRows: { id: string; price: string; secondPrice: string | null }[] = [];
+
+// `where` result doubles as a thenable (awaited by validateAmount) and carries
+// `.limit` used by the culqiBlocked query: `db.select(...).from(...).where(...).limit(1)`.
+const mockSelectWhere = vi.fn(() => ({
+  then: (onFulfilled: (rows: unknown) => unknown) =>
+    Promise.resolve(mockValidateRows).then(onFulfilled),
+  limit: mockSelectCulqiBlocked,
+}));
+const mockSelectFrom = vi.fn(() => ({ where: mockSelectWhere }));
+const mockSelect = vi.fn(() => ({ from: mockSelectFrom }));
+
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
     auth: {
@@ -25,13 +38,7 @@ vi.mock('@/lib/supabase/server', () => ({
 vi.mock('@/core/database/client', () => ({
   db: {
     insert: mockInsert,
-    select: vi.fn(() => ({
-      from: vi.fn(() => ({
-        where: vi.fn(() => ({
-          limit: mockSelectCulqiBlocked,
-        })),
-      })),
-    })),
+    select: mockSelect,
     query: {
       businesses: { findFirst: mockBusinessFindFirst },
       businessSettings: { findFirst: mockBusinessSettingsFindFirst },
@@ -94,6 +101,16 @@ describe('POST /api/payment/create-order', () => {
 
     // Default mock: culqiBlocked check — business is NOT blocked
     mockSelectCulqiBlocked.mockResolvedValue([{ culqiBlocked: false }]);
+
+    // Default mock: validateAmount product query (matching productId when present)
+    mockValidateRows = [
+      {
+        id: '660e8400-e29b-41d4-a716-446655440001',
+        price: '50.00',
+        secondPrice: null,
+      },
+    ];
+    mockSelectWhere.mockClear();
 
     // Default mock: business settings found
     mockBusinessSettingsFindFirst.mockResolvedValue({
@@ -416,5 +433,77 @@ describe('POST /api/payment/create-order', () => {
 
     // MUST NOT persist any row
     expect(mockInsert).not.toHaveBeenCalled();
+  });
+
+  // ============================================================
+  // Amount revalidation (fix-price-tampering)
+  // ============================================================
+
+  test('rejects tampered amount that does not match product price (400)', async () => {
+    const { POST } = await import('@/app/api/payment/create-order/route');
+
+    // Product price is 50.00 soles = 5000 cents
+    mockValidateRows = [
+      {
+        id: '660e8400-e29b-41d4-a716-446655440001',
+        price: '50.00',
+        secondPrice: null,
+      },
+    ];
+
+    const request = new Request('http://localhost/api/payment/create-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(
+        createValidPayload({
+          productId: '660e8400-e29b-41d4-a716-446655440001',
+          amount: 1000, // tampered lower amount
+        }),
+      ),
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(400);
+
+    const body = await response.json();
+    expect(body.error).toBe('El monto no coincide con el precio del producto');
+
+    // Culqi API MUST NOT be called
+    expect(mockFetch).not.toHaveBeenCalled();
+    // No order persisted
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+
+  test('accepts correct amount that matches product price', async () => {
+    const { POST } = await import('@/app/api/payment/create-order/route');
+
+    // Product price is 50.00 soles = 5000 cents
+    mockValidateRows = [
+      {
+        id: '660e8400-e29b-41d4-a716-446655440001',
+        price: '50.00',
+        secondPrice: null,
+      },
+    ];
+
+    const request = new Request('http://localhost/api/payment/create-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(
+        createValidPayload({
+          productId: '660e8400-e29b-41d4-a716-446655440001',
+          amount: 5000,
+        }),
+      ),
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(200);
+
+    const body = await response.json();
+    expect(body.success).toBe(true);
+
+    // Culqi API WAS called (order proceeds)
+    expect(mockFetch).toHaveBeenCalled();
   });
 });
