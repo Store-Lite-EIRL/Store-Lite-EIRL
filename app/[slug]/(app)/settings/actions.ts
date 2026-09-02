@@ -19,6 +19,7 @@ import {
 import { requireAccessOnId } from '@/features/storage/actions/authz';
 import { getPostHogClient } from '@/lib/posthogServer';
 import type { ActionState } from '@/types/actions';
+import { getErrorMessage } from '@/utils/errors';
 import { and, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
@@ -36,8 +37,8 @@ export async function updateBusinessSlug(
 ): Promise<SlugActionState> {
   try {
     await requireAccessOnId(businessId, 'business.edit');
-  } catch (error: any) {
-    return { success: false, error: error.message || 'No autorizado' };
+  } catch (error: unknown) {
+    return { success: false, error: getErrorMessage(error, 'No autorizado') };
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
@@ -114,7 +115,7 @@ export async function updateBusinessSlug(
     await posthog.flush();
 
     return { success: true, newSlug };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error updating slug:', error);
     return { success: false, error: 'Error inesperado al actualizar el slug.' };
   }
@@ -144,8 +145,8 @@ export async function toggleBusinessActive(
 ): Promise<ToggleActionState> {
   try {
     await requireAccessOnId(businessId, 'business.edit');
-  } catch (error: any) {
-    return { success: false, error: error.message || 'No autorizado' };
+  } catch (error: unknown) {
+    return { success: false, error: getErrorMessage(error, 'No autorizado') };
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
@@ -163,7 +164,7 @@ export async function toggleBusinessActive(
     revalidatePath('/', 'layout');
 
     return { success: true, isActive: nextState };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error toggling business active state:', error);
     return { success: false, error: 'Error inesperado al cambiar estado del negocio.' };
   }
@@ -193,8 +194,8 @@ export async function updateBusinessSEO(
 ): Promise<ActionState> {
   try {
     await requireAccessOnId(businessId, 'seo.edit');
-  } catch (error: any) {
-    return { success: false, error: error.message || 'No autorizado' };
+  } catch (error: unknown) {
+    return { success: false, error: getErrorMessage(error, 'No autorizado') };
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
@@ -219,7 +220,7 @@ export async function updateBusinessSEO(
 
     revalidatePath('/', 'layout');
     return { success: true, message: 'Configuracion SEO actualizada correctamente.' };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error updating business SEO:', error);
     return { success: false, error: 'Error inesperado al actualizar la configuracion SEO.' };
   }
@@ -232,8 +233,8 @@ export async function updateStorefrontLayout(
 ): Promise<StorefrontLayoutActionState> {
   try {
     await requireAccessOnId(businessId, 'storefront.edit');
-  } catch (error: any) {
-    return { success: false, error: error.message || 'No autorizado' };
+  } catch (error: unknown) {
+    return { success: false, error: getErrorMessage(error, 'No autorizado') };
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
@@ -286,7 +287,7 @@ export async function updateStorefrontLayout(
       message: 'Layout del storefront actualizado correctamente.',
       layout: normalizedLayout,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error updating storefront layout:', error);
     return {
       success: false,
@@ -304,8 +305,8 @@ export async function updateStorefrontTheme(
 ): Promise<StorefrontThemeActionState> {
   try {
     await requireAccessOnId(businessId, 'storefront.edit');
-  } catch (error: any) {
-    return { success: false, error: error.message || 'No autorizado' };
+  } catch (error: unknown) {
+    return { success: false, error: getErrorMessage(error, 'No autorizado') };
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
@@ -367,7 +368,7 @@ export async function updateStorefrontTheme(
       message: 'Apariencia publica actualizada correctamente.',
       storefrontTheme: normalizedTheme,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error updating storefront theme:', error);
     return {
       success: false,
@@ -380,8 +381,8 @@ export async function updateStorefrontTheme(
 export async function clearStorefrontTheme(businessId: string, slug: string): Promise<ActionState> {
   try {
     await requireAccessOnId(businessId, 'storefront.edit');
-  } catch (error: any) {
-    return { success: false, error: error.message || 'No autorizado' };
+  } catch (error: unknown) {
+    return { success: false, error: getErrorMessage(error, 'No autorizado') };
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
@@ -423,7 +424,7 @@ export async function clearStorefrontTheme(businessId: string, slug: string): Pr
       success: true,
       message: 'Apariencia publica restablecida a los colores de la plataforma.',
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error clearing storefront theme:', error);
     return {
       success: false,
@@ -439,8 +440,8 @@ export async function updateCulqiCredentials(
 ): Promise<ActionState> {
   try {
     await requireAccessOnId(businessId, 'business.edit');
-  } catch (error: any) {
-    return { success: false, error: error.message || 'No autorizado' };
+  } catch (error: unknown) {
+    return { success: false, error: getErrorMessage(error, 'No autorizado') };
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
@@ -526,7 +527,7 @@ export async function updateCulqiCredentials(
     await posthog.flush();
 
     return { success: true, message: 'Credenciales de Culqi actualizadas correctamente.' };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error updating Culqi credentials:', error);
     return { success: false, error: 'Error inesperado al actualizar las credenciales.' };
   }
@@ -539,8 +540,8 @@ export async function updateBusinessData(
 ): Promise<ActionState> {
   try {
     await requireAccessOnId(businessId, 'business.edit');
-  } catch (error: any) {
-    return { success: false, error: error.message || 'No autorizado' };
+  } catch (error: unknown) {
+    return { success: false, error: getErrorMessage(error, 'No autorizado') };
   }
 
   try {
@@ -555,7 +556,7 @@ export async function updateBusinessData(
     revalidatePath(`/${slug}/settings`);
     revalidatePath('/', 'layout');
     return { success: true, message: 'WhatsApp actualizado correctamente.' };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error updating business data:', error);
     return { success: false, error: 'Error inesperado al actualizar datos del negocio.' };
   }
@@ -612,8 +613,8 @@ export async function updateSocialLinks(
 ): Promise<ActionState> {
   try {
     await requireAccessOnId(businessId, 'business.edit');
-  } catch (error: any) {
-    return { success: false, error: error.message || 'No autorizado' };
+  } catch (error: unknown) {
+    return { success: false, error: getErrorMessage(error, 'No autorizado') };
   }
 
   // Validar URLs contra dominios permitidos
@@ -641,7 +642,7 @@ export async function updateSocialLinks(
 
     revalidatePath('/', 'layout');
     return { success: true, message: 'Redes sociales actualizadas correctamente.' };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error updating social links:', error);
     return { success: false, error: 'Error inesperado al actualizar las redes sociales.' };
   }

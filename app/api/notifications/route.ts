@@ -9,6 +9,7 @@ import {
 } from '@/core/database/schema';
 import { getMemberPermissions } from '@/lib/permissions/checkPermission';
 import { createClient } from '@/lib/supabase/server';
+import { getErrorMessage } from '@/utils/errors';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
@@ -103,10 +104,11 @@ export async function GET(request: Request) {
       notifications: results,
       pagination: { total, limit, offset, hasMore: offset + results.length < total },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = getErrorMessage(error, 'Error al obtener notificaciones');
     console.error('[GET notifications] Critical Error:', {
-      message: error.message,
-      stack: error.stack,
+      message,
+      stack: error instanceof Error ? error.stack : undefined,
       businessId: resolvedBusinessId,
       userId: user.id,
     });
@@ -114,7 +116,7 @@ export async function GET(request: Request) {
     return NextResponse.json(
       {
         error: 'Error al obtener notificaciones',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        details: process.env.NODE_ENV === 'development' ? message : undefined,
       },
       { status: 500 },
     );

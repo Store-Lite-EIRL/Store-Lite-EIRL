@@ -1,5 +1,6 @@
 'use client';
 
+import { getErrorMessage } from '@/utils/errors';
 import { verifyIdentityAction } from '@app/actions/kyb';
 import { useState } from 'react';
 import type { BusinessData } from '../types';
@@ -114,8 +115,8 @@ export function useRucVerification({
 
       // For BOTH person types: Open validation modal
       setShowValidationModal(true);
-    } catch (err: any) {
-      setVerifyError(err.message || 'Error al verificar');
+    } catch (err: unknown) {
+      setVerifyError(getErrorMessage(err, 'Error al verificar'));
     } finally {
       setIsVerifying(false);
     }
