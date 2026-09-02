@@ -1,14 +1,15 @@
 'use client';
 
 import {
+  normalizeStorefrontLayout,
   type StorefrontLayout,
   type StorefrontPalette,
   type StorefrontSection,
   type StorefrontTheme,
-  normalizeStorefrontLayout,
 } from '@/core/storefront';
 import type { Permission } from '@/lib/permissions/definitions';
 import { Icon, IconButton, LinearProgress } from '@/shared/components/ui';
+import { getCounterStatus, type OptimalRange } from '@/shared/seo/seoPreview';
 import React, { useState } from 'react';
 import styles from './settings.module.css';
 
@@ -394,8 +395,17 @@ export function SearchPreview({
   );
 }
 
-export function CharCounter({ current, limit }: { current: number; limit: number }) {
+export function CharCounter({
+  current,
+  limit,
+  optimalRange,
+}: {
+  current: number;
+  limit: number;
+  optimalRange?: OptimalRange;
+}) {
   const isOver = current > limit;
+  const status = optimalRange ? getCounterStatus(current, optimalRange) : null;
   return (
     <div className={styles.charCounter}>
       <span className={`${styles.charCountText} ${isOver ? styles.charCountWarning : ''}`}>
@@ -404,6 +414,18 @@ export function CharCounter({ current, limit }: { current: number; limit: number
         )}
         {current}/{limit}
       </span>
+      {status && (
+        <div
+          className={`${styles.charCounterBar} ${
+            status === 'ideal'
+              ? styles.charCounterBarIdeal
+              : status === 'ok'
+                ? styles.charCounterBarOk
+                : styles.charCounterBarPoor
+          }`}
+          style={{ width: `${Math.min((current / limit) * 100, 100)}%` }}
+        />
+      )}
     </div>
   );
 }
@@ -449,6 +471,43 @@ export function ColumnChips({
           {opt.label ?? opt.value}
         </button>
       ))}
+    </div>
+  );
+}
+
+export function CollapsibleSEOSection({
+  defaultCollapsed = true,
+  label = 'SEO avanzado',
+  helperText = 'Tu SEO ya está optimizado. Podés ajustarlo si querés.',
+  children,
+}: {
+  defaultCollapsed?: boolean;
+  label?: string;
+  helperText?: string;
+  children: React.ReactNode;
+}) {
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
+  return (
+    <div className={styles.collapsibleSection}>
+      <button
+        type="button"
+        className={styles.collapsibleHeader}
+        aria-expanded={!collapsed}
+        onClick={() => setCollapsed(!collapsed)}
+      >
+        <Icon
+          style={{
+            fontSize: 20,
+            transition: 'transform 0.2s',
+            transform: collapsed ? 'rotate(0deg)' : 'rotate(90deg)',
+          }}
+        >
+          chevron_right
+        </Icon>
+        <span className={styles.collapsibleLabel}>{label}</span>
+        {!collapsed && <span className={styles.collapsibleHelper}>{helperText}</span>}
+      </button>
+      {!collapsed && <div className={styles.collapsibleContent}>{children}</div>}
     </div>
   );
 }
