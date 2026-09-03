@@ -3,7 +3,8 @@
 // TABLES: chat_sessions, messages
 // =====================================================
 
-import { boolean, index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { boolean, index, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 import { businesses } from './businesses';
 import { payments } from './orders';
@@ -39,6 +40,11 @@ export const chatSessions = pgTable(
       table.status,
       table.createdAt.desc(),
     ),
+    // One active chat session per (business, guest) — matches the invariant the
+    // chat startSession logic already assumes and enforces at the app layer.
+    activeSessionPerGuestIdx: uniqueIndex('uq_chat_sessions_active_per_guest')
+      .on(table.businessId, table.guestId)
+      .where(sql`status = 'active'`),
   }),
 );
 
