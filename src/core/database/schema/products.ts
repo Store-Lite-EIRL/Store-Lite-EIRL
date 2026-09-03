@@ -6,6 +6,7 @@
 import { sql } from 'drizzle-orm';
 import {
   boolean,
+  check,
   decimal,
   index,
   integer,
@@ -115,6 +116,7 @@ export const products = pgTable(
       table.businessId,
       table.updatedAt.desc(),
     ),
+    productsStarsNonNegative: check('products_stars_non_negative', sql`${table.stars} >= 0`),
   }),
 );
 
@@ -140,6 +142,10 @@ export const productMedia = pgTable(
   (table) => ({
     productIdIdx: index('idx_product_media_product_id').on(table.productId),
     displayOrderIdx: index('idx_product_media_display_order').on(
+      table.productId,
+      table.displayOrder,
+    ),
+    uniqueProductMediaDisplayOrder: unique('unique_product_media_display_order').on(
       table.productId,
       table.displayOrder,
     ),
