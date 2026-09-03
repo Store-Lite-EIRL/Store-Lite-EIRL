@@ -1,3 +1,5 @@
+'use server';
+
 import { db } from '@/core/database/client';
 import { businessTeamMembers, businesses } from '@/core/database/schema';
 import type { ActionState } from '@/types/actions';

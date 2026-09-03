@@ -1,5 +1,3 @@
-'use server';
-
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businessTeamMembers, businesses } from '@/core/database/schema';

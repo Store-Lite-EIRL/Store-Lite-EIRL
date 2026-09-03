@@ -1,3 +1,5 @@
+'use server';
+
 import { resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { businessInvitations, businessTeamMembers, businesses } from '@/core/database/schema';
