@@ -55,8 +55,8 @@ export const messages = pgTable(
       .references(() => chatSessions.id, { onDelete: 'cascade' }),
     paymentId: uuid('payment_id').references(() => payments.id, { onDelete: 'set null' }),
     content: text('content').notNull(),
-    isFromStore: boolean('is_from_store').default(false),
-    isRead: boolean('is_read').default(false),
+    isFromStore: boolean('is_from_store').default(false).notNull(),
+    isRead: boolean('is_read').default(false).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   },
   (table) => ({
