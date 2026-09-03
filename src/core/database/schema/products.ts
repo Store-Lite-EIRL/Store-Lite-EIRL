@@ -111,6 +111,10 @@ export const products = pgTable(
       table.slug,
     ),
     slugIdx: index('idx_products_slug').on(table.businessId, table.slug),
+    businessUpdatedIdx: index('idx_products_business_updated').on(
+      table.businessId,
+      table.updatedAt.desc(),
+    ),
   }),
 );
 

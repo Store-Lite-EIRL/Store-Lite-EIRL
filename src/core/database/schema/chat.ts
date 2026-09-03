@@ -34,6 +34,11 @@ export const chatSessions = pgTable(
     guestIdIdx: index('idx_chat_sessions_guest_id').on(table.guestId),
     businessIdIdx: index('idx_chat_sessions_business_id').on(table.businessId),
     paymentIdIdx: index('idx_chat_sessions_payment_id').on(table.paymentId),
+    businessStatusCreatedIdx: index('idx_chat_sessions_business_status_created').on(
+      table.businessId,
+      table.status,
+      table.createdAt.desc(),
+    ),
   }),
 );
 
@@ -58,6 +63,7 @@ export const messages = pgTable(
     sessionIdIdx: index('idx_messages_session_id').on(table.sessionId),
     paymentIdIdx: index('idx_messages_payment_id').on(table.paymentId),
     createdAtIdx: index('idx_messages_created_at').on(table.createdAt),
+    sessionCreatedIdx: index('idx_messages_session_created').on(table.sessionId, table.createdAt),
   }),
 );
 
