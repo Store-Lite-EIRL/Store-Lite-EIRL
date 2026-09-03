@@ -49,6 +49,8 @@ export type {
 
 export { generatePickupCode } from './orderPickup';
 
+export { isValidPaymentStatus } from './isValidPaymentStatus';
+
 export { VersionConflictError, transition } from './orderService';
 export type { TransitionError, TransitionResult } from './orderService';
 
