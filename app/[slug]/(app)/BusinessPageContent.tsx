@@ -1,7 +1,6 @@
 'use client';
 
 import type {
-  ProductGridSection,
   StorefrontColorScheme,
   StorefrontLayout,
   StorefrontSection,
@@ -12,52 +11,29 @@ import {
   buildStorefrontThemeVars,
   createDefaultStorefrontTheme,
 } from '@/core/storefront';
-import type { BrandFilterOption } from '@/features/products/hooks/useProductFilters';
 import { useProductFilters } from '@/features/products/hooks/useProductFilters';
 import type { ProductWithRelations } from '@/features/products/types/productTypes';
-import { DeleteProductDialog } from '@/features/storage/components/DeleteProductDialog';
-import { CreateProductSheet } from '@/features/storage/components/createProduct/CreateProductSheet';
 import { StorageProvider, useStorage } from '@/features/storage/context/StorageContext';
 import type { Product as StorageProduct } from '@/features/storage/data';
 import { AlertSnackbar } from '@/shared/components/ui';
-import { Button } from '@/shared/components/ui/buttons/Button';
-import { Icon } from '@/shared/components/ui/data-display/Icon';
 import { useTheme } from '@/shared/context/ThemeContext';
 import type { Business } from '@/types/business';
 import type { ProductCategory } from '@/types/product';
 import type { SaveProductMediaItem, SaveProductPayload } from '@/types/storage';
 import { useRouter } from 'next/navigation';
 import { posthog } from 'posthog-js';
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useState,
-  type CSSProperties,
-  type Dispatch,
-  type SetStateAction,
-} from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState, type CSSProperties } from 'react';
 import FeaturedItems from '../../(main)/home/FeaturedItems';
-import Feed from '../../(main)/home/Feed';
-import FilterBar from '../../(main)/home/FilterBar';
-import filterStyles from '../../(main)/home/FilterBar.module.css';
 import Hero from '../../(main)/home/Hero';
-import Pagination from '../../(main)/home/Pagination';
-import ProductFiltersTopBar from '../../(main)/home/components/ProductFiltersTopBar';
 import styles from './BusinessPageContent.module.css';
-import { Footer } from './Footer';
-import { StorefrontAboutSection } from './StorefrontAboutSection';
 import { BasicContactDialog } from './components/BasicContactDialog';
-import { CartDrawer } from './components/CartDrawer';
-import { FloatingCartButton } from './components/FloatingCartButton';
-import { FloatingChatFab } from './components/FloatingChatFab';
+import { CustomerFloatingUi } from './components/CustomerFloatingUi';
 import { LookupOrderModal } from './components/LookupOrderModal';
 import ProductPreviewSheet from './components/ProductPreviewSheet';
-import { StorefrontEditor } from './components/StorefrontEditor';
-import { ThemeToggle } from './components/ThemeToggle';
+import { StaffManagementTools } from './components/StaffManagementTools';
+import { StorefrontProductGridSection } from './components/StorefrontProductGridSection';
+import { mapToStorageProduct } from './components/mapToStorageProduct';
 import { resolveActiveScheme } from './components/schemeResolution';
-
-const PAGE_SIZE = 12;
 
 interface BusinessPageContentProps {
   business: Business;
@@ -84,24 +60,6 @@ interface BusinessPageContentProps {
 
 type OwnerSheetSaveArgs = [StorageProduct, SaveProductPayload, SaveProductMediaItem[], boolean];
 
-const mapToStorageProduct = (product: ProductWithRelations): StorageProduct => ({
-  id: product.id,
-  name: product.title,
-  category: product.category?.name || 'Varios',
-  stock: product.stock,
-  price: String(product.price),
-  currency: product.currency,
-  status: product.isAvailable ? 'ACTIVO' : 'NO ACTIVO',
-  image: product.media?.[0]?.mediaUrl || '',
-  images: product.media?.map((m) => m.mediaUrl) || [],
-  description: product.description || '',
-  brand: product.brand,
-  tags: product.tags,
-  shippingInfo: product.shippingInfo,
-  saleStatus: product.saleStatus,
-  secondPrice: product.secondPrice ? String(product.secondPrice) : null,
-});
-
 export default function BusinessPageContent({
   business,
   isOwner = false,
@@ -118,23 +76,7 @@ export default function BusinessPageContent({
   previewCardTheme,
   defaultScheme,
 }: BusinessPageContentProps) {
-  const mappedProducts: StorageProduct[] = products.map((p) => ({
-    id: p.id,
-    name: p.title,
-    category: p.category?.name || 'Varios',
-    stock: p.stock,
-    price: String(p.price),
-    currency: p.currency,
-    status: p.isAvailable ? 'ACTIVO' : 'NO ACTIVO',
-    image: p.media?.[0]?.mediaUrl || '',
-    images: p.media?.map((m) => m.mediaUrl) || [],
-    description: p.description || '',
-    brand: p.brand,
-    tags: p.tags,
-    shippingInfo: p.shippingInfo,
-    saleStatus: p.saleStatus,
-    secondPrice: p.secondPrice ? String(p.secondPrice) : null,
-  }));
+  const mappedProducts: StorageProduct[] = products.map(mapToStorageProduct);
 
   const mappedCategories = categories.map((c) => ({ id: c.id, name: c.name }));
 
@@ -642,423 +584,5 @@ function BusinessPageContentUI({
         businessName={business.name}
       />
     </>
-  );
-}
-
-interface CustomerFloatingUiProps {
-  business: Business;
-  paymentsEnabled: boolean;
-  culqiPublicKey?: string;
-  chatEnabled: boolean;
-  activeScheme: StorefrontColorScheme;
-  onViewerThemeToggle: () => void;
-  onContactClick: () => void;
-}
-
-function CustomerFloatingUi({
-  business,
-  paymentsEnabled,
-  culqiPublicKey,
-  chatEnabled,
-  activeScheme,
-  onViewerThemeToggle,
-  onContactClick,
-}: CustomerFloatingUiProps) {
-  return (
-    <>
-      <FloatingCartButton />
-      <CartDrawer
-        hasPaymentGateway={paymentsEnabled}
-        culqiPublicKey={culqiPublicKey}
-        businessId={business.id}
-        businessName={business.name}
-        businessAddress={business.address ?? undefined}
-        businessCity={business.city ?? undefined}
-        businessLogoUrl={business.logoUrl ?? undefined}
-        onContactClick={onContactClick}
-      />
-      {chatEnabled && (
-        <FloatingChatFab
-          businessName={business.name}
-          businessId={business.id}
-          slug={business.slug}
-          businessLogo={business.logoUrl}
-        />
-      )}
-      <ThemeToggle currentScheme={activeScheme} onToggle={onViewerThemeToggle} />
-      <Footer business={business} />
-    </>
-  );
-}
-
-interface StaffManagementToolsProps {
-  business: { id: string; slug: string };
-  previewProduct: ProductWithRelations | null;
-  isEditOpen: boolean;
-  isCreateOpen: boolean;
-  isDeleteOpen: boolean;
-  onSheetClose: () => void;
-  onSave: (...args: OwnerSheetSaveArgs) => Promise<void>;
-  onDeleteClose: () => void;
-  onDeleteConfirm: (id: string) => Promise<void>;
-  editableTheme: StorefrontTheme;
-  onThemeChange: (theme: StorefrontTheme) => void;
-  onPreviewSchemeChange: (scheme: StorefrontColorScheme | undefined) => void;
-  detectedColorScheme: StorefrontColorScheme;
-  previewScheme?: StorefrontColorScheme;
-  defaultScheme?: 'light' | 'dark';
-}
-
-function StaffManagementTools({
-  business,
-  previewProduct,
-  isEditOpen,
-  isCreateOpen,
-  isDeleteOpen,
-  onSheetClose,
-  onSave,
-  onDeleteClose,
-  onDeleteConfirm,
-  editableTheme,
-  onThemeChange,
-  onPreviewSchemeChange,
-  detectedColorScheme,
-  previewScheme,
-  defaultScheme,
-}: StaffManagementToolsProps) {
-  const initialProduct = isEditOpen && previewProduct ? mapToStorageProduct(previewProduct) : null;
-  return (
-    <>
-      <DeleteProductDialog
-        open={isDeleteOpen}
-        product={previewProduct ? mapToStorageProduct(previewProduct) : null}
-        onClose={onDeleteClose}
-        onConfirm={onDeleteConfirm}
-      />
-      <CreateProductSheet
-        open={isEditOpen || isCreateOpen}
-        onClose={onSheetClose}
-        onSave={onSave}
-        initialProduct={initialProduct}
-      />
-      <StorefrontEditor
-        business={business}
-        storefrontTheme={editableTheme}
-        onThemeChange={onThemeChange}
-        onPreviewSchemeChange={onPreviewSchemeChange}
-        detectedColorScheme={detectedColorScheme}
-        currentScheme={previewScheme}
-        defaultScheme={defaultScheme}
-      />
-    </>
-  );
-}
-
-interface StorefrontProductGridSectionProps {
-  section: ProductGridSection;
-  business: Business;
-  categories: ProductCategory[];
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-  searchQuery: string;
-  onSearchChange: (value: string) => void;
-  selectedCategories: string[];
-  onSelectedCategoriesChange: Dispatch<SetStateAction<string[]>>;
-  selectedBrands: string[];
-  onSelectedBrandsChange: Dispatch<SetStateAction<string[]>>;
-  absoluteMin: number;
-  absoluteMax: number;
-  currentMinPrice: number;
-  onCurrentMinPriceChange: Dispatch<SetStateAction<number>>;
-  currentMaxPrice: number;
-  onCurrentMaxPriceChange: Dispatch<SetStateAction<number>>;
-  showDiscountedOnly: boolean;
-  onShowDiscountedOnlyChange: Dispatch<SetStateAction<boolean>>;
-  brandOptions: BrandFilterOption[];
-  filteredProducts: ProductWithRelations[];
-  hasActiveFilters: boolean;
-  onClearFilters: () => void;
-  currentPage: number;
-  onPageChange: (page: number) => void;
-  isOwner: boolean;
-  isStaff: boolean;
-  hasPaymentGateway: boolean;
-  isPaymentConfigured: boolean;
-  culqiPublicKey?: string;
-  onProductPreview: (product: ProductWithRelations, initialIndex?: number) => void;
-  onContactClick: () => void;
-  onCreateProduct: () => void;
-  storefrontTheme?: StorefrontTheme;
-  previewCardTheme?: StorefrontTheme;
-  onShowLookupModal: () => void;
-}
-
-function StorefrontProductGridSection({
-  section,
-  business,
-  categories,
-  activeTab,
-  onTabChange,
-  searchQuery,
-  onSearchChange,
-  selectedCategories,
-  onSelectedCategoriesChange,
-  selectedBrands,
-  onSelectedBrandsChange,
-  absoluteMin,
-  absoluteMax,
-  currentMinPrice,
-  onCurrentMinPriceChange,
-  currentMaxPrice,
-  onCurrentMaxPriceChange,
-  showDiscountedOnly,
-  onShowDiscountedOnlyChange,
-  brandOptions,
-  filteredProducts,
-  hasActiveFilters,
-  onClearFilters,
-  currentPage,
-  onPageChange,
-  isOwner,
-  isStaff,
-  hasPaymentGateway,
-  isPaymentConfigured,
-  culqiPublicKey,
-  onProductPreview,
-  onContactClick,
-  onCreateProduct,
-  storefrontTheme,
-  previewCardTheme,
-  onShowLookupModal,
-}: StorefrontProductGridSectionProps) {
-  const isGridVisible = section.visible;
-  const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
-  const start = (currentPage - 1) * PAGE_SIZE;
-  const paginatedProducts = filteredProducts.slice(start, start + PAGE_SIZE);
-
-  return (
-    <>
-      <FilterBar
-        business={business}
-        activeTab={activeTab}
-        onTabChange={onTabChange}
-        searchQuery={searchQuery}
-        onSearchChange={onSearchChange}
-      />
-
-      {activeTab === 'products' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <StorefrontNoticeBar
-            isOwner={isStaff}
-            business={business}
-            hasPaymentGateway={hasPaymentGateway}
-            isPaymentConfigured={isPaymentConfigured}
-          />
-          {isGridVisible ? (
-            <>
-              <ProductFiltersTopBar
-                categories={categories}
-                selectedCategories={selectedCategories}
-                onCategoryChange={(id, checked) => {
-                  onSelectedCategoriesChange((prev) =>
-                    checked ? [...prev, id] : prev.filter((c) => c !== id),
-                  );
-                  onPageChange(1);
-                }}
-                minPrice={absoluteMin}
-                maxPrice={absoluteMax}
-                currentMinPrice={currentMinPrice}
-                currentMaxPrice={currentMaxPrice}
-                onPriceRangeChange={(min, max) => {
-                  onCurrentMinPriceChange(min);
-                  onCurrentMaxPriceChange(max);
-                  onPageChange(1);
-                }}
-                showDiscountedOnly={showDiscountedOnly}
-                onDiscountToggle={(checked) => {
-                  onShowDiscountedOnlyChange(checked);
-                  onPageChange(1);
-                }}
-                onClearFilters={() => {
-                  onClearFilters();
-                  onPageChange(1);
-                }}
-                hasActiveFilters={hasActiveFilters}
-                selectedBrands={selectedBrands}
-                onBrandChange={(brand, checked) => {
-                  onSelectedBrandsChange((prev) =>
-                    checked ? [...prev, brand] : prev.filter((b) => b !== brand),
-                  );
-                  onPageChange(1);
-                }}
-                brandOptions={brandOptions}
-              />
-              <StorefrontOwnerActions
-                isOwner={isStaff}
-                onCreateProduct={onCreateProduct}
-                onShowLookupModal={onShowLookupModal}
-              />
-              <Feed
-                products={paginatedProducts}
-                isOwner={isStaff}
-                onProductPreview={onProductPreview}
-                hasPaymentGateway={hasPaymentGateway}
-                isPaymentConfigured={isPaymentConfigured}
-                culqiPublicKey={culqiPublicKey}
-                onContactClick={onContactClick}
-                gridConfig={section.config}
-                businessName={business.name}
-                businessRuc={business.taxId ?? undefined}
-                businessAddress={business.address ?? undefined}
-                businessId={business.id}
-                businessLogoUrl={business.logoUrl ?? undefined}
-              />
-              <Pagination
-                totalPages={totalPages}
-                currentPage={currentPage}
-                onPageChange={onPageChange}
-              />
-            </>
-          ) : (
-            <HiddenCatalogNotice isOwner={isStaff} onCreateProduct={onCreateProduct} />
-          )}
-        </div>
-      )}
-
-      {activeTab === 'about' && (
-        <StorefrontAboutSection
-          business={business}
-          storefrontTheme={storefrontTheme}
-          previewCardTheme={previewCardTheme}
-          isOwner={isOwner}
-        />
-      )}
-    </>
-  );
-}
-
-interface StorefrontNoticeBarProps {
-  isOwner: boolean;
-  business: Business;
-  hasPaymentGateway: boolean;
-  isPaymentConfigured: boolean;
-}
-
-function StorefrontNoticeBar({
-  isOwner,
-  business,
-  hasPaymentGateway,
-  isPaymentConfigured,
-}: StorefrontNoticeBarProps) {
-  const paymentsEnabled = hasPaymentGateway && isPaymentConfigured;
-  return (
-    <>
-      {/* ── Badge de confianza para el customer ── */}
-      {!isOwner && business.verificationStatus === 'verified' && (
-        <div className={styles.verifiedBadge}>
-          <Icon size={14}>verified</Icon>
-          Verificado
-        </div>
-      )}
-
-      {/* ── Mensajes para el owner ── */}
-      {isOwner && hasPaymentGateway && !isPaymentConfigured && (
-        <div className={`${styles.ownerPrompt} ${styles.ownerPromptWarning}`}>
-          <span className={styles.ownerPromptIcon}>⚠️</span>
-          <span>Configura tus credenciales de pago para empezar a recibir pagos automáticos.</span>
-        </div>
-      )}
-      {isOwner && !hasPaymentGateway && (
-        <div className={`${styles.ownerPrompt} ${styles.ownerPromptInfo}`}>
-          <span className={styles.ownerPromptIcon}>💡</span>
-          <span>
-            Estás en el plan básico. Actualiza tu plan para aceptar pagos automáticos y acceder a
-            más beneficios.
-          </span>
-        </div>
-      )}
-
-      {/* ── Info de pagos para el customer ── */}
-      {!isOwner && !paymentsEnabled && (
-        <div
-          className={styles.paymentBanner}
-          tabIndex={0}
-          role="button"
-          aria-label="Información de pagos"
-        >
-          <span className={styles.paymentBannerIcon}>?</span>
-          <span>Pagos automáticos no disponibles</span>
-          <div className={styles.paymentTooltip}>
-            {hasPaymentGateway
-              ? 'Este negocio aún no terminó de configurar sus credenciales de pago. Mientras tanto, puedes contactar al negocio para comprar.'
-              : 'Este negocio necesita un plan premium para habilitar pagos automáticos. Mientras tanto, puedes contactar al negocio para comprar.'}
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-interface StorefrontOwnerActionsProps {
-  isOwner: boolean;
-  onCreateProduct: () => void;
-  onShowLookupModal: () => void;
-}
-
-function StorefrontOwnerActions({
-  isOwner,
-  onCreateProduct,
-  onShowLookupModal,
-}: StorefrontOwnerActionsProps) {
-  if (isOwner) {
-    return (
-      <div className={styles.ownerActionRow}>
-        <Button variant="filled" onClick={onCreateProduct} className={styles.addProductButton}>
-          <Icon slot="icon" size={21}>
-            add_circle
-          </Icon>
-          Agregar Producto
-        </Button>
-      </div>
-    );
-  }
-  return (
-    <div className={styles.ownerActionRow}>
-      <Button variant="filled" onClick={onShowLookupModal} className={styles.addProductButton}>
-        <Icon slot="icon" size={21}>
-          search
-        </Icon>
-        Ver Pedido
-      </Button>
-    </div>
-  );
-}
-
-interface HiddenCatalogNoticeProps {
-  isOwner: boolean;
-  onCreateProduct: () => void;
-}
-
-function HiddenCatalogNotice({ isOwner, onCreateProduct }: HiddenCatalogNoticeProps) {
-  return (
-    <div className={filterStyles.aboutContent}>
-      <div className={filterStyles.infoCard}>
-        <h2 className={filterStyles.infoTitle}>Catálogo oculto</h2>
-        <p className={filterStyles.description}>
-          El grid de productos está oculto en la configuración del storefront, pero la navegación
-          principal del negocio sigue disponible.
-        </p>
-        {isOwner && (
-          <div className={styles.ownerActionRow}>
-            <Button variant="filled" onClick={onCreateProduct} className={styles.addProductButton}>
-              <Icon slot="icon" size={21}>
-                add_circle
-              </Icon>
-              Agregar Producto
-            </Button>
-          </div>
-        )}
-      </div>
-    </div>
   );
 }

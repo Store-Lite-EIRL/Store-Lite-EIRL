@@ -119,6 +119,9 @@ vi.mock('@/features/storage/components/createProduct/CreateProductSheet', () => 
   CreateProductSheet: () => null,
 }));
 vi.mock('@/app/[slug]/(app)/Footer', () => ({ Footer: () => null }));
+vi.mock('@/app/[slug]/(app)/components/mapToStorageProduct', () => ({
+  mapToStorageProduct: (p: any) => p,
+}));
 
 // ─── Real imports (after mocks are hoisted by vitest) ──────────────────────
 
