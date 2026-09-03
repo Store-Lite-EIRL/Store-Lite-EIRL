@@ -27,6 +27,10 @@ export const profiles = pgTable(
     // ageCheck: check('age_check', sql`${table.age} >= 13 AND ${table.age} <= 120`),
     emailIdx: index('idx_profiles_email').on(table.email),
     fullNameIdx: index('idx_profiles_full_name').on(table.fullName),
+    // NOTE: RLS policies for profiles are applied via the operator migration
+    //   migrations/0040_profiles_rls_own.sql  (3 policies: SELECT/UPDATE/INSERT own
+    //   WHERE id = auth.uid()). Drizzle does not model RLS; do not regen/push
+    //   from schema.ts against prod or it would drop the whole RLS layer (see A1 audit).
   }),
 );
 
