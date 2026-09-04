@@ -9,6 +9,7 @@ import { updateCulqiCredentials } from '../actions';
 import { type Entitlements, type SettingsBusiness } from '../constants';
 import { useSnackbarFeedback } from '../hooks/useSettingsState';
 import styles from '../settings.module.css';
+import CulqiReadinessCheck from './CulqiReadinessCheck';
 
 export function PaymentsConfig({
   business,
@@ -70,22 +71,68 @@ export function PaymentsConfig({
   const isConfigured = business.culqiPublicKey && business.culqiSecretKey;
   const isTestKeys = business.culqiPublicKey?.startsWith('pk_test_');
 
-  const isPremiumPlan = ['business_pro', 'enterprise_ai'].includes(entitlements.plan);
+  const isPremiumPlan = ['business_pro', 'enterprise_pro'].includes(entitlements.plan);
+
+  const hero = (
+    <div className={styles.businessHero}>
+      <div className={styles.businessHeroIcon}>
+        <Icon size={28}>payments</Icon>
+      </div>
+      <div>
+        <h2 className={styles.businessHeroTitle}>Pagos</h2>
+        <p className={styles.businessHeroSubtitle}>
+          Configurá cómo recibís el dinero de tus ventas.
+        </p>
+      </div>
+    </div>
+  );
+
+  const culqiInfoCard = (
+    <Card variant="outlined">
+      <div style={{ padding: '16px', fontSize: '13px', lineHeight: 1.6 }}>
+        <p
+          style={{
+            margin: '0 0 8px',
+            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+        >
+          <Icon size={16}>credit_card</Icon>
+          ¿Qué es Culqi?
+        </p>
+        <p
+          style={{
+            margin: '0 0 8px',
+            color: 'var(--md-sys-color-on-surface-variant)',
+          }}
+        >
+          Culqi es la pasarela de pagos que procesa los cobros de su tienda: tarjetas (Visa,
+          Mastercard, American Express), Yape, Plin, billeteras móviles y más. Está disponible en
+          los planes Business Pro o Enterprise Pro.
+        </p>
+        <p
+          style={{
+            margin: 0,
+            color: 'var(--md-sys-color-on-surface-variant)',
+          }}
+        >
+          ⚠️ Culqi valida cada comercio de forma independiente antes de activar pagos reales (1–3
+          días hábiles). Tenga en cuenta este tiempo al elegir su plan; puede preparar su tienda con
+          este checklist incluso antes de suscribirse.
+        </p>
+      </div>
+    </Card>
+  );
 
   if (!isPremiumPlan) {
     return (
       <div className={styles.sectionArea}>
-        <div className={styles.businessHero}>
-          <div className={styles.businessHeroIcon}>
-            <Icon size={28}>payments</Icon>
-          </div>
-          <div>
-            <h2 className={styles.businessHeroTitle}>Pagos</h2>
-            <p className={styles.businessHeroSubtitle}>
-              Configurá cómo recibís el dinero de tus ventas.
-            </p>
-          </div>
-        </div>
+        {hero}
+        {culqiInfoCard}
+        {/* ✅ Checklist de requisitos para producción — visible para todos los planes */}
+        <CulqiReadinessCheck businessId={business.id} interactive={false} />
         <Card variant="outlined" className={styles.upgradeBanner}>
           <div className={styles.upgradeBannerContent}>
             <Icon size={24} style={{ color: 'var(--md-sys-color-primary)' } as CSSProperties}>
@@ -109,17 +156,8 @@ export function PaymentsConfig({
 
   return (
     <div className={styles.sectionArea}>
-      <div className={styles.businessHero}>
-        <div className={styles.businessHeroIcon}>
-          <Icon size={28}>payments</Icon>
-        </div>
-        <div>
-          <h2 className={styles.businessHeroTitle}>Pagos</h2>
-          <p className={styles.businessHeroSubtitle}>
-            Configurá cómo recibís el dinero de tus ventas.
-          </p>
-        </div>
-      </div>
+      {hero}
+      {culqiInfoCard}
 
       <Card variant="elevated" className={styles.paymentCard}>
         {/* ── Cabecera Pasarela Culqi ── */}
@@ -214,80 +252,6 @@ export function PaymentsConfig({
               )}
 
               {/* ✅ Checklist de requisitos para producción */}
-              <div
-                style={{
-                  margin: '16px 0 0',
-                  padding: '12px',
-                  background: 'var(--md-sys-color-surface-container-high)',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  lineHeight: 1.6,
-                }}
-              >
-                <p style={{ margin: '0 0 8px', fontWeight: 500 }}>
-                  <Icon size={16} style={{ verticalAlign: 'middle', marginRight: '4px' }}>
-                    checklist
-                  </Icon>
-                  Antes de pedirle a Culqi que valide tu tienda
-                </p>
-                <ul style={{ margin: 0, paddingLeft: '16px' }}>
-                  <li>
-                    ✅ Términos y Condiciones publicados —{' '}
-                    <a
-                      href={`/${business.slug}/terminos`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ textDecoration: 'underline' }}
-                    >
-                      Ver página
-                    </a>
-                  </li>
-                  <li>
-                    ✅ Política de Devoluciones publicada —{' '}
-                    <a
-                      href={`/${business.slug}/devoluciones`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ textDecoration: 'underline' }}
-                    >
-                      Ver página
-                    </a>
-                  </li>
-                  <li>
-                    ✅ Libro de Reclamaciones activo —{' '}
-                    <a
-                      href={`/${business.slug}/libro-reclamaciones`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ textDecoration: 'underline' }}
-                    >
-                      Ver página
-                    </a>
-                  </li>
-                  <li>
-                    ✅ <strong>WhatsApp</strong> configurado en Datos del negocio
-                  </li>
-                  <li>
-                    ✅ Al menos <strong>5 productos</strong> con foto, precio y descripción
-                  </li>
-                  <li>
-                    ✅ Cuenta en{' '}
-                    <a
-                      href="https://afiliate.culqi.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ textDecoration: 'underline' }}
-                    >
-                      Culqi
-                    </a>{' '}
-                    activa y en producción
-                  </li>
-                  <li>
-                    ✅ Llaves de <strong>producción</strong> (<code>pk_live_</code> /{' '}
-                    <code>sk_live_</code>) configuradas acá
-                  </li>
-                </ul>
-              </div>
 
               <div className={styles.paymentActionRow}>
                 <Button
@@ -325,6 +289,9 @@ export function PaymentsConfig({
           )}
         </div>
       </Card>
+
+      {/* ✅ Checklist de requisitos para producción — siempre visible */}
+      <CulqiReadinessCheck businessId={business.id} />
 
       <Dialog open={showConfigDialog} onClose={() => !isPending && setShowConfigDialog(false)}>
         <div slot="headline">Configurar Culqi</div>

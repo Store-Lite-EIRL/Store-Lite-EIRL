@@ -17,12 +17,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!business) {
     return {
-      title: 'Negocio No Encontrado | Store Lite',
+      title: 'Negocio No Encontrado',
     };
   }
 
   return {
-    title: `Notificaciones - ${business.name} | Store Lite`,
+    title: `Notificaciones - ${business.name}`,
     description: `Centro de notificaciones para ${business.name}`,
   };
 }

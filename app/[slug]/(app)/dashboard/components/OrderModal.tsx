@@ -176,7 +176,7 @@ export default function OrderModal({
     try {
       const result = await notifyDelivery(order.id, order.businessId);
       if (result.success) {
-        onOrderUpdate({ ...order, status: 'en_reparto' as any });
+        onOrderUpdate({ ...order, status: 'en_reparto' });
       } else {
         alert(result.error || 'Error al notificar la entrega');
       }
@@ -192,7 +192,7 @@ export default function OrderModal({
     try {
       const result = await requestFinalization(order.id, order.businessId);
       if (result.success) {
-        onOrderUpdate({ ...order, status: 'DELIVERED' as any });
+        onOrderUpdate({ ...order, status: 'DELIVERED' });
       } else {
         alert(result.error || 'Error al solicitar la finalización');
       }
@@ -208,7 +208,7 @@ export default function OrderModal({
     try {
       const result = await markReadyForPickup(order.id, order.businessId);
       if (result.success) {
-        onOrderUpdate({ ...order, status: 'READY_FOR_PICKUP' as any });
+        onOrderUpdate({ ...order, status: 'READY_FOR_PICKUP' });
       } else {
         alert(result.error || 'Error al marcar como listo para recojo');
       }
@@ -224,7 +224,7 @@ export default function OrderModal({
     try {
       const result = await prepareOrder(order.id, order.businessId);
       if (result.success) {
-        onOrderUpdate({ ...order, status: 'PREPARING_ORDER' as any });
+        onOrderUpdate({ ...order, status: 'PREPARING_ORDER' });
       } else {
         alert(result.error || 'Error al preparar el pedido');
       }
@@ -244,7 +244,7 @@ export default function OrderModal({
       if (result.success) {
         // If auto-complete succeeded, show COMPLETED; otherwise show PICKED_UP (auto-complete pending via cron)
         const newStatus = result.autoCompletePending ? 'PICKED_UP' : 'COMPLETED';
-        onOrderUpdate({ ...order, status: newStatus as any });
+        onOrderUpdate({ ...order, status: newStatus });
         setPickupCodeInput('');
         if (result.autoCompletePending) {
           setCodeError(

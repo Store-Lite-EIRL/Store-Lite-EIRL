@@ -33,6 +33,7 @@ interface StorageContextType {
   statuses: string[];
   totalProducts: number;
   isLoading: boolean;
+  hasError: boolean;
   deleteProduct: (id: string) => Promise<{ success: boolean; error?: string }>;
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;

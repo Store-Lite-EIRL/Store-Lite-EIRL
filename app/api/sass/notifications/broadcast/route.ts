@@ -15,6 +15,7 @@
 // ──────────────────────────────────────────
 
 import { db } from '@/core/database/client';
+import type { NotificationCategory, NotificationType } from '@/core/database/schema';
 import { businessSubscriptions } from '@/core/database/schema';
 import { createBusinessNotification } from '@/lib/notifications';
 import { eq } from 'drizzle-orm';
@@ -78,8 +79,8 @@ export async function POST(request: Request) {
     targetBusinessIds.map((businessId) =>
       createBusinessNotification({
         businessId,
-        type: type as any,
-        category: category as any,
+        type: type as NotificationType,
+        category: category as NotificationCategory,
         title: body.title!,
         message: body.message!,
       }),

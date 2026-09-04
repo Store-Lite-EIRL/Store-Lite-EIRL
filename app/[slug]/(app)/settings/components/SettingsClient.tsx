@@ -21,6 +21,7 @@ import {
   Switch,
   TextField,
 } from '@/shared/components/ui';
+import { buildStoreDescription, buildStoreTitle } from '@/shared/seo/buildStorefrontMeta';
 import { getBusinessPath } from '@/shared/utils/url';
 import { useParams, useRouter } from 'next/navigation';
 import React, {
@@ -42,6 +43,7 @@ import {
 } from '../actions';
 import {
   CharCounter,
+  CollapsibleSEOSection,
   ColumnChips,
   CopyableValue,
   DESKTOP_COLUMN_OPTIONS,
@@ -1272,9 +1274,11 @@ function SEOSection({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const autoTitle = buildStoreTitle(business);
+  const autoDescription = buildStoreDescription(business);
   const initialForm = {
-    seoTitle: business.seoTitle || '',
-    seoDescription: business.seoDescription || '',
+    seoTitle: business.seoTitle ?? autoTitle,
+    seoDescription: business.seoDescription ?? autoDescription,
     seoKeywords: business.seoKeywords?.join(', ') || '',
     latitude: business.latitude || '',
     longitude: business.longitude || '',
@@ -1362,58 +1366,68 @@ function SEOSection({
         geoRegion={formData.geoRegion}
       />
 
-      <Card variant="outlined" className={styles.infoCard}>
-        <p className={styles.cardLabel}>Metadata de Búsqueda</p>
-        <div className={styles.metaFields}>
-          <div>
-            <TextField
-              label="Título SEO"
-              value={formData.seoTitle}
-              placeholder="Ej: Mi Tienda Online | Store Lite"
-              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setFormData({ ...formData, seoTitle: e.target.value })
-              }
-              supportingText="Entre 50 y 60 caracteres. Aparece como el título azul en Google."
-            >
-              <Icon slot="leading-icon">title</Icon>
-            </TextField>
-            <CharCounter current={formData.seoTitle.length} limit={60} />
-          </div>
+      <CollapsibleSEOSection defaultCollapsed={true}>
+        <Card variant="outlined" className={styles.infoCard}>
+          <p className={styles.cardLabel}>Metadata de Búsqueda</p>
+          <div className={styles.metaFields}>
+            <div>
+              <TextField
+                label="Título SEO"
+                value={formData.seoTitle}
+                placeholder="Ej: Mi Tienda Online | Store Lite"
+                onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, seoTitle: e.target.value })
+                }
+                supportingText="Entre 50 y 60 caracteres. Aparece como el título azul en Google."
+              >
+                <Icon slot="leading-icon">title</Icon>
+              </TextField>
+              <CharCounter
+                current={formData.seoTitle.length}
+                limit={60}
+                optimalRange={{ min: 50, max: 60 }}
+              />
+            </div>
 
-          <div>
-            <TextField
-              label="Descripción SEO"
-              type="textarea"
-              rows="3"
-              value={formData.seoDescription}
-              placeholder="Ej: Comprá productos únicos en Mi Tienda — envíos a todo el país."
-              onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                setFormData({ ...formData, seoDescription: e.target.value })
-              }
-              supportingText="Máximo 160 caracteres. Aparece como el texto gris debajo del título en Google."
-            >
-              <Icon slot="leading-icon">description</Icon>
-            </TextField>
-            <CharCounter current={formData.seoDescription.length} limit={160} />
-          </div>
+            <div>
+              <TextField
+                label="Descripción SEO"
+                type="textarea"
+                rows="3"
+                value={formData.seoDescription}
+                placeholder="Ej: Comprá productos únicos en Mi Tienda — envíos a todo el país."
+                onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  setFormData({ ...formData, seoDescription: e.target.value })
+                }
+                supportingText="Máximo 160 caracteres. Aparece como el texto gris debajo del título en Google."
+              >
+                <Icon slot="leading-icon">description</Icon>
+              </TextField>
+              <CharCounter
+                current={formData.seoDescription.length}
+                limit={160}
+                optimalRange={{ min: 150, max: 160, lowerOffset: 30 }}
+              />
+            </div>
 
-          <Divider />
+            <Divider />
 
-          <div>
-            <TextField
-              label="Keywords (etiquetas clave)"
-              value={formData.seoKeywords}
-              placeholder="ropa, zapatos, ofertas, envíos"
-              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setFormData({ ...formData, seoKeywords: e.target.value })
-              }
-              supportingText="Palabras clave separadas por comas. Ayudan a Google a entender el contenido de tu tienda."
-            >
-              <Icon slot="leading-icon">key</Icon>
-            </TextField>
+            <div>
+              <TextField
+                label="Keywords (etiquetas clave)"
+                value={formData.seoKeywords}
+                placeholder="ropa, zapatos, ofertas, envíos"
+                onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, seoKeywords: e.target.value })
+                }
+                supportingText="Palabras clave separadas por comas. Ayudan a Google a entender el contenido de tu tienda."
+              >
+                <Icon slot="leading-icon">key</Icon>
+              </TextField>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </CollapsibleSEOSection>
 
       <Card variant="outlined" className={styles.infoCard}>
         <p className={styles.cardLabel}>Posicionamiento Local (GPS)</p>
@@ -1541,7 +1555,7 @@ export function SettingsClient({
               hasAccess = permissions.includes('business.edit');
               break;
             case 'payments': {
-              const isPremiumPlan = ['business_pro', 'enterprise_ai'].includes(entitlements.plan);
+              const isPremiumPlan = ['business_pro', 'enterprise_pro'].includes(entitlements.plan);
               hasAccess = isPremiumPlan && permissions.includes('business.edit');
               break;
             }

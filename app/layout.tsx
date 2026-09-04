@@ -1,13 +1,13 @@
 import { env } from '@/config/env';
 import { AuthProvider } from '@/features/auth';
 import { MaterialWebInit } from '@/lib/material-design/MaterialWebInit';
+import { ThemeBoot } from '@/shared/components/ThemeBoot';
 import { WebVitalsReporter } from '@/shared/components/WebVitalsReporter';
 import { ThemeProvider } from '@/shared/context/ThemeContext';
 import { CSPostHogProvider } from '@/shared/providers/PostHogProvider';
 import { buildSiteJsonLd, SITE_DESCRIPTION, SITE_NAME } from '@/shared/utils/siteJsonLd';
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
-import Script from 'next/script';
 import './globals.css';
 
 const google_sans_flex = localFont({
@@ -54,35 +54,6 @@ const poppins = localFont({
   variable: '--font-storefront-poppins',
 });
 
-const themeBootScript = `
-(() => {
-  try {
-    const classes = [
-      'light',
-      'light-medium-contrast',
-      'light-high-contrast',
-      'dark',
-      'dark-medium-contrast',
-      'dark-high-contrast',
-    ];
-
-    const storedTheme = localStorage.getItem('app-theme') || 'system';
-    const storedScheme = localStorage.getItem('app-color-scheme') || 'default';
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const resolvedTheme = storedTheme === 'system' ? (prefersDark ? 'dark' : 'light') : storedTheme;
-    const suffix =
-      storedScheme === 'medium' ? '-medium-contrast' : storedScheme === 'high' ? '-high-contrast' : '';
-    const nextClass = resolvedTheme + suffix;
-
-    document.body.classList.remove(...classes);
-    document.body.classList.add(nextClass);
-    document.documentElement.style.colorScheme = resolvedTheme;
-  } catch (error) {
-    console.warn('Theme boot script failed', error);
-  }
-})();
-`;
-
 // Site-level JSON-LD knowledge graph — built once, rendered on every page.
 const siteJsonLd = buildSiteJsonLd(env.nextPublicAppUrl);
 
@@ -123,12 +94,7 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
         />
-        {/* ⚡ Theme boot script — beforeInteractive: must be in <head> to avoid React hydration warning */}
-        <Script
-          id="theme-boot"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: themeBootScript }}
-        />
+        <ThemeBoot />
       </head>
       <body suppressHydrationWarning className="antialiased">
         {/* Site-level structured data: Organization + WebSite knowledge graph */}

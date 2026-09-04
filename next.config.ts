@@ -1,6 +1,12 @@
 import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from 'next';
 
+// Derive the Supabase hostname from the env var so both dev and prod work
+// without touching this file when the project ref changes.
+const supabaseHostname = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+  : '';
+
 const nextConfig: NextConfig = {
   // Exponer explícitamente vars al build para que el Edge Runtime las tenga disponibles
   env: {
@@ -62,10 +68,8 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'picsum.photos',
       },
-      {
-        protocol: 'https',
-        hostname: 'likloeyrdzfsrwelpdoz.supabase.co',
-      },
+      // Supabase Storage — resolved from NEXT_PUBLIC_SUPABASE_URL at build time
+      ...(supabaseHostname ? [{ protocol: 'https' as const, hostname: supabaseHostname }] : []),
       {
         protocol: 'https',
         hostname: 'via.placeholder.com',

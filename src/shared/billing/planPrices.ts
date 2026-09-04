@@ -7,7 +7,7 @@
 // desglosa internamente: subtotal = total / 1.18; igv = total - subtotal.
 // =====================================================
 
-export type PlanKey = 'basico' | 'emprendedor' | 'business_pro' | 'enterprise_ai';
+export type PlanKey = 'basico' | 'emprendedor' | 'business_pro' | 'enterprise_pro';
 
 export interface PlanPrice {
   monthly: number; // céntimos, total final incluye IGV
@@ -19,7 +19,7 @@ export const PLAN_PRICES: Record<PlanKey, PlanPrice> = {
   basico: { monthly: 0, annual: 0, label: 'Básico' },
   emprendedor: { monthly: 5900, annual: 59000, label: 'Emprendedor' }, // S/ 59.00 / S/ 590.00
   business_pro: { monthly: 9900, annual: 99000, label: 'Business Pro' }, // S/ 99.00 / S/ 990.00
-  enterprise_ai: { monthly: 14900, annual: 149000, label: 'Enterprise AI' }, // S/ 149.00 / S/ 1490.00
+  enterprise_pro: { monthly: 14900, annual: 149000, label: 'Enterprise Pro' }, // S/ 149.00 / S/ 1490.00
 };
 
 export const IGV_RATE = 0.18;

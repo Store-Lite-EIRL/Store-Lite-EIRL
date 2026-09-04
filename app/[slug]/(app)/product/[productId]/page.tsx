@@ -2,6 +2,8 @@ import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { products as productsTable } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
+import { buildProductBreadcrumbs } from '@/shared/seo/buildStorefrontBreadcrumbs';
+import { buildProductDescription, buildProductTitle } from '@/shared/seo/buildStorefrontMeta';
 import { getCanonicalBusinessUrl } from '@/shared/utils/url';
 import { and, eq, or } from 'drizzle-orm';
 import type { Metadata } from 'next';
@@ -35,20 +37,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!product) return {};
 
-  const { seoEnabled } = await getBusinessEntitlements(business.id);
-
-  if (!seoEnabled) {
-    return {
-      title: `${product.title} | ${business.name}`,
-      robots: { index: false, follow: false },
-    };
-  }
-
-  const title = product.seoTitle || `${product.title} - ${business.name} | ${business.city || ''}`;
-  const description =
-    product.seoDescription ||
-    product.description?.slice(0, 160) ||
-    `Compra ${product.title} en ${business.name}`;
+  const title = buildProductTitle(product, business);
+  const description = buildProductDescription(product, business);
 
   const productSlug = product.slug || product.id;
   const canonicalUrl = getCanonicalBusinessUrl(business.slug, `/product/${productSlug}`);
@@ -104,34 +94,44 @@ export default async function ProductDetailPage({ params }: Props) {
   }
 
   const entitlements = await getBusinessEntitlements(businessDetail.id);
-  const { hasPaymentGateway, seoEnabled } = entitlements;
+  const { hasPaymentGateway } = entitlements;
   const paymentsEnabled = hasPaymentGateway && entitlements.isPaymentConfigured;
 
-  const jsonLd = seoEnabled
-    ? {
-        '@context': 'https://schema.org',
-        '@type': 'Product',
-        name: product.title,
-        description: product.description,
-        image: product.media?.[0]?.mediaUrl,
-        brand: {
-          '@type': 'Brand',
-          name: product.brand || businessDetail.name,
-        },
-        offers: {
-          '@type': 'Offer',
-          price: product.price,
-          priceCurrency: product.currency,
-          availability: product.isAvailable
-            ? 'https://schema.org/InStock'
-            : 'https://schema.org/OutOfStock',
-          seller: {
-            '@type': 'Organization',
-            name: businessDetail.name,
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.title,
+    description: product.description,
+    image: product.media?.[0]?.mediaUrl,
+    sku: product.externalCode || undefined,
+    brand: {
+      '@type': 'Brand',
+      name: product.brand || businessDetail.name,
+    },
+    offers: {
+      '@type': 'Offer',
+      price: product.price,
+      priceCurrency: product.currency,
+      availability: product.isAvailable
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+      seller: {
+        '@type': 'Organization',
+        name: businessDetail.name,
+      },
+    },
+    ...(product.stars && product.stars > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: product.stars,
+            bestRating: 5,
           },
-        },
-      }
-    : null;
+        }
+      : {}),
+  };
+
+  const breadcrumbJsonLd = buildProductBreadcrumbs(businessDetail, product);
 
   return (
     <>
@@ -139,6 +139,12 @@ export default async function ProductDetailPage({ params }: Props) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      {breadcrumbJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
         />
       )}
       <ProductDetailContent

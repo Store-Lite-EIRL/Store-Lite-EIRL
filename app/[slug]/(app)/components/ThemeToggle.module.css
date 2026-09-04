@@ -1,8 +1,8 @@
 .toggle {
   position: fixed;
-  bottom: 24px;
+  top: 24px;
   left: 24px;
-  z-index: 50;
+  z-index: 150;
   width: 56px;
   height: 56px;
   border-radius: 28px;

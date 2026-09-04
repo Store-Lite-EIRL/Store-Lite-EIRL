@@ -155,6 +155,13 @@
       "when": 1784326582928,
       "tag": "0022_charming_excalibur",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1756233600000,
+      "tag": "0023_rename_enterprise_ai_to_enterprise_pro",
+      "breakpoints": true
     }
   ]
 }

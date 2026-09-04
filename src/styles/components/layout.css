@@ -17,16 +17,30 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: margin-left var(--sidebar-transition-duration) var(--sidebar-transition-easing);
   margin-left: 0;
 }
 
+/* Use sidebar CSS tokens for consistent sizing */
 .content-wrapper--expanded {
-  margin-left: var(--navbar-expanded-width);
+  margin-left: calc(var(--navbar-expanded-width, 282px) + 2rem);
 }
 
 .content-wrapper--collapsed {
-  margin-left: var(--navbar-width);
+  margin-left: calc(var(--navbar-width, 112px) + 2rem);
+}
+
+.content-wrapper--v2-expanded {
+  margin-left: var(--sidebar-width-expanded, 280px);
+}
+
+.content-wrapper--v2-collapsed {
+  margin-left: var(--sidebar-width-collapsed, 72px);
+}
+
+.content-wrapper--mobile-open,
+.content-wrapper--v2-mobile-open {
+  margin-left: 0;
 }
 
 .content-wrapper--hidden {

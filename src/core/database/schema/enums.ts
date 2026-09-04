@@ -86,7 +86,7 @@ export const subscriptionPlanEnum = pgEnum('subscription_plan', [
   'basico',
   'emprendedor',
   'business_pro',
-  'enterprise_ai',
+  'enterprise_pro',
 ]);
 export const subscriptionStatusEnum = pgEnum('subscription_status', [
   'active',
@@ -165,4 +165,32 @@ export const importRowStatusEnum = pgEnum('import_row_status', [
   'processing',
   'completed',
   'error',
+]);
+
+// =====================================================
+// FEEDBACK ENUMS
+// =====================================================
+
+export const feedbackCategoryEnum = pgEnum('feedback_category', [
+  'bug',
+  'suggestion',
+  'question',
+  'other',
+]);
+
+export const feedbackStatusEnum = pgEnum('feedback_status', [
+  'open',
+  'in_progress',
+  'resolved',
+  'closed',
+]);
+
+export const feedbackPriorityEnum = pgEnum('feedback_priority', ['low', 'normal', 'high']);
+
+export const feedbackSenderTypeEnum = pgEnum('feedback_sender_type', ['user', 'admin']);
+
+export const feedbackRequestTypeEnum = pgEnum('feedback_request_type', [
+  'support',
+  'feedback',
+  'complaint',
 ]);

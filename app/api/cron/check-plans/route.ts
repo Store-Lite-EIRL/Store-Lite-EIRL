@@ -6,6 +6,7 @@
 
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
+import type { NotificationType } from '@/core/database/schema';
 import { businessSubscriptions, notifications } from '@/core/database/schema';
 import { notifyPlanExpired, notifyPlanExpiring } from '@/lib/notifications';
 import { and, eq, gte, sql } from 'drizzle-orm';
@@ -129,7 +130,7 @@ function getPlanLabel(planType: string): string {
     basico: 'Básico',
     emprendedor: 'Emprendedor',
     business_pro: 'Business Pro',
-    enterprise_ai: 'Enterprise AI',
+    enterprise_pro: 'Enterprise Pro',
   };
   return labels[planType] ?? planType;
 }
@@ -148,7 +149,7 @@ async function alreadyNotified(
 
   const conditions: any[] = [
     eq(notifications.businessId, businessId),
-    eq(notifications.type, type as any),
+    eq(notifications.type, type as NotificationType),
     gte(notifications.createdAt, today),
   ];
 

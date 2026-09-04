@@ -21,7 +21,7 @@ interface BusinessSettingsModalProps {
 
 type TabType = 'negocio' | 'productos' | 'resultados' | 'equipo' | 'peligro';
 
-const PREMIUM_PLANS = ['business_pro', 'enterprise_ai'];
+const PREMIUM_PLANS = ['business_pro', 'enterprise_pro'];
 const PREMIUM_TABS: TabType[] = ['resultados', 'equipo'];
 
 export default function BusinessSettingsModal({
@@ -117,7 +117,7 @@ export default function BusinessSettingsModal({
             </h2>
             <p className={styles.formHint} style={{ textAlign: 'center', maxWidth: '400px' }}>
               Esta sección está disponible solo en los planes <strong>Business Pro</strong> y{' '}
-              <strong>Enterprise AI</strong>. Actualiza tu plan para acceder a métricas avanzadas y
+              <strong>Enterprise Pro</strong>. Actualiza tu plan para acceder a métricas avanzadas y
               gestión de equipo.
             </p>
           </div>

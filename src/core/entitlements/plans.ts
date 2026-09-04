@@ -6,7 +6,7 @@
 // Consulta docs/ENTITLEMENTS_GUIDE.md antes de modificar.
 // =====================================================
 
-export type PlanType = 'basico' | 'emprendedor' | 'business_pro' | 'enterprise_ai';
+export type PlanType = 'basico' | 'emprendedor' | 'business_pro' | 'enterprise_pro';
 
 /**
  * Todos los permisos/límites que un negocio puede tener.
@@ -100,7 +100,7 @@ export const PLAN_ENTITLEMENTS: Record<
     dashboardEnabled: true,
     seoEnabled: true,
     canUseAIAssistant: false,
-    maxTeamMembers: 3,
+    maxTeamMembers: 2, // Owner + 1 invitado
   },
 
   business_pro: {
@@ -113,10 +113,10 @@ export const PLAN_ENTITLEMENTS: Record<
     dashboardEnabled: true,
     seoEnabled: true,
     canUseAIAssistant: true,
-    maxTeamMembers: 2, // Owner + 1 invitado
+    maxTeamMembers: 3, // Owner + 2 invitados
   },
 
-  enterprise_ai: {
+  enterprise_pro: {
     hasPaymentGateway: true,
     maxProducts: 600,
     maxCategories: 7, // máximo

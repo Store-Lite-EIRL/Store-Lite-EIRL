@@ -9,6 +9,10 @@ import { db } from '@/core/database/client';
 import { businesses, businessSettings, paymentOrders } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { completeIdempotencyKey, reserveIdempotencyKey } from '@/core/payments/idempotency';
+import { validateAmount } from '@/features/billing/validateAmount';
+import { captureEvent } from '@/lib/analytics/capture';
+import { AnalyticsEvents } from '@/lib/analytics/taxonomy';
+import { setSentryContext } from '@/lib/sentryContext';
 import { createClient } from '@/lib/supabase/server';
 import { splitFullName } from '@/shared/payments/fullName';
 import { decrypt } from '@/utils/crypto';
@@ -64,6 +68,21 @@ export async function POST(request: Request) {
 
     const { amount, currency, email, phone, customerName, businessId, productId, description } =
       validationResult.data;
+
+    // ─── PRICE REVALIDATION (fix-price-tampering) ────────────────
+    // When the order is tied to a product, reject a client-supplied amount
+    // that doesn't match the authoritative price from the DB. Skipped for
+    // generic (non product-tied) orders where productId is absent.
+    if (productId) {
+      const priceCheck = await validateAmount({
+        productId,
+        businessId,
+        clientAmount: amount,
+      });
+      if (!priceCheck.ok) {
+        return NextResponse.json({ error: priceCheck.error }, { status: 400 });
+      }
+    }
 
     const idempotencyReservation = await reserveIdempotencyKey(idempotencyKey);
     if (
@@ -236,6 +255,20 @@ export async function POST(request: Request) {
       qrUrl: order.qrUrl,
       expirationDate: order.expirationDate.toISOString(),
     };
+
+    // Fire-and-forget: capture checkout started event
+    captureEvent(AnalyticsEvents.CHECKOUT_STARTED, {
+      order_id: order.id,
+      amount: amount / 100,
+      currency,
+    }).catch(() => {});
+
+    // Attach user + business context to Sentry for multi-tenant error tracing
+    setSentryContext(
+      { id: user.id, email: user.email },
+      { id: businessId, plan: entitlements.plan },
+    );
+
     await completeIdempotencyKey(reservedIdempotencyKey, responseBody, 200);
     return NextResponse.json(responseBody);
   } catch (error) {
