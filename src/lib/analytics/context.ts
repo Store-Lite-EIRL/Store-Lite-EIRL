@@ -24,19 +24,31 @@ export async function getAnalyticsContext(): Promise<AnalyticsContext> {
     return { userId: null, businessId: null, plan: 'none' };
   }
 
-  // Look up the user's business membership
+  // Look up the user's business membership (real table: business_team_members)
   const { data: membership } = await supabase
-    .from('business_members')
-    .select('business_id, businesses(id, plan)')
+    .from('business_team_members')
+    .select('business_id')
     .eq('user_id', user.id)
     .limit(1)
     .single();
 
-  const businessId = (membership as Record<string, unknown>)?.business_id as string | null;
-  const businesses = (membership as Record<string, unknown>)?.businesses as
-    | { id: string; plan: string | null }[]
-    | null;
-  const plan = businesses?.[0]?.plan ?? 'none';
+  const businessId = (membership as { business_id: string } | null)?.business_id ?? null;
+
+  // Resolve the plan from the active subscription — the `businesses` table has
+  // no plan column; plan lives in `business_subscriptions.plan_type`.
+  let plan = 'none';
+  if (businessId) {
+    const { data: subscription } = await supabase
+      .from('business_subscriptions')
+      .select('plan_type')
+      .eq('business_id', businessId)
+      .eq('plan_status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    plan = (subscription as { plan_type: string } | null)?.plan_type ?? 'none';
+  }
 
   return { userId: user.id, businessId, plan };
 }

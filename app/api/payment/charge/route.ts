@@ -22,6 +22,7 @@ import { captureEvent } from '@/lib/analytics/capture';
 import { AnalyticsEvents } from '@/lib/analytics/taxonomy';
 import { sendOrderConfirmationEmail } from '@/lib/email/orderEmails';
 import { notifyLowStock, notifyNewOrder, notifyOutOfStock } from '@/lib/notifications';
+import { setSentryContext } from '@/lib/sentryContext';
 import { createClient } from '@/lib/supabase/server';
 import { sendOrderStatusSms } from '@/lib/twilio/orderSms';
 import { splitFullName } from '@/shared/payments/fullName';
@@ -456,6 +457,15 @@ export async function POST(request: Request) {
       amount: amount / 100,
       currency,
     }).catch(() => {});
+
+    // Attach user + business context to Sentry for multi-tenant error tracing.
+    // Guest checkouts (anonymous buyers) safely skip user context.
+    if (authUser?.id) {
+      setSentryContext(
+        { id: authUser.id, email: authUser.email },
+        { id: businessId, plan: entitlements.plan },
+      );
+    }
 
     const responseBody = {
       success: true,

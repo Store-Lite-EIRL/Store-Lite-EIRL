@@ -7,6 +7,7 @@ import { captureEvent } from '@/lib/analytics/capture';
 import { AnalyticsEvents } from '@/lib/analytics/taxonomy';
 import { logError } from '@/lib/errorHandling';
 import { notifyLowStock, notifyOutOfStock } from '@/lib/notifications';
+import { setSentryContext } from '@/lib/sentryContext';
 import { getUniqueCategorySlug } from '@/shared/utils/categorySlug';
 import { getUniqueProductSlug } from '@/shared/utils/productSlug';
 import { and, eq, sql } from 'drizzle-orm';
@@ -182,7 +183,7 @@ export async function getProductById(businessSlug: string, productId: string) {
 export async function createProduct(businessSlug: string, productData: ProductActionInput) {
   try {
     const normalizedProduct = normalizeProductInput(productData);
-    const { businessId } = await requireAccess(businessSlug, 'products.create');
+    const { businessId, userId } = await requireAccess(businessSlug, 'products.create');
 
     // --- Entitlements Check ---
     const entitlements = await getBusinessEntitlements(businessId);
@@ -304,6 +305,9 @@ export async function createProduct(businessSlug: string, productData: ProductAc
     captureEvent(AnalyticsEvents.PRODUCT_CREATED, {
       product_id: newProduct.id,
     }).catch(() => {});
+
+    // Attach user + business context to Sentry for multi-tenant error tracing
+    setSentryContext({ id: userId }, { id: businessId, plan: entitlements.plan });
 
     // ─── Notificar stock bajo si aplica ───
     if (normalizedProduct.stock === 0) {

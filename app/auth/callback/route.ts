@@ -7,6 +7,7 @@
 
 import { captureEvent } from '@/lib/analytics/capture';
 import { AnalyticsEvents } from '@/lib/analytics/taxonomy';
+import { setSentryContext } from '@/lib/sentryContext';
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
@@ -43,6 +44,10 @@ export async function GET(request: Request) {
     captureEvent(AnalyticsEvents.USER_SIGNED_UP, {
       provider: data.user.app_metadata?.provider,
     }).catch(() => {});
+
+    // Attach user context to Sentry for post-signup error tracing.
+    // No business exists yet at signup, so only the user is set.
+    setSentryContext({ id: data.user.id, email: data.user.email });
 
     // Check for chat intent from storefront
     const chat = requestUrl.searchParams.get('chat');

@@ -11,6 +11,8 @@ import {
 import { captureEvent } from '@/lib/analytics/capture';
 import { AnalyticsEvents } from '@/lib/analytics/taxonomy';
 import { getRucInfo, getRucRepresentatives } from '@/lib/factiliza/client';
+import { setSentryContext } from '@/lib/sentryContext';
+import { createClient } from '@/lib/supabase/server';
 import { checkOtpViaVerify, sendOtpViaVerify } from '@/lib/twilio/client';
 import { and, desc, eq, gt, sql } from 'drizzle-orm';
 
@@ -280,6 +282,15 @@ export async function createVerifiedBusinessAction(formData: FormData) {
 
     // Fire-and-forget: capture business creation event
     captureEvent(AnalyticsEvents.BUSINESS_CREATED).catch(() => {});
+
+    // Attach user context to Sentry. Business context is intentionally
+    // skipped while this action still returns a placeholder id — tagging a
+    // fake business_id would pollute multi-tenant error tracing.
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    setSentryContext(user ? { id: user.id, email: user.email } : undefined);
 
     return {
       success: true,

@@ -1,31 +1,48 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────
+// The real schema: `business_team_members` holds membership (business_id,
+// user_id); the plan lives in `business_subscriptions.plan_type` (the
+// `businesses` table has NO plan column). The mock dispatches by table name
+// so any query against a wrong table fails loudly.
 
-const { mockGetUser, mockSupabaseChain } = vi.hoisted(() => {
-  const mockSingle = vi.fn();
-  const mockLimit = vi.fn(() => ({ single: mockSingle }));
-  const mockEq = vi.fn(() => ({ limit: mockLimit }));
-  const mockSelect = vi.fn(() => ({ eq: mockEq }));
-  const mockFrom = vi.fn(() => ({ select: mockSelect }));
+const { mockGetUser, mockFrom, mockMembershipSingle, mockSubscriptionSingle } = vi.hoisted(() => {
+  const mockMembershipSingle = vi.fn();
+  const mockMembershipLimit = vi.fn(() => ({ single: mockMembershipSingle }));
+  const mockMembershipEq = vi.fn(() => ({ limit: mockMembershipLimit }));
+  const mockMembershipSelect = vi.fn(() => ({ eq: mockMembershipEq }));
+
+  const mockSubscriptionSingle = vi.fn();
+  const mockSubscriptionLimit = vi.fn(() => ({ single: mockSubscriptionSingle }));
+  const mockSubscriptionOrder = vi.fn(() => ({ limit: mockSubscriptionLimit }));
+  const mockSubscriptionEqFilter = vi.fn(() => ({ order: mockSubscriptionOrder }));
+  const mockSubscriptionEq = vi.fn(() => ({ eq: mockSubscriptionEqFilter }));
+  const mockSubscriptionSelect = vi.fn(() => ({ eq: mockSubscriptionEq }));
+
+  const mockFrom = vi.fn((table: string) => {
+    if (table === 'business_team_members') {
+      return { select: mockMembershipSelect };
+    }
+    if (table === 'business_subscriptions') {
+      return { select: mockSubscriptionSelect };
+    }
+    throw new Error(`Unexpected table queried: ${table}`);
+  });
+
   const mockGetUser = vi.fn();
 
   return {
     mockGetUser,
-    mockSupabaseChain: {
-      from: mockFrom,
-      select: mockSelect,
-      eq: mockEq,
-      limit: mockLimit,
-      single: mockSingle,
-    },
+    mockFrom,
+    mockMembershipSingle,
+    mockSubscriptionSingle,
   };
 });
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
     auth: { getUser: mockGetUser },
-    from: mockSupabaseChain.from,
+    from: mockFrom,
   })),
 }));
 
@@ -40,22 +57,33 @@ describe('getAnalyticsContext', () => {
     vi.restoreAllMocks();
   });
 
-  it('returns userId, businessId, and plan when session and business exist', async () => {
+  it('returns userId, businessId, and active-subscription plan when they exist', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-abc' } } });
-    mockSupabaseChain.single.mockResolvedValue({
-      data: { business_id: 'biz-123', businesses: [{ id: 'biz-123', plan: 'pro' }] },
-    });
+    mockMembershipSingle.mockResolvedValue({ data: { business_id: 'biz-123' } });
+    mockSubscriptionSingle.mockResolvedValue({ data: { plan_type: 'emprendedor' } });
 
     const ctx = await getAnalyticsContext();
 
     expect(ctx).toEqual({
       userId: 'user-abc',
       businessId: 'biz-123',
-      plan: 'pro',
+      plan: 'emprendedor',
     });
   });
 
-  it('returns null userId and defaults when no session', async () => {
+  it('queries business_team_members (not business_members) and business_subscriptions for plan', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'user-abc' } } });
+    mockMembershipSingle.mockResolvedValue({ data: { business_id: 'biz-123' } });
+    mockSubscriptionSingle.mockResolvedValue({ data: { plan_type: 'pro' } });
+
+    await getAnalyticsContext();
+
+    expect(mockFrom).toHaveBeenCalledWith('business_team_members');
+    expect(mockFrom).not.toHaveBeenCalledWith('business_members');
+    expect(mockSubscriptionSingle).toHaveBeenCalled();
+  });
+
+  it('returns null userId and defaults when no session exists', async () => {
     mockGetUser.mockResolvedValue({ data: { user: null } });
 
     const ctx = await getAnalyticsContext();
@@ -65,14 +93,13 @@ describe('getAnalyticsContext', () => {
       businessId: null,
       plan: 'none',
     });
-    expect(mockSupabaseChain.from).not.toHaveBeenCalled();
+    expect(mockFrom).not.toHaveBeenCalled();
   });
 
-  it('returns "none" plan when business has no plan', async () => {
+  it('returns businessId with "none" plan when membership has no active subscription', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-xyz' } } });
-    mockSupabaseChain.single.mockResolvedValue({
-      data: { business_id: 'biz-456', businesses: [{ id: 'biz-456', plan: null }] },
-    });
+    mockMembershipSingle.mockResolvedValue({ data: { business_id: 'biz-456' } });
+    mockSubscriptionSingle.mockResolvedValue({ data: null });
 
     const ctx = await getAnalyticsContext();
 
@@ -81,5 +108,19 @@ describe('getAnalyticsContext', () => {
       businessId: 'biz-456',
       plan: 'none',
     });
+  });
+
+  it('returns null businessId and "none" plan when user has no membership', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'user-lonely' } } });
+    mockMembershipSingle.mockResolvedValue({ data: null });
+
+    const ctx = await getAnalyticsContext();
+
+    expect(ctx).toEqual({
+      userId: 'user-lonely',
+      businessId: null,
+      plan: 'none',
+    });
+    expect(mockFrom).not.toHaveBeenCalledWith('business_subscriptions');
   });
 });
