@@ -18,6 +18,8 @@ import { completeIdempotencyKey, reserveIdempotencyKey } from '@/core/payments/i
 import { paymentRateLimiter } from '@/core/payments/rateLimiter';
 import { generateTrackingToken } from '@/core/utils/trackingToken';
 import { validateAmount } from '@/features/billing/validateAmount';
+import { captureEvent } from '@/lib/analytics/capture';
+import { AnalyticsEvents } from '@/lib/analytics/taxonomy';
 import { sendOrderConfirmationEmail } from '@/lib/email/orderEmails';
 import { notifyLowStock, notifyNewOrder, notifyOutOfStock } from '@/lib/notifications';
 import { createClient } from '@/lib/supabase/server';
@@ -447,6 +449,13 @@ export async function POST(request: Request) {
         }).catch(() => {});
       }
     }
+
+    // Fire-and-forget: capture payment completed event
+    captureEvent(AnalyticsEvents.PAYMENT_COMPLETED, {
+      order_id: result.id,
+      amount: amount / 100,
+      currency,
+    }).catch(() => {});
 
     const responseBody = {
       success: true,

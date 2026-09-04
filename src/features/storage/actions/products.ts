@@ -3,6 +3,8 @@
 import { db } from '@/core/database/client';
 import { productCategories, productLikes, productMedia, products } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements';
+import { captureEvent } from '@/lib/analytics/capture';
+import { AnalyticsEvents } from '@/lib/analytics/taxonomy';
 import { logError } from '@/lib/errorHandling';
 import { notifyLowStock, notifyOutOfStock } from '@/lib/notifications';
 import { getUniqueCategorySlug } from '@/shared/utils/categorySlug';
@@ -297,6 +299,11 @@ export async function createProduct(businessSlug: string, productData: ProductAc
 
       await db.insert(productMedia).values(mediaValues);
     }
+
+    // Fire-and-forget: capture product creation event
+    captureEvent(AnalyticsEvents.PRODUCT_CREATED, {
+      product_id: newProduct.id,
+    }).catch(() => {});
 
     // ─── Notificar stock bajo si aplica ───
     if (normalizedProduct.stock === 0) {
