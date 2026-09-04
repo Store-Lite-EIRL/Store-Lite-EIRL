@@ -10,6 +10,9 @@ import { businesses, businessSettings, paymentOrders } from '@/core/database/sch
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { completeIdempotencyKey, reserveIdempotencyKey } from '@/core/payments/idempotency';
 import { validateAmount } from '@/features/billing/validateAmount';
+import { captureEvent } from '@/lib/analytics/capture';
+import { AnalyticsEvents } from '@/lib/analytics/taxonomy';
+import { setSentryContext } from '@/lib/sentryContext';
 import { createClient } from '@/lib/supabase/server';
 import { splitFullName } from '@/shared/payments/fullName';
 import { decrypt } from '@/utils/crypto';
@@ -252,6 +255,20 @@ export async function POST(request: Request) {
       qrUrl: order.qrUrl,
       expirationDate: order.expirationDate.toISOString(),
     };
+
+    // Fire-and-forget: capture checkout started event
+    captureEvent(AnalyticsEvents.CHECKOUT_STARTED, {
+      order_id: order.id,
+      amount: amount / 100,
+      currency,
+    }).catch(() => {});
+
+    // Attach user + business context to Sentry for multi-tenant error tracing
+    setSentryContext(
+      { id: user.id, email: user.email },
+      { id: businessId, plan: entitlements.plan },
+    );
+
     await completeIdempotencyKey(reservedIdempotencyKey, responseBody, 200);
     return NextResponse.json(responseBody);
   } catch (error) {

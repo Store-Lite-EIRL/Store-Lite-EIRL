@@ -21,6 +21,21 @@ import { createServerClient } from '@supabase/ssr';
 import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
 
+/**
+ * Checks whether a given taxId (RUC) is already registered in the platform.
+ * Called from the client during RUC verification (Step 1) for immediate UX feedback.
+ */
+export async function checkTaxIdExistsAction(taxId: string): Promise<{ exists: boolean }> {
+  if (!taxId || taxId.trim().length === 0) return { exists: false };
+
+  const existing = await db.query.businesses.findFirst({
+    where: eq(businesses.taxId, taxId.trim()),
+    columns: { id: true },
+  });
+
+  return { exists: !!existing };
+}
+
 export async function createBusinessAction(formData: FormData) {
   const cookieStore = await cookies();
 
@@ -72,6 +87,21 @@ export async function createBusinessAction(formData: FormData) {
     return {
       error: 'Has alcanzado el límite máximo de 3 negocios por cuenta.',
     };
+  }
+
+  // 1.8 Check for duplicate RUC / taxId
+  const incomingTaxId = (formData.get('taxId') as string | null)?.trim();
+  if (incomingTaxId) {
+    const duplicateRuc = await db.query.businesses.findFirst({
+      where: eq(businesses.taxId, incomingTaxId),
+      columns: { id: true },
+    });
+    if (duplicateRuc) {
+      return {
+        error:
+          'Este RUC ya está registrado en la plataforma. Si creés que es un error, contactá al soporte.',
+      };
+    }
   }
 
   // 2. Validate Data using Zod
@@ -167,105 +197,133 @@ export async function createBusinessAction(formData: FormData) {
   );
 
   try {
-    // 5. Insert into Database
-    const [newBusiness] = await db
-      .insert(businesses)
-      .values({
-        ownerId: userId,
-        name: commercialName,
-        slug: finalSlug,
-        taxId,
-        personType,
-        country,
-        city,
-        departamento,
-        provincia,
-        distrito,
-        address,
-        email,
-        whatsappNumber: phone,
-        description,
-        legalRepName,
-        legalRepRole,
-        legalRepPhone,
-        legalRepEmail,
-        isActive: true,
-        storeType: sector, // Map sector to storeType for now
-      })
-      .returning({ id: businesses.id });
-
-    const businessId = newBusiness.id;
-    console.warn('[createBusinessAction] DB insertion success:', businessId);
-
-    const preferencesWithLayout = mergeStorefrontLayoutIntoPreferences(
-      {},
-      createDefaultStorefrontLayout(),
-    );
-    const initialPreferences = mergeStorefrontThemeIntoPreferences(
-      preferencesWithLayout,
-      storefrontTheme,
-    );
-
-    await db.insert(businessSettings).values({
-      businessId,
-      contrastLevel: 'standard',
-      preferences: initialPreferences,
-    });
-
-    await db.insert(businessSubscriptions).values({
-      businessId,
-      planType: 'basico',
-      planStatus: 'active',
-      planStartDate: new Date(),
-      planEndDate: null,
-      cancelAtPeriodEnd: false,
-    });
-
-    // 3. Handle Logo Upload
-    if (logoFile && logoFile.size > 0) {
-      console.warn('[createBusinessAction] Preparing logo upload for business:', businessId);
-
-      const fileExt = logoFile.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `logos/${businessId}/${fileName}`;
-
-      // USE ADMIN STORAGE CLIENT to bypass RLS for uploads (as done in other actions)
-      const { createClient } = await import('@supabase/supabase-js');
-      const adminStorage = createClient(env.supabaseUrl, env.supabaseServiceRoleKey, {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-          detectSessionInUrl: false,
-        },
+    // 5. Insert into Database — wrapped in a transaction so the limit check
+    // and the insert are atomic. If anything fails, nothing gets committed.
+    const { businessId, finalSlug: txSlug } = await db.transaction(async (tx) => {
+      // Re-check limit inside the transaction to prevent race conditions
+      const txBusinesses = await tx.query.businesses.findMany({
+        where: eq(businesses.ownerId, userId),
+        columns: { id: true },
       });
 
-      console.warn('[createBusinessAction] Uploading to store-covers:', filePath);
-      const { error: uploadError } = await adminStorage.storage
-        .from('store-covers')
-        .upload(filePath, logoFile);
-
-      if (uploadError) {
-        console.error(
-          '[createBusinessAction] Storage error from Supabase (bypassing RLS):',
-          uploadError,
-        );
-        return { error: `Error al subir el logo: ${uploadError.message}` };
+      if (txBusinesses.length >= 3) {
+        throw new Error('LIMIT_EXCEEDED');
       }
 
-      console.warn('[createBusinessAction] Upload successful:', filePath);
+      const [newBusiness] = await tx
+        .insert(businesses)
+        .values({
+          ownerId: userId,
+          name: commercialName,
+          slug: finalSlug,
+          taxId,
+          personType,
+          country,
+          city,
+          departamento,
+          provincia,
+          distrito,
+          address,
+          email,
+          whatsappNumber: phone,
+          description,
+          legalRepName,
+          legalRepRole,
+          legalRepPhone,
+          legalRepEmail,
+          isActive: true,
+          storeType: sector, // Map sector to storeType for now
+        })
+        .returning({ id: businesses.id });
 
-      const {
-        data: { publicUrl },
-      } = adminStorage.storage.from('store-covers').getPublicUrl(filePath);
+      const bizId = newBusiness.id;
 
-      console.warn('[createBusinessAction] Final logo URL:', publicUrl);
+      const preferencesWithLayout = mergeStorefrontLayoutIntoPreferences(
+        {},
+        createDefaultStorefrontLayout(),
+      );
+      const initialPreferences = mergeStorefrontThemeIntoPreferences(
+        preferencesWithLayout,
+        storefrontTheme,
+      );
 
-      await db.update(businesses).set({ logoUrl: publicUrl }).where(eq(businesses.id, businessId));
+      await tx.insert(businessSettings).values({
+        businessId: bizId,
+        contrastLevel: 'standard',
+        preferences: initialPreferences,
+      });
+
+      await tx.insert(businessSubscriptions).values({
+        businessId: bizId,
+        planType: 'basico',
+        planStatus: 'active',
+        planStartDate: new Date(),
+        planEndDate: null,
+        cancelAtPeriodEnd: false,
+      });
+
+      return { businessId: bizId, finalSlug };
+    });
+
+    console.warn('[createBusinessAction] Transaction committed for slug:', txSlug);
+
+    // 6. Handle Logo Upload — OUTSIDE the transaction.
+    // If it fails, the business is already created. We treat it as non-fatal.
+    let logoWarning: string | undefined;
+
+    if (logoFile && logoFile.size > 0) {
+      try {
+        console.warn('[createBusinessAction] Preparing logo upload for business:', businessId);
+
+        const fileExt = logoFile.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `logos/${businessId}/${fileName}`;
+
+        const { createClient } = await import('@supabase/supabase-js');
+        const adminStorage = createClient(env.supabaseUrl, env.supabaseServiceRoleKey, {
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false,
+          },
+        });
+
+        const arrayBuffer = await logoFile.arrayBuffer();
+        const fileBuffer = Buffer.from(arrayBuffer);
+
+        const { error: uploadError } = await adminStorage.storage
+          .from('store-covers')
+          .upload(filePath, fileBuffer, {
+            contentType: logoFile.type || 'image/jpeg',
+            upsert: true,
+          });
+
+        if (uploadError) {
+          console.error('[createBusinessAction] Logo upload failed (non-fatal):', uploadError);
+          logoWarning = uploadError.message;
+        } else {
+          const {
+            data: { publicUrl },
+          } = adminStorage.storage.from('store-covers').getPublicUrl(filePath);
+
+          console.warn('[createBusinessAction] Final logo URL:', publicUrl);
+          await db
+            .update(businesses)
+            .set({ logoUrl: publicUrl })
+            .where(eq(businesses.id, businessId));
+        }
+      } catch (logoError) {
+        console.error('[createBusinessAction] Logo upload exception (non-fatal):', logoError);
+        logoWarning = 'No se pudo subir el logo.';
+      }
     }
 
-    console.warn('[createBusinessAction] Creation fully completed for slug:', finalSlug);
-    return { success: true, slug: finalSlug };
+    console.warn('[createBusinessAction] Creation fully completed for slug:', txSlug);
+    return { success: true, slug: txSlug, logoWarning };
   } catch (error) {
+    if (error instanceof Error && error.message === 'LIMIT_EXCEEDED') {
+      return { error: 'Has alcanzado el límite máximo de 3 negocios por cuenta.' };
+    }
     console.error('[createBusinessAction] Top level catch block error:', error);
     return { error: 'Error al guardar los datos en la base de datos.' };
   }
