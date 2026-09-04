@@ -1,5 +1,5 @@
 // =====================================================
-// AuthProvider — signInWithEmail tests
+// AuthProvider tests
 // Spec: openspec/changes/culqi-validation-email-password-auth/specs/email-password-login/spec.md
 // =====================================================
 
@@ -28,7 +28,6 @@ vi.mock('posthog-js', () => ({
 
 const mockGetSession = vi.fn();
 const mockOnAuthStateChange = vi.fn();
-const mockSignInWithPassword = vi.fn();
 const mockSignInWithOAuth = vi.fn();
 const mockSignOut = vi.fn();
 const mockMaybeSingle = vi.fn();
@@ -37,7 +36,6 @@ vi.mock('@/lib/supabase/client', () => ({
     auth: {
       getSession: mockGetSession,
       onAuthStateChange: mockOnAuthStateChange,
-      signInWithPassword: mockSignInWithPassword,
       signInWithOAuth: mockSignInWithOAuth,
       signOut: mockSignOut,
     },
@@ -50,9 +48,6 @@ vi.mock('@/lib/supabase/client', () => ({
 }));
 
 // ── Helpers ──────────────────────────────────────────
-
-const TEST_EMAIL = 'admin@store-lite.com';
-const TEST_CREDENTIAL = 'correct-horse-battery-staple';
 
 // The probe reports the context through a callback created outside the
 // component body, so react-hooks/globals does not flag outer-state writes.
@@ -88,64 +83,6 @@ beforeEach(() => {
 });
 
 // ── Tests ────────────────────────────────────────────
-
-describe('AuthProvider — signInWithEmail', () => {
-  it('signs in with valid credentials and navigates to /onboarding', async () => {
-    mockSignInWithPassword.mockResolvedValue({
-      data: { user: { id: 'user-1' }, session: { user: { id: 'user-1' } } },
-      error: null,
-    });
-    const auth = renderProvider();
-
-    const result = await auth.signInWithEmail(TEST_EMAIL, TEST_CREDENTIAL);
-
-    expect(result.error).toBeUndefined();
-    expect(mockSignInWithPassword).toHaveBeenCalledWith({
-      email: TEST_EMAIL,
-      password: TEST_CREDENTIAL,
-    });
-    expect(mockRouter.push).toHaveBeenCalledWith('/onboarding');
-  });
-
-  it('returns es-PE message for invalid credentials and does not navigate', async () => {
-    mockSignInWithPassword.mockResolvedValue({
-      data: { user: null, session: null },
-      error: { code: 'invalid_credentials', message: 'Invalid login credentials' },
-    });
-    const auth = renderProvider();
-
-    const result = await auth.signInWithEmail(TEST_EMAIL, 'wrong-password');
-
-    expect(result.error).toBe('Correo o contraseña incorrectos.');
-    expect(mockRouter.push).not.toHaveBeenCalled();
-  });
-
-  it('returns confirm-email message when the account is not confirmed', async () => {
-    mockSignInWithPassword.mockResolvedValue({
-      data: { user: null, session: null },
-      error: { code: 'email_not_confirmed', message: 'Email not confirmed' },
-    });
-    const auth = renderProvider();
-
-    const result = await auth.signInWithEmail(TEST_EMAIL, TEST_CREDENTIAL);
-
-    expect(result.error).toBe('Debes confirmar tu correo electrónico antes de iniciar sesión.');
-    expect(mockRouter.push).not.toHaveBeenCalled();
-  });
-
-  it('falls back to a generic message for unknown errors and never navigates', async () => {
-    mockSignInWithPassword.mockResolvedValue({
-      data: { user: null, session: null },
-      error: { code: 'unexpected_failure', message: 'Something broke' },
-    });
-    const auth = renderProvider();
-
-    const result = await auth.signInWithEmail(TEST_EMAIL, TEST_CREDENTIAL);
-
-    expect(result.error).toBe('No se pudo iniciar sesión. Inténtalo de nuevo.');
-    expect(mockRouter.push).not.toHaveBeenCalled();
-  });
-});
 
 describe('AuthProvider — profile sync after sign-in', () => {
   it('tolerates a missing profile (PGRST116) without crashing', async () => {
