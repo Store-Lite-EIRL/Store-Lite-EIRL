@@ -65,7 +65,7 @@ export const TableControls = ({ extraColumns }: TableControlsProps) => {
           <Select
             label="Ordenar por"
             value={sortBy}
-            onInput={(e: React.FormEvent<HTMLSelectElement>) => setSortBy(e.currentTarget.value)}
+            onInput={(e: MaterialSelectEvent) => setSortBy(getMaterialSelectValue(e))}
             options={[
               { label: 'Mas recientes', value: 'newest' },
               { label: 'Precio: Menor a Mayor', value: 'low-price' },

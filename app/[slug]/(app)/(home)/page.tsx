@@ -5,13 +5,18 @@ import { db } from '@/core/database/client';
 import { businessSettings, productCategories } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import {
+  buildStorefrontThemeStyleTag,
+  createDefaultStorefrontTheme,
   getStorefrontLayoutFromPreferences,
   getStorefrontThemeFromPreferences,
   hasCustomStorefrontTheme,
 } from '@/core/storefront';
 import { getMemberPermissions } from '@/lib/permissions';
 import { createClient } from '@/lib/supabase/server';
+import { buildHomeBreadcrumbs } from '@/shared/seo/buildStorefrontBreadcrumbs';
+import { buildStoreDescription, buildStoreTitle } from '@/shared/seo/buildStorefrontMeta';
 import { getCanonicalBusinessUrl } from '@/shared/utils/url';
+import type { Business } from '@/types/business';
 import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
@@ -19,6 +24,46 @@ import BusinessPageContent from '../BusinessPageContent';
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+function buildBusinessJsonLd(business: Business) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: business.name,
+    description: business.seoDescription || business.description,
+    url: getCanonicalBusinessUrl(business.slug),
+    logo: business.logoUrl,
+    image: business.coverImageUrl,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: business.address,
+      addressLocality: business.city,
+      addressCountry: business.country || 'PE',
+    },
+    geo:
+      business.latitude && business.longitude
+        ? {
+            '@type': 'GeoCoordinates',
+            latitude: business.latitude,
+            longitude: business.longitude,
+          }
+        : undefined,
+    telephone: business.whatsappNumber,
+  };
+}
+
+function buildBusinessGeoMeta(business: Business) {
+  return {
+    ...(business.geoRegion && { 'geo.region': business.geoRegion }),
+    ...(business.geoPlacename && { 'geo.placename': business.geoPlacename }),
+    ...(business.city && !business.geoPlacename && { 'geo.placename': business.city }),
+    ...(business.latitude &&
+      business.longitude && {
+        'geo.position': `${business.latitude};${business.longitude}`,
+        ICBM: `${business.latitude}, ${business.longitude}`,
+      }),
+  };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -31,22 +76,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  const { seoEnabled } = await getBusinessEntitlements(business.id);
-
-  if (!seoEnabled) {
-    return {
-      title: `${business.name} | Store Lite`,
-      description: business.description || `Welcome to ${business.name}`,
-      robots: { index: false, follow: false },
-    };
-  }
-
-  const title =
-    business.seoTitle || `${business.name} — Tienda en ${business.city || 'Perú'} | Store Lite`;
-  const description =
-    business.seoDescription ||
-    business.description ||
-    `Bienvenido a ${business.name}, tu tienda de confianza.`;
+  const title = buildStoreTitle(business);
+  const description = buildStoreDescription(business);
 
   const canonicalUrl = getCanonicalBusinessUrl(business.slug);
 
@@ -64,16 +95,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: 'website',
       ...(business.logoUrl && { images: [{ url: business.logoUrl }] }),
     },
-    other: {
-      ...(business.geoRegion && { 'geo.region': business.geoRegion }),
-      ...(business.geoPlacename && { 'geo.placename': business.geoPlacename }),
-      ...(business.city && !business.geoPlacename && { 'geo.placename': business.city }),
-      ...(business.latitude &&
-        business.longitude && {
-          'geo.position': `${business.latitude};${business.longitude}`,
-          ICBM: `${business.latitude}, ${business.longitude}`,
-        }),
-    },
+    other: buildBusinessGeoMeta(business),
   };
 }
 
@@ -116,34 +138,10 @@ export default async function BusinessPage({ params }: Props) {
   const isStaff = isOwner || permissions.length > 0;
 
   const entitlements = await getBusinessEntitlements(business.id);
-  const { hasPaymentGateway, chatEnabled, seoEnabled, plan } = entitlements;
+  const { hasPaymentGateway, chatEnabled } = entitlements;
 
-  const jsonLd = seoEnabled
-    ? {
-        '@context': 'https://schema.org',
-        '@type': 'LocalBusiness',
-        name: business.name,
-        description: business.seoDescription || business.description,
-        url: getCanonicalBusinessUrl(business.slug),
-        logo: business.logoUrl,
-        image: business.coverImageUrl,
-        address: {
-          '@type': 'PostalAddress',
-          streetAddress: business.address,
-          addressLocality: business.city,
-          addressCountry: business.country || 'PE',
-        },
-        geo:
-          business.latitude && business.longitude
-            ? {
-                '@type': 'GeoCoordinates',
-                latitude: business.latitude,
-                longitude: business.longitude,
-              }
-            : undefined,
-        telephone: business.whatsappNumber,
-      }
-    : null;
+  const jsonLd = buildBusinessJsonLd(business);
+  const breadcrumbJsonLd = buildHomeBreadcrumbs(business);
 
   const allProducts = await db.query.products.findMany({
     where: (p, { and, eq }) => {
@@ -164,6 +162,10 @@ export default async function BusinessPage({ params }: Props) {
     ? getStorefrontThemeFromPreferences(settings?.preferences)
     : undefined;
 
+  const defaultScheme = settings?.themeMode ?? 'light';
+  const effectiveStorefrontTheme = savedStorefrontTheme ?? createDefaultStorefrontTheme();
+  const ssrThemeStyleTag = buildStorefrontThemeStyleTag(effectiveStorefrontTheme, defaultScheme);
+
   return (
     <>
       {jsonLd && (
@@ -172,6 +174,13 @@ export default async function BusinessPage({ params }: Props) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}
+      {breadcrumbJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        />
+      )}
+      <style dangerouslySetInnerHTML={{ __html: ssrThemeStyleTag }} />
       <BusinessPageContent
         business={business}
         isOwner={isOwner}

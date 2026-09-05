@@ -16,6 +16,8 @@ interface NavbarProps {
   onToggle: () => void;
   planName?: string;
   businessId?: string;
+  businessName?: string;
+  businessLogoUrl?: string;
 }
 
 export default function Navbar({
@@ -23,6 +25,8 @@ export default function Navbar({
   onToggle,
   planName = 'Básico',
   businessId,
+  businessName,
+  businessLogoUrl,
 }: NavbarProps) {
   const pathname = usePathname();
   const params = useParams();
@@ -101,33 +105,92 @@ export default function Navbar({
     router.push('/list-business');
   };
 
-  const navItems = [
-    { id: 'home', icon: 'home', label: 'Inicio', path: getBusinessPath(slug) },
-    { id: 'chat', icon: 'chat', label: 'Mensajes', path: getBusinessPath(slug, '/chat') },
+  // Section configuration with collapsible state
+  const SECTIONS_STORAGE_KEY = `navbar_sections_${businessId || 'default'}`;
+
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    principal: true,
+    gestion: true,
+    configuracion: true,
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(SECTIONS_STORAGE_KEY);
+      if (stored) {
+        try {
+          setExpandedSections(JSON.parse(stored));
+        } catch {
+          // Ignore parse errors
+        }
+      }
+    }
+  }, [SECTIONS_STORAGE_KEY]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(SECTIONS_STORAGE_KEY, JSON.stringify(expandedSections));
+    }
+  }, [expandedSections, SECTIONS_STORAGE_KEY]);
+
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections((prev) => ({ ...prev, [sectionId]: !prev[sectionId] }));
+  };
+
+  // Define sections with their items
+  const sections = [
     {
-      id: 'notifications',
-      icon: 'notifications',
-      label: 'Notificaciones',
-      path: getBusinessPath(slug, '/notifications'),
+      id: 'principal',
+      title: 'Principal',
+      icon: 'apps',
+      items: [
+        { id: 'home', icon: 'home', label: 'Inicio', path: getBusinessPath(slug) },
+        { id: 'chat', icon: 'chat', label: 'Mensajes', path: getBusinessPath(slug, '/chat') },
+        {
+          id: 'notifications',
+          icon: 'notifications',
+          label: 'Notificaciones',
+          path: getBusinessPath(slug, '/notifications'),
+        },
+      ],
     },
-    { id: 'storage', icon: 'package_2', label: 'Almacén', path: getBusinessPath(slug, '/storage') },
     {
-      id: 'soporte',
-      icon: 'support',
-      label: 'Soporte',
-      path: getBusinessPath(slug, '/soporte'),
+      id: 'gestion',
+      title: 'Gestión',
+      icon: 'inventory_2',
+      items: [
+        {
+          id: 'storage',
+          icon: 'package_2',
+          label: 'Almacén',
+          path: getBusinessPath(slug, '/storage'),
+        },
+        {
+          id: 'dashboard',
+          icon: 'dashboard',
+          label: 'Dashboard',
+          path: getBusinessPath(slug, '/dashboard'),
+        },
+      ],
     },
     {
-      id: 'dashboard',
-      icon: 'dashboard',
-      label: 'Dashboard',
-      path: getBusinessPath(slug, '/dashboard'),
-    },
-    {
-      id: 'settings',
-      icon: 'settings',
-      label: 'Ajustes',
-      path: getBusinessPath(slug, '/settings'),
+      id: 'configuracion',
+      title: 'Configuración',
+      icon: 'tune',
+      items: [
+        {
+          id: 'feedback',
+          icon: 'feedback',
+          label: 'Ayuda',
+          path: getBusinessPath(slug, '/ayuda'),
+        },
+        {
+          id: 'settings',
+          icon: 'settings',
+          label: 'Ajustes',
+          path: getBusinessPath(slug, '/settings'),
+        },
+      ],
     },
   ];
 
@@ -144,13 +207,129 @@ export default function Navbar({
     return false;
   };
 
+  // Filter items based on permissions and plan
+  const getVisibleItems = (items: (typeof sections)[0]['items']) => {
+    return items.filter((item) => {
+      if (item.id === 'dashboard' && planName === 'basico') return false;
+      if (isOwner) return true;
+      if (item.id === 'chat') return can('chat.view');
+      if (item.id === 'notifications') return can('notifications.view');
+      if (item.id === 'storage') return can('products.view') || can('categories.view');
+      if (item.id === 'dashboard') return can('dashboard.view');
+      return true;
+    });
+  };
+
+  // Mobile render logic extracted to avoid IIFE in JSX
+  const renderMobileItems = () => {
+    const allVisibleItems = sections.flatMap((s) => getVisibleItems(s.items));
+    const hasChat = allVisibleItems.some((i) => i.id === 'chat');
+    const hasNotifications = allVisibleItems.some((i) => i.id === 'notifications');
+
+    const itemsToRender =
+      hasChat && hasNotifications
+        ? allVisibleItems
+            .filter((i) => i.id !== 'chat' && i.id !== 'notifications')
+            .concat({
+              id: 'more',
+              icon: 'more_horiz',
+              label: 'Más',
+              path: '#',
+            })
+        : allVisibleItems;
+
+    return itemsToRender.map((item) => {
+      if (item.id === 'more') {
+        return (
+          <div ref={mobileMoreRef} key="more" className="navbar__mobile-more-container">
+            <button
+              className={`navbar__item navbar__item--more ${isMobileMoreOpen ? 'navbar__item--active' : ''}`}
+              onClick={() => setIsMobileMoreOpen(!isMobileMoreOpen)}
+              aria-label="Más"
+              title="Más"
+              suppressHydrationWarning
+            >
+              <span className="navbar__item-icon-wrapper">
+                <md-icon className="navbar__item-icon" suppressHydrationWarning>
+                  chat
+                </md-icon>
+              </span>
+            </button>
+            {isMobileMoreOpen && (
+              <div className="navbar__mobile-popup">
+                <Link
+                  href={getBusinessPath(slug, '/chat')}
+                  className="navbar__mobile-popup-item"
+                  onClick={() => setIsMobileMoreOpen(false)}
+                  suppressHydrationWarning
+                >
+                  <md-icon>chat</md-icon>
+                  <span>Mensajes</span>
+                </Link>
+                <Link
+                  href={getBusinessPath(slug, '/notifications')}
+                  className="navbar__mobile-popup-item"
+                  onClick={() => setIsMobileMoreOpen(false)}
+                  suppressHydrationWarning
+                >
+                  <md-icon>notifications</md-icon>
+                  <span>Notificaciones</span>
+                </Link>
+                <Link
+                  href={getBusinessPath(slug, '/ayuda')}
+                  className="navbar__mobile-popup-item"
+                  onClick={() => setIsMobileMoreOpen(false)}
+                  suppressHydrationWarning
+                >
+                  <md-icon>feedback</md-icon>
+                  <span>Ayuda</span>
+                </Link>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      return (
+        <Link
+          key={item.id}
+          href={item.path}
+          className={`navbar__item navbar__item--${item.id} ${isActive(item.path) ? 'navbar__item--active' : ''}`}
+          aria-label={item.label}
+          title={item.label}
+          suppressHydrationWarning
+        >
+          <span className="navbar__item-icon-wrapper">
+            <md-icon className="navbar__item-icon" suppressHydrationWarning>
+              {item.icon}
+            </md-icon>
+            {item.id === 'notifications' && businessId && (
+              <NavbarNotificationsBadge businessId={businessId} />
+            )}
+          </span>
+          {!isCollapsed && (
+            <span className="navbar__item-label" suppressHydrationWarning>
+              {item.label}
+            </span>
+          )}
+        </Link>
+      );
+    });
+  };
+
   return (
     <nav className={`navbar ${isCollapsed ? 'navbar--collapsed' : 'navbar--expanded'}`}>
       <div className="navbar__content">
-        <div className="navbar__header-actions">
-          {!isCollapsed && (
-            <div className="navbar__plan-badge">
-              <span className="navbar__plan-label">{planName}</span>
+        <div className="navbar__header">
+          {!isCollapsed && businessName && (
+            <div className="navbar__business-header">
+              {businessLogoUrl && (
+                <img src={businessLogoUrl} alt={businessName} className="navbar__business-logo" />
+              )}
+              <div className="navbar__business-text">
+                <span className="navbar__business-name">{businessName}</span>
+                <span className="navbar__plan-badge-small">{planName}</span>
+              </div>
             </div>
           )}
           <button
@@ -159,7 +338,7 @@ export default function Navbar({
             aria-label={isCollapsed ? 'Expandir' : 'Contraer'}
             title={isCollapsed ? 'Expandir' : 'Contraer'}
           >
-            <Icon size={isCollapsed ? 24 : 18}>
+            <Icon size={isCollapsed ? 28 : 18}>
               {isCollapsed ? 'chevron_right' : 'chevron_left'}
             </Icon>
           </button>
@@ -168,118 +347,73 @@ export default function Navbar({
         <div className="navbar__divider" />
 
         <div className="navbar__items">
-          {(isMobileViewport
-            ? (() => {
-                // Determine which items are visible
-                const visibleItems = navItems.filter((item) => {
-                  if (item.id === 'dashboard' && planName === 'basico') return false;
-                  if (isOwner) return true;
-                  if (item.id === 'chat') return can('chat.view');
-                  if (item.id === 'notifications') return can('notifications.view');
-                  if (item.id === 'storage') return can('products.view') || can('categories.view');
-                  if (item.id === 'dashboard') return can('dashboard.view');
-                  return true;
-                });
+          {!isMobileViewport
+            ? // Desktop: Sections with collapsible headers
+              sections.map((section) => {
+                const visibleItems = getVisibleItems(section.items);
+                if (visibleItems.length === 0) return null;
 
-                const hasChat = visibleItems.some((i) => i.id === 'chat');
-                const hasNotifications = visibleItems.some((i) => i.id === 'notifications');
+                const isExpanded = expandedSections[section.id] !== false;
 
-                // If BOTH chat and notifications are available on mobile → group into "Más"
-                if (hasChat && hasNotifications) {
-                  return visibleItems
-                    .filter((i) => i.id !== 'chat' && i.id !== 'notifications')
-                    .concat({
-                      id: 'more',
-                      icon: 'more_horiz',
-                      label: 'Más',
-                      path: '#',
-                    });
-                }
-
-                return visibleItems;
-              })()
-            : navItems.filter((item) => {
-                // 1. Plan-based filtering
-                if (item.id === 'dashboard' && planName === 'basico') return false;
-
-                // 2. Permission-based filtering
-                if (isOwner) return true;
-
-                if (item.id === 'chat') return can('chat.view');
-                if (item.id === 'notifications') return can('notifications.view');
-                if (item.id === 'storage') return can('products.view') || can('categories.view');
-                if (item.id === 'dashboard') return can('dashboard.view');
-
-                return true; // home, settings always visible
-              })
-          ).map((item) => {
-            if (item.id === 'more') {
-              return (
-                <div ref={mobileMoreRef} key="more" className="navbar__mobile-more-container">
-                  <button
-                    className={`navbar__item navbar__item--more ${isMobileMoreOpen ? 'navbar__item--active' : ''}`}
-                    onClick={() => setIsMobileMoreOpen(!isMobileMoreOpen)}
-                    aria-label="Más"
-                    title="Más"
-                    suppressHydrationWarning
-                  >
-                    <span className="navbar__item-icon-wrapper">
-                      <md-icon className="navbar__item-icon" suppressHydrationWarning>
-                        notifications
+                return (
+                  <div key={section.id} className="navbar__section">
+                    <button
+                      className={`navbar__section-header ${!isExpanded ? 'navbar__section-header--collapsed' : ''}`}
+                      onClick={() => toggleSection(section.id)}
+                      aria-expanded={isExpanded}
+                      title={isExpanded ? `Ocultar ${section.title}` : `Mostrar ${section.title}`}
+                      suppressHydrationWarning
+                    >
+                      <md-icon className="navbar__section-icon" suppressHydrationWarning>
+                        {section.icon}
                       </md-icon>
-                    </span>
-                  </button>
-                  {isMobileMoreOpen && (
-                    <div className="navbar__mobile-popup">
-                      <Link
-                        href={getBusinessPath(slug, '/chat')}
-                        className="navbar__mobile-popup-item"
-                        onClick={() => setIsMobileMoreOpen(false)}
-                        suppressHydrationWarning
-                      >
-                        <md-icon>chat</md-icon>
-                        <span>Mensajes</span>
-                      </Link>
-                      <Link
-                        href={getBusinessPath(slug, '/notifications')}
-                        className="navbar__mobile-popup-item"
-                        onClick={() => setIsMobileMoreOpen(false)}
-                        suppressHydrationWarning
-                      >
-                        <md-icon>notifications</md-icon>
-                        <span>Notificaciones</span>
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              );
-            }
-
-            return (
-              <Link
-                key={item.id}
-                href={item.path}
-                className={`navbar__item navbar__item--${item.id} ${isActive(item.path) ? 'navbar__item--active' : ''}`}
-                aria-label={item.label}
-                title={item.label}
-                suppressHydrationWarning
-              >
-                <span className="navbar__item-icon-wrapper">
-                  <md-icon className="navbar__item-icon" suppressHydrationWarning>
-                    {item.icon}
-                  </md-icon>
-                  {item.id === 'notifications' && businessId && (
-                    <NavbarNotificationsBadge businessId={businessId} />
-                  )}
-                </span>
-                {!isCollapsed && (
-                  <span className="navbar__item-label" suppressHydrationWarning>
-                    {item.label}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+                      {!isCollapsed && (
+                        <span className="navbar__section-title" suppressHydrationWarning>
+                          {section.title}
+                        </span>
+                      )}
+                      {!isCollapsed && (
+                        <Icon
+                          className={`navbar__section-chevron ${!isExpanded ? 'rotated' : ''}`}
+                          size={16}
+                        >
+                          expand_more
+                        </Icon>
+                      )}
+                    </button>
+                    {isExpanded && (
+                      <div className="navbar__section-items">
+                        {visibleItems.map((item) => (
+                          <Link
+                            key={item.id}
+                            href={item.path}
+                            className={`navbar__item navbar__item--${item.id} ${isActive(item.path) ? 'navbar__item--active' : ''}`}
+                            aria-label={item.label}
+                            title={item.label}
+                            suppressHydrationWarning
+                          >
+                            <span className="navbar__item-icon-wrapper">
+                              <md-icon className="navbar__item-icon" suppressHydrationWarning>
+                                {item.icon}
+                              </md-icon>
+                              {item.id === 'notifications' && businessId && (
+                                <NavbarNotificationsBadge businessId={businessId} />
+                              )}
+                            </span>
+                            {!isCollapsed && (
+                              <span className="navbar__item-label" suppressHydrationWarning>
+                                {item.label}
+                              </span>
+                            )}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            : // Mobile: simplified - show all visible items, group chat/notifications into "Más"
+              renderMobileItems()}
         </div>
 
         <div className="navbar__divider" />
@@ -287,16 +421,18 @@ export default function Navbar({
         <div className="navbar__actions">
           <div className="navbar__account-actions" ref={dropdownRef}>
             <button
-              className="navbar__item navbar__item--account"
+              className="navbar__item navbar__item--logout"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              title="Salir"
+              title="Cerrar sesión"
             >
-              <Icon size={24} className="navbar__item-icon">
-                login
-              </Icon>
+              <span className="navbar__item-icon-wrapper">
+                <Icon size={24} className="navbar__item-icon">
+                  power_settings_new
+                </Icon>
+              </span>
               {!isCollapsed && (
                 <span className="navbar__item-label" suppressHydrationWarning>
-                  Salir
+                  Cerrar sesión
                 </span>
               )}
             </button>
@@ -308,7 +444,7 @@ export default function Navbar({
                   <span className="navbar__dropdown-label">Cerrar tienda</span>
                 </button>
                 <button onClick={handleLogout} className="navbar__dropdown-item">
-                  <Icon size={20}>logout</Icon>
+                  <Icon size={20}>power_settings_new</Icon>
                   <span className="navbar__dropdown-label">Cerrar sesión</span>
                 </button>
               </div>

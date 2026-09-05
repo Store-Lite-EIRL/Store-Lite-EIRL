@@ -65,6 +65,7 @@ export const useStorageProducts = ({
   const [categories, setCategories] = useState<CategoryItem[]>(initialCategories);
   const [businessId, setBusinessId] = useState<string | null>(initialBusinessId);
   const [entitlements, setEntitlements] = useState<BusinessEntitlements | null>(null);
+  const [hasError, setHasError] = useState(false);
 
   // Sincronizar businessId si cambia el prop (hidratación o re-render)
   useEffect(() => {
@@ -121,29 +122,42 @@ export const useStorageProducts = ({
               : Promise.resolve({ categories: categories, entitlements, error: null }),
           ]);
 
-          if (productsRes.error) console.error('Error loading products:', productsRes.error);
-          if (categoriesRes.error) console.error('Error loading categories:', categoriesRes.error);
+          const hasProductsError = Boolean(productsRes.error);
+          const hasCategoriesError = Boolean(categoriesRes.error);
+          if (hasProductsError) console.error('Error loading products:', productsRes.error);
+          if (hasCategoriesError) console.error('Error loading categories:', categoriesRes.error);
 
-          const products = productsRes.products || currentProducts;
-          const cats = categoriesRes.categories || categories;
-          const bId = productsRes.businessId || businessId;
-          const ents = productsRes.entitlements || categoriesRes.entitlements || null;
+          // No contaminar el estado ni el caché con respuestas de error:
+          // si una carga falló, conservamos lo que haya (no pisamos con []).
+          const products = hasProductsError
+            ? currentProducts
+            : productsRes.products || currentProducts;
+          const cats = hasCategoriesError ? categories : categoriesRes.categories || categories;
+          const bId = hasProductsError ? businessId : productsRes.businessId || businessId;
+          const ents =
+            hasProductsError || hasCategoriesError
+              ? entitlements
+              : productsRes.entitlements || categoriesRes.entitlements || null;
 
           setCurrentProducts(products);
           setCategories(cats);
           setBusinessId(bId);
           setEntitlements(ents);
+          setHasError(hasProductsError || hasCategoriesError);
 
-          // Guardar en caché
-          globalStorageCache[businessSlug] = {
-            products,
-            categories: cats,
-            businessId: bId,
-            entitlements: ents,
-            timestamp: Date.now(),
-          };
+          // Guardar en caché solo resultados exitosos
+          if (!hasProductsError && !hasCategoriesError) {
+            globalStorageCache[businessSlug] = {
+              products,
+              categories: cats,
+              businessId: bId,
+              entitlements: ents,
+              timestamp: Date.now(),
+            };
+          }
         } catch (error) {
           console.error('Error fetching storage data:', error);
+          setHasError(true);
         } finally {
           setIsLoading(false);
         }
@@ -184,6 +198,15 @@ export const useStorageProducts = ({
       direction = 'desc';
     }
     setSortConfig({ key, direction });
+    // El sort por columna y el dropdown son mutuamente excluyentes:
+    // clickear una columna resetea la selección del dropdown.
+    setSortBy('newest');
+  };
+
+  const handleSortByChange = (sort: string) => {
+    setSortBy(sort);
+    // Elegir un orden en el dropdown limpia el sort de columna.
+    setSortConfig(null);
   };
 
   // CRUD Operations
@@ -518,7 +541,7 @@ export const useStorageProducts = ({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterCategory, filterStatus, sortBy]);
+  }, [searchTerm, filterCategory, filterStatus, sortBy, sortConfig]);
 
   return {
     products: paginatedProducts,
@@ -534,13 +557,14 @@ export const useStorageProducts = ({
     filterStatus,
     setFilterStatus,
     sortBy,
-    setSortBy,
+    setSortBy: handleSortByChange,
     sortConfig,
     handleSort,
     categories,
     statuses,
     totalProducts: currentProducts.length,
     isLoading,
+    hasError,
     entitlements,
     deleteProduct,
     addProduct,
@@ -551,9 +575,15 @@ export const useStorageProducts = ({
     refreshProducts: async () => {
       Reflect.deleteProperty(globalStorageCache, businessSlug);
       setIsLoading(true);
+      setHasError(false);
       try {
         const productsRes = await getProductsByBusinessSlug(businessSlug);
-        if (!productsRes.error && productsRes.products) {
+        if (productsRes.error) {
+          console.error('Error refreshing products:', productsRes.error);
+          setHasError(true);
+          return;
+        }
+        if (productsRes.products) {
           setCurrentProducts(productsRes.products);
           setCurrentPage(1);
           if (productsRes.businessId) setBusinessId(productsRes.businessId);
@@ -568,6 +598,7 @@ export const useStorageProducts = ({
         }
       } catch (error) {
         console.error('Error refreshing products:', error);
+        setHasError(true);
       } finally {
         setIsLoading(false);
       }

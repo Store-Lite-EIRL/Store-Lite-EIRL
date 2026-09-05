@@ -3,7 +3,7 @@
 import { db } from '@/core/database/client';
 import { businesses, chatSessions, messages, payments } from '@/core/database/schema';
 import { transition } from '@/core/orders/orderService';
-import { ORDER_STATUS_V2 } from '@/core/orders/orderStatus';
+import { ORDER_STATUS_V2, type OrderStatusV2 } from '@/core/orders/orderStatus';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
@@ -122,7 +122,7 @@ export async function updateOrderStatus(
     const expectedVersion = current.version ?? 0;
 
     // Map legacy customer status to V2 and use transition() for safety
-    const v2Status = CUSTOMER_ACTION_MAP[status] || status;
+    const v2Status = (CUSTOMER_ACTION_MAP[status] || status) as OrderStatusV2;
 
     const extraFields: Record<string, unknown> = {};
     if (options?.rejectionReason) {
@@ -131,7 +131,7 @@ export async function updateOrderStatus(
 
     const result = await transition({
       paymentId,
-      toStatus: v2Status as any,
+      toStatus: v2Status,
       actor: { type: 'customer' },
       expectedVersion,
       extraFields,

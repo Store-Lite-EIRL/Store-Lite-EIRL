@@ -6,14 +6,14 @@ import { NotificationBell } from './NotificationBell';
 const PLAN_LABELS: Record<string, string> = {
   emprendedor: 'Emprendedor',
   business_pro: 'Business Pro',
-  enterprise_ai: 'Enterprise AI',
+  enterprise_pro: 'Enterprise Pro',
   basico: 'Básico',
 };
 
 const PLAN_COLORS: Record<string, string> = {
   emprendedor: 'var(--md-sys-color-primary)',
   business_pro: '#7c3aed',
-  enterprise_ai: '#0891b2',
+  enterprise_pro: '#0891b2',
   basico: 'var(--md-sys-color-outline)',
 };
 

@@ -21,6 +21,7 @@ export default function CreateBusinessPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasBusinesses, setHasBusinesses] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [businessCreated, setBusinessCreated] = useState(false);
   const [isRucVerified, setIsRucVerified] = useState(false);
   // Almacena el número de teléfono que fue verificado con OTP.
   // Derivated state: cualquier campo con formData.phone === verifiedPhone muestra "✓ Verificado"
@@ -279,6 +280,8 @@ export default function CreateBusinessPage() {
   };
 
   const handleFinish = async () => {
+    if (businessCreated || isSubmitting) return;
+
     if (validateStep(currentStep)) {
       setIsSubmitting(true);
       try {
@@ -328,6 +331,17 @@ export default function CreateBusinessPage() {
           });
           setIsSubmitting(false);
         } else if (result.success) {
+          // Lock the button permanently — business was created in the DB
+          setBusinessCreated(true);
+
+          if (result.logoWarning) {
+            setAlert({
+              open: true,
+              message: 'Negocio creado. El logo no se pudo subir, podés agregarlo después.',
+              color: 'warning',
+            });
+          }
+
           // Redirect to success page with business ID and slug
           window.location.href = `/created?businessId=${result.slug}&name=${result.slug}`;
         }

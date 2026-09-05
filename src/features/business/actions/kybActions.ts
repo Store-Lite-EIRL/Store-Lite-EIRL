@@ -1,14 +1,18 @@
 'use server';
 
 import { db } from '@/core/database/client';
-import { verificationOtps } from '@/core/database/schema';
+import { businesses, verificationOtps } from '@/core/database/schema';
 import {
   CreateVerifiedBusinessSchema,
   RequestOtpSchema,
   VerifyIdentitySchema,
   VerifyOtpSchema,
 } from '@/features/business/actions/kybSchemas';
+import { captureEvent } from '@/lib/analytics/capture';
+import { AnalyticsEvents } from '@/lib/analytics/taxonomy';
 import { getRucInfo, getRucRepresentatives } from '@/lib/factiliza/client';
+import { setSentryContext } from '@/lib/sentryContext';
+import { createClient } from '@/lib/supabase/server';
 import { checkOtpViaVerify, sendOtpViaVerify } from '@/lib/twilio/client';
 import { and, desc, eq, gt, sql } from 'drizzle-orm';
 
@@ -159,17 +163,16 @@ export async function requestOtpAction(formData: FormData) {
     }
 
     // ── Anti-fraude: número ya registrado? ─────────────────────────
-    // Si el teléfono ya tiene un OTP verificado, está asociado
-    // a otro negocio. Bloqueamos para evitar re-uso del mismo número.
-    const existingVerified = await db
-      .select({ id: verificationOtps.id })
-      .from(verificationOtps)
-      .where(and(eq(verificationOtps.identifier, identifier), eq(verificationOtps.verified, true)))
-      .limit(1);
+    // Validamos contra los negocios que ya están creados,
+    // NO contra los OTPs (ya que un OTP verificado no garantiza que se completó el registro).
+    const existingBusiness = await db.query.businesses.findFirst({
+      where: eq(businesses.whatsappNumber, identifier),
+      columns: { id: true },
+    });
 
-    if (existingVerified.length > 0) {
+    if (existingBusiness) {
       return {
-        error: 'Este número ya está registrado en el sistema. Use un número diferente.',
+        error: 'Este número ya está registrado en un negocio activo. Use un número diferente.',
       };
     }
 
@@ -268,6 +271,7 @@ export async function verifyOtpAction(formData: FormData) {
 export async function createVerifiedBusinessAction(formData: FormData) {
   try {
     const rawData = Object.fromEntries(formData.entries());
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const parsed = CreateVerifiedBusinessSchema.parse(rawData);
 
     // Business creation logic pending:
@@ -275,6 +279,18 @@ export async function createVerifiedBusinessAction(formData: FormData) {
     // 2. Insert into businesses table
     // 3. Set verification_status to 'verified'
     // 4. Clean up used OTPs
+
+    // Fire-and-forget: capture business creation event
+    captureEvent(AnalyticsEvents.BUSINESS_CREATED).catch(() => {});
+
+    // Attach user context to Sentry. Business context is intentionally
+    // skipped while this action still returns a placeholder id — tagging a
+    // fake business_id would pollute multi-tenant error tracing.
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    setSentryContext(user ? { id: user.id, email: user.email } : undefined);
 
     return {
       success: true,

@@ -1,0 +1,552 @@
+/* =====================================================
+   FEEDBACK — Styles
+   ===================================================== */
+
+.feedbackPage {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 16px;
+}
+
+.feedbackHeader {
+  margin-bottom: 32px;
+}
+
+.feedbackTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--md-sys-color-on-surface);
+}
+
+.feedbackSubtitle {
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+/* ── Tabs ── */
+
+.feedbackTabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.feedbackTab {
+  padding: 12px 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.feedbackTab:hover {
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.feedbackTabActive {
+  color: var(--md-sys-color-primary);
+  border-bottom-color: var(--md-sys-color-primary);
+}
+
+/* ── Form ── */
+
+.feedbackForm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.feedbackFormRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.categorySelect {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.categoryLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.categoryOptions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.categoryChip {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.categoryChip:hover {
+  background: var(--md-sys-color-surface-container);
+}
+
+.categoryChipActive {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-color: var(--md-sys-color-primary);
+}
+
+/* ── Request Type Cards ── */
+
+.requestTypeOptions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.requestTypeCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 12px;
+  border: 2px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  background: var(--md-sys-color-surface);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.requestTypeCard:hover {
+  background: var(--md-sys-color-surface-container-low);
+  border-color: var(--md-sys-color-outline);
+}
+
+.requestTypeCardActive {
+  background: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.requestTypeLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.requestTypeDescription {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.3;
+}
+
+.requestTypeCardActive .requestTypeDescription {
+  color: var(--md-sys-color-on-primary-container);
+  opacity: 0.8;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* ── Priority Info ── */
+
+.priorityInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: 12px;
+  font-size: 0.8125rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.priorityIcon {
+  font-size: 18px;
+  color: var(--md-sys-color-primary);
+}
+
+/* ── History ── */
+
+.feedbackHistory {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ticketCard {
+  padding: 16px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  background: var(--md-sys-color-surface);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ticketCard:hover {
+  background: var(--md-sys-color-surface-container-low);
+  border-color: var(--md-sys-color-outline);
+}
+
+.ticketHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.ticketNumber {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
+  font-family: monospace;
+}
+
+.ticketSubject {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  margin: 4px 0 0;
+}
+
+.ticketMeta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.ticketDate {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ticketResponseCount {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Status Badge ── */
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.statusOpen {
+  background: #fef3cd;
+  color: #856404;
+}
+
+.statusInProgress {
+  background: #cce5ff;
+  color: #004085;
+}
+
+.statusResolved {
+  background: #d4edda;
+  color: #155724;
+}
+
+.statusClosed {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+/* ── Priority Badge ── */
+
+.priorityBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.priorityLow {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+.priorityNormal {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.priorityHigh {
+  background: #fff3cd;
+  color: #856404;
+}
+
+/* ── Ticket Detail ── */
+
+.ticketDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.ticketDetailHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: var(--md-sys-color-primary);
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.backButton:hover {
+  background: var(--md-sys-color-primary-container);
+}
+
+.ticketDetailInfo {
+  padding: 16px;
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: 12px;
+}
+
+.ticketDetailSubject {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 12px;
+}
+
+.ticketDetailMeta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.ticketDetailMessage {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--md-sys-color-on-surface);
+  white-space: pre-wrap;
+}
+
+/* ── Responses ── */
+
+.responsesSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.responsesTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.responseCard {
+  padding: 16px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.responseUser {
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.responseAdmin {
+  background: var(--md-sys-color-primary-container);
+  border: 1px solid var(--md-sys-color-primary);
+}
+
+.responseHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.responseSender {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.responseSenderUser {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.responseSenderAdmin {
+  color: var(--md-sys-color-primary);
+}
+
+.responseDate {
+  font-size: 0.6875rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.responseMessage {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface);
+  white-space: pre-wrap;
+}
+
+/* ── Empty State ── */
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  text-align: center;
+}
+
+.emptyStateIcon {
+  font-size: 48px;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: 16px;
+}
+
+.emptyStateTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 8px;
+}
+
+.emptyStateDescription {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0 0 24px;
+  max-width: 320px;
+}
+
+/* ── Success State ── */
+
+.successState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 32px 24px;
+  gap: 16px;
+}
+
+.successIcon {
+  font-size: 48px;
+  color: #16a34a;
+}
+
+.successTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.successDescription {
+  font-size: 0.9375rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+.successTicketNumber {
+  padding: 12px 24px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  font-family: monospace;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #16a34a;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 600px) {
+  .feedbackPage {
+    padding: 24px 16px;
+  }
+
+  .feedbackFormRow {
+    grid-template-columns: 1fr;
+  }
+
+  .categoryOptions {
+    flex-direction: column;
+  }
+
+  .categoryChip {
+    justify-content: center;
+  }
+
+  .ticketHeader {
+    flex-direction: column;
+  }
+
+  .ticketMeta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

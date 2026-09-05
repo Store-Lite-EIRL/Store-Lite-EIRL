@@ -2,27 +2,31 @@ import { describe, expect, it, vi } from 'vitest';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('@/core/database/client', () => ({
-  db: {
-    query: {
-      profiles: {
-        findFirst: vi.fn(),
-      },
-      businesses: {
-        findMany: vi.fn(),
-      },
+const mockDb = {
+  query: {
+    profiles: {
+      findFirst: vi.fn(),
     },
-    insert: vi.fn(() => ({
-      values: vi.fn(() => ({
-        returning: vi.fn().mockResolvedValue([{ id: 'mock-business-id' }]),
-      })),
-    })),
-    update: vi.fn(() => ({
-      set: vi.fn(() => ({
-        where: vi.fn().mockResolvedValue(undefined),
-      })),
-    })),
+    businesses: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+    },
   },
+  insert: vi.fn(() => ({
+    values: vi.fn(() => ({
+      returning: vi.fn().mockResolvedValue([{ id: 'mock-business-id' }]),
+    })),
+  })),
+  update: vi.fn(() => ({
+    set: vi.fn(() => ({
+      where: vi.fn().mockResolvedValue(undefined),
+    })),
+  })),
+  transaction: vi.fn(async (cb) => cb(mockDb)),
+};
+
+vi.mock('@/core/database/client', () => ({
+  db: mockDb,
 }));
 
 vi.mock('next/headers', () => ({
@@ -166,5 +170,100 @@ describe('createBusinessAction', () => {
   it('verifies businessSubscriptions schema export exists', async () => {
     const schema = await import('@/core/database/schema');
     expect(schema.businessSubscriptions).toBeDefined();
+  });
+});
+
+// ── checkTaxIdExistsAction ────────────────────────────────────────────────────
+
+describe('checkTaxIdExistsAction', () => {
+  it('returns { exists: true } when the taxId is already in the DB', async () => {
+    vi.clearAllMocks();
+    vi.mocked(mockedDb.query.businesses.findFirst).mockResolvedValue({
+      id: 'existing-business-id',
+    } as any);
+
+    const { checkTaxIdExistsAction } = await import('../actions');
+    const result = await checkTaxIdExistsAction('20123456789');
+
+    expect(result).toEqual({ exists: true });
+  });
+
+  it('returns { exists: false } when the taxId is not registered', async () => {
+    vi.clearAllMocks();
+    vi.mocked(mockedDb.query.businesses.findFirst).mockResolvedValue(undefined);
+
+    const { checkTaxIdExistsAction } = await import('../actions');
+    const result = await checkTaxIdExistsAction('10987654321');
+
+    expect(result).toEqual({ exists: false });
+  });
+
+  it('returns { exists: false } for an empty string without hitting the DB', async () => {
+    vi.clearAllMocks();
+
+    const { checkTaxIdExistsAction } = await import('../actions');
+    const result = await checkTaxIdExistsAction('');
+
+    expect(result).toEqual({ exists: false });
+    expect(mockedDb.query.businesses.findFirst).not.toHaveBeenCalled();
+  });
+});
+
+// ── createBusinessAction — duplicate RUC guard ────────────────────────────────
+
+describe('createBusinessAction — duplicate RUC guard', () => {
+  function setupAuthenticatedUser() {
+    const email = 'owner@example.com';
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'user-789', email, user_metadata: {} } },
+      error: null,
+    });
+    vi.mocked(mockedDb.query.profiles.findFirst).mockResolvedValue({
+      id: 'user-789',
+      email,
+      fullName: 'Owner',
+      avatarUrl: null,
+      address: null,
+      phone: null,
+      providerId: null,
+      age: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    // User has 0 businesses (under limit)
+    vi.mocked(mockedDb.query.businesses.findMany).mockResolvedValue([]);
+  }
+
+  it('returns an error when the RUC is already registered', async () => {
+    vi.clearAllMocks();
+    setupAuthenticatedUser();
+
+    // findFirst returns an existing business for this taxId
+    vi.mocked(mockedDb.query.businesses.findFirst).mockResolvedValue({
+      id: 'already-registered-id',
+    } as any);
+
+    const formData = buildValidFormData();
+    const { createBusinessAction } = await import('../actions');
+    const result = await createBusinessAction(formData);
+
+    expect(result).toHaveProperty('error');
+    expect((result as { error: string }).error).toMatch(/RUC ya está registrado/i);
+    // DB insert must NOT have been called
+    expect(mockedDb.insert).not.toHaveBeenCalled();
+  });
+
+  it('proceeds normally when the RUC is not yet registered', async () => {
+    vi.clearAllMocks();
+    setupAuthenticatedUser();
+
+    // findFirst returns undefined → RUC is free
+    vi.mocked(mockedDb.query.businesses.findFirst).mockResolvedValue(undefined);
+
+    const formData = buildValidFormData();
+    const { createBusinessAction } = await import('../actions');
+    const result = await createBusinessAction(formData);
+
+    expect(result).toEqual({ success: true, slug: 'test-business' });
   });
 });

@@ -1,7 +1,9 @@
 'use client';
 
+import { getErrorMessage } from '@/utils/errors';
 import { verifyIdentityAction } from '@app/actions/kyb';
 import { useState } from 'react';
+import { checkTaxIdExistsAction } from '../actions';
 import type { BusinessData } from '../types';
 
 export interface UseRucVerificationOptions {
@@ -78,6 +80,17 @@ export function useRucVerification({
       setIsRucVerified(true);
       setVerificationResult(verificationData);
 
+      // Check if this RUC is already registered in our platform
+      const { exists: rucAlreadyRegistered } = await checkTaxIdExistsAction(formData.taxId);
+      if (rucAlreadyRegistered) {
+        setIsRucVerified(false);
+        setVerificationResult(null);
+        setVerifyError(
+          'Este RUC ya está registrado en la plataforma. Si creés que es un error, contactá al soporte.',
+        );
+        return;
+      }
+
       // AUTO-SET personType from backend detection (NOT user selection)
       const detectedPersonType = verificationData?.personType || 'natural';
       onChange('personType', detectedPersonType); // ← UPDATE the form data
@@ -114,8 +127,8 @@ export function useRucVerification({
 
       // For BOTH person types: Open validation modal
       setShowValidationModal(true);
-    } catch (err: any) {
-      setVerifyError(err.message || 'Error al verificar');
+    } catch (err: unknown) {
+      setVerifyError(getErrorMessage(err, 'Error al verificar'));
     } finally {
       setIsVerifying(false);
     }

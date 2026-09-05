@@ -2,22 +2,11 @@
 
 import { createClient } from '@/lib/supabase/client';
 import type { AuthContextType, AuthSession, AuthUser } from '@/types/auth';
-import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const DEBUG_ABORTS = process.env.NEXT_PUBLIC_DEBUG_ABORTS === '1';
-
-const SIGN_IN_ERROR_MESSAGES: Record<string, string> = {
-  invalid_credentials: 'Correo o contraseña incorrectos.',
-  email_not_confirmed: 'Debes confirmar tu correo electrónico antes de iniciar sesión.',
-  default: 'No se pudo iniciar sesión. Inténtalo de nuevo.',
-};
-
-function resolveSignInErrorMessage(error: { code?: string }): string {
-  return SIGN_IN_ERROR_MESSAGES[error.code ?? ''] ?? SIGN_IN_ERROR_MESSAGES.default;
-}
 
 function isAbortLikeError(error: unknown): boolean {
   if (error instanceof Error) {
@@ -56,7 +45,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [session, setSession] = useState<AuthSession | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const profileRequestIdRef = useRef(0);
   const stableSessionRef = useRef<AuthSession | null>(null);
@@ -281,17 +269,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const signInWithEmail = async (email: string, password: string): Promise<{ error?: string }> => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      return { error: resolveSignInErrorMessage(error) };
-    }
-    // Explicit post-login destination: password logins bypass the OAuth
-    // callback redirect, so navigation lives in the method itself.
-    router.push('/onboarding');
-    return {};
-  };
-
   const signOut = async () => {
     posthog.capture('user_signed_out');
     posthog.reset();
@@ -308,7 +285,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         signInWithGoogle,
         signInWithGoogleForChat,
         signInWithFacebook,
-        signInWithEmail,
         signOut,
       }}
     >
@@ -334,10 +310,6 @@ export const useAuth = () => {
       },
       signInWithFacebook: async () => {
         console.warn('[useAuth] signInWithFacebook called outside AuthProvider');
-      },
-      signInWithEmail: async (): Promise<{ error?: string }> => {
-        console.warn('[useAuth] signInWithEmail called outside AuthProvider');
-        return {};
       },
       signOut: async () => {
         console.warn('[useAuth] signOut called outside AuthProvider');

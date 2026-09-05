@@ -7,6 +7,7 @@
 import { sql } from 'drizzle-orm';
 import {
   boolean,
+  check,
   decimal,
   index,
   integer,
@@ -118,6 +119,7 @@ export const payments = pgTable(
     statusIdx: index('idx_payments_status').on(table.status),
     culqiChargeIdIdx: index('idx_payments_culqi_charge_id').on(table.culqiChargeId),
     createdAtIdx: index('idx_payments_created_at').on(table.createdAt.desc()),
+    paymentsAmountPositive: check('payments_amount_positive', sql`${table.amount} > 0`),
   }),
 );
 

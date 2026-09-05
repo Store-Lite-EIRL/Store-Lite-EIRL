@@ -42,7 +42,6 @@ export interface AuthContextType extends AuthState {
   signInWithGoogle: () => Promise<void>;
   signInWithGoogleForChat: (slug: string) => Promise<void>;
   signInWithFacebook: () => Promise<void>;
-  signInWithEmail: (email: string, password: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
 }
 

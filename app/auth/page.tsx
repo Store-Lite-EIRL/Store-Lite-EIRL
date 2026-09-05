@@ -3,11 +3,9 @@
 import { useAuth } from '@/features/auth';
 import ConsentCheckbox from '@/features/auth/ConsentCheckbox';
 import { clearBusinessSessionData } from '@/hooks/useBusinessSession';
-import { Button } from '@/shared/components/ui/buttons/Button';
-import { TextField } from '@/shared/components/ui/inputs/TextField';
 import Image from 'next/image';
 // Space Grotesk removed to use project default font (Google Sans)
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './page.module.css';
 
 /**
@@ -15,16 +13,10 @@ import styles from './page.module.css';
  * Strict implementation of the Future.io design template.
  */
 export default function AuthPage() {
-  const { signInWithGoogle, signInWithFacebook, signInWithEmail } = useAuth();
+  const { signInWithGoogle, signInWithFacebook } = useAuth();
   const [googleLoading, setGoogleLoading] = useState(false);
   const [facebookLoading, setFacebookLoading] = useState(false);
-  const [emailLoading, setEmailLoading] = useState(false);
   const [consented, setConsented] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  // Email/password form is hidden by default behind a discreet toggle.
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
 
   // Clean stale business data from previous sessions (defense layer C)
   useEffect(() => {
@@ -48,26 +40,6 @@ export default function AuthPage() {
     } catch (error) {
       console.error('Facebook sign in failed', error);
       setFacebookLoading(false);
-    }
-  };
-
-  const handlePasswordSignIn = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (emailLoading || !consented) return;
-
-    setPasswordError(null);
-    setEmailLoading(true);
-    try {
-      const { error } = await signInWithEmail(email, password);
-      if (error) {
-        setPasswordError(error);
-        setEmailLoading(false);
-      }
-      // On success signInWithEmail navigates to /onboarding (page unmounts).
-    } catch (error) {
-      console.error('Password sign in failed', error);
-      setPasswordError('No se pudo iniciar sesión. Inténtalo de nuevo.');
-      setEmailLoading(false);
     }
   };
 
@@ -229,57 +201,6 @@ export default function AuthPage() {
                   </button>
                   <span className={styles.soonBadge}>Próximamente</span>
                 </div>
-
-                <button
-                  type="button"
-                  className={styles.toggleLink}
-                  aria-expanded={showPasswordForm}
-                  aria-controls="password-sign-in"
-                  onClick={() => setShowPasswordForm((visible) => !visible)}
-                >
-                  {showPasswordForm ? 'Ocultar' : '¿Acceso con correo electrónico?'}
-                </button>
-
-                {showPasswordForm ? (
-                  <div id="password-sign-in">
-                    <div className={styles.divider}>
-                      <div className={styles.dividerLine} />
-                      <span className={styles.dividerText}>INSTANT ACCESS</span>
-                      <div className={styles.dividerLine} />
-                    </div>
-
-                    <form className={styles.passwordForm} onSubmit={handlePasswordSignIn}>
-                      <TextField
-                        label="Correo electrónico"
-                        type="email"
-                        name="email"
-                        value={email}
-                        required
-                        onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                          setEmail(event.target.value)
-                        }
-                      />
-                      <TextField
-                        label="Contraseña"
-                        type="password"
-                        name="password"
-                        value={password}
-                        required
-                        onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                          setPassword(event.target.value)
-                        }
-                      />
-                      {passwordError ? (
-                        <p role="alert" className={styles.errorText}>
-                          {passwordError}
-                        </p>
-                      ) : null}
-                      <Button type="submit" disabled={emailLoading || !consented}>
-                        {emailLoading ? 'Ingresando…' : 'Iniciar sesión'}
-                      </Button>
-                    </form>
-                  </div>
-                ) : null}
               </div>
             </section>
 

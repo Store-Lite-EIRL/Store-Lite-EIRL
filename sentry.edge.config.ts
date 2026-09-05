@@ -6,18 +6,20 @@
 import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
-  dsn: 'https://b6c1dc0143987d3b1c69b6a28a479ac8@o4511785250324480.ingest.us.sentry.io/4511785277063168',
+  dsn: process.env.SENTRY_DSN ?? process.env.NEXT_PUBLIC_SENTRY_DSN,
 
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
+  // Free tier: 5M spans/month — 10% sampling in production
+  tracesSampleRate: 0.1,
 
   // Enable logs to be sent to Sentry
   enableLogs: true,
 
+  // Release tracking from Vercel build
+  release: process.env.NEXT_SENTRY_DSN_RELEASE,
+  environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV,
+
   dataCollection: {
-    // To disable sending user data and HTTP bodies, uncomment the lines below. For more info visit:
-    // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#dataCollection
-    // userInfo: false,
-    // httpBodies: [],
+    // Disable automatic user data collection — we set context manually
+    userInfo: false,
   },
 });

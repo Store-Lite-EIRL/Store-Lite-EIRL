@@ -1,0 +1,174 @@
+/* Nosotros (StorefrontAboutSection) — clases copiadas de AboutSection.module.css
+   y FilterBar.module.css (infoCard), dark-safe vía tokens --md-sys-*. */
+
+.container {
+  animation: fadeIn 0.3s ease-out;
+  padding: 0 1rem;
+}
+
+.grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 2.5rem;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ─── Columna de contenido ─── */
+.contentColumn {
+  flex: 1 1 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.cardColumn {
+  flex: 0 1 440px;
+  position: sticky;
+  top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ─── Card de info (heredada de FilterBar .infoCard) ─── */
+.infoCard {
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-radius: 1.5rem;
+  padding: 2.5rem;
+  box-shadow: var(--md-sys-elevation-level-1);
+  max-width: none;
+  margin: 0;
+}
+
+.infoTitle {
+  color: var(--storefront-on-surface, var(--md-sys-color-on-surface, #1d1b20));
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-family: var(--md-sys-typescale-headline-small-font);
+  font-size: var(--md-sys-typescale-headline-small-size);
+}
+
+.description {
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.6;
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  white-space: pre-wrap;
+}
+
+/* ─── Grid de detalles ─── */
+.detailsGrid {
+  display: grid;
+  gap: 1rem;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  padding-top: 1.5rem;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detailItem strong {
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detailItem span {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 1.1rem;
+}
+
+/* ─── Link de contacto (de AboutSection.module.css) ─── */
+.contactLink {
+  color: var(--storefront-primary, var(--md-sys-color-primary));
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1.1rem;
+  transition: opacity 0.2s;
+}
+
+.contactLink:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* ─── Badge de verificación (de AboutSection.module.css) ─── */
+.verificationBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 100px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  width: fit-content;
+  margin-top: 1.5rem;
+}
+
+.verified {
+  background: color-mix(in srgb, var(--md-sys-color-tertiary, #22c55e) 12%, transparent);
+  color: var(--md-sys-color-tertiary, #15803d);
+}
+
+.pending {
+  background: color-mix(in srgb, var(--md-sys-color-secondary, #eab308) 12%, transparent);
+  color: var(--md-sys-color-secondary, #a16207);
+}
+
+.unverified {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 8%, transparent);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.rejected {
+  background: color-mix(in srgb, var(--md-sys-color-error, #ef4444) 12%, transparent);
+  color: var(--md-sys-color-error, #b91c1c);
+}
+
+.verificationIcon {
+  font-size: 1.125rem;
+}
+
+.verificationTitle {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+/* ─── Animación ─── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .grid {
+    gap: 1.5rem;
+    padding-top: 1rem;
+  }
+
+  .infoCard {
+    padding: 1.25rem;
+    border-radius: 1rem;
+  }
+
+  .cardColumn {
+    flex: 1 1 100%;
+    position: static;
+  }
+}

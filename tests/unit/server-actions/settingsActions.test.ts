@@ -56,6 +56,13 @@ vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }));
 
+vi.mock('@/lib/posthogServer', () => ({
+  getPostHogClient: vi.fn(() => ({
+    capture: vi.fn(),
+    flush: vi.fn().mockResolvedValue(undefined),
+  })),
+}));
+
 // Storefront helpers
 vi.mock('@/core/storefront', () => ({
   normalizeStorefrontLayout: vi.fn((l: unknown) => l),

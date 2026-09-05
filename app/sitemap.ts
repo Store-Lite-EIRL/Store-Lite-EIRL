@@ -1,7 +1,6 @@
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businesses } from '@/core/database/schema';
-import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { getCanonicalBusinessUrl } from '@/shared/utils/url';
 import { eq } from 'drizzle-orm';
 import type { MetadataRoute } from 'next';
@@ -75,39 +74,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return fallbackSitemap(baseUrl);
   }
 
-  // 2. Filter using centralized entitlements logic (SEO Enabled)
-  const seoEnabledBusinesses = new Map<string, (typeof allActiveBusinesses)[number]>();
-
-  try {
-    await Promise.all(
-      allActiveBusinesses.map(async (b) => {
-        const { seoEnabled } = await getBusinessEntitlements(b.id);
-        if (seoEnabled) {
-          seoEnabledBusinesses.set(b.id, b);
-        }
-      }),
-    );
-  } catch {
+  if (allActiveBusinesses.length === 0) {
     return fallbackSitemap(baseUrl);
   }
 
-  const businessUrls: MetadataRoute.Sitemap = Array.from(seoEnabledBusinesses.values()).map(
-    (b) => ({
-      url: getCanonicalBusinessUrl(b.slug),
-      lastModified: b.updatedAt,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    }),
-  );
+  const businessUrls: MetadataRoute.Sitemap = allActiveBusinesses.map((b) => ({
+    url: getCanonicalBusinessUrl(b.slug),
+    lastModified: b.updatedAt,
+    changeFrequency: 'weekly',
+    priority: 0.8,
+  }));
 
-  const seoBusinessIds = Array.from(seoEnabledBusinesses.keys());
+  const businessIds = allActiveBusinesses.map((b) => b.id);
 
-  // 3. Handle case with no SEO businesses
-  if (seoBusinessIds.length === 0) {
-    return fallbackSitemap(baseUrl);
-  }
-
-  // 4. Fetch products for SEO-enabled businesses
+  // 3. Fetch products for all active businesses
   let allProducts: {
     slug: string | null;
     id: string;
@@ -118,7 +98,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     allProducts = await db.query.products.findMany({
       where: (p, { and, eq, inArray }) =>
-        and(eq(p.isAvailable, true), inArray(p.businessId, seoBusinessIds)),
+        and(eq(p.isAvailable, true), inArray(p.businessId, businessIds)),
       with: {
         business: {
           columns: {
