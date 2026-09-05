@@ -1,6 +1,8 @@
 allowBuilds:
   '@sentry/cli': true
+  core-js: set this to true or false
   esbuild: true
+  sharp: set this to true or false
   unrs-resolver: true
 auditConfig:
   ignoreGhsas:

@@ -43,7 +43,6 @@ export default function AuthPage() {
     }
   };
 
-
   return (
     // `dark` is the global MD3 token class from src/styles/material-design/dark.css.
     // The layout boot script only sets light/dark on <body> from the saved/system
@@ -202,7 +201,6 @@ export default function AuthPage() {
                   </button>
                   <span className={styles.soonBadge}>Próximamente</span>
                 </div>
-
               </div>
             </section>
 
