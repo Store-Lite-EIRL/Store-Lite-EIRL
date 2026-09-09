@@ -1,5 +1,6 @@
 'use client';
 
+import QRCode from 'qrcode';
 import { useEffect, useState } from 'react';
 import Barcode from 'react-barcode';
 import StoreLogo from '../StoreLogo';
@@ -36,6 +37,8 @@ export interface ReceiptProps {
   shippingAddress?: string;
   /** Tipo de entrega: 'delivery' | 'pickup' | 'agency' */
   shippingType?: 'delivery' | 'pickup' | 'agency';
+  /** URL de verificación para el código QR */
+  verificationUrl?: string;
 }
 
 // ─── SVG Inline Icons (reemplazan Material Symbols para que funcionen en PNG) ─────
@@ -121,7 +124,10 @@ export function Receipt({
   onClose,
   shippingAddress,
   shippingType = 'delivery',
+  verificationUrl,
 }: ReceiptProps) {
+  const [qrUrl, setQrUrl] = useState<string | null>(null);
+
   const formatDate = (d: Date) => {
     return d.toLocaleDateString('es-PE', {
       day: '2-digit',
@@ -144,6 +150,18 @@ export function Receipt({
       setGeneratedId(`ORD-${Date.now().toString(36).toUpperCase()}`);
     }
   }, [orderNumber]);
+
+  useEffect(() => {
+    if (verificationUrl) {
+      QRCode.toDataURL(verificationUrl, {
+        width: 160,
+        margin: 1,
+        color: { dark: '#1c1b1f', light: '#ffffff' },
+      })
+        .then(setQrUrl)
+        .catch(console.error);
+    }
+  }, [verificationUrl]);
 
   const formatAmount = (amount: number) => {
     return `${currency} ${amount.toFixed(2)}`;
@@ -283,14 +301,37 @@ export function Receipt({
             gap: '8px',
           }}
         >
-          <Barcode
-            value={orderNum}
-            width={1.2}
-            height={40}
-            fontSize={10}
-            background="transparent"
-            displayValue={false}
-          />
+          {qrUrl ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={qrUrl}
+                alt="QR Verificación"
+                width={88}
+                height={88}
+                style={{ width: '88px', height: '88px', borderRadius: '8px' }}
+              />
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  color: 'var(--on-surface-variant)',
+                  marginTop: '6px',
+                }}
+              >
+                Escaneá para verificar autenticidad
+              </span>
+            </div>
+          ) : (
+            <Barcode
+              value={orderNum}
+              width={1.2}
+              height={40}
+              fontSize={10}
+              background="transparent"
+              displayValue={false}
+            />
+          )}
           <div
             style={{
               display: 'flex',

@@ -13,9 +13,17 @@ describe('splitFullName', () => {
     });
   });
 
-  test('single word "Juan" returns only first_name', async () => {
+  test('single word "Juan" duplicates into first_name and last_name', async () => {
     const { splitFullName } = await import('@/shared/payments/fullName');
-    expect(splitFullName('Juan')).toEqual({ first_name: 'Juan' });
+    expect(splitFullName('Juan')).toEqual({ first_name: 'Juan', last_name: 'Juan' });
+  });
+
+  test('padded single word "  Ernesto  " duplicates after trim', async () => {
+    const { splitFullName } = await import('@/shared/payments/fullName');
+    expect(splitFullName('  Ernesto  ')).toEqual({
+      first_name: 'Ernesto',
+      last_name: 'Ernesto',
+    });
   });
 
   test('empty string returns empty object', async () => {

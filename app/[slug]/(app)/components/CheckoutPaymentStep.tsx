@@ -2,6 +2,7 @@
 
 import type { CartItem } from '@/features/storage/context/CartContext';
 import { Icon } from '@/shared/components/ui';
+import { BUYER_NAME_ERROR_MESSAGE, isTwoWordName } from '@/shared/payments/buyerName';
 import type { ShippingInfo } from './Checkout';
 import styles from './Checkout.module.css';
 import { YAPE_LIMITS } from './hooks/useCheckoutPayment';
@@ -62,15 +63,9 @@ export function CheckoutPaymentStep({
         </div>
         <div className={styles.summaryShippingLine}>
           {shippingInfo.courier === 'recojo' ? (
-            <span>Envío: Recojo en tienda</span>
+            <span>Entrega: Recojo en tienda</span>
           ) : (
-            <span>
-              Envío:{' '}
-              {shippingInfo.courier === 'urbano_agencia'
-                ? `Agencia Urbano (${shippingInfo.agency || '—'})`
-                : 'Domicilio'}
-              {' — pagás con ticket CIP'}
-            </span>
+            <span>Entrega: Envío a domicilio</span>
           )}
         </div>
         <div
@@ -112,15 +107,22 @@ export function CheckoutPaymentStep({
           value={customerName}
           onChange={(e) => onCustomerNameChange(e.target.value)}
           className={`${styles.input} ${
-            customerName.trim().length > 0 &&
-            (customerName.trim().length < 3 ||
-              !/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(customerName.trim()))
-              ? styles.inputError
-              : ''
+            customerName.trim().length > 0 && !isTwoWordName(customerName) ? styles.inputError : ''
           }`}
           disabled={loading}
           required
         />
+        {customerName.trim().length > 0 && !isTwoWordName(customerName) && (
+          <p
+            style={{
+              margin: '4px 0 0',
+              fontSize: '12px',
+              color: 'var(--md-sys-color-error, #ed3312)',
+            }}
+          >
+            {BUYER_NAME_ERROR_MESSAGE}
+          </p>
+        )}
       </div>
 
       {/* ─── Email ─── */}
@@ -434,8 +436,9 @@ export function CheckoutPaymentStep({
             color: 'var(--md-sys-color-on-surface-variant)',
           }}
         >
-          Montos mayores a S/ {YAPE_LIMITS.max.toFixed(2)} solo con tarjeta · Pagos por{' '}
-          <strong>Culqi</strong>
+          El banco acepta Yape solo entre S/ {YAPE_LIMITS.min.toFixed(2)} y S/{' '}
+          {YAPE_LIMITS.max.toFixed(2)}. Para otros montos, usá tarjeta. Los pagos los procesa{' '}
+          <strong>Culqi</strong>.
         </div>
       </div>
     </div>

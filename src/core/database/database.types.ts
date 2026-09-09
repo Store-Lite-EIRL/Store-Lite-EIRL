@@ -1264,6 +1264,7 @@ export interface Database {
           shipping_province: string | null;
           shipping_reference: string | null;
           shipping_type: Database['public']['Enums']['shipping_type'] | null;
+          shipping_ubigeo: string | null;
           status: string;
           ticket_image_url: string | null;
           ticket_url: string | null;
@@ -1314,6 +1315,7 @@ export interface Database {
           shipping_province?: string | null;
           shipping_reference?: string | null;
           shipping_type?: Database['public']['Enums']['shipping_type'] | null;
+          shipping_ubigeo?: string | null;
           status?: string;
           ticket_image_url?: string | null;
           ticket_url?: string | null;
@@ -1364,6 +1366,7 @@ export interface Database {
           shipping_province?: string | null;
           shipping_reference?: string | null;
           shipping_type?: Database['public']['Enums']['shipping_type'] | null;
+          shipping_ubigeo?: string | null;
           status?: string;
           ticket_image_url?: string | null;
           ticket_url?: string | null;

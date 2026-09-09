@@ -2,16 +2,35 @@
 // POST /api/payment/create-order — Integration tests
 // =====================================================
 
+import { POST } from '@/app/api/payment/create-order/route';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
 
-const mockBusinessFindFirst = vi.fn();
-const mockBusinessSettingsFindFirst = vi.fn();
-const mockSubscriptionFindFirst = vi.fn();
-const mockReturning = vi.fn();
-const mockValues = vi.fn(() => ({ returning: mockReturning }));
-const mockInsert = vi.fn(() => ({ values: mockValues }));
+const {
+  mockBusinessFindFirst,
+  mockBusinessSettingsFindFirst,
+  mockSubscriptionFindFirst,
+  mockReturning,
+  mockValues,
+  mockInsert,
+} = vi.hoisted(() => {
+  const mockBusinessFindFirst = vi.fn();
+  const mockBusinessSettingsFindFirst = vi.fn();
+  const mockSubscriptionFindFirst = vi.fn();
+  const mockReturning = vi.fn();
+  const mockValues = vi.fn(() => ({ returning: mockReturning }));
+  const mockInsert = vi.fn(() => ({ values: mockValues }));
+
+  return {
+    mockBusinessFindFirst,
+    mockBusinessSettingsFindFirst,
+    mockSubscriptionFindFirst,
+    mockReturning,
+    mockValues,
+    mockInsert,
+  };
+});
 const mockSelectCulqiBlocked = vi.fn();
 
 // validateAmount query result (product rows for price revalidation)
@@ -19,13 +38,17 @@ let mockValidateRows: { id: string; price: string; secondPrice: string | null }[
 
 // `where` result doubles as a thenable (awaited by validateAmount) and carries
 // `.limit` used by the culqiBlocked query: `db.select(...).from(...).where(...).limit(1)`.
-const mockSelectWhere = vi.fn(() => ({
-  then: (onFulfilled: (rows: unknown) => unknown) =>
-    Promise.resolve(mockValidateRows).then(onFulfilled),
-  limit: mockSelectCulqiBlocked,
-}));
-const mockSelectFrom = vi.fn(() => ({ where: mockSelectWhere }));
-const mockSelect = vi.fn(() => ({ from: mockSelectFrom }));
+const { mockSelectWhere, mockSelectFrom, mockSelect } = vi.hoisted(() => {
+  const mockSelectWhere = vi.fn(() => ({
+    then: (onFulfilled: (rows: unknown) => unknown) =>
+      Promise.resolve(mockValidateRows).then(onFulfilled),
+    limit: mockSelectCulqiBlocked,
+  }));
+  const mockSelectFrom = vi.fn(() => ({ where: mockSelectWhere }));
+  const mockSelect = vi.fn(() => ({ from: mockSelectFrom }));
+
+  return { mockSelectWhere, mockSelectFrom, mockSelect };
+});
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
@@ -47,13 +70,13 @@ vi.mock('@/core/database/client', () => ({
   },
 }));
 
-const mockDecrypt = vi.fn();
+const mockDecrypt = vi.hoisted(() => vi.fn());
 vi.mock('@/utils/crypto', () => ({
   decrypt: mockDecrypt,
 }));
 
 const mockFetch = vi.fn();
-globalThis.fetch = mockFetch;
+vi.stubGlobal('fetch', mockFetch);
 
 // ── Helpers ──────────────────────────────────────────
 
@@ -146,8 +169,6 @@ describe('POST /api/payment/create-order', () => {
   // ============================================================
 
   test('returns 400 for missing businessId', async () => {
-    const { POST } = await import('@/app/api/payment/create-order/route');
-
     const request = new Request('http://localhost/api/payment/create-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -162,8 +183,6 @@ describe('POST /api/payment/create-order', () => {
   });
 
   test('returns 400 for invalid email', async () => {
-    const { POST } = await import('@/app/api/payment/create-order/route');
-
     const request = new Request('http://localhost/api/payment/create-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -178,8 +197,6 @@ describe('POST /api/payment/create-order', () => {
   });
 
   test('returns 400 for amount less than 100', async () => {
-    const { POST } = await import('@/app/api/payment/create-order/route');
-
     const request = new Request('http://localhost/api/payment/create-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -200,8 +217,6 @@ describe('POST /api/payment/create-order', () => {
   test('returns 400 when business has no culqi secret key', async () => {
     mockBusinessSettingsFindFirst.mockResolvedValue(null);
 
-    const { POST } = await import('@/app/api/payment/create-order/route');
-
     const request = new Request('http://localhost/api/payment/create-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -217,8 +232,6 @@ describe('POST /api/payment/create-order', () => {
 
   test('returns 400 when key environment mismatches (dev with sk_live)', async () => {
     mockDecrypt.mockReturnValue('sk_live_real_key');
-
-    const { POST } = await import('@/app/api/payment/create-order/route');
 
     const request = new Request('http://localhost/api/payment/create-order', {
       method: 'POST',
@@ -238,8 +251,6 @@ describe('POST /api/payment/create-order', () => {
   // ============================================================
 
   test('returns success with culqiOrderId, paymentCode, qrUrl for PagoEfectivo', async () => {
-    const { POST } = await import('@/app/api/payment/create-order/route');
-
     mockFetch.mockResolvedValue({
       ok: true,
       json: async () =>
@@ -278,8 +289,6 @@ describe('POST /api/payment/create-order', () => {
   });
 
   test('returns qrUrl for Billetera Móvil', async () => {
-    const { POST } = await import('@/app/api/payment/create-order/route');
-
     mockFetch.mockResolvedValue({
       ok: true,
       json: async () =>
@@ -317,8 +326,6 @@ describe('POST /api/payment/create-order', () => {
   });
 
   test('sends client_details with first_name/last_name when customerName is provided', async () => {
-    const { POST } = await import('@/app/api/payment/create-order/route');
-
     mockFetch.mockResolvedValue({
       ok: true,
       json: async () => createCulqiOrderResponse(),
@@ -362,8 +369,6 @@ describe('POST /api/payment/create-order', () => {
   // ============================================================
 
   test('returns Culqi error and does NOT insert when Culqi API fails', async () => {
-    const { POST } = await import('@/app/api/payment/create-order/route');
-
     mockFetch.mockResolvedValue({
       ok: false,
       status: 400,
@@ -391,8 +396,6 @@ describe('POST /api/payment/create-order', () => {
   });
 
   test('handles Culqi network timeout (AbortError)', async () => {
-    const { POST } = await import('@/app/api/payment/create-order/route');
-
     const abortError = new Error('The operation was aborted');
     abortError.name = 'AbortError';
     mockFetch.mockRejectedValue(abortError);
@@ -415,8 +418,6 @@ describe('POST /api/payment/create-order', () => {
   });
 
   test('handles generic network error', async () => {
-    const { POST } = await import('@/app/api/payment/create-order/route');
-
     mockFetch.mockRejectedValue(new TypeError('Failed to fetch'));
 
     const request = new Request('http://localhost/api/payment/create-order', {
@@ -440,8 +441,6 @@ describe('POST /api/payment/create-order', () => {
   // ============================================================
 
   test('rejects tampered amount that does not match product price (400)', async () => {
-    const { POST } = await import('@/app/api/payment/create-order/route');
-
     // Product price is 50.00 soles = 5000 cents
     mockValidateRows = [
       {
@@ -475,8 +474,6 @@ describe('POST /api/payment/create-order', () => {
   });
 
   test('accepts correct amount that matches product price', async () => {
-    const { POST } = await import('@/app/api/payment/create-order/route');
-
     // Product price is 50.00 soles = 5000 cents
     mockValidateRows = [
       {

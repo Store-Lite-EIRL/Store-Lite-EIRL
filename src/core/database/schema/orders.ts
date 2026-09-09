@@ -91,6 +91,7 @@ export const payments = pgTable(
     shippingAgency: text('shipping_agency'),
     shippingReference: text('shipping_reference'),
     shippingPhone: text('shipping_phone'),
+    shippingUbigeo: text('shipping_ubigeo'),
     shippingCost: decimal('shipping_cost', { precision: 10, scale: 2 }),
     // ── New courier/shipping fields (additive, nullable) ──
     courierName: text('courier_name'),
