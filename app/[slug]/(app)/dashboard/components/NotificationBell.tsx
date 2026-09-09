@@ -21,6 +21,8 @@ export function NotificationBell() {
       <button
         className={styles.container}
         title={`${unreadCount} notificaciones sin leer`}
+        aria-label={`Notificaciones — ${unreadCount} sin leer`}
+        aria-expanded={notificationsOpen}
         onClick={() => setNotificationsOpen(true)}
         type="button"
       >

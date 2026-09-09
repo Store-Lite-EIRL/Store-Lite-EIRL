@@ -3,14 +3,29 @@
   align-items: center;
   justify-content: center;
   padding: 8px;
+  border: none;
+  background: transparent;
+  appearance: none;
   border-radius: 50%;
   cursor: pointer;
-  transition: background 0.2s;
   position: relative;
+  color: var(--md-sys-color-on-surface-variant);
+  transition:
+    background 0.2s,
+    transform 0.1s ease;
 }
 
 .container:hover {
   background: var(--md-sys-color-surface-container-high);
+}
+
+.container:active {
+  transform: scale(0.94);
+}
+
+.container:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
 }
 
 .iconWrap {
