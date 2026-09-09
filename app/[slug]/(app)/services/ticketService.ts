@@ -1,66 +1,55 @@
-import { generateAndUploadTicket } from '@/shared/payments/ticketGenerator';
-import type { RefObject } from 'react';
+/**
+ * ticketService.ts
+ *
+ * Client-side service for ticket operations.
+ * Delegates generation to the server-side API (no more client-side PNG capture).
+ */
+
+export interface ServerTicketResult {
+  success: boolean;
+  publicUrl?: string;
+  error?: string;
+}
 
 /**
- * Generates a ticket PNG from a DOM ref and uploads it to the tickets bucket.
- * Delegates to the shared ticketGenerator module with checkout-specific options.
+ * Requests the server to generate a tamper-proof ticket PNG from the database.
+ * The server reads the real order data, renders via Satori, uploads to Supabase,
+ * and returns the public URL.
+ *
+ * @param orderNumber - The order number to generate the ticket for
+ * @returns The public URL of the generated ticket
  */
-export async function generateAndUploadCheckoutTicket(
-  receiptRef: RefObject<HTMLDivElement | null>,
+export async function requestServerTicket(
   orderNumber: string,
-) {
-  return generateAndUploadTicket(receiptRef, orderNumber, {
-    bucket: 'tickets',
-    updateUrl: '/api/payment/update-ticket',
+  forceRegenerate?: boolean,
+): Promise<ServerTicketResult> {
+  const response = await fetch('/api/ticket/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderNumber, forceRegenerate }),
   });
-}
 
-/**
- * Captures a DOM ref as a PNG blob for local download.
- */
-export async function generateTicketBlob(ref: RefObject<HTMLDivElement | null>): Promise<Blob> {
-  if (!ref.current) throw new Error('No se pudo generar el ticket');
-  const { toPng } = await import('html-to-image');
-  const dataUrl = await toPng(ref.current, {
-    cacheBust: true,
-    backgroundColor: '#ffffff',
-    pixelRatio: 2,
-    skipFonts: true,
-    quality: 0.95,
-  });
-  // Convert data URL to Blob without fetch() to avoid CSP connect-src violations.
-  // fetch() on a data: URL is blocked by restrictive CSPs; atob + Uint8Array is purely in-memory.
-  const [header, base64] = dataUrl.split(',');
-  const mimeMatch = header.match(/:(.*?);/);
-  const mime = mimeMatch ? mimeMatch[1] : 'image/png';
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
+  const data = await response.json();
+
+  if (!response.ok) {
+    return { success: false, error: data.error || 'Error generating ticket' };
   }
-  return new Blob([bytes], { type: mime });
+
+  return { success: true, publicUrl: data.publicUrl };
 }
 
 /**
- * Uploads a PNG blob to the tickets Supabase bucket.
+ * Downloads a ticket image from a URL to the user's device.
+ *
+ * @param ticketUrl - Public URL of the ticket image
+ * @param orderNumber - Used as the download filename
  */
-export async function uploadTicket(blob: Blob, orderNumber: string): Promise<string> {
-  const { createClient } = await import('@/lib/supabase/client');
-  const supabase = createClient();
-  const fileName = `${orderNumber.replace(/[^a-zA-Z0-9_-]/g, '_')}.png`;
-  const { error: uploadError } = await supabase.storage
-    .from('tickets')
-    .upload(fileName, blob, { contentType: 'image/png', upsert: true });
-  if (uploadError) throw new Error(`Error al subir el ticket: ${uploadError.message}`);
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from('tickets').getPublicUrl(fileName);
-  return publicUrl;
-}
-
-export function downloadLocally(blob: Blob, orderNumber: string): void {
+export async function downloadTicketFromUrl(ticketUrl: string, orderNumber: string): Promise<void> {
+  const response = await fetch(ticketUrl);
+  const blob = await response.blob();
   const link = document.createElement('a');
   link.download = `ticket-${orderNumber}.png`;
   link.href = URL.createObjectURL(blob);
   link.click();
+  URL.revokeObjectURL(link.href);
 }

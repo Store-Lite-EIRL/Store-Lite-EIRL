@@ -27,6 +27,7 @@ import styles from './ProductDetail.module.css';
 import ProductGallery from './ProductGallery';
 import PurchaseActions from './PurchaseActions';
 import RelatedProductsSection from './RelatedProductsSection';
+import { SellerContactSection } from './SellerContactSection';
 
 interface ProductDetailContentProps {
   slug: string;
@@ -427,20 +428,9 @@ export default async function ProductDetailContent({
 
           <div className={styles.accordion}>
             <div className={styles.accordionHeader}>
-              <span className={styles.accordionHeaderTitle}>Envío y disponibilidad</span>
+              <span className={styles.accordionHeaderTitle}>Disponibilidad</span>
             </div>
             <div className={styles.shippingGrid}>
-              {product.shippingInfo && (
-                <div className={styles.shippingItemFull}>
-                  <div className={styles.shippingIconContainer}>
-                    <span className={styles.shippingIcon}>📦</span>
-                  </div>
-                  <div>
-                    <p className={styles.shippingInfoTitle}>Información de envío</p>
-                    <p className={styles.shippingInfoValue}>{product.shippingInfo}</p>
-                  </div>
-                </div>
-              )}
               <div className={styles.shippingItem}>
                 <div className={styles.shippingIconContainer}>
                   <span className={styles.shippingIcon}>📋</span>
@@ -539,8 +529,8 @@ export default async function ProductDetailContent({
               <div>
                 <p className={styles.stepTitle}>Elige cómo recibirlo</p>
                 <p className={styles.stepDesc}>
-                  Recoge en <strong>tienda</strong> (gratis), elige <strong>agencia Urbano</strong>{' '}
-                  (S/ 7.50) o <strong>delivery a domicilio</strong> (S/ 10.00).
+                  Recoge en <strong>tienda</strong> (gratis) o solicita <strong>envío</strong> a tu
+                  ubicación: la entrega se coordina directamente con el negocio.
                 </p>
               </div>
             </div>
@@ -611,9 +601,7 @@ export default async function ProductDetailContent({
                   <div>
                     <p className={styles.stepTitle}>Rastrea tu entrega</p>
                     <p className={styles.stepDesc}>
-                      El vendedor te notificará cuando el producto esté en ruta. También puedes
-                      rastrear el paquete directamente en la plataforma del <strong>courier</strong>{' '}
-                      que elegiste.
+                      El vendedor te notificará cuando el producto esté en ruta.
                     </p>
                   </div>
                 </div>
@@ -709,216 +697,83 @@ export default async function ProductDetailContent({
           Atención al Cliente
         </h2>
 
-        {(() => {
-          // Deduplicación: si el rep tiene el mismo email/phone que el negocio, no se repite
-          const repEmailSame =
-            !!businessDetail.legalRepEmail &&
-            !!businessDetail.email &&
-            businessDetail.legalRepEmail.toLowerCase() === businessDetail.email.toLowerCase();
-          const repPhoneSame =
-            !!businessDetail.legalRepPhone &&
-            !!businessDetail.whatsappNumber &&
-            businessDetail.legalRepPhone.replace(/\D/g, '') ===
-              businessDetail.whatsappNumber.replace(/\D/g, '');
+        {/* Public seller contact: business identity + real RUC + contact channels.
+            Legal representative identity (name/role) is NEVER rendered here (Ley 29733). */}
+        <SellerContactSection business={businessDetail} />
 
-          const hasLegalRep = !!businessDetail.legalRepName;
-
-          return (
-            <>
-              {/* Row: Business Info + Legal Rep side by side */}
-              <div className={styles.contactColumns}>
-                {/* Block 1: Business Info */}
-                <div className={styles.contactBlock}>
-                  <p className={styles.contactBlockTitle}>
-                    <Icon size={18} style={{ verticalAlign: 'middle', marginRight: '6px' }}>
-                      store
-                    </Icon>
-                    Negocio
-                  </p>
-                  <div className={styles.contactBlockCards}>
-                    <div className={styles.contactCard}>
-                      <span className={styles.contactLabel}>Razón Social</span>
-                      <span className={styles.contactValue}>{businessDetail.name}</span>
-                    </div>
-                    {businessDetail.taxId && (
-                      <div className={styles.contactCard}>
-                        <span className={styles.contactLabel}>RUC</span>
-                        <span className={styles.contactValue}>{businessDetail.taxId}</span>
-                      </div>
-                    )}
-                    {businessDetail.email && (
-                      <div className={styles.contactCard}>
-                        <span className={styles.contactLabel}>Email</span>
-                        <span className={styles.contactValue}>{businessDetail.email}</span>
-                      </div>
-                    )}
-                    {businessDetail.whatsappNumber && (
-                      <div className={styles.contactCard}>
-                        <span className={styles.contactLabel}>WhatsApp</span>
-                        <span className={styles.contactValue}>
-                          <a
-                            href={`https://wa.me/${businessDetail.whatsappNumber.replace(/\D/g, '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.whatsappInline}
-                          >
-                            {businessDetail.whatsappNumber}
-                            <Icon size={14} style={{ opacity: 0.5 }}>
-                              open_in_new
-                            </Icon>
-                          </a>
-                        </span>
-                      </div>
-                    )}
-                    {businessDetail.address && (
-                      <div className={styles.contactCard}>
-                        <span className={styles.contactLabel}>Dirección</span>
-                        <span className={styles.contactValue}>{businessDetail.address}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Block 2: Legal Rep (only if exists) */}
-                {hasLegalRep && (
-                  <div className={styles.contactBlock}>
-                    <p className={styles.contactBlockTitle}>
-                      <Icon size={18} style={{ verticalAlign: 'middle', marginRight: '6px' }}>
-                        badge
-                      </Icon>
-                      Representante Legal
-                    </p>
-                    <div className={styles.contactBlockCards}>
-                      <div className={styles.contactCard}>
-                        <span className={styles.contactLabel}>Nombre</span>
-                        <span className={styles.contactValue}>{businessDetail.legalRepName}</span>
-                      </div>
-                      {businessDetail.legalRepRole && (
-                        <div className={styles.contactCard}>
-                          <span className={styles.contactLabel}>Cargo</span>
-                          <span className={styles.contactValue}>{businessDetail.legalRepRole}</span>
-                        </div>
+        {/* Block 3: Team (only if has members) */}
+        {teamMembers.length > 0 && (
+          <div className={styles.contactBlock} style={{ marginTop: '2rem' }}>
+            <p className={styles.contactBlockTitle}>
+              <Icon size={18} style={{ verticalAlign: 'middle', marginRight: '6px' }}>
+                group
+              </Icon>
+              Equipo de Trabajo
+              <span className={styles.teamCount}>
+                {teamMembers.length} miembro{teamMembers.length !== 1 ? 's' : ''}
+              </span>
+            </p>
+            <div className={styles.teamGrid}>
+              {teamMembers.map((member) => (
+                <div key={member.id} className={styles.teamCard}>
+                  <div className={styles.teamCardHeader}>
+                    <span className={styles.teamAvatar}>
+                      {member.avatarUrl ? (
+                        <Image
+                          src={member.avatarUrl}
+                          alt=""
+                          className={styles.teamAvatarImg}
+                          width={36}
+                          height={36}
+                        />
+                      ) : (
+                        member.name.charAt(0).toUpperCase()
                       )}
-                      {businessDetail.legalRepEmail && !repEmailSame && (
-                        <div className={styles.contactCard}>
-                          <span className={styles.contactLabel}>Email</span>
-                          <span className={styles.contactValue}>
-                            {businessDetail.legalRepEmail}
-                          </span>
-                        </div>
-                      )}
-                      {businessDetail.legalRepPhone && !repPhoneSame && (
-                        <div className={styles.contactCard}>
-                          <span className={styles.contactLabel}>Teléfono</span>
-                          <span className={styles.contactValue}>
-                            <a
-                              href={`https://wa.me/${businessDetail.legalRepPhone.replace(/\D/g, '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={styles.whatsappInline}
-                            >
-                              {businessDetail.legalRepPhone}
-                              <Icon size={14} style={{ opacity: 0.5 }}>
-                                open_in_new
-                              </Icon>
-                            </a>
-                          </span>
-                        </div>
-                      )}
-                      {repEmailSame && repPhoneSame && (
-                        <p className={styles.contactSameInfo}>
-                          Mismos datos de contacto que el negocio.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Block 3: Team (only if has members) */}
-              {teamMembers.length > 0 && (
-                <div className={styles.contactBlock} style={{ marginTop: '2rem' }}>
-                  <p className={styles.contactBlockTitle}>
-                    <Icon size={18} style={{ verticalAlign: 'middle', marginRight: '6px' }}>
-                      group
-                    </Icon>
-                    Equipo de Trabajo
-                    <span className={styles.teamCount}>
-                      {teamMembers.length} miembro{teamMembers.length !== 1 ? 's' : ''}
                     </span>
-                  </p>
-                  <div className={styles.teamGrid}>
-                    {teamMembers.map((member) => (
-                      <div key={member.id} className={styles.teamCard}>
-                        <div className={styles.teamCardHeader}>
-                          <span className={styles.teamAvatar}>
-                            {member.avatarUrl ? (
-                              <Image
-                                src={member.avatarUrl}
-                                alt=""
-                                className={styles.teamAvatarImg}
-                                width={36}
-                                height={36}
-                              />
-                            ) : (
-                              member.name.charAt(0).toUpperCase()
-                            )}
-                          </span>
-                          <div>
-                            <p className={styles.teamMemberName}>{member.name}</p>
-                            <span
-                              className={`${styles.teamRoleBadge} ${
-                                member.role === 'admin'
-                                  ? styles.teamRoleAdmin
-                                  : styles.teamRoleMember
-                              }`}
-                            >
-                              {member.role === 'admin' ? 'Admin' : 'Miembro'}
-                            </span>
-                          </div>
-                        </div>
-                        <div className={styles.teamCardBody}>
-                          {member.email && (
-                            <span className={styles.teamDetail}>
-                              <Icon
-                                size={14}
-                                style={{ verticalAlign: 'middle', marginRight: '4px' }}
-                              >
-                                mail
-                              </Icon>
-                              {member.email}
-                            </span>
-                          )}
-                          {member.phone && (
-                            <span className={styles.teamDetail}>
-                              <Icon
-                                size={14}
-                                style={{ verticalAlign: 'middle', marginRight: '4px' }}
-                              >
-                                phone
-                              </Icon>
-                              <a
-                                href={`https://wa.me/${member.phone.replace(/\D/g, '')}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={styles.whatsappInline}
-                              >
-                                {member.phone}
-                                <Icon size={14} style={{ opacity: 0.5 }}>
-                                  open_in_new
-                                </Icon>
-                              </a>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                    <div>
+                      <p className={styles.teamMemberName}>{member.name}</p>
+                      <span
+                        className={`${styles.teamRoleBadge} ${
+                          member.role === 'admin' ? styles.teamRoleAdmin : styles.teamRoleMember
+                        }`}
+                      >
+                        {member.role === 'admin' ? 'Admin' : 'Miembro'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={styles.teamCardBody}>
+                    {member.email && (
+                      <span className={styles.teamDetail}>
+                        <Icon size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }}>
+                          mail
+                        </Icon>
+                        {member.email}
+                      </span>
+                    )}
+                    {member.phone && (
+                      <span className={styles.teamDetail}>
+                        <Icon size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }}>
+                          phone
+                        </Icon>
+                        <a
+                          href={`https://wa.me/${member.phone.replace(/\D/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.whatsappInline}
+                        >
+                          {member.phone}
+                          <Icon size={14} style={{ opacity: 0.5 }}>
+                            open_in_new
+                          </Icon>
+                        </a>
+                      </span>
+                    )}
                   </div>
                 </div>
-              )}
-            </>
-          );
-        })()}
+              ))}
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );

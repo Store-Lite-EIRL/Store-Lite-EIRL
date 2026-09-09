@@ -275,6 +275,10 @@ export default function OrderChatSection({
               : m,
           ),
         );
+      } else {
+        setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+        setNewMessage(text);
+        console.error('[OrderChat] Send failed:', result.error);
       }
     } catch (err) {
       // Si falla, quitamos el mensaje optimista y restauramos el input

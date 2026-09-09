@@ -244,9 +244,9 @@ export async function syncChatSession(params: {
   paymentId: string;
 }) {
   try {
-    // Null DNI guard: si no hay DNI, usar un guestId único por paymentId
-    // para evitar que todas las órdenes sin DNI compartan sesión
-    const dniGuestId = params.dni ? `dni-${params.dni}` : `guest-${params.paymentId}`;
+    // Unique guestId for this order if shared DNI session is already active for another order
+    const orderGuestId = `guest-${params.paymentId}`;
+    const targetGuestId = params.dni ? `dni-${params.dni}` : orderGuestId;
 
     // 1. Buscar sesión activa vinculada EXACTAMENTE a este paymentId
     const exactSession = await db.query.chatSessions.findFirst({
@@ -268,7 +268,7 @@ export async function syncChatSession(params: {
     //    un paymentId asignado, pertenece a OTRA orden y NO debe reusarse.
     const existingSession = await db.query.chatSessions.findFirst({
       where: and(
-        eq(chatSessions.guestId, dniGuestId),
+        eq(chatSessions.guestId, targetGuestId),
         eq(chatSessions.businessId, params.businessId),
         eq(chatSessions.status, 'active'),
         isNull(chatSessions.paymentId),
@@ -279,22 +279,33 @@ export async function syncChatSession(params: {
     if (existingSession) {
       // Reusamos la sesión existente: vinculamos el paymentId
       // así el cliente ve el historial completo del chat pre-compra
-      // (solo ocurre para sesiones sin paymentId, es decir, pre-compra)
       await db
         .update(chatSessions)
         .set({ paymentId: params.paymentId, updatedAt: new Date() })
         .where(eq(chatSessions.id, existingSession.id));
 
-      return { success: true, sessionId: existingSession.id, guestId: dniGuestId };
+      return { success: true, sessionId: existingSession.id, guestId: targetGuestId };
     }
 
-    // 3. No hay sesión previa → CREAMOS una nueva vinculada al paymentId
+    // 3. Si ya existe una sesión activa para este targetGuestId (ej. de otra orden previa),
+    // usaremos orderGuestId para evitar la violación del índice único uq_chat_sessions_active_per_guest
+    const existingActiveSession = await db.query.chatSessions.findFirst({
+      where: and(
+        eq(chatSessions.guestId, targetGuestId),
+        eq(chatSessions.businessId, params.businessId),
+        eq(chatSessions.status, 'active'),
+      ),
+    });
+
+    const finalGuestId = existingActiveSession ? orderGuestId : targetGuestId;
+
+    // 4. No hay sesión previa libre → CREAMOS una nueva vinculada al paymentId
     const [newSession] = await db
       .insert(chatSessions)
       .values({
         businessId: params.businessId,
         paymentId: params.paymentId,
-        guestId: dniGuestId,
+        guestId: finalGuestId,
         guestName: params.buyerName,
         guestGender: 'other',
         status: 'active',
@@ -308,7 +319,7 @@ export async function syncChatSession(params: {
       content: `¡Hola ${params.buyerName}! Bienvenido al canal de soporte de tu orden. ¿Cómo podemos ayudarte?`,
     });
 
-    return { success: true, sessionId: newSession.id, guestId: dniGuestId };
+    return { success: true, sessionId: newSession.id, guestId: finalGuestId };
   } catch (error) {
     console.error('[Action Error] syncChatSession:', error);
     return { success: false, error: 'Error al sincronizar chat' };
