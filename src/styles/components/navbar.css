@@ -495,6 +495,18 @@
   color: var(--md-sys-color-on-surface);
 }
 
+/* Action items rendered as <button> (e.g. theme toggle) */
+.navbar__item--action {
+  font-family: inherit;
+  font-size: inherit;
+  text-align: left;
+}
+
+.navbar__item--action:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}
+
 /* ============================================
    Account Actions & Dropdown
    ============================================ */
@@ -784,8 +796,10 @@ md-menu-item {
   cursor: pointer;
   border-radius: 12px;
   text-decoration: none;
+  font-family: inherit;
   font-size: 0.9rem;
   font-weight: 500;
+  text-align: left;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-sizing: border-box;
   width: 100%;

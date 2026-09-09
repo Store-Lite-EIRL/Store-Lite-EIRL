@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -7,6 +7,12 @@ vi.mock('@app/[slug]/(app)/context/NotificationsContext', () => ({
   useNotificationsContext: vi.fn(),
 }));
 
+// Mock the theme context hook
+vi.mock('@/shared/context/ThemeContext', () => ({
+  useTheme: vi.fn(),
+}));
+
+import { useTheme } from '@/shared/context/ThemeContext';
 import { useNotificationsContext } from '@app/[slug]/(app)/context/NotificationsContext';
 import type { Mock } from 'vitest';
 
@@ -64,6 +70,13 @@ describe('Navbar notifications item', () => {
       dismiss: vi.fn(),
       refresh: vi.fn(),
       subscribeToNewNotifications: vi.fn().mockReturnValue(vi.fn()),
+    });
+    (useTheme as Mock).mockReturnValue({
+      theme: 'light',
+      colorScheme: 'default',
+      effectiveTheme: 'light',
+      setTheme: vi.fn(),
+      setColorScheme: vi.fn(),
     });
   });
 
@@ -139,5 +152,63 @@ describe('Navbar notifications item', () => {
     const badge = notificationsLink.querySelector('.navbar__badge');
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveTextContent('3');
+  });
+
+  it('renders theme toggle button in Configuración and switches to dark on click', () => {
+    mockCan.mockReturnValue(true);
+    const mockSetTheme = vi.fn();
+    (useTheme as Mock).mockReturnValue({
+      theme: 'light',
+      colorScheme: 'default',
+      effectiveTheme: 'light',
+      setTheme: mockSetTheme,
+      setColorScheme: vi.fn(),
+    });
+
+    renderNavbar();
+
+    const themeButton = screen.getByLabelText('Tema');
+    expect(themeButton).toBeInTheDocument();
+    expect(themeButton).toBeInstanceOf(HTMLButtonElement);
+
+    themeButton.click();
+    expect(mockSetTheme).toHaveBeenCalledWith('dark');
+  });
+
+  it('renders theme toggle inside the mobile "Más" popup and switches theme', async () => {
+    mockCan.mockReturnValue(true);
+    const mockSetTheme = vi.fn();
+    (useTheme as Mock).mockReturnValue({
+      theme: 'light',
+      colorScheme: 'default',
+      effectiveTheme: 'light',
+      setTheme: mockSetTheme,
+      setColorScheme: vi.fn(),
+    });
+
+    // Simulate mobile viewport (<= 768px)
+    const originalInnerWidth = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 500,
+    });
+
+    renderNavbar();
+
+    const moreButton = await screen.findByLabelText('Más');
+    fireEvent.click(moreButton);
+
+    const themeButton = await screen.findByLabelText('Tema');
+    expect(themeButton).toBeInTheDocument();
+
+    fireEvent.click(themeButton);
+    expect(mockSetTheme).toHaveBeenCalledWith('dark');
+
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: originalInnerWidth,
+    });
   });
 });
