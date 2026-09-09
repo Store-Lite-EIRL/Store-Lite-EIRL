@@ -11,6 +11,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import type { Mock } from 'vitest';
 
 // Import AFTER mocks
+import type { Notification } from '@/types/notifications';
 import type { NotificationsContextValue } from '../../app/[slug]/(app)/context/NotificationsContext';
 import {
   NotificationsProvider,
@@ -42,7 +43,11 @@ function ContextReader({ onValue }: { onValue: (value: NotificationsContextValue
   return null;
 }
 
-/** Renders the provider with a default mock return and an optional child. */
+/**
+ * Renders the provider with a default mock return and an optional child.
+ * Captures the onNewNotification callback passed to useNotifications so tests
+ * can dispatch real notification events through the provider's pub/sub path.
+ */
 function renderProvider({
   businessId = 'biz_1',
   children,
@@ -54,13 +59,24 @@ function renderProvider({
 } = {}) {
   const defaults = createDefaultMockReturn();
   const merged = { ...defaults, ...mockReturn };
-  (useNotifications as Mock).mockReturnValue(merged);
+  let capturedOnNewNotification: ((notification: Notification) => void) | undefined;
+
+  (useNotifications as Mock).mockImplementation(
+    (opts: { onNewNotification?: (notification: Notification) => void }) => {
+      capturedOnNewNotification = opts.onNewNotification;
+      return merged;
+    },
+  );
 
   return {
     ...render(
       <NotificationsProvider businessId={businessId}>{children ?? null}</NotificationsProvider>,
     ),
     mockReturn: merged,
+    /** Fires a new notification through the provider's internal onNewNotification. */
+    dispatchNewNotification: (notification: Notification) => {
+      capturedOnNewNotification?.(notification);
+    },
   };
 }
 
@@ -185,12 +201,12 @@ describe('NotificationsContext', () => {
   });
 
   describe('Subscriber dispatch', () => {
-    it('multiple subscribers register successfully and return unsubscribe functions', () => {
+    it('dispatches a new notification to every subscribed listener', () => {
       const subscriber1 = vi.fn();
       const subscriber2 = vi.fn();
       let subscribeFn: SubscribeFn | undefined;
 
-      renderProvider({
+      const { dispatchNewNotification } = renderProvider({
         children: (
           <ContextReader
             onValue={(v) => {
@@ -200,16 +216,82 @@ describe('NotificationsContext', () => {
         ),
       });
 
-      const unsub1 = subscribeFn!(subscriber1);
-      const unsub2 = subscribeFn!(subscriber2);
+      subscribeFn!(subscriber1);
+      subscribeFn!(subscriber2);
 
-      // Both should have gotten unsubscribe functions (registered successfully)
-      expect(typeof unsub1).toBe('function');
-      expect(typeof unsub2).toBe('function');
+      const notification = {
+        id: 'n1',
+        businessId: 'biz_1',
+        type: 'new_order',
+        category: 'pedidos',
+        title: 'Nuevo pedido',
+        message: 'Pedido #1',
+        data: {},
+        isRead: false,
+        isDismissed: false,
+        createdAt: new Date(),
+        readAt: null,
+      } as Notification;
 
-      // Cleanup
-      unsub1();
-      unsub2();
+      dispatchNewNotification(notification);
+
+      expect(subscriber1).toHaveBeenCalledTimes(1);
+      expect(subscriber1).toHaveBeenCalledWith(notification);
+      expect(subscriber2).toHaveBeenCalledTimes(1);
+      expect(subscriber2).toHaveBeenCalledWith(notification);
+    });
+
+    it('stops dispatching to a subscriber after unsubscribe (removal from registry)', () => {
+      const subscriber1 = vi.fn();
+      const subscriber2 = vi.fn();
+      let subscribeFn: SubscribeFn | undefined;
+
+      const { dispatchNewNotification } = renderProvider({
+        children: (
+          <ContextReader
+            onValue={(v) => {
+              subscribeFn = v.subscribeToNewNotifications;
+            }}
+          />
+        ),
+      });
+
+      const unsubscribe = subscribeFn!(subscriber1);
+      subscribeFn!(subscriber2);
+
+      const firstNotification = {
+        id: 'n1',
+        businessId: 'biz_1',
+        type: 'new_order',
+        category: 'pedidos',
+        title: 'Nuevo pedido',
+        message: 'Pedido #1',
+        data: {},
+        isRead: false,
+        isDismissed: false,
+        createdAt: new Date(),
+        readAt: null,
+      } as Notification;
+
+      dispatchNewNotification(firstNotification);
+      expect(subscriber1).toHaveBeenCalledTimes(1);
+      expect(subscriber2).toHaveBeenCalledTimes(1);
+
+      // Remove subscriber1 — it must no longer receive future events
+      unsubscribe();
+
+      const secondNotification = {
+        ...firstNotification,
+        id: 'n2',
+        title: 'Otro pedido',
+      } as Notification;
+
+      dispatchNewNotification(secondNotification);
+
+      expect(subscriber1).toHaveBeenCalledTimes(1); // unchanged after removal
+      expect(subscriber1).not.toHaveBeenCalledWith(secondNotification);
+      expect(subscriber2).toHaveBeenCalledTimes(2);
+      expect(subscriber2).toHaveBeenLastCalledWith(secondNotification);
     });
   });
 
