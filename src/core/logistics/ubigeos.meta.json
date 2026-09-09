@@ -1,0 +1,14 @@
+{
+  "description": "Peru Ubigeo Catalog — Complete Official Data",
+  "source": "https://raw.githubusercontent.com/jmc-software-x/public-ubigeo-pe/main/data/ubigeo-inei.json",
+  "crossReference": "https://raw.githubusercontent.com/jmc-software-x/public-ubigeo-pe/main/data/ubigeo-reniec.json",
+  "sourceNote": "INEI 2025 via jmc-software-x/public-ubigeo-pe (GitHub, publicly maintained, official INEI/RENIEC data)",
+  "officialCounts": {
+    "departments": 25,
+    "provinces": 196,
+    "districts": 1874
+  },
+  "generated": "2026-09-08T17:27:14.120Z",
+  "structure": "Array of { id (2-digit dept), name, provinces: [{ id (4-digit prov), name, districts: [{ id (6-digit dist), name }] }] }",
+  "notes": "All IDs are official INEI ubigeo codes. Names are UPPERCASE UTF-8 with accents preserved from official sources."
+}
