@@ -35,9 +35,9 @@ Chain strategy: size-exception
 
 ## Phase 3: Hook Cleanup
 
-- [ ] 3.1 Modify `src/hooks/useNotifications.ts` — remove `onNewNotification` from `UseNotificationsOptions` interface and destructuring. The provider will pass it internally via ref (already uses `onNewNotificationRef`).
-- [ ] 3.2 Update `tests/unit/NotificationsClient.test.tsx` — remove `onNewNotification` from any mock setup if present (verify; currently not used in test).
-- [ ] 3.3 Run `pnpm test:unit` — verify hook tests and NotificationsClient tests pass.
+- [x] 3.1 Modify `src/hooks/useNotifications.ts` — remove `onNewNotification` from `UseNotificationsOptions` interface and destructuring. The provider will pass it internally via ref (already uses `onNewNotificationRef`).
+- [x] 3.2 Update `tests/unit/NotificationsClient.test.tsx` — remove `onNewNotification` from any mock setup if present (verify; currently not used in test).
+- [x] 3.3 Run `pnpm test:unit` — verify hook tests and NotificationsClient tests pass.
 
 ## Phase 4: Consumer Migrations
 
