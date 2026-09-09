@@ -147,7 +147,6 @@ function StorageContent({ businessId }: { businessId: string }) {
           setProductToEdit(null);
           setIsCreateSheetOpen(true);
         }}
-        businessId={businessId}
       />
 
       <main className="storage-content" style={{ position: 'relative' }}>

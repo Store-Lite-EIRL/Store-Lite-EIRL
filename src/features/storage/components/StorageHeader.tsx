@@ -1,8 +1,8 @@
-import { useNotifications } from '@/hooks/useNotifications';
 import { AlertSnackbar, Button, Icon } from '@/shared/components/ui';
+import { useNotificationsContext } from '@app/[slug]/(app)/context/NotificationsContext';
 import { usePermissions } from '@app/[slug]/(app)/context/PermissionsContext';
 import { useParams, useRouter } from 'next/navigation';
-import { useCallback, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useStorage } from '../context/StorageContext';
 import type { Product } from '../data';
 import { ImportProgressDialog } from './import/ImportProgressDialog';
@@ -15,7 +15,6 @@ interface StorageHeaderProps {
   productsCount: number;
   allProducts: Product[];
   onAddProduct: () => void;
-  businessId: string;
 }
 
 interface ImportRowInput {
@@ -37,12 +36,7 @@ interface ImportRowInput {
   metadata?: Record<string, unknown>;
 }
 
-export const StorageHeader = ({
-  productsCount,
-  allProducts,
-  onAddProduct,
-  businessId,
-}: StorageHeaderProps) => {
+export const StorageHeader = ({ productsCount, allProducts, onAddProduct }: StorageHeaderProps) => {
   const { can, isOwner } = usePermissions();
   const { entitlements, refreshProducts } = useStorage();
   const [sourceModalOpen, setSourceModalOpen] = useState(false);
@@ -62,26 +56,29 @@ export const StorageHeader = ({
     message: string;
   } | null>(null);
 
-  const onNewNotification = useCallback((notif: { id: string; title: string; message: string }) => {
-    setRealtimeToast({
-      id: notif.id,
-      title: notif.title,
-      message: notif.message,
-    });
-    setTimeout(() => {
-      setRealtimeToast((prev) => (prev?.id === notif.id ? null : prev));
-    }, 5000);
-  }, []);
-
   const {
     unreadCount,
     notifications,
     isLoading: notifLoading,
     markAsRead,
-  } = useNotifications({
-    businessId,
-    onNewNotification,
-  });
+    subscribeToNewNotifications,
+  } = useNotificationsContext();
+
+  // Subscribe to real-time new notifications
+  useEffect(() => {
+    const unsubscribe = subscribeToNewNotifications((notif) => {
+      setRealtimeToast({
+        id: notif.id,
+        title: notif.title,
+        message: notif.message,
+      });
+      setTimeout(() => {
+        setRealtimeToast((prev) => (prev?.id === notif.id ? null : prev));
+      }, 5000);
+    });
+
+    return unsubscribe;
+  }, [subscribeToNewNotifications]);
 
   const params = useParams();
   const slug = params?.slug as string;

@@ -303,9 +303,7 @@ export default function Navbar({
             <md-icon className="navbar__item-icon" suppressHydrationWarning>
               {item.icon}
             </md-icon>
-            {item.id === 'notifications' && businessId && (
-              <NavbarNotificationsBadge businessId={businessId} />
-            )}
+            {item.id === 'notifications' && businessId && <NavbarNotificationsBadge />}
           </span>
           {!isCollapsed && (
             <span className="navbar__item-label" suppressHydrationWarning>
@@ -397,7 +395,7 @@ export default function Navbar({
                                 {item.icon}
                               </md-icon>
                               {item.id === 'notifications' && businessId && (
-                                <NavbarNotificationsBadge businessId={businessId} />
+                                <NavbarNotificationsBadge />
                               )}
                             </span>
                             {!isCollapsed && (

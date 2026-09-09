@@ -69,7 +69,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
 
   return (
     <>
-      <RealtimeToast businessId={business.id} />
+      <RealtimeToast />
       {hasPendingOrders && <PlanExpiredBanner />}
       {children}
     </>

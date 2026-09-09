@@ -87,7 +87,7 @@ export function DashboardHeader({
       </div>
 
       <div className={styles.actions}>
-        <NotificationBell businessId={businessId} />
+        <NotificationBell />
 
         {showExpiryWarning && (
           <div className={styles.expiryWarning}>

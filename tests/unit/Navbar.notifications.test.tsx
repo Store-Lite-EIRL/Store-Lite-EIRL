@@ -2,12 +2,12 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-// Mock the useNotifications hook for the badge
-vi.mock('@/hooks/useNotifications', () => ({
-  useNotifications: vi.fn(),
+// Mock the useNotificationsContext hook for the badge
+vi.mock('@app/[slug]/(app)/context/NotificationsContext', () => ({
+  useNotificationsContext: vi.fn(),
 }));
 
-import { useNotifications } from '@/hooks/useNotifications';
+import { useNotificationsContext } from '@app/[slug]/(app)/context/NotificationsContext';
 import type { Mock } from 'vitest';
 
 // Mock the permissions context
@@ -53,7 +53,7 @@ describe('Navbar notifications item', () => {
     vi.clearAllMocks();
     mockPathname.mockReturnValue('/test-business');
     mockIsOwner.mockReturnValue(false);
-    (useNotifications as Mock).mockReturnValue({
+    (useNotificationsContext as Mock).mockReturnValue({
       unreadCount: 0,
       notifications: [],
       unreadCountByCategory: {},
@@ -63,6 +63,7 @@ describe('Navbar notifications item', () => {
       markAllAsRead: vi.fn(),
       dismiss: vi.fn(),
       refresh: vi.fn(),
+      subscribeToNewNotifications: vi.fn().mockReturnValue(vi.fn()),
     });
   });
 
@@ -119,7 +120,7 @@ describe('Navbar notifications item', () => {
 
   it('renders badge component near the notifications icon', () => {
     mockCan.mockReturnValue(true);
-    (useNotifications as Mock).mockReturnValue({
+    (useNotificationsContext as Mock).mockReturnValue({
       unreadCount: 3,
       notifications: [],
       unreadCountByCategory: {},
@@ -129,6 +130,7 @@ describe('Navbar notifications item', () => {
       markAllAsRead: vi.fn(),
       dismiss: vi.fn(),
       refresh: vi.fn(),
+      subscribeToNewNotifications: vi.fn().mockReturnValue(vi.fn()),
     });
 
     renderNavbar('biz_123');

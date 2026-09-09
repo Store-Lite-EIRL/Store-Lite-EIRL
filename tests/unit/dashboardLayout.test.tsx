@@ -5,40 +5,49 @@
 // orders exist; renders children when pending orders found.
 // =====================================================
 
+import DashboardLayout from '@/app/[slug]/(app)/dashboard/layout';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
 
 // Next.js redirect() throws a special error — match that behavior
-const mockRedirect = vi.fn(() => {
-  throw new Error('NEXT_REDIRECT');
+const { mockRedirect, mockNotFound } = vi.hoisted(() => {
+  const mockRedirect = vi.fn(() => {
+    throw new Error('NEXT_REDIRECT');
+  });
+  const mockNotFound = vi.fn();
+
+  return { mockRedirect, mockNotFound };
 });
-const mockNotFound = vi.fn();
 vi.mock('next/navigation', () => ({ notFound: mockNotFound, redirect: mockRedirect }));
 
-const mockResolveBusinessSlug = vi.fn();
+const mockResolveBusinessSlug = vi.hoisted(() => vi.fn());
 vi.mock('@/core/business/slug', () => ({
   resolveBusinessSlug: mockResolveBusinessSlug,
 }));
 
-const mockGetBusinessEntitlements = vi.fn();
+const mockGetBusinessEntitlements = vi.hoisted(() => vi.fn());
 vi.mock('@/core/entitlements/getBusinessEntitlements', () => ({
   getBusinessEntitlements: mockGetBusinessEntitlements,
 }));
 
-const mockCheckPermission = vi.fn();
+const mockCheckPermission = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/permissions', () => ({ checkPermission: mockCheckPermission }));
 
-const mockGetUser = vi.fn();
-const mockCreateClient = vi.fn(() => ({ auth: { getUser: mockGetUser } }));
+const { mockGetUser, mockCreateClient } = vi.hoisted(() => {
+  const mockGetUser = vi.fn();
+  const mockCreateClient = vi.fn(() => ({ auth: { getUser: mockGetUser } }));
+
+  return { mockGetUser, mockCreateClient };
+});
 vi.mock('@/lib/supabase/server', () => ({ createClient: mockCreateClient }));
 
-const mockGetBusinessPath = vi.fn((slug: string) => `/${slug}`);
+const mockGetBusinessPath = vi.hoisted(() => vi.fn((slug: string) => `/${slug}`));
 vi.mock('@/shared/utils/url', () => ({ getBusinessPath: mockGetBusinessPath }));
 
 // Database mock — only payments.findFirst is needed by this task
-const mockPaymentsFindFirst = vi.fn();
+const mockPaymentsFindFirst = vi.hoisted(() => vi.fn());
 vi.mock('@/core/database/client', () => ({
   db: {
     query: {
@@ -93,8 +102,6 @@ describe('DashboardLayout — plan enforcement redirect', () => {
     mockGetBusinessEntitlements.mockResolvedValue({ plan: 'basico', maxProducts: 50 });
     mockPaymentsFindFirst.mockResolvedValue(null); // no pending orders
 
-    const { default: DashboardLayout } = await import('@/app/[slug]/(app)/dashboard/layout');
-
     await expect(
       DashboardLayout({
         children: <div>content</div>,
@@ -112,8 +119,6 @@ describe('DashboardLayout — plan enforcement redirect', () => {
   test('does NOT redirect when plan is basico and pending orders exist', async () => {
     mockGetBusinessEntitlements.mockResolvedValue({ plan: 'basico', maxProducts: 50 });
     mockPaymentsFindFirst.mockResolvedValue({ id: 'order_1' }); // has pending order
-
-    const { default: DashboardLayout } = await import('@/app/[slug]/(app)/dashboard/layout');
 
     // Should render, not redirect
     const result = await DashboardLayout({
@@ -137,8 +142,6 @@ describe('DashboardLayout — plan enforcement redirect', () => {
     // with only active statuses returns null → must redirect
     mockPaymentsFindFirst.mockResolvedValue(null);
 
-    const { default: DashboardLayout } = await import('@/app/[slug]/(app)/dashboard/layout');
-
     await expect(
       DashboardLayout({
         children: <div>content</div>,
@@ -153,8 +156,6 @@ describe('DashboardLayout — plan enforcement redirect', () => {
     mockGetBusinessEntitlements.mockResolvedValue({ plan: 'business_pro', maxProducts: 300 });
     // payments.findFirst should NOT be called for non-basico plans
     mockPaymentsFindFirst.mockResolvedValue(null);
-
-    const { default: DashboardLayout } = await import('@/app/[slug]/(app)/dashboard/layout');
 
     const result = await DashboardLayout({
       children: <div>content</div>,

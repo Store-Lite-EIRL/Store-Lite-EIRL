@@ -4,6 +4,7 @@ import type { NotificationWithMeta } from '@/hooks/useNotifications';
 import { Icon } from '@/shared/components/ui';
 import { formatRelativeDate } from '@/shared/utils/date';
 import { useEffect, useRef } from 'react';
+import './notifications-panel.css';
 
 interface NotificationsPanelProps {
   open: boolean;

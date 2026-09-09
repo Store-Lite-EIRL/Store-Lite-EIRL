@@ -1,8 +1,8 @@
 'use client';
 
 import type { NotificationWithMeta } from '@/hooks/useNotifications';
-import { useNotifications } from '@/hooks/useNotifications';
 import { formatRelativeDate } from '@/shared/utils/date';
+import { useNotificationsContext } from '@app/[slug]/(app)/context/NotificationsContext';
 import type { LucideProps } from 'lucide-react';
 import {
   Bell,
@@ -30,13 +30,11 @@ const CATEGORIES: readonly { id: string; label: string; icon: ComponentType<Luci
 ];
 
 interface NotificationsClientProps {
-  businessId: string;
   businessName: string;
   availableCategoryIds: string[];
 }
 
 export default function NotificationsClient({
-  businessId,
   businessName: _businessName,
   availableCategoryIds,
 }: NotificationsClientProps) {
@@ -65,7 +63,7 @@ export default function NotificationsClient({
     error,
     markAsRead,
     markAllAsRead,
-  } = useNotifications({ businessId });
+  } = useNotificationsContext();
 
   const getCategoryLabel = (category: string) => {
     const found = CATEGORIES.find((c) => c.id === category);

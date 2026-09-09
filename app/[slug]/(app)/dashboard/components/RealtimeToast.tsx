@@ -1,40 +1,37 @@
 'use client';
 
-import { useNotifications } from '@/hooks/useNotifications';
+import { useNotificationsContext } from '@app/[slug]/(app)/context/NotificationsContext';
 import { Bell, X } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './RealtimeToast.module.css';
 
-interface RealtimeToastProps {
-  businessId: string;
-}
-
-export function RealtimeToast({ businessId }: RealtimeToastProps) {
+export function RealtimeToast() {
   const [activeToast, setActiveToast] = useState<{
     id: string;
     title: string;
     message: string;
   } | null>(null);
 
-  const onNewNotification = useCallback((notif: any) => {
-    setActiveToast({
-      id: notif.id,
-      title: notif.title,
-      message: notif.message,
+  const { subscribeToNewNotifications } = useNotificationsContext();
+
+  useEffect(() => {
+    const unsubscribe = subscribeToNewNotifications((notif) => {
+      setActiveToast({
+        id: notif.id,
+        title: notif.title,
+        message: notif.message,
+      });
+
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        setActiveToast((prev) => (prev?.id === notif.id ? null : prev));
+      }, 5000);
     });
 
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
-      setActiveToast((prev) => (prev?.id === notif.id ? null : prev));
-    }, 5000);
-  }, []);
+    return unsubscribe;
+  }, [subscribeToNewNotifications]);
 
-  useNotifications({
-    businessId,
-    onNewNotification,
-  });
-
-  if (!businessId || !activeToast) return null;
+  if (!activeToast) return null;
 
   return (
     <div className={styles.toast}>

@@ -1,13 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-// Mock useNotifications hook BEFORE any imports that use it
-vi.mock('@/hooks/useNotifications', () => ({
-  useNotifications: vi.fn(),
+// Mock useNotificationsContext BEFORE any imports that use it
+vi.mock('@app/[slug]/(app)/context/NotificationsContext', () => ({
+  useNotificationsContext: vi.fn(),
 }));
 
 import type { NotificationWithMeta } from '@/hooks/useNotifications';
-import { useNotifications } from '@/hooks/useNotifications';
+import { useNotificationsContext } from '@app/[slug]/(app)/context/NotificationsContext';
 import type { Mock } from 'vitest';
 import NotificationsClient from '../../app/[slug]/(app)/notifications/NotificationsClient';
 
@@ -72,8 +72,10 @@ const fiveNotifications = [
   }),
 ];
 
-function mockUseNotifications(overrides: Partial<ReturnType<typeof useNotifications>> = {}) {
-  const defaults: ReturnType<typeof useNotifications> = {
+function mockUseNotificationsContext(
+  overrides: Partial<ReturnType<typeof useNotificationsContext>> = {},
+) {
+  const defaults: ReturnType<typeof useNotificationsContext> = {
     notifications: fiveNotifications,
     unreadCount: 4,
     unreadCountByCategory: { chat: 1, almacen: 0, plan: 1, pedidos: 1, sistema: 1 },
@@ -83,9 +85,10 @@ function mockUseNotifications(overrides: Partial<ReturnType<typeof useNotificati
     markAllAsRead: vi.fn().mockResolvedValue(undefined),
     dismiss: vi.fn().mockResolvedValue(undefined),
     refresh: vi.fn().mockResolvedValue(undefined),
+    subscribeToNewNotifications: vi.fn().mockReturnValue(vi.fn()),
     ...overrides,
   };
-  (useNotifications as Mock).mockReturnValue(defaults);
+  (useNotificationsContext as Mock).mockReturnValue(defaults);
   return defaults;
 }
 
@@ -93,7 +96,6 @@ function mockUseNotifications(overrides: Partial<ReturnType<typeof useNotificati
 function renderClient(props: Partial<Parameters<typeof NotificationsClient>[0]> = {}) {
   return render(
     <NotificationsClient
-      businessId="biz_123"
       businessName="Test Business"
       availableCategoryIds={DEFAULT_CATEGORY_IDS}
       {...props}
@@ -110,7 +112,7 @@ describe('NotificationsClient', () => {
 
   describe('Loading state', () => {
     it('shows loading spinner when isLoading is true', () => {
-      mockUseNotifications({ isLoading: true, notifications: [] });
+      mockUseNotificationsContext({ isLoading: true, notifications: [] });
       renderClient();
 
       expect(screen.getByText('Cargando notificaciones...')).toBeInTheDocument();
@@ -119,7 +121,7 @@ describe('NotificationsClient', () => {
 
   describe('Empty state', () => {
     it('shows empty state when there are no notifications at all', () => {
-      mockUseNotifications({
+      mockUseNotificationsContext({
         notifications: [],
         unreadCount: 0,
         unreadCountByCategory: { chat: 0, almacen: 0, plan: 0, pedidos: 0, sistema: 0 },
@@ -130,7 +132,7 @@ describe('NotificationsClient', () => {
     });
 
     it('shows filtered empty message when no notifications match selected category', () => {
-      mockUseNotifications({
+      mockUseNotificationsContext({
         notifications: [createNotification({ id: 'n1', category: 'chat', title: 'Solo chat' })],
         unreadCount: 1,
         unreadCountByCategory: { chat: 1, almacen: 0, plan: 0, pedidos: 0, sistema: 0 },
@@ -146,7 +148,7 @@ describe('NotificationsClient', () => {
 
   describe('Error state', () => {
     it('shows error message when error is set and no cached notifications exist', () => {
-      mockUseNotifications({
+      mockUseNotificationsContext({
         notifications: [],
         unreadCount: 0,
         error: 'Failed to fetch',
@@ -161,7 +163,7 @@ describe('NotificationsClient', () => {
 
   describe('Populated state', () => {
     it('renders all notification titles when data is available', () => {
-      mockUseNotifications();
+      mockUseNotificationsContext();
       renderClient();
 
       expect(screen.getByText('Nuevo mensaje')).toBeInTheDocument();
@@ -172,7 +174,7 @@ describe('NotificationsClient', () => {
     });
 
     it('renders header with title and unread summary', () => {
-      mockUseNotifications();
+      mockUseNotificationsContext();
       renderClient();
 
       expect(screen.getByText('Notificaciones')).toBeInTheDocument();
@@ -182,7 +184,7 @@ describe('NotificationsClient', () => {
 
   describe('Category filter', () => {
     it('shows only matching notifications when a category tab is selected', () => {
-      mockUseNotifications();
+      mockUseNotificationsContext();
       renderClient();
 
       // Use getAllByText and pick the second match, or getByRole with name
@@ -197,7 +199,7 @@ describe('NotificationsClient', () => {
     });
 
     it('shows all notifications when "Todas" tab is active', () => {
-      mockUseNotifications();
+      mockUseNotificationsContext();
       renderClient();
 
       // "Todas" should be the default — verify all 5 are visible
@@ -212,7 +214,7 @@ describe('NotificationsClient', () => {
   describe('Mark as read', () => {
     it('calls markAsRead with the notification id when an unread listitem is clicked', () => {
       const mockMarkAsRead = vi.fn().mockResolvedValue(undefined);
-      mockUseNotifications({
+      mockUseNotificationsContext({
         markAsRead: mockMarkAsRead,
         notifications: [
           createNotification({
@@ -238,7 +240,7 @@ describe('NotificationsClient', () => {
 
     it('does NOT call markAsRead when a read notification is clicked', () => {
       const mockMarkAsRead = vi.fn().mockResolvedValue(undefined);
-      mockUseNotifications({
+      mockUseNotificationsContext({
         markAsRead: mockMarkAsRead,
         notifications: [
           createNotification({
@@ -263,7 +265,7 @@ describe('NotificationsClient', () => {
   describe('Mark all as read', () => {
     it('calls markAllAsRead when "Marcar todas" button is clicked', () => {
       const mockMarkAllAsRead = vi.fn().mockResolvedValue(undefined);
-      mockUseNotifications({
+      mockUseNotificationsContext({
         markAllAsRead: mockMarkAllAsRead,
         unreadCount: 4,
       });
@@ -275,7 +277,7 @@ describe('NotificationsClient', () => {
     });
 
     it('does NOT show "Marcar todas" button when unreadCount is 0', () => {
-      mockUseNotifications({
+      mockUseNotificationsContext({
         unreadCount: 0,
         unreadCountByCategory: { chat: 0, almacen: 0, plan: 0, pedidos: 0, sistema: 0 },
       });
@@ -287,7 +289,7 @@ describe('NotificationsClient', () => {
 
   describe('Viewport', () => {
     it('renders the notification list without a max-height cap', () => {
-      mockUseNotifications();
+      mockUseNotificationsContext();
       const { container } = renderClient();
 
       // The list container should be rendered inside the component — no inline max-height

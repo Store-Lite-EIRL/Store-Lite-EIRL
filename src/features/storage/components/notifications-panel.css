@@ -1,0 +1,315 @@
+/* ============================================================
+   Notifications Panel — slide-in drawer
+   Shared component styles (used by storage + dashboard)
+   ============================================================ */
+
+.notif-backdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, rgb(0 0 0) 40%, transparent);
+  z-index: 900;
+  animation: notif-fade-in 0.2s ease-out;
+}
+
+@keyframes notif-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.notif-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 420px;
+  max-width: 100vw;
+  background: var(--md-sys-color-surface);
+  border-left: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: -8px 0 32px rgb(0 0 0 / 0.12);
+  z-index: 910;
+  display: flex;
+  flex-direction: column;
+  animation: notif-slide-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes notif-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Panel header */
+.notif-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  flex-shrink: 0;
+}
+
+.notif-panel-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.notif-panel-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+}
+
+.notif-panel-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.notif-panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.notif-close-btn {
+  background: none;
+  border: none;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.notif-close-btn:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+/* Notification list */
+.notif-panel-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+  overscroll-behavior: contain;
+}
+
+.notif-panel-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.notif-empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--md-sys-color-surface-container-high);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  color: var(--md-sys-color-outline);
+}
+
+.notif-empty-icon md-icon {
+  font-size: 32px;
+}
+
+.notif-empty-text {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.notif-empty-subtext {
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.notif-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--md-sys-color-outline-variant);
+  border-top-color: var(--md-sys-color-primary);
+  border-radius: 50%;
+  animation: notif-spin 0.8s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes notif-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Notification item */
+.notif-item {
+  display: flex;
+  gap: 0.85rem;
+  padding: 0.85rem 1.5rem;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  transition: background 0.2s;
+  position: relative;
+  cursor: pointer;
+}
+
+.notif-item:last-child {
+  border-bottom: none;
+}
+
+.notif-item-unread {
+  background: color-mix(in srgb, var(--md-sys-color-primary-container) 25%, transparent);
+}
+
+.notif-item-new {
+  animation: notif-highlight 4s ease-out;
+}
+
+@keyframes notif-highlight {
+  0% {
+    background: color-mix(in srgb, var(--md-sys-color-tertiary-container) 70%, transparent);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+.notif-item:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.notif-item-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notif-item-icon md-icon {
+  font-size: 20px;
+}
+
+/* Category icon colors */
+.notif-icon-chat {
+  background: var(--md-sys-color-primary-container, #e0f2fe);
+  color: var(--md-sys-color-on-primary-container, #0369a1);
+}
+.notif-icon-almacen {
+  background: var(--md-sys-color-secondary-container, #ffedd5);
+  color: var(--md-sys-color-on-secondary-container, #c2410c);
+}
+.notif-icon-plan {
+  background: var(--md-sys-color-tertiary-container, #f3e8ff);
+  color: var(--md-sys-color-on-tertiary-container, #7e22ce);
+}
+.notif-icon-pedidos {
+  background: var(--md-sys-color-tertiary-container, #dcfce7);
+  color: var(--md-sys-color-on-tertiary-container, #15803d);
+}
+.notif-icon-sistema {
+  background: var(--md-sys-color-surface-variant, #f1f5f9);
+  color: var(--md-sys-color-on-surface-variant, #475569);
+}
+
+/* Unread item background tint per category */
+.notif-item-unread.notif-item-chat {
+  background: rgb(3 105 161 / 0.06);
+}
+.notif-item-unread.notif-item-almacen {
+  background: rgb(194 65 12 / 0.06);
+}
+.notif-item-unread.notif-item-plan {
+  background: rgb(126 34 206 / 0.06);
+}
+.notif-item-unread.notif-item-pedidos {
+  background: rgb(21 128 61 / 0.06);
+}
+.notif-item-unread.notif-item-sistema {
+  background: rgb(71 85 105 / 0.06);
+}
+
+.notif-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+
+.notif-item-category {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.notif-item-time {
+  font-size: 0.7rem;
+  color: var(--md-sys-color-outline);
+  white-space: nowrap;
+}
+
+.notif-item-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0 0 0.15rem;
+  color: var(--md-sys-color-on-surface);
+  line-height: 1.3;
+}
+
+.notif-item-message {
+  font-size: 0.8rem;
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---- Small mobile (≤ 600px) ---- */
+@media (max-width: 600px) {
+  .notif-panel {
+    width: 100vw;
+    border-left: none;
+  }
+
+  .notif-panel-header {
+    padding: 1rem 1.25rem;
+  }
+
+  .notif-item {
+    padding: 0.75rem 1.25rem;
+  }
+}
