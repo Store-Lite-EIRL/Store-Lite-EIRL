@@ -8,7 +8,7 @@
 
 import { useProductItemController } from '@/features/products/hooks/useProductItemController';
 import { renderHook } from '@testing-library/react';
-import { createContext, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
@@ -90,18 +90,24 @@ vi.mock('@app/[slug]/(app)/context/PermissionsContext', () => ({
 }));
 
 // Mock StorageContext — must export StorageContext (React Context) and useStorage
-vi.mock('@/features/storage/context/StorageContext', () => ({
-  StorageContext: createContext(mockStorageValue),
-  useStorage: () => mockStorageValue,
-  StorageProvider: ({ children }: { children: ReactNode }) => children,
-}));
+vi.mock('@/features/storage/context/StorageContext', async () => {
+  const { createContext } = await import('react');
+  return {
+    StorageContext: createContext(mockStorageValue),
+    useStorage: () => mockStorageValue,
+    StorageProvider: ({ children }: { children: ReactNode }) => children,
+  };
+});
 
 // Mock CartContext — must export CartContext (React Context) and useCart
-vi.mock('@/features/storage/context/CartContext', () => ({
-  CartContext: createContext(mockCartValue),
-  useCart: () => mockCartValue,
-  CartProvider: ({ children }: { children: ReactNode }) => children,
-}));
+vi.mock('@/features/storage/context/CartContext', async () => {
+  const { createContext } = await import('react');
+  return {
+    CartContext: createContext(mockCartValue),
+    useCart: () => mockCartValue,
+    CartProvider: ({ children }: { children: ReactNode }) => children,
+  };
+});
 
 // ── Helpers ──────────────────────────────────────────
 
