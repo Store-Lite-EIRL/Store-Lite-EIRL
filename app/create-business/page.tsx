@@ -4,6 +4,7 @@ import { createDefaultStorefrontTheme, type StorefrontTheme } from '@/core/store
 import { Button, Icon } from '@/shared/components/ui';
 import { CircularProgress } from '@/shared/components/ui/feedback';
 import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
+import { ImageCropModal } from '@/shared/components/ui/inputs/ImageCropModal';
 import { optimizeImage } from '@/shared/utils/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -27,6 +28,7 @@ export default function CreateBusinessPage() {
   // Derivated state: cualquier campo con formData.phone === verifiedPhone muestra "✓ Verificado"
   const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoToCrop, setLogoToCrop] = useState<File | null>(null);
   const [formData, setFormData] = useState<BusinessData>({
     personType: 'natural',
     country: 'Perú',
@@ -134,6 +136,12 @@ export default function CreateBusinessPage() {
       });
       return;
     }
+
+    setLogoToCrop(file);
+  };
+
+  const handleCroppedLogo = (file: File) => {
+    setLogoToCrop(null);
 
     // Convertimos el logo a dataURL (no blob:) porque html-to-image procesa
     // con fetch() las imágenes que no son data: URLs y el fetch de blob:
@@ -399,6 +407,11 @@ export default function CreateBusinessPage() {
         width: '100vw',
       }}
     >
+      <ImageCropModal
+        file={logoToCrop}
+        onCancel={() => setLogoToCrop(null)}
+        onApply={handleCroppedLogo}
+      />
       {/* Exit Button - Only shown if user has businesses */}
       {hasBusinesses && (
         <Button
