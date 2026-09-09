@@ -12,6 +12,7 @@ import type { CategoryItem } from '@/features/storage/hooks/useStorageProducts';
 import { getCurrencyByCountry } from '@/features/storage/utils/currency';
 import type { Permission, Role } from '@/lib/permissions/definitions';
 import { BusinessEntitlementsProvider } from '../context/BusinessEntitlementsContext';
+import { NotificationsProvider } from '../context/NotificationsContext';
 import { PermissionsProvider } from '../context/PermissionsContext';
 
 interface BusinessProvidersProps {
@@ -44,19 +45,21 @@ export function BusinessProviders({
   return (
     <PermissionsProvider role={role} permissions={permissions} isOwner={isOwner}>
       <BusinessEntitlementsProvider entitlements={entitlements}>
-        <CurrencyProvider value={currency}>
-          <CartProvider businessSlug={businessSlug}>
-            <StorageProvider
-              businessSlug={businessSlug}
-              businessId={businessId}
-              initialProducts={initialProducts}
-              initialCategories={initialCategories}
-              isOwner={isOwner}
-            >
-              {children}
-            </StorageProvider>
-          </CartProvider>
-        </CurrencyProvider>
+        <NotificationsProvider businessId={businessId}>
+          <CurrencyProvider value={currency}>
+            <CartProvider businessSlug={businessSlug}>
+              <StorageProvider
+                businessSlug={businessSlug}
+                businessId={businessId}
+                initialProducts={initialProducts}
+                initialCategories={initialCategories}
+                isOwner={isOwner}
+              >
+                {children}
+              </StorageProvider>
+            </CartProvider>
+          </CurrencyProvider>
+        </NotificationsProvider>
       </BusinessEntitlementsProvider>
     </PermissionsProvider>
   );
