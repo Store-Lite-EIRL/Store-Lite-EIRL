@@ -9,10 +9,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { proxy } from '../../proxy';
 
 // ── Mocks (must be before module imports — vi.mock is hoisted) ──
 
-const mockUpdateProxy = vi.fn();
+const mockUpdateProxy = vi.hoisted(() => vi.fn());
 
 vi.mock('@/config/env', () => ({
   env: {
@@ -45,7 +46,6 @@ function createRequest(pathWithQuery: string, host: string = TENANT_HOST): NextR
 }
 
 async function expectNoRedirect(pathWithQuery: string, host: string = TENANT_HOST) {
-  const { proxy } = await import('../../proxy');
   const request = createRequest(pathWithQuery, host);
   const response = await proxy(request);
 
@@ -76,7 +76,6 @@ describe('proxy — platform routes on tenant subdomains', () => {
       ['/created', '/created'],
       ['/list-business', '/list-business'],
     ])('%s redirects (302) to the platform domain', async (path, expectedPath) => {
-      const { proxy } = await import('../../proxy');
       const request = createRequest(path);
       const response = await proxy(request);
 
@@ -86,7 +85,6 @@ describe('proxy — platform routes on tenant subdomains', () => {
     });
 
     test('/pricing preserves the query string in the redirect', async () => {
-      const { proxy } = await import('../../proxy');
       const request = createRequest('/pricing?slug=mi-tienda&utm_source=email');
       const response = await proxy(request);
 

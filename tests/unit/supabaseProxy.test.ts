@@ -13,6 +13,7 @@
 import type { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { updateProxy } from '../../src/lib/supabase/proxy';
 
 // ── Mocks (must be before module imports — vi.mock is hoisted) ──
 
@@ -54,7 +55,6 @@ function expectRedirectTo(response: NextResponse, expectedPath: string) {
 }
 
 async function callUpdateProxy(request: NextRequest): Promise<NextResponse> {
-  const { updateProxy } = await import('../../src/lib/supabase/proxy');
   return updateProxy(request);
 }
 

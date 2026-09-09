@@ -233,6 +233,10 @@ export async function createBusinessAction(formData: FormData) {
           legalRepEmail,
           isActive: true,
           storeType: sector, // Map sector to storeType for now
+          // The owner already completed all KYB steps in real time
+          // (RUC verified against SUNAT + phone OTP via WhatsApp), so
+          // the business is verified from the moment it is created.
+          verificationStatus: 'verified',
         })
         .returning({ id: businesses.id });
 

@@ -93,13 +93,11 @@ export default async function PricingPage({
       badgeType: 'primary',
       features: [
         { text: 'Incluye todo lo del plan Emprendedor' },
-        { text: 'SEO avanzado: controla cómo te encuentra Google' },
         { text: 'Pasarela completa: Pagos digitales y tarjetas bancarias' },
         { text: 'Almacenamiento premium para 300 productos' },
         { text: 'Personalización avanzada: Edición del negocio' },
         { text: 'Colaboración élite: Equipo de trabajo con 2 usuarios adicionales' },
         { text: 'Centro de mando: Dashboard de ventas y métricas de progreso' },
-        { text: 'Integración con envíos Urbano' },
       ],
     },
     {

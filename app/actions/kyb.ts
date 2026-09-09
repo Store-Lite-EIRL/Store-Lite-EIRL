@@ -6,7 +6,6 @@
 // =====================================================
 
 export {
-  createVerifiedBusinessAction,
   requestOtpAction,
   verifyIdentityAction,
   verifyOtpAction,

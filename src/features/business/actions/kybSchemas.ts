@@ -69,29 +69,3 @@ export const VerifyOtpSchema = z.object({
 });
 
 export type VerifyOtpInput = z.infer<typeof VerifyOtpSchema>;
-
-// =====================================================
-// Step 4: Final Business Creation
-// =====================================================
-
-export const CreateVerifiedBusinessSchema = z.object({
-  // Owner (from session)
-  ownerId: z.string().uuid(),
-  // Data from Step 1 & 2
-  personType: z.enum(['natural', 'juridica']),
-  taxId: z.string(), // RUC
-  legalRepName: z.string(), // Full name of representative
-  legalRepPhone: z.string(), // Verified phone
-  legalRepEmail: z.string().email(),
-  // Business specific (from Step 4)
-  businessPhone: z.string().optional(),
-  businessEmail: z.string().email().optional(),
-  name: z.string().min(3), // Business name (for juridica) or trade name
-  address: z.string().optional(),
-  slug: z.string().min(3),
-  // Verification status
-  verificationStatus: z.literal('verified'),
-  verificationData: z.record(z.string(), z.any()).default({}),
-});
-
-export type CreateVerifiedBusinessInput = z.infer<typeof CreateVerifiedBusinessSchema>;

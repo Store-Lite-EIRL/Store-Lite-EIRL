@@ -5,19 +5,42 @@
 // excess products when business exceeds plan limit.
 // =====================================================
 
+import { enforceProductLimit } from '@/core/entitlements/enforceProductLimit';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
 
-const mockLimit = vi.fn();
-const mockOrderBy = vi.fn(() => ({ limit: mockLimit }));
-const mockSelectWhere = vi.fn();
-const mockSelectFrom = vi.fn(() => ({ where: mockSelectWhere }));
-const mockSelect = vi.fn(() => ({ from: mockSelectFrom }));
+const {
+  mockLimit,
+  mockOrderBy,
+  mockSelectWhere,
+  mockSelectFrom,
+  mockSelect,
+  mockUpdateWhere,
+  mockUpdateSet,
+  mockUpdate,
+} = vi.hoisted(() => {
+  const mockLimit = vi.fn();
+  const mockOrderBy = vi.fn(() => ({ limit: mockLimit }));
+  const mockSelectWhere = vi.fn();
+  const mockSelectFrom = vi.fn(() => ({ where: mockSelectWhere }));
+  const mockSelect = vi.fn(() => ({ from: mockSelectFrom }));
 
-const mockUpdateWhere = vi.fn();
-const mockUpdateSet = vi.fn(() => ({ where: mockUpdateWhere }));
-const mockUpdate = vi.fn(() => ({ set: mockUpdateSet }));
+  const mockUpdateWhere = vi.fn();
+  const mockUpdateSet = vi.fn(() => ({ where: mockUpdateWhere }));
+  const mockUpdate = vi.fn(() => ({ set: mockUpdateSet }));
+
+  return {
+    mockLimit,
+    mockOrderBy,
+    mockSelectWhere,
+    mockSelectFrom,
+    mockSelect,
+    mockUpdateWhere,
+    mockUpdateSet,
+    mockUpdate,
+  };
+});
 
 vi.mock('@/core/database/client', () => ({
   db: {
@@ -46,8 +69,6 @@ describe('enforceProductLimit', () => {
   test('no-op when under limit', async () => {
     mockSelectWhere.mockImplementation(() => thenableWithOrderBy([{ count: 3 }]));
 
-    const { enforceProductLimit } = await import('@/core/entitlements/enforceProductLimit');
-
     const result = await enforceProductLimit('biz_1', 50);
 
     expect(result).toBe(0);
@@ -58,8 +79,6 @@ describe('enforceProductLimit', () => {
   test('no-op when at exact limit', async () => {
     mockSelectWhere.mockImplementation(() => thenableWithOrderBy([{ count: 50 }]));
 
-    const { enforceProductLimit } = await import('@/core/entitlements/enforceProductLimit');
-
     const result = await enforceProductLimit('biz_1', 50);
 
     expect(result).toBe(0);
@@ -68,8 +87,6 @@ describe('enforceProductLimit', () => {
   });
 
   test('no-op when unlimited', async () => {
-    const { enforceProductLimit } = await import('@/core/entitlements/enforceProductLimit');
-
     const result = await enforceProductLimit('biz_1', -1);
 
     expect(result).toBe(0);
@@ -93,8 +110,6 @@ describe('enforceProductLimit', () => {
     mockLimit.mockResolvedValue(oldestProducts);
     mockUpdateWhere.mockResolvedValue(undefined);
 
-    const { enforceProductLimit } = await import('@/core/entitlements/enforceProductLimit');
-
     const result = await enforceProductLimit('biz_1', 50);
 
     expect(result).toBe(5);
@@ -116,8 +131,6 @@ describe('enforceProductLimit', () => {
 
     mockLimit.mockResolvedValue(oldestProducts);
     mockUpdateWhere.mockResolvedValue(undefined);
-
-    const { enforceProductLimit } = await import('@/core/entitlements/enforceProductLimit');
 
     const firstResult = await enforceProductLimit('biz_1', 50);
     expect(firstResult).toBe(5);
@@ -149,8 +162,6 @@ describe('enforceProductLimit', () => {
 
     mockLimit.mockResolvedValue(bizAProducts);
     mockUpdateWhere.mockResolvedValue(undefined);
-
-    const { enforceProductLimit } = await import('@/core/entitlements/enforceProductLimit');
 
     const resultA = await enforceProductLimit('biz_a', 50);
     expect(resultA).toBe(5);

@@ -5,29 +5,50 @@
 // for renewals, upgrades, downgrades, and first purchase.
 // =====================================================
 
+import { POST } from '@/app/api/billing/purchase-plan/route';
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
 
-const mockSaasIssuerFindFirst = vi.fn();
-const mockSubscriptionFindFirst = vi.fn();
-const mockReturning = vi.fn();
-const mockOnConflict = vi.fn();
-const mockValues = vi.fn(() => ({
-  returning: mockReturning,
-  onConflictDoUpdate: mockOnConflict,
-}));
-const mockInsert = vi.fn(() => ({ values: mockValues }));
+const {
+  mockSaasIssuerFindFirst,
+  mockSubscriptionFindFirst,
+  mockReturning,
+  mockOnConflict,
+  mockValues,
+  mockInsert,
+  mockTransaction,
+} = vi.hoisted(() => {
+  const mockSaasIssuerFindFirst = vi.fn();
+  const mockSubscriptionFindFirst = vi.fn();
+  const mockReturning = vi.fn();
+  const mockOnConflict = vi.fn();
+  const mockValues = vi.fn(() => ({
+    returning: mockReturning,
+    onConflictDoUpdate: mockOnConflict,
+  }));
+  const mockInsert = vi.fn(() => ({ values: mockValues }));
 
-const mockTransaction = vi.fn((callback) =>
-  callback({
-    insert: mockInsert,
-    query: {
-      businessSubscriptions: { findFirst: mockSubscriptionFindFirst },
-      saasIssuerConfig: { findFirst: mockSaasIssuerFindFirst },
-    },
-  }),
-);
+  const mockTransaction = vi.fn((callback) =>
+    callback({
+      insert: mockInsert,
+      query: {
+        businessSubscriptions: { findFirst: mockSubscriptionFindFirst },
+        saasIssuerConfig: { findFirst: mockSaasIssuerFindFirst },
+      },
+    }),
+  );
+
+  return {
+    mockSaasIssuerFindFirst,
+    mockSubscriptionFindFirst,
+    mockReturning,
+    mockOnConflict,
+    mockValues,
+    mockInsert,
+    mockTransaction,
+  };
+});
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
@@ -38,9 +59,12 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 vi.mock('@/features/storage/actions/authz', () => ({
-  requireOwnedBusinessById: vi
-    .fn()
-    .mockResolvedValue({ businessId: 'biz_123', ownerId: 'test-user-id', slug: 'test-business' }),
+  // original-impl form so restoreMocks keeps this resolved value across tests
+  requireOwnedBusinessById: vi.fn(async () => ({
+    businessId: 'biz_123',
+    ownerId: 'test-user-id',
+    slug: 'test-business',
+  })),
 }));
 
 vi.mock('@/core/database/client', () => ({
@@ -135,8 +159,6 @@ describe('POST /api/billing/purchase-plan — proration', () => {
       planStartDate: new Date('2026-01-01T00:00:00Z'),
     });
 
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -165,8 +187,6 @@ describe('POST /api/billing/purchase-plan — proration', () => {
       planStartDate: new Date('2026-03-01T00:00:00Z'),
     });
 
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -193,8 +213,6 @@ describe('POST /api/billing/purchase-plan — proration', () => {
       planStartDate: new Date('2026-01-01T00:00:00Z'),
     });
 
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -216,8 +234,6 @@ describe('POST /api/billing/purchase-plan — proration', () => {
   test('first purchase without previous subscription starts from today', async () => {
     // No previous subscription
     mockSubscriptionFindFirst.mockResolvedValue(null);
-
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
 
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
@@ -245,8 +261,6 @@ describe('POST /api/billing/purchase-plan — proration', () => {
       planStartDate: new Date('2025-06-01T00:00:00Z'),
     });
 
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -267,8 +281,6 @@ describe('POST /api/billing/purchase-plan — proration', () => {
 
   test('wraps subscription read + write in a DB transaction', async () => {
     mockSubscriptionFindFirst.mockResolvedValue(null);
-
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
 
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',

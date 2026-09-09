@@ -222,26 +222,30 @@ export function PricingCard({
 
       <Dialog open={isPaymentDialogOpen} onClose={handleCloseDialog}>
         <div slot="headline">Suscripción a {title}</div>
-        <PaymentDialogContent
-          step={step}
-          title={title}
-          businesses={businesses}
-          selectedBusiness={selectedBusiness}
-          onSelectedBusinessChange={setSelectedBusiness}
-          hasActivePlan={hasActivePlan}
-          buyerEmail={buyerEmail}
-          buyerFullName={buyerFullName}
-          buyerDocumentType={buyerDocumentType}
-          buyerDocumentNumber={buyerDocumentNumber}
-          buyerAddress={buyerAddress}
-          orderDetails={orderDetails}
-          selectedBusinessName={selectedBusinessName}
-          period={period}
-          price={price}
-          isProcessing={isProcessing}
-          error={error}
-          result={result}
-        />
+        <div slot="content">
+          <PaymentDialogContent
+            step={step}
+            title={title}
+            businesses={businesses}
+            selectedBusiness={selectedBusiness}
+            onSelectedBusinessChange={setSelectedBusiness}
+            hasActivePlan={hasActivePlan}
+            buyerEmail={buyerEmail}
+            buyerFullName={buyerFullName}
+            buyerDocumentType={buyerDocumentType}
+            buyerDocumentNumber={buyerDocumentNumber}
+            buyerAddress={buyerAddress}
+            orderDetails={orderDetails}
+            selectedBusinessName={selectedBusinessName}
+            period={period}
+            price={price}
+            subtotalSoles={subtotalSoles}
+            igvSoles={igvSoles}
+            isProcessing={isProcessing}
+            error={error}
+            result={result}
+          />
+        </div>
         <PaymentDialogActions
           step={step}
           onStepChange={setStep}
@@ -624,26 +628,65 @@ function BillingStepContent({
 
 interface PaymentStepContentProps {
   step: PaymentStep;
+  title: string;
   orderDetails: { id: string; date: string; time: string };
   selectedBusinessName: string | undefined;
   period: string;
   price: string;
+  subtotalSoles: number;
+  igvSoles: number;
   isProcessing: boolean;
   error: string | null;
 }
 
+const currencyFormatter = new Intl.NumberFormat('es-PE', {
+  style: 'currency',
+  currency: 'PEN',
+  minimumFractionDigits: 2,
+});
+
+/** Formatea una fecha en español para el pre-ticket. */
+function formatPlanDate(date: Date): string {
+  return date.toLocaleDateString('es-PE', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'America/Lima',
+  });
+}
+
+/**
+ * Fechas estimadas del periodo contratado, calculadas desde hoy.
+ * Solo UI de pre-ticket: la fecha real de activación la confirma el
+ * servidor tras el pago (planActivatedUntil).
+ */
+function getPlanPeriodDates(period: string): { start: string; end: string } {
+  const start = new Date();
+  const end = new Date(start);
+  if (period === 'anual' || period === 'annual') {
+    end.setFullYear(end.getFullYear() + 1);
+  } else {
+    end.setMonth(end.getMonth() + 1);
+  }
+  return { start: formatPlanDate(start), end: formatPlanDate(end) };
+}
+
 function PaymentStepContent({
   step,
+  title,
   orderDetails,
   selectedBusinessName,
   period,
   price,
+  subtotalSoles,
+  igvSoles,
   isProcessing,
   error,
 }: PaymentStepContentProps) {
   if (step !== 'payment') {
     return null;
   }
+  const planDates = getPlanPeriodDates(period);
   return (
     <div
       style={{
@@ -653,6 +696,7 @@ function PaymentStepContent({
         marginBottom: '1rem',
       }}
     >
+      {/* ── Pre-ticket del plan a comprar ── */}
       <div
         style={{
           padding: '1rem',
@@ -661,6 +705,23 @@ function PaymentStepContent({
           border: '1px solid var(--md-sys-color-outline-variant)',
         }}
       >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: '12px',
+            paddingBottom: '12px',
+            borderBottom: '1px dashed var(--md-sys-color-outline-variant)',
+          }}
+        >
+          <span style={{ fontWeight: '600', color: 'var(--md-sys-color-on-surface)' }}>
+            Plan {title}
+          </span>
+          <span style={{ fontSize: '0.875rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
+            {period === 'mes' ? 'Mensual' : 'Anual'}
+          </span>
+        </div>
+
         <div
           style={{
             display: 'flex',
@@ -674,7 +735,7 @@ function PaymentStepContent({
               color: 'var(--md-sys-color-on-surface-variant)',
             }}
           >
-            ID de Orden:
+            N° de Ticket:
           </span>
           <span style={{ fontSize: '0.875rem', fontFamily: 'monospace' }}>{orderDetails.id}</span>
         </div>
@@ -691,11 +752,26 @@ function PaymentStepContent({
               color: 'var(--md-sys-color-on-surface-variant)',
             }}
           >
-            Fecha y Hora:
+            Negocio:
           </span>
-          <span style={{ fontSize: '0.875rem' }}>
-            {orderDetails.date} {orderDetails.time}
+          <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>{selectedBusinessName}</span>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: '8px',
+          }}
+        >
+          <span
+            style={{
+              fontSize: '0.875rem',
+              color: 'var(--md-sys-color-on-surface-variant)',
+            }}
+          >
+            Fecha de inicio:
           </span>
+          <span style={{ fontSize: '0.875rem' }}>{planDates.start}</span>
         </div>
         <div
           style={{
@@ -712,10 +788,48 @@ function PaymentStepContent({
               color: 'var(--md-sys-color-on-surface-variant)',
             }}
           >
-            Negocio:
+            Fecha de vencimiento:
           </span>
-          <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>{selectedBusinessName}</span>
+          <span style={{ fontSize: '0.875rem' }}>{planDates.end}</span>
         </div>
+
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: '6px',
+          }}
+        >
+          <span
+            style={{
+              fontSize: '0.875rem',
+              color: 'var(--md-sys-color-on-surface-variant)',
+            }}
+          >
+            Subtotal:
+          </span>
+          <span style={{ fontSize: '0.875rem' }}>{currencyFormatter.format(subtotalSoles)}</span>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: '12px',
+            paddingBottom: '12px',
+            borderBottom: '1px dashed var(--md-sys-color-outline-variant)',
+          }}
+        >
+          <span
+            style={{
+              fontSize: '0.875rem',
+              color: 'var(--md-sys-color-on-surface-variant)',
+            }}
+          >
+            IGV (18%):
+          </span>
+          <span style={{ fontSize: '0.875rem' }}>{currencyFormatter.format(igvSoles)}</span>
+        </div>
+
         <div
           style={{
             display: 'flex',
@@ -724,7 +838,7 @@ function PaymentStepContent({
           }}
         >
           <span style={{ fontWeight: '500', color: 'var(--md-sys-color-on-surface)' }}>
-            Total a Pagar ({period})
+            Total a Pagar ({period === 'mes' ? 'mensual' : 'anual'})
           </span>
           <span
             style={{
@@ -1020,6 +1134,8 @@ interface PaymentDialogContentProps {
   selectedBusinessName: string | undefined;
   period: string;
   price: string;
+  subtotalSoles: number;
+  igvSoles: number;
   isProcessing: boolean;
   error: string | null;
   result: PurchasePlanResult | null;
@@ -1041,6 +1157,8 @@ function PaymentDialogContent({
   selectedBusinessName,
   period,
   price,
+  subtotalSoles,
+  igvSoles,
   isProcessing,
   error,
   result,
@@ -1064,10 +1182,13 @@ function PaymentDialogContent({
       />
       <PaymentStepContent
         step={step}
+        title={title}
         orderDetails={orderDetails}
         selectedBusinessName={selectedBusinessName}
         period={period}
         price={price}
+        subtotalSoles={subtotalSoles}
+        igvSoles={igvSoles}
         isProcessing={isProcessing}
         error={error}
       />

@@ -2,32 +2,51 @@
 // createProduct — Server Action unit tests
 // =====================================================
 
+import { createProduct } from '@/features/storage/actions/products';
+import { notifyLowStock, notifyOutOfStock } from '@/lib/notifications';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
 
 // Auth
-const mockRequireAccess = vi.fn();
+const mockRequireAccess = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/storage/actions/authz', () => ({
   requireAccess: mockRequireAccess,
 }));
 
 // Entitlements
-const mockGetEntitlements = vi.fn();
+const mockGetEntitlements = vi.hoisted(() => vi.fn());
 
 vi.mock('@/core/entitlements', () => ({
   getBusinessEntitlements: mockGetEntitlements,
 }));
 
 // Database
-const mockQueryProductCategoriesFindFirst = vi.fn();
-const mockQueryProductCategoriesFindMany = vi.fn();
-const mockQueryProductsFindMany = vi.fn();
-const mockSelect = vi.fn();
+const {
+  mockQueryProductCategoriesFindFirst,
+  mockQueryProductCategoriesFindMany,
+  mockQueryProductsFindMany,
+  mockSelect,
+  mockInsert,
+} = vi.hoisted(() => {
+  const mockQueryProductCategoriesFindFirst = vi.fn();
+  const mockQueryProductCategoriesFindMany = vi.fn();
+  const mockQueryProductsFindMany = vi.fn();
+  const mockSelect = vi.fn();
+  const mockInsert = vi.fn();
+
+  return {
+    mockQueryProductCategoriesFindFirst,
+    mockQueryProductCategoriesFindMany,
+    mockQueryProductsFindMany,
+    mockSelect,
+    mockInsert,
+  };
+});
+
 const mockSelectFrom = vi.fn();
 const mockSelectWhere = vi.fn();
-const mockInsert = vi.fn();
 const mockInsertValues = vi.fn();
 const mockInsertReturning = vi.fn();
 
@@ -151,8 +170,6 @@ describe('createProduct', () => {
   // ============================================================
 
   test('creates product with existing category', async () => {
-    const { createProduct } = await import('@/features/storage/actions/products');
-
     const result = await createProduct('test-business', validInput());
 
     expect(result).toEqual({
@@ -177,8 +194,6 @@ describe('createProduct', () => {
       .mockResolvedValueOnce([{ id: 'cat-new-1' }]) // category insert
       .mockResolvedValueOnce([{ id: 'prod-new-1' }]); // product insert
 
-    const { createProduct } = await import('@/features/storage/actions/products');
-
     // Use input without images to keep it simple (category + product = 2 inserts)
     const result = await createProduct('test-business', validInput({ images: [] }));
 
@@ -194,8 +209,6 @@ describe('createProduct', () => {
 
   test('creates product without category', async () => {
     const input = validInput({ category: '' });
-
-    const { createProduct } = await import('@/features/storage/actions/products');
 
     const result = await createProduct('test-business', input);
 
@@ -214,8 +227,6 @@ describe('createProduct', () => {
       images: ['https://example.com/img1.jpg', 'https://example.com/img2.jpg'],
     });
 
-    const { createProduct } = await import('@/features/storage/actions/products');
-
     await createProduct('test-business', input);
 
     // Verify media was inserted with correct order
@@ -230,8 +241,6 @@ describe('createProduct', () => {
   test('does NOT insert media when no images provided', async () => {
     const input = validInput({ images: [] });
 
-    const { createProduct } = await import('@/features/storage/actions/products');
-
     await createProduct('test-business', input);
 
     // Only product insert, no media insert (category already exists)
@@ -245,8 +254,6 @@ describe('createProduct', () => {
   test('returns error when unauthenticated (requireAccess throws)', async () => {
     mockRequireAccess.mockRejectedValue(new Error('No autorizado'));
 
-    const { createProduct } = await import('@/features/storage/actions/products');
-
     const result = await createProduct('test-business', validInput());
 
     expect(result).toEqual({
@@ -258,8 +265,6 @@ describe('createProduct', () => {
 
   test('returns error when user lacks permission (requireAccess throws)', async () => {
     mockRequireAccess.mockRejectedValue(new Error('No tienes permiso para realizar esta acción'));
-
-    const { createProduct } = await import('@/features/storage/actions/products');
 
     const result = await createProduct('test-business', validInput());
 
@@ -283,8 +288,6 @@ describe('createProduct', () => {
     // Current count is already at the limit
     mockSelectWhere.mockResolvedValue([{ count: 10 }]);
 
-    const { createProduct } = await import('@/features/storage/actions/products');
-
     const result = await createProduct('test-business', validInput());
 
     expect(result).toEqual({
@@ -305,8 +308,6 @@ describe('createProduct', () => {
 
     // Current count is under the limit
     mockSelectWhere.mockResolvedValue([{ count: 5 }]);
-
-    const { createProduct } = await import('@/features/storage/actions/products');
 
     const result = await createProduct('test-business', validInput());
 
@@ -329,8 +330,6 @@ describe('createProduct', () => {
     // Category count is at the limit (maxProducts: -1, so no product count check)
     mockSelectWhere.mockResolvedValue([{ count: 5 }]);
 
-    const { createProduct } = await import('@/features/storage/actions/products');
-
     const result = await createProduct('test-business', validInput());
 
     expect(result).toEqual({
@@ -349,10 +348,7 @@ describe('createProduct', () => {
   // ============================================================
 
   test('triggers notifyOutOfStock when stock is 0', async () => {
-    const { notifyOutOfStock } = await import('@/lib/notifications');
     const input = validInput({ stock: 0 });
-
-    const { createProduct } = await import('@/features/storage/actions/products');
 
     await createProduct('test-business', input);
 
@@ -362,15 +358,11 @@ describe('createProduct', () => {
     });
 
     // Low stock should NOT be called
-    const { notifyLowStock } = await import('@/lib/notifications');
     expect(notifyLowStock).not.toHaveBeenCalled();
   });
 
   test('triggers notifyLowStock when stock is below threshold', async () => {
-    const { notifyLowStock } = await import('@/lib/notifications');
     const input = validInput({ stock: 3 });
-
-    const { createProduct } = await import('@/features/storage/actions/products');
 
     await createProduct('test-business', input);
 
@@ -383,10 +375,7 @@ describe('createProduct', () => {
   });
 
   test('does NOT trigger any notification when stock is sufficient', async () => {
-    const { notifyLowStock, notifyOutOfStock } = await import('@/lib/notifications');
     const input = validInput({ stock: 20 });
-
-    const { createProduct } = await import('@/features/storage/actions/products');
 
     await createProduct('test-business', input);
 
@@ -401,8 +390,6 @@ describe('createProduct', () => {
   test('clamps negative price to 0', async () => {
     const input = validInput({ price: -100 });
 
-    const { createProduct } = await import('@/features/storage/actions/products');
-
     await createProduct('test-business', input);
 
     // Price should be clamped to 0 and stored as "0"
@@ -411,8 +398,6 @@ describe('createProduct', () => {
 
   test('clamps negative stock to 0', async () => {
     const input = validInput({ stock: -5 });
-
-    const { createProduct } = await import('@/features/storage/actions/products');
 
     await createProduct('test-business', input);
 
@@ -426,8 +411,6 @@ describe('createProduct', () => {
       category: '  Electrónicos  ',
       brand: '  TechBrand  ',
     });
-
-    const { createProduct } = await import('@/features/storage/actions/products');
 
     await createProduct('test-business', input);
 
@@ -452,8 +435,6 @@ describe('createProduct', () => {
       metadata: undefined,
     });
 
-    const { createProduct } = await import('@/features/storage/actions/products');
-
     await createProduct('test-business', input);
 
     // Verify the product insert values use Drizzle defaults:
@@ -474,8 +455,6 @@ describe('createProduct', () => {
   test('converts secondPrice to string when present', async () => {
     const input = validInput({ secondPrice: 1999.99 });
 
-    const { createProduct } = await import('@/features/storage/actions/products');
-
     await createProduct('test-business', input);
 
     expect(mockInsertValues).toHaveBeenCalledWith(
@@ -486,8 +465,6 @@ describe('createProduct', () => {
   test('sets secondPrice to null when explicitly null', async () => {
     const input = validInput({ secondPrice: null });
 
-    const { createProduct } = await import('@/features/storage/actions/products');
-
     await createProduct('test-business', input);
 
     expect(mockInsertValues).toHaveBeenCalledWith(expect.objectContaining({ secondPrice: null }));
@@ -495,8 +472,6 @@ describe('createProduct', () => {
 
   test('defaults saleStatus to NORMAL when not provided', async () => {
     const input = validInput({ saleStatus: undefined });
-
-    const { createProduct } = await import('@/features/storage/actions/products');
 
     await createProduct('test-business', input);
 
@@ -508,8 +483,6 @@ describe('createProduct', () => {
   test('converts ACTIVE status to isAvailable true', async () => {
     const input = validInput({ status: 'ACTIVO' });
 
-    const { createProduct } = await import('@/features/storage/actions/products');
-
     await createProduct('test-business', input);
 
     expect(mockInsertValues).toHaveBeenCalledWith(expect.objectContaining({ isAvailable: true }));
@@ -518,8 +491,6 @@ describe('createProduct', () => {
   test('converts non-ACTIVE status to isAvailable false', async () => {
     const input = validInput({ status: 'INACTIVO' });
 
-    const { createProduct } = await import('@/features/storage/actions/products');
-
     await createProduct('test-business', input);
 
     expect(mockInsertValues).toHaveBeenCalledWith(expect.objectContaining({ isAvailable: false }));
@@ -527,8 +498,6 @@ describe('createProduct', () => {
 
   test('handles empty tags array', async () => {
     const input = validInput({ tags: [] });
-
-    const { createProduct } = await import('@/features/storage/actions/products');
 
     await createProduct('test-business', input);
 
@@ -548,8 +517,6 @@ describe('createProduct', () => {
   test('returns generic error message for non-Error throws', async () => {
     mockRequireAccess.mockRejectedValue('Some string error');
 
-    const { createProduct } = await import('@/features/storage/actions/products');
-
     const result = await createProduct('test-business', validInput());
 
     expect(result).toEqual({
@@ -561,8 +528,6 @@ describe('createProduct', () => {
 
   test('returns original error message when requireAccess throws Error', async () => {
     mockRequireAccess.mockRejectedValue(new Error('Negocio no encontrado'));
-
-    const { createProduct } = await import('@/features/storage/actions/products');
 
     const result = await createProduct('test-business', validInput());
 

@@ -6,33 +6,54 @@
 // default (sequence) fills it automatically.
 // =====================================================
 
+import { POST } from '@/app/api/billing/purchase-plan/route';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
 // Must be before module imports (vi.mock is hoisted)
 
-const mockSaasIssuerFindFirst = vi.fn();
-const mockSubscriptionFindFirst = vi.fn();
-const mockReturning = vi.fn();
-const mockOnConflict = vi.fn();
-const mockValues = vi.fn(() => ({
-  returning: mockReturning,
-  onConflictDoUpdate: mockOnConflict,
-}));
-const mockInsert = vi.fn(() => ({ values: mockValues }));
+const {
+  mockSaasIssuerFindFirst,
+  mockSubscriptionFindFirst,
+  mockReturning,
+  mockOnConflict,
+  mockValues,
+  mockInsert,
+  mockTransaction,
+} = vi.hoisted(() => {
+  const mockSaasIssuerFindFirst = vi.fn();
+  const mockSubscriptionFindFirst = vi.fn();
+  const mockReturning = vi.fn();
+  const mockOnConflict = vi.fn();
+  const mockValues = vi.fn(() => ({
+    returning: mockReturning,
+    onConflictDoUpdate: mockOnConflict,
+  }));
+  const mockInsert = vi.fn(() => ({ values: mockValues }));
 
-// db.transaction executes the callback with a tx that delegates
-// to the same mocks — existing tests still work because
-// mockSubscriptionFindFirst returns null by default.
-const mockTransaction = vi.fn((callback) =>
-  callback({
-    insert: mockInsert,
-    query: {
-      businessSubscriptions: { findFirst: mockSubscriptionFindFirst },
-      saasIssuerConfig: { findFirst: mockSaasIssuerFindFirst },
-    },
-  }),
-);
+  // db.transaction executes the callback with a tx that delegates
+  // to the same mocks — existing tests still work because
+  // mockSubscriptionFindFirst returns null by default.
+  const mockTransaction = vi.fn((callback) =>
+    callback({
+      insert: mockInsert,
+      query: {
+        businessSubscriptions: { findFirst: mockSubscriptionFindFirst },
+        saasIssuerConfig: { findFirst: mockSaasIssuerFindFirst },
+      },
+    }),
+  );
+
+  return {
+    mockSaasIssuerFindFirst,
+    mockSubscriptionFindFirst,
+    mockReturning,
+    mockOnConflict,
+    mockValues,
+    mockInsert,
+    mockTransaction,
+  };
+});
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
@@ -43,9 +64,12 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 vi.mock('@/features/storage/actions/authz', () => ({
-  requireOwnedBusinessById: vi
-    .fn()
-    .mockResolvedValue({ businessId: 'biz_123', ownerId: 'test-user-id', slug: 'test-business' }),
+  // original-impl form so restoreMocks keeps this resolved value across tests
+  requireOwnedBusinessById: vi.fn(async () => ({
+    businessId: 'biz_123',
+    ownerId: 'test-user-id',
+    slug: 'test-business',
+  })),
 }));
 
 vi.mock('@/core/database/client', () => ({
@@ -126,8 +150,6 @@ describe('POST /api/billing/purchase-plan', () => {
   // ============================================================
 
   test('omits ticketCorrelative from insert values — DB default fills it', async () => {
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -149,8 +171,6 @@ describe('POST /api/billing/purchase-plan', () => {
   });
 
   test('returns issuer fiscal data in the response for the client ticket', async () => {
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -172,8 +192,6 @@ describe('POST /api/billing/purchase-plan', () => {
   });
 
   test('sends buyer identity in antifraud_details of the Culqi charge', async () => {
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -198,8 +216,6 @@ describe('POST /api/billing/purchase-plan', () => {
   // ============================================================
 
   test('returns 400 for invalid plan type', async () => {
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -214,8 +230,6 @@ describe('POST /api/billing/purchase-plan', () => {
   });
 
   test('returns 400 for free plan (basico)', async () => {
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -232,8 +246,6 @@ describe('POST /api/billing/purchase-plan', () => {
   test('returns 500 when saas issuer config is missing', async () => {
     mockSaasIssuerFindFirst.mockResolvedValue(null);
 
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -248,8 +260,6 @@ describe('POST /api/billing/purchase-plan', () => {
   });
 
   test('returns 400 when missing required fields', async () => {
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -271,8 +281,6 @@ describe('POST /api/billing/purchase-plan', () => {
         ticketCorrelative: 1,
       },
     ]);
-
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
 
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',

@@ -6,6 +6,7 @@
 // computes discount values from secondPrice.
 // Expected: PASS (the controller already works)
 
+import { useProductItemController } from '@/features/products/hooks/useProductItemController';
 import { renderHook } from '@testing-library/react';
 import { createContext, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
@@ -14,7 +15,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 // The hook has a deep import chain that eventually hits
 // DB client, so we mock all server-action modules.
 
-const mockStorageValue = {
+const mockStorageValue = vi.hoisted(() => ({
   product: null,
   updateProduct: vi.fn(),
   deleteProduct: vi.fn(),
@@ -23,16 +24,16 @@ const mockStorageValue = {
   refreshProducts: vi.fn(),
   isLoading: false,
   error: null,
-};
+}));
 
-const mockCartValue = {
+const mockCartValue = vi.hoisted(() => ({
   isProductInCart: false,
   addItem: vi.fn(),
   removeItem: vi.fn(),
   cart: [],
   cartCount: 0,
   cartTotal: 0,
-};
+}));
 
 // ── Mocks ────────────────────────────────────────────
 // The hook has a deep import chain that eventually hits
@@ -139,9 +140,6 @@ describe('useProductItemController — discount computation', () => {
   });
 
   test('sets price to secondPrice and originalPrice to price when secondPrice exists', async () => {
-    const { useProductItemController } =
-      await import('@/features/products/hooks/useProductItemController');
-
     const product = buildProduct({ price: '100.00', secondPrice: '80.00' });
     const { result } = renderHook(() => useProductItemController(product, false, false, vi.fn()));
 
@@ -151,9 +149,6 @@ describe('useProductItemController — discount computation', () => {
   });
 
   test('uses price as current when secondPrice is null', async () => {
-    const { useProductItemController } =
-      await import('@/features/products/hooks/useProductItemController');
-
     const product = buildProduct({ price: '100.00', secondPrice: null });
     const { result } = renderHook(() => useProductItemController(product, false, false, vi.fn()));
 
@@ -163,9 +158,6 @@ describe('useProductItemController — discount computation', () => {
   });
 
   test('uses price as current when secondPrice is undefined', async () => {
-    const { useProductItemController } =
-      await import('@/features/products/hooks/useProductItemController');
-
     const product = buildProduct({ price: '100.00', secondPrice: undefined });
     const { result } = renderHook(() => useProductItemController(product, false, false, vi.fn()));
 
@@ -175,9 +167,6 @@ describe('useProductItemController — discount computation', () => {
   });
 
   test('computes 25% discount correctly', async () => {
-    const { useProductItemController } =
-      await import('@/features/products/hooks/useProductItemController');
-
     const product = buildProduct({ price: '200.00', secondPrice: '150.00' });
     const { result } = renderHook(() => useProductItemController(product, false, false, vi.fn()));
 
@@ -187,9 +176,6 @@ describe('useProductItemController — discount computation', () => {
   });
 
   test('does not compute discount when secondPrice equals price', async () => {
-    const { useProductItemController } =
-      await import('@/features/products/hooks/useProductItemController');
-
     const product = buildProduct({ price: '100.00', secondPrice: '100.00' });
     const { result } = renderHook(() => useProductItemController(product, false, false, vi.fn()));
 

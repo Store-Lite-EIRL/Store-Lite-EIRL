@@ -5,13 +5,20 @@
 // and edge cases (no subscription, expired, inactive).
 // =====================================================
 
+import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
 
-const mockBusinessFindFirst = vi.fn();
-const mockSubscriptionFindFirst = vi.fn();
-const mockSettingsFindFirst = vi.fn();
+const { mockBusinessFindFirst, mockSubscriptionFindFirst, mockSettingsFindFirst } = vi.hoisted(
+  () => {
+    const mockBusinessFindFirst = vi.fn();
+    const mockSubscriptionFindFirst = vi.fn();
+    const mockSettingsFindFirst = vi.fn();
+
+    return { mockBusinessFindFirst, mockSubscriptionFindFirst, mockSettingsFindFirst };
+  },
+);
 
 vi.mock('@/core/database/client', () => ({
   db: {
@@ -23,7 +30,7 @@ vi.mock('@/core/database/client', () => ({
   },
 }));
 
-const mockEnforceProductLimit = vi.fn().mockResolvedValue(0);
+const mockEnforceProductLimit = vi.hoisted(() => vi.fn(async () => 0));
 vi.mock('@/core/entitlements/enforceProductLimit', () => ({
   enforceProductLimit: mockEnforceProductLimit,
 }));
@@ -59,8 +66,6 @@ describe('getBusinessEntitlements', () => {
   test('returns plan entitlements for active valid subscription', async () => {
     mockSubscriptionFindFirst.mockResolvedValue(makeSubscription());
 
-    const { getBusinessEntitlements } = await import('@/core/entitlements/getBusinessEntitlements');
-
     const result = await getBusinessEntitlements('biz_123');
 
     expect(result.plan).toBe('business_pro');
@@ -76,8 +81,6 @@ describe('getBusinessEntitlements', () => {
       makeSubscription({ planEndDate: new Date('2024-01-01T00:00:00Z') }),
     );
 
-    const { getBusinessEntitlements } = await import('@/core/entitlements/getBusinessEntitlements');
-
     const result = await getBusinessEntitlements('biz_123');
 
     expect(result.plan).toBe('basico');
@@ -88,8 +91,6 @@ describe('getBusinessEntitlements', () => {
 
   test('returns DEFAULT_PLAN when no subscription exists', async () => {
     mockSubscriptionFindFirst.mockResolvedValue(null);
-
-    const { getBusinessEntitlements } = await import('@/core/entitlements/getBusinessEntitlements');
 
     const result = await getBusinessEntitlements('biz_123');
 
@@ -102,8 +103,6 @@ describe('getBusinessEntitlements', () => {
     // The query already filters planStatus = 'active', so inactive → null
     mockSubscriptionFindFirst.mockResolvedValue(null);
 
-    const { getBusinessEntitlements } = await import('@/core/entitlements/getBusinessEntitlements');
-
     const result = await getBusinessEntitlements('biz_123');
 
     expect(result.plan).toBe('basico');
@@ -114,8 +113,6 @@ describe('getBusinessEntitlements', () => {
     mockBusinessFindFirst.mockResolvedValue({ isActive: false });
     mockSubscriptionFindFirst.mockResolvedValue(makeSubscription());
 
-    const { getBusinessEntitlements } = await import('@/core/entitlements/getBusinessEntitlements');
-
     const result = await getBusinessEntitlements('biz_123');
 
     expect(result.isActive).toBe(false);
@@ -124,8 +121,6 @@ describe('getBusinessEntitlements', () => {
 
   test('exposes culqiPublicKey when payment is configured', async () => {
     mockSubscriptionFindFirst.mockResolvedValue(makeSubscription());
-
-    const { getBusinessEntitlements } = await import('@/core/entitlements/getBusinessEntitlements');
 
     const result = await getBusinessEntitlements('biz_123');
 
@@ -139,9 +134,6 @@ describe('getBusinessEntitlements', () => {
         makeSubscription({ planEndDate: new Date('2024-01-01T00:00:00Z') }),
       );
 
-      const { getBusinessEntitlements } =
-        await import('@/core/entitlements/getBusinessEntitlements');
-
       await getBusinessEntitlements('biz_123');
 
       expect(mockEnforceProductLimit).toHaveBeenCalledTimes(1);
@@ -151,9 +143,6 @@ describe('getBusinessEntitlements', () => {
     test('does NOT call enforceProductLimit when plan stays same (active)', async () => {
       mockSubscriptionFindFirst.mockResolvedValue(makeSubscription());
 
-      const { getBusinessEntitlements } =
-        await import('@/core/entitlements/getBusinessEntitlements');
-
       await getBusinessEntitlements('biz_123');
 
       expect(mockEnforceProductLimit).not.toHaveBeenCalled();
@@ -161,9 +150,6 @@ describe('getBusinessEntitlements', () => {
 
     test('does NOT call enforceProductLimit when no subscription exists', async () => {
       mockSubscriptionFindFirst.mockResolvedValue(null);
-
-      const { getBusinessEntitlements } =
-        await import('@/core/entitlements/getBusinessEntitlements');
 
       await getBusinessEntitlements('biz_123');
 

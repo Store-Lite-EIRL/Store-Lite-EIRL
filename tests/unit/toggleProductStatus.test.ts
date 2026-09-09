@@ -5,16 +5,29 @@
 // business has reached its plan's maxProducts limit.
 // =====================================================
 
+import { toggleProductStatus } from '@/features/storage/isolatedUpdateAction';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
 
-const mockRequireOwnedBusinessBySlug = vi.fn();
-const mockGetEntitlements = vi.fn();
-const mockSelect = vi.fn();
+const { mockRequireOwnedBusinessBySlug, mockGetEntitlements, mockSelect, mockUpdate } = vi.hoisted(
+  () => {
+    const mockRequireOwnedBusinessBySlug = vi.fn();
+    const mockGetEntitlements = vi.fn();
+    const mockSelect = vi.fn();
+    const mockUpdate = vi.fn();
+
+    return {
+      mockRequireOwnedBusinessBySlug,
+      mockGetEntitlements,
+      mockSelect,
+      mockUpdate,
+    };
+  },
+);
+
 const mockSelectFrom = vi.fn();
 const mockSelectWhere = vi.fn();
-const mockUpdate = vi.fn();
 const mockUpdateSet = vi.fn();
 const mockUpdateWhere = vi.fn();
 
@@ -108,8 +121,6 @@ describe('toggleProductStatus', () => {
     });
     mockSelectWhere.mockResolvedValue([{ count: 5 }]);
 
-    const { toggleProductStatus } = await import('@/features/storage/isolatedUpdateAction');
-
     const result = await toggleProductStatus('prod-1', false, 'test-business');
 
     expect(result).toEqual({ success: true, newStatus: true });
@@ -130,8 +141,6 @@ describe('toggleProductStatus', () => {
     });
     mockSelectWhere.mockResolvedValue([{ count: 10 }]);
 
-    const { toggleProductStatus } = await import('@/features/storage/isolatedUpdateAction');
-
     const result = await toggleProductStatus('prod-1', false, 'test-business');
 
     expect(result).toEqual({
@@ -151,8 +160,6 @@ describe('toggleProductStatus', () => {
     });
     mockSelectWhere.mockResolvedValue([{ count: 12 }]);
 
-    const { toggleProductStatus } = await import('@/features/storage/isolatedUpdateAction');
-
     const result = await toggleProductStatus('prod-1', false, 'test-business');
 
     expect(result).toEqual({
@@ -170,8 +177,6 @@ describe('toggleProductStatus', () => {
       ...BASE_ENTITLEMENTS,
       maxProducts: -1,
     });
-
-    const { toggleProductStatus } = await import('@/features/storage/isolatedUpdateAction');
 
     const result = await toggleProductStatus('prod-1', false, 'test-business');
 
@@ -196,8 +201,6 @@ describe('toggleProductStatus', () => {
     });
     mockSelectWhere.mockResolvedValue([{ count: 10 }]);
 
-    const { toggleProductStatus } = await import('@/features/storage/isolatedUpdateAction');
-
     const result = await toggleProductStatus('prod-1', true, 'test-business');
 
     expect(result).toEqual({ success: true, newStatus: false });
@@ -215,8 +218,6 @@ describe('toggleProductStatus', () => {
 
   test('returns error when requireOwnedBusinessBySlug throws', async () => {
     mockRequireOwnedBusinessBySlug.mockRejectedValue(new Error('No autorizado'));
-
-    const { toggleProductStatus } = await import('@/features/storage/isolatedUpdateAction');
 
     const result = await toggleProductStatus('prod-1', false, 'test-business');
 

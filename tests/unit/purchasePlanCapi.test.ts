@@ -5,27 +5,51 @@
 //  - consent accepted    → response carries eventId AND fireEvent fires
 //  - consent declined/pending → no eventId, no CAPI event
 //  - fireEvent throwing  → never alters the purchase response
-// Pattern: dynamic route import + vi.mock (see purchasePlan.test.ts).
+// Pattern: static route import + vi.mock (see purchasePlan.test.ts).
 
+import { POST } from '@/app/api/billing/purchase-plan/route';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks (before module imports — vi.mock is hoisted) ────────────────
 
-const mockSaasIssuerFindFirst = vi.fn();
-const mockSubscriptionFindFirst = vi.fn();
-const mockReturning = vi.fn();
-const mockOnConflict = vi.fn();
-const mockValues = vi.fn(() => ({ returning: mockReturning, onConflictDoUpdate: mockOnConflict }));
-const mockInsert = vi.fn(() => ({ values: mockValues }));
-const mockTransaction = vi.fn((callback) =>
-  callback({
-    insert: mockInsert,
-    query: {
-      businessSubscriptions: { findFirst: mockSubscriptionFindFirst },
-      saasIssuerConfig: { findFirst: mockSaasIssuerFindFirst },
-    },
-  }),
-);
+const {
+  mockSaasIssuerFindFirst,
+  mockSubscriptionFindFirst,
+  mockReturning,
+  mockOnConflict,
+  mockValues,
+  mockInsert,
+  mockTransaction,
+} = vi.hoisted(() => {
+  const mockSaasIssuerFindFirst = vi.fn();
+  const mockSubscriptionFindFirst = vi.fn();
+  const mockReturning = vi.fn();
+  const mockOnConflict = vi.fn();
+  const mockValues = vi.fn(() => ({
+    returning: mockReturning,
+    onConflictDoUpdate: mockOnConflict,
+  }));
+  const mockInsert = vi.fn(() => ({ values: mockValues }));
+  const mockTransaction = vi.fn((callback) =>
+    callback({
+      insert: mockInsert,
+      query: {
+        businessSubscriptions: { findFirst: mockSubscriptionFindFirst },
+        saasIssuerConfig: { findFirst: mockSaasIssuerFindFirst },
+      },
+    }),
+  );
+
+  return {
+    mockSaasIssuerFindFirst,
+    mockSubscriptionFindFirst,
+    mockReturning,
+    mockOnConflict,
+    mockValues,
+    mockInsert,
+    mockTransaction,
+  };
+});
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
@@ -36,7 +60,8 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 vi.mock('@/features/storage/actions/authz', () => ({
-  requireOwnedBusinessById: vi.fn().mockResolvedValue({ businessId: 'biz_123' }),
+  // original-impl form so restoreMocks keeps this resolved value across tests
+  requireOwnedBusinessById: vi.fn(async () => ({ businessId: 'biz_123' })),
 }));
 
 vi.mock('@/core/database/client', () => ({
@@ -119,7 +144,6 @@ describe('purchase-plan → Meta CAPI wiring', () => {
   });
 
   test('returns eventId and fires CAPI Purchase when consent is accepted', async () => {
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -151,7 +175,6 @@ describe('purchase-plan → Meta CAPI wiring', () => {
   });
 
   test('passes request-derived context (ip, ua, fbp/fbc, fbclid) to fireEvent', async () => {
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: {
@@ -184,7 +207,6 @@ describe('purchase-plan → Meta CAPI wiring', () => {
 
   test('does not fire CAPI and omits eventId when consent is declined', async () => {
     mockGetConsentState.mockResolvedValue('declined');
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -201,7 +223,6 @@ describe('purchase-plan → Meta CAPI wiring', () => {
 
   test('does not fire CAPI while consent is pending', async () => {
     mockGetConsentState.mockResolvedValue('pending');
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -226,7 +247,6 @@ describe('purchase-plan → Meta CAPI wiring', () => {
     });
     mockFireEvent.mockReturnValue(capiInFlight);
 
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -4,30 +4,36 @@
 // Tests for T6: Product limit check on batch import
 // =====================================================
 
+import { importProductsBatch } from '@/features/storage/actions/imports';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
 
 // Auth
-const mockRequireOwnedBusinessBySlug = vi.fn();
+const mockRequireOwnedBusinessBySlug = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/storage/actions/authz', () => ({
   requireOwnedBusinessBySlug: mockRequireOwnedBusinessBySlug,
 }));
 
 // Entitlements
-const mockGetEntitlements = vi.fn();
+const mockGetEntitlements = vi.hoisted(() => vi.fn());
 
 vi.mock('@/core/entitlements', () => ({
   getBusinessEntitlements: mockGetEntitlements,
 }));
 
 // Database
-const mockQueryProductCategoriesFindMany = vi.fn();
-const mockSelect = vi.fn();
+const { mockQueryProductCategoriesFindMany, mockSelect, mockInsert } = vi.hoisted(() => {
+  const mockQueryProductCategoriesFindMany = vi.fn();
+  const mockSelect = vi.fn();
+  const mockInsert = vi.fn();
+
+  return { mockQueryProductCategoriesFindMany, mockSelect, mockInsert };
+});
+
 const mockSelectFrom = vi.fn();
 const mockSelectWhere = vi.fn();
-const mockInsert = vi.fn();
 const mockInsertValues = vi.fn();
 const mockInsertReturning = vi.fn();
 
@@ -149,8 +155,6 @@ describe('importProductsBatch', () => {
     mockSelectWhere.mockResolvedValue([{ count: 5 }]);
     mockInsertReturning.mockResolvedValue([{ id: 'prod-1' }, { id: 'prod-2' }, { id: 'prod-3' }]);
 
-    const { importProductsBatch } = await import('@/features/storage/actions/imports');
-
     const result = await importProductsBatch('test-business', buildProductList(3));
 
     expect(result).toEqual({ success: true });
@@ -166,8 +170,6 @@ describe('importProductsBatch', () => {
     mockSelectWhere.mockResolvedValue([{ count: 8 }]);
     mockInsertReturning.mockResolvedValue([{ id: 'prod-1' }, { id: 'prod-2' }]);
 
-    const { importProductsBatch } = await import('@/features/storage/actions/imports');
-
     const result = await importProductsBatch('test-business', buildProductList(2));
 
     expect(result).toEqual({ success: true });
@@ -181,8 +183,6 @@ describe('importProductsBatch', () => {
 
     // 9 existing active products + 2 incoming = 11 > 10
     mockSelectWhere.mockResolvedValue([{ count: 9 }]);
-
-    const { importProductsBatch } = await import('@/features/storage/actions/imports');
 
     const result = await importProductsBatch('test-business', buildProductList(2));
 
@@ -201,8 +201,6 @@ describe('importProductsBatch', () => {
     // maxProducts: -1 by default — no check needed
     mockInsertReturning.mockResolvedValue([{ id: 'prod-1' }]);
 
-    const { importProductsBatch } = await import('@/features/storage/actions/imports');
-
     const result = await importProductsBatch('test-business', buildProductList(50));
 
     expect(result).toEqual({ success: true });
@@ -212,8 +210,6 @@ describe('importProductsBatch', () => {
   });
 
   test('handles empty import list trivially', async () => {
-    const { importProductsBatch } = await import('@/features/storage/actions/imports');
-
     const result = await importProductsBatch('test-business', []);
 
     expect(result).toEqual({ success: true });

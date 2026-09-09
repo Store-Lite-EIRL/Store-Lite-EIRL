@@ -1,3 +1,4 @@
+import { BUYER_NAME_ERROR_MESSAGE, isTwoWordName } from '@/shared/payments/buyerName';
 import { z } from 'zod';
 
 const customerAuthSchema = z.object({
@@ -53,24 +54,33 @@ export const chargeRequestSchema = z
   })
   .refine((data) => data.token || data.culqiOrderId, {
     message: 'Se requiere token o culqiOrderId',
+  })
+  .refine((data) => !data.customerName || isTwoWordName(data.customerName), {
+    message: BUYER_NAME_ERROR_MESSAGE,
+    path: ['customerName'],
   });
 
 export type ChargeRequestInput = z.infer<typeof chargeRequestSchema>;
 
-export const createOrderRequestSchema = z.object({
-  amount: z.number().int().min(100, 'Monto mínimo S/ 1.00 (100 céntimos)'),
-  currency: z.string().default('PEN'),
-  email: z.string().email('Email no válido'),
-  phone: z.string().optional().nullable(),
-  customerName: z
-    .string()
-    .trim()
-    .min(3, 'El nombre del cliente debe tener al menos 3 caracteres')
-    .optional(),
-  businessId: z.string().uuid('ID de negocio inválido'),
-  productId: z.string().uuid('ID de producto inválido').optional(),
-  description: z.string().optional(),
-});
+export const createOrderRequestSchema = z
+  .object({
+    amount: z.number().int().min(100, 'Monto mínimo S/ 1.00 (100 céntimos)'),
+    currency: z.string().default('PEN'),
+    email: z.string().email('Email no válido'),
+    phone: z.string().optional().nullable(),
+    customerName: z
+      .string()
+      .trim()
+      .min(3, 'El nombre del cliente debe tener al menos 3 caracteres')
+      .optional(),
+    businessId: z.string().uuid('ID de negocio inválido'),
+    productId: z.string().uuid('ID de producto inválido').optional(),
+    description: z.string().optional(),
+  })
+  .refine((data) => !data.customerName || isTwoWordName(data.customerName), {
+    message: BUYER_NAME_ERROR_MESSAGE,
+    path: ['customerName'],
+  });
 export type CreateOrderRequestInput = z.infer<typeof createOrderRequestSchema>;
 
 export const trackOrderSchema = z.object({

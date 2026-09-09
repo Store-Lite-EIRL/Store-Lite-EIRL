@@ -33,7 +33,6 @@ export default function PricingSection() {
         '🎨 Personalización completa del diseño',
         '👥 Equipo de 2 usuarios adicionales',
         '📊 Dashboard con métricas de ventas',
-        '📦 Integración con envíos Urbano',
         '🎯 SEO avanzado incluido',
       ],
       cta: 'Escalar mi negocio',
