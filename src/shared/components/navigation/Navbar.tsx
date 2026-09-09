@@ -18,6 +18,19 @@ interface NavbarProps {
   businessId?: string;
   businessName?: string;
   businessLogoUrl?: string;
+  businessCoverUrl?: string;
+}
+
+const PLAN_LABELS: Record<string, string> = {
+  basico: 'Básico',
+  emprendedor: 'Emprendedor',
+  business_pro: 'Business PRO',
+  enterprise_pro: 'Enterprise PRO',
+};
+
+function formatPlanName(planName: string): string {
+  const normalizedPlan = planName.trim().toLowerCase();
+  return PLAN_LABELS[normalizedPlan] ?? planName.replace(/_/g, ' ').replace(/\bpro\b/gi, 'PRO');
 }
 
 export default function Navbar({
@@ -27,6 +40,7 @@ export default function Navbar({
   businessId,
   businessName,
   businessLogoUrl,
+  businessCoverUrl,
 }: NavbarProps) {
   const pathname = usePathname();
   const params = useParams();
@@ -321,25 +335,63 @@ export default function Navbar({
         <div className="navbar__header">
           {!isCollapsed && businessName && (
             <div className="navbar__business-header">
-              {businessLogoUrl && (
-                <img src={businessLogoUrl} alt={businessName} className="navbar__business-logo" />
-              )}
+              <div className="navbar__business-media">
+                {businessLogoUrl && (
+                  <img src={businessLogoUrl} alt={businessName} className="navbar__business-logo" />
+                )}
+                {businessCoverUrl && (
+                  <img
+                    src={businessCoverUrl}
+                    alt=""
+                    aria-hidden="true"
+                    className="navbar__business-cover"
+                  />
+                )}
+              </div>
+              <button
+                className="navbar__item--toggle-small navbar__item--toggle-business"
+                onClick={onToggle}
+                aria-label="Contraer"
+                title="Contraer"
+              >
+                <Icon size={18}>chevron_left</Icon>
+              </button>
               <div className="navbar__business-text">
                 <span className="navbar__business-name">{businessName}</span>
-                <span className="navbar__plan-badge-small">{planName}</span>
+                <div className="navbar__plan-row">
+                  <span className="navbar__plan-badge-small">
+                    <Icon size={14} aria-hidden="true">
+                      star
+                    </Icon>
+                    {formatPlanName(planName)}
+                  </span>
+                  <span className="navbar__status-active">
+                    <span className="navbar__status-dot" aria-hidden="true" />
+                    ACTIVO
+                  </span>
+                </div>
               </div>
             </div>
           )}
-          <button
-            className={`navbar__item--toggle-small ${isCollapsed ? 'collapsed' : ''}`}
-            onClick={onToggle}
-            aria-label={isCollapsed ? 'Expandir' : 'Contraer'}
-            title={isCollapsed ? 'Expandir' : 'Contraer'}
-          >
-            <Icon size={isCollapsed ? 28 : 18}>
-              {isCollapsed ? 'chevron_right' : 'chevron_left'}
-            </Icon>
-          </button>
+          {isCollapsed && (
+            <div className="navbar__collapsed-brand">
+              {businessLogoUrl && (
+                <img
+                  src={businessLogoUrl}
+                  alt={businessName ?? 'Negocio'}
+                  className="navbar__business-logo navbar__business-logo--collapsed"
+                />
+              )}
+              <button
+                className="navbar__item--toggle-small navbar__item--toggle-collapsed"
+                onClick={onToggle}
+                aria-label="Expandir"
+                title="Expandir"
+              >
+                <Icon size={20}>chevron_right</Icon>
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="navbar__divider" />

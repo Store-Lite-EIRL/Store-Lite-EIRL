@@ -1,5 +1,6 @@
 /* ─── Consent Checkbox ─── */
-/* Matches the dark auth page theme (app/auth/page.module.css) */
+/* Theme-aware: uses MD tokens (same as app/auth/customer/page.module.css).
+   Previously hardcoded for dark theme (white border) -> invisible on light bg. */
 
 .checkboxLabel {
   display: flex;
@@ -14,7 +15,7 @@
   -webkit-appearance: none;
   width: 1rem;
   height: 1rem;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border: 1.5px solid var(--md-sys-color-outline, #79747e);
   border-radius: 3px;
   background: transparent;
   cursor: pointer;
@@ -25,8 +26,8 @@
 }
 
 .checkbox:checked {
-  background-color: #135bec;
-  border-color: #135bec;
+  background-color: var(--md-sys-color-primary, #135bec);
+  border-color: var(--md-sys-color-primary, #135bec);
 }
 
 .checkbox:checked::after {
@@ -42,23 +43,43 @@
 }
 
 .checkbox:focus-visible {
-  outline: 2px solid #135bec;
+  outline: 2px solid var(--md-sys-color-primary, #135bec);
   outline-offset: 2px;
 }
 
 .checkboxText {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
   line-height: 1.625;
 }
 
 .link {
-  color: #94a3b8;
+  color: var(--md-sys-color-primary, #135bec);
   text-decoration-line: underline;
-  text-decoration-color: #334155;
+  text-decoration-color: currentColor;
   transition: color 150ms;
 }
 
 .link:hover {
-  color: #135bec;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+/* Dark mode fallbacks (mirror app/auth/customer/page.module.css pattern:
+   covers dark surfaces even when the .dark token class is not applied). */
+@media (prefers-color-scheme: dark) {
+  .checkbox {
+    border-color: var(--md-sys-color-outline, #8b9198);
+  }
+
+  .checkboxText {
+    color: var(--md-sys-color-on-surface-variant, #c1c7ce);
+  }
+
+  .link {
+    color: var(--md-sys-color-primary, #92cef5);
+  }
+
+  .link:hover {
+    color: var(--md-sys-color-on-surface, #dfe3e7);
+  }
 }

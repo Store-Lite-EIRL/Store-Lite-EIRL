@@ -499,6 +499,13 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem; /* space-y-6 */
+
+  /* MD token overrides so ConsentCheckbox (token-driven) matches this
+     always-dark page regardless of OS theme or global token class. */
+  --md-sys-color-outline: #8b9198;
+  --md-sys-color-on-surface-variant: #c1c7ce;
+  --md-sys-color-primary: #92cef5;
+  --md-sys-color-on-surface: #dfe3e7;
 }
 
 /* CUSTOM GOOGLE BUTTON STYLES */

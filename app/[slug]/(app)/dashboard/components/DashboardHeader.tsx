@@ -1,4 +1,5 @@
 import type { BusinessEntitlements } from '@/core/entitlements/plans';
+import { Star } from 'lucide-react';
 import Image from 'next/image';
 import styles from './DashboardHeader.module.css';
 import { NotificationBell } from './NotificationBell';
@@ -75,6 +76,7 @@ export function DashboardHeader({
               className={styles.planBadge}
               style={{ '--plan-color': planColor } as React.CSSProperties}
             >
+              <Star className={styles.planIcon} aria-hidden="true" />
               {planLabel}
             </span>
             {entitlements.isActive ? (

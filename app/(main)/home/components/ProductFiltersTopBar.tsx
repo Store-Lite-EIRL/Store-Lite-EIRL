@@ -99,6 +99,7 @@ export default function ProductFiltersTopBar({
         </span>
         <Switch
           selected={showDiscountedOnly}
+          className={styles.discountSwitch}
           onChange={(e) => onDiscountToggle(getMaterialSwitchSelected(e))}
         />
       </div>

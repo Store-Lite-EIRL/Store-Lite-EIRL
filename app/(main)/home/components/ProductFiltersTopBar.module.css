@@ -71,6 +71,33 @@
   gap: 12px;
 }
 
+.discountSwitch {
+  --md-switch-selected-track-color: color-mix(
+    in srgb,
+    var(--md-sys-color-primary) 64%,
+    var(--md-sys-color-surface) 36%
+  );
+  --md-switch-selected-hover-track-color: color-mix(
+    in srgb,
+    var(--md-sys-color-primary) 72%,
+    var(--md-sys-color-surface) 28%
+  );
+  --md-switch-selected-focus-track-color: color-mix(
+    in srgb,
+    var(--md-sys-color-primary) 72%,
+    var(--md-sys-color-surface) 28%
+  );
+  --md-switch-selected-pressed-track-color: color-mix(
+    in srgb,
+    var(--md-sys-color-primary) 78%,
+    var(--md-sys-color-surface) 22%
+  );
+  --md-switch-selected-handle-color: var(--md-sys-color-on-primary);
+  --md-switch-selected-hover-handle-color: var(--md-sys-color-on-primary);
+  --md-switch-selected-focus-handle-color: var(--md-sys-color-on-primary);
+  --md-switch-selected-pressed-handle-color: var(--md-sys-color-on-primary);
+}
+
 .switchLabelText {
   font-family: inherit;
   font-size: 1rem;

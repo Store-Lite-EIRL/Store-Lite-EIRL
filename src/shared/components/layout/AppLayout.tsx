@@ -20,6 +20,7 @@ interface AppLayoutProps {
   navbarBusinessId?: string;
   navbarBusinessName?: string;
   navbarBusinessLogoUrl?: string;
+  navbarBusinessCoverUrl?: string;
 }
 
 /** Determine content wrapper class based on sidebar state and feature flag */
@@ -61,6 +62,7 @@ function renderSidebar({
   navbarBusinessId,
   navbarBusinessName,
   navbarBusinessLogoUrl,
+  navbarBusinessCoverUrl,
   pathname,
   isChatPage,
 }: {
@@ -75,6 +77,7 @@ function renderSidebar({
   navbarBusinessId?: string;
   navbarBusinessName?: string;
   navbarBusinessLogoUrl?: string;
+  navbarBusinessCoverUrl?: string;
   pathname: string;
   isChatPage: boolean;
 }) {
@@ -104,6 +107,7 @@ function renderSidebar({
       businessId={navbarBusinessId}
       businessName={navbarBusinessName}
       businessLogoUrl={navbarBusinessLogoUrl}
+      businessCoverUrl={navbarBusinessCoverUrl}
     />
   );
 }
@@ -115,6 +119,7 @@ export default function AppLayout({
   navbarBusinessId,
   navbarBusinessName,
   navbarBusinessLogoUrl,
+  navbarBusinessCoverUrl,
 }: AppLayoutProps) {
   // Business session management - only for detecting when session is killed from another tab
   const { sessionKilledFromOtherTab, resetSessionKilledFlag } = useBusinessSession();
@@ -229,6 +234,7 @@ export default function AppLayout({
           navbarBusinessId,
           navbarBusinessName,
           navbarBusinessLogoUrl,
+          navbarBusinessCoverUrl,
           pathname,
           isChatPage,
         })}
