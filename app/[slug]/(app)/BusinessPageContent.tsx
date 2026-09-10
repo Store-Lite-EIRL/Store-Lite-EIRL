@@ -143,6 +143,7 @@ function BusinessPageContentUI({
     () => storefrontTheme ?? createDefaultStorefrontTheme(),
   );
   const [previewScheme, setPreviewScheme] = useState<StorefrontColorScheme | undefined>(undefined);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [viewerTheme, setViewerTheme] = useState<'light' | 'dark' | null>(null);
   const [alert, setAlert] = useState<{
     open: boolean;
@@ -480,14 +481,13 @@ function BusinessPageContentUI({
 
   // Reverse sync: when the global theme changes (navbar toggle / settings),
   // propagate it to the storefront viewer — but only when the customize
-  // editor is NOT actively previewing a scheme (previewScheme === undefined).
-  // This prevents the navbar toggle from becoming a no-op after
-  // "Personalizar Tienda" has set viewerTheme.
+  // editor is NOT open. This prevents the navbar toggle from becoming a
+  // no-op after "Personalizar Tienda" has set viewerTheme.
   useEffect(() => {
-    if (previewScheme !== undefined) return;
+    if (isEditorOpen) return;
     if (viewerTheme === effectiveTheme) return;
     setViewerTheme(effectiveTheme);
-  }, [effectiveTheme, previewScheme, viewerTheme]);
+  }, [effectiveTheme, isEditorOpen, viewerTheme]);
 
   // Read stored preview scheme from localStorage on mount (staff only)
   // Mirrors the same localStorage pattern as viewerTheme above.
@@ -574,6 +574,8 @@ function BusinessPageContentUI({
           editableTheme={editableTheme}
           onThemeChange={setEditableTheme}
           onPreviewSchemeChange={handlePreviewSchemeChange}
+          onEditorClose={() => setIsEditorOpen(false)}
+          onEditorOpen={() => setIsEditorOpen(true)}
           detectedColorScheme={effectiveTheme as StorefrontColorScheme}
           previewScheme={previewScheme}
           defaultScheme={defaultScheme}

@@ -24,6 +24,8 @@ interface StaffManagementToolsProps {
   editableTheme: StorefrontTheme;
   onThemeChange: (theme: StorefrontTheme) => void;
   onPreviewSchemeChange: (scheme: StorefrontColorScheme | undefined) => void;
+  onEditorClose: () => void;
+  onEditorOpen: () => void;
   detectedColorScheme: StorefrontColorScheme;
   previewScheme?: StorefrontColorScheme;
   defaultScheme?: 'light' | 'dark';
@@ -42,6 +44,8 @@ export function StaffManagementTools({
   editableTheme,
   onThemeChange,
   onPreviewSchemeChange,
+  onEditorClose,
+  onEditorOpen,
   detectedColorScheme,
   previewScheme,
   defaultScheme,
@@ -66,6 +70,8 @@ export function StaffManagementTools({
         storefrontTheme={editableTheme}
         onThemeChange={onThemeChange}
         onPreviewSchemeChange={onPreviewSchemeChange}
+        onOpen={onEditorOpen}
+        onClose={onEditorClose}
         detectedColorScheme={detectedColorScheme}
         currentScheme={previewScheme}
         defaultScheme={defaultScheme}
