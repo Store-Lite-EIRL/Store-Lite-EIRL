@@ -4,6 +4,7 @@
   display: flex;
   min-height: 100dvh;
   background-color: var(--storefront-bg, var(--md-sys-color-surface));
+  transition: background-color 300ms ease;
 }
 
 .layout--chat {
@@ -81,6 +82,7 @@
   padding: 1.5rem;
   min-width: 0;
   background-color: var(--storefront-bg, var(--md-sys-color-surface));
+  transition: background-color 300ms ease;
 }
 
 .main-area--chat {

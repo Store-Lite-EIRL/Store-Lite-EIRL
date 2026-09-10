@@ -386,10 +386,6 @@ function BusinessPageContentUI({
     // 1. Set all CSS vars on root (affects layout/main-area/storefront)
     entries.forEach(([key, value]) => root.style.setProperty(key, value));
 
-    // Enable smooth theme transitions on background properties
-    root.style.transition = 'background-color 300ms ease, background-image 300ms ease';
-    document.body.style.transition = 'background-color 300ms ease';
-
     // 2. Recompute the ORIGINAL background (themeStyles has it stripped so
     //    ::before doesn't double-paint). HTML handles the pattern exclusively.
     const activeBackground =
@@ -441,9 +437,7 @@ function BusinessPageContentUI({
       root.style.backgroundPosition = '';
       root.style.backgroundRepeat = '';
       root.style.backgroundAttachment = '';
-      root.style.transition = '';
       document.body.style.backgroundColor = '';
-      document.body.style.transition = '';
     };
   }, [themeStyles, editableTheme, activeScheme]);
 
