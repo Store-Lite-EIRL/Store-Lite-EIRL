@@ -472,11 +472,22 @@ function BusinessPageContentUI({
     setViewerTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   }, []);
 
-  // Sync viewer theme to global app-theme so all pages reflect the change
+  // Sync viewer theme → global app-theme so all pages reflect the change
   useEffect(() => {
     if (viewerTheme === null) return;
     setTheme(viewerTheme);
   }, [viewerTheme, setTheme]);
+
+  // Reverse sync: when the global theme changes (navbar toggle / settings),
+  // propagate it to the storefront viewer — but only when the customize
+  // editor is NOT actively previewing a scheme (previewScheme === undefined).
+  // This prevents the navbar toggle from becoming a no-op after
+  // "Personalizar Tienda" has set viewerTheme.
+  useEffect(() => {
+    if (previewScheme !== undefined) return;
+    if (viewerTheme === effectiveTheme) return;
+    setViewerTheme(effectiveTheme);
+  }, [effectiveTheme, previewScheme, viewerTheme]);
 
   // Read stored preview scheme from localStorage on mount (staff only)
   // Mirrors the same localStorage pattern as viewerTheme above.
