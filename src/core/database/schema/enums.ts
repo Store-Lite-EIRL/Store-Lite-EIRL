@@ -82,12 +82,12 @@ export const paymentMethodEnum = pgEnum('payment_method', [
   'billetera_movil',
   'cuotealo',
 ]);
-export const subscriptionPlanEnum = pgEnum('subscription_plan', [
-  'basico',
-  'emprendedor',
-  'business_pro',
-  'enterprise_pro',
-]);
+// ─── 3-plan catalog (pricing restructure) ──────────────
+// App-authoritative union. The DB enum still carries legacy members
+// (basico, emprendedor, business_pro, enterprise_pro) because PG cannot
+// DROP enum values; legacy rows are remapped by migrations 0023+0047 and
+// resolvePlan() shims any leftover legacy keys at runtime.
+export const subscriptionPlanEnum = pgEnum('subscription_plan', ['lite', 'lite_pago', 'lite_plus']);
 export const subscriptionStatusEnum = pgEnum('subscription_status', [
   'active',
   'inactive',
