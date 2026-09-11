@@ -1,11 +1,6 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export interface Database {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: '14.5';
-  };
   public: {
     Tables: {
       activity_log: {
@@ -887,8 +882,8 @@ export interface Database {
           content: string;
           created_at: string | null;
           id: string;
-          is_from_store: boolean | null;
-          is_read: boolean | null;
+          is_from_store: boolean;
+          is_read: boolean;
           payment_id: string | null;
           session_id: string;
         };
@@ -896,8 +891,8 @@ export interface Database {
           content: string;
           created_at?: string | null;
           id?: string;
-          is_from_store?: boolean | null;
-          is_read?: boolean | null;
+          is_from_store?: boolean;
+          is_read?: boolean;
           payment_id?: string | null;
           session_id: string;
         };
@@ -905,8 +900,8 @@ export interface Database {
           content?: string;
           created_at?: string | null;
           id?: string;
-          is_from_store?: boolean | null;
-          is_read?: boolean | null;
+          is_from_store?: boolean;
+          is_read?: boolean;
           payment_id?: string | null;
           session_id?: string;
         };
@@ -1962,13 +1957,7 @@ export interface Database {
         | 'order_auto_finalized'
         | 'system';
       order_attachment_type:
-        | 'tracking'
-        | 'cip'
-        | 'invoice'
-        | 'photo'
-        | 'video'
-        | 'document'
-        | 'other';
+        'tracking' | 'cip' | 'invoice' | 'photo' | 'video' | 'document' | 'other';
       order_status_v2:
         | 'CREATED'
         | 'PAID'
@@ -2020,7 +2009,15 @@ export interface Database {
         | 'en_reparto';
       plan_payment_status: 'pending' | 'paid' | 'failed' | 'refunded' | 'disputed';
       shipping_type: 'agencia' | 'domicilio' | 'recojo';
-      subscription_plan: 'basico' | 'emprendedor' | 'business_pro' | 'enterprise_ai';
+      subscription_plan:
+        | 'basico'
+        | 'emprendedor'
+        | 'business_pro'
+        | 'enterprise_ai'
+        | 'enterprise_pro'
+        | 'lite'
+        | 'lite_pago'
+        | 'lite_plus';
       subscription_status: 'active' | 'inactive' | 'past_due' | 'canceled' | 'expired' | 'trialing';
       theme_mode: 'light' | 'dark';
     };
@@ -2038,12 +2035,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
@@ -2063,13 +2060,12 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema['Tables']
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+    keyof DefaultSchema['Tables'] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
@@ -2088,13 +2084,12 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema['Tables']
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+    keyof DefaultSchema['Tables'] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
@@ -2113,13 +2108,12 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema['Enums']
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    keyof DefaultSchema['Enums'] | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
@@ -2130,13 +2124,12 @@ export type Enums<
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema['CompositeTypes']
-    | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    keyof DefaultSchema['CompositeTypes'] | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
@@ -2230,7 +2223,16 @@ export const Constants = {
       ],
       plan_payment_status: ['pending', 'paid', 'failed', 'refunded', 'disputed'],
       shipping_type: ['agencia', 'domicilio', 'recojo'],
-      subscription_plan: ['basico', 'emprendedor', 'business_pro', 'enterprise_ai'],
+      subscription_plan: [
+        'basico',
+        'emprendedor',
+        'business_pro',
+        'enterprise_ai',
+        'enterprise_pro',
+        'lite',
+        'lite_pago',
+        'lite_plus',
+      ],
       subscription_status: ['active', 'inactive', 'past_due', 'canceled', 'expired', 'trialing'],
       theme_mode: ['light', 'dark'],
     },
