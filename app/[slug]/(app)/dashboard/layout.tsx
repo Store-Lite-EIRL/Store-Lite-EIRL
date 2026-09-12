@@ -33,7 +33,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
 
   let hasPendingOrders = false;
 
-  if (entitlements.plan === 'basico') {
+  if (entitlements.plan === 'lite') {
     // Non-terminal order statuses that keep the dashboard accessible
     const activeStatuses: (typeof payments.$inferSelect.status)[] = [
       'pending',

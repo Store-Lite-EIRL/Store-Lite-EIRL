@@ -1,7 +1,7 @@
 // =====================================================
 // Dashboard Layout — Unit tests
 // =====================================================
-// Verifies T4: basico plan redirects only when no pending
+// Verifies T4: lite plan redirects only when no pending
 // orders exist; renders children when pending orders found.
 // =====================================================
 
@@ -98,8 +98,8 @@ describe('DashboardLayout — plan enforcement redirect', () => {
     mockCheckPermission.mockResolvedValue(true);
   });
 
-  test('redirects when plan is basico and NO pending orders exist', async () => {
-    mockGetBusinessEntitlements.mockResolvedValue({ plan: 'basico', maxProducts: 50 });
+  test('redirects when plan is lite and NO pending orders exist', async () => {
+    mockGetBusinessEntitlements.mockResolvedValue({ plan: 'lite', maxProducts: 50 });
     mockPaymentsFindFirst.mockResolvedValue(null); // no pending orders
 
     await expect(
@@ -116,8 +116,8 @@ describe('DashboardLayout — plan enforcement redirect', () => {
     expect(queryArgs.columns).toEqual({ id: true });
   });
 
-  test('does NOT redirect when plan is basico and pending orders exist', async () => {
-    mockGetBusinessEntitlements.mockResolvedValue({ plan: 'basico', maxProducts: 50 });
+  test('does NOT redirect when plan is lite and pending orders exist', async () => {
+    mockGetBusinessEntitlements.mockResolvedValue({ plan: 'lite', maxProducts: 50 });
     mockPaymentsFindFirst.mockResolvedValue({ id: 'order_1' }); // has pending order
 
     // Should render, not redirect
@@ -135,8 +135,8 @@ describe('DashboardLayout — plan enforcement redirect', () => {
     expect(screen.getByTestId('plan-expired-banner')).toBeInTheDocument();
   });
 
-  test('redirects when plan is basico and all existing orders have terminal statuses only', async () => {
-    mockGetBusinessEntitlements.mockResolvedValue({ plan: 'basico', maxProducts: 50 });
+  test('redirects when plan is lite and all existing orders have terminal statuses only', async () => {
+    mockGetBusinessEntitlements.mockResolvedValue({ plan: 'lite', maxProducts: 50 });
     // Simulate: orders exist in the database but ALL have terminal statuses
     // (completed, cancelled, expired, failed, refunded, etc.), so findFirst
     // with only active statuses returns null → must redirect
@@ -152,9 +152,9 @@ describe('DashboardLayout — plan enforcement redirect', () => {
     expect(mockPaymentsFindFirst).toHaveBeenCalledTimes(1);
   });
 
-  test('does NOT redirect when plan is NOT basico (existing behavior)', async () => {
-    mockGetBusinessEntitlements.mockResolvedValue({ plan: 'business_pro', maxProducts: 300 });
-    // payments.findFirst should NOT be called for non-basico plans
+  test('does NOT redirect when plan is NOT lite (existing behavior)', async () => {
+    mockGetBusinessEntitlements.mockResolvedValue({ plan: 'lite_pago', maxProducts: 300 });
+    // payments.findFirst should NOT be called for non-lite plans
     mockPaymentsFindFirst.mockResolvedValue(null);
 
     const result = await DashboardLayout({
@@ -166,7 +166,7 @@ describe('DashboardLayout — plan enforcement redirect', () => {
     expect(mockRedirect).not.toHaveBeenCalled();
     expect(result).toBeDefined();
 
-    // Banner should NOT render for non-basico plans
+    // Banner should NOT render for non-lite plans
     render(result);
     expect(screen.queryByTestId('plan-expired-banner')).not.toBeInTheDocument();
   });
