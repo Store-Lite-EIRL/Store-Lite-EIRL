@@ -22,7 +22,7 @@ interface BusinessSettingsModalProps {
 
 type TabType = 'negocio' | 'productos' | 'resultados' | 'equipo' | 'peligro';
 
-const PREMIUM_PLANS = ['business_pro', 'enterprise_pro'];
+const PREMIUM_PLANS = ['lite_pago', 'lite_plus'];
 const PREMIUM_TABS: TabType[] = ['resultados', 'equipo'];
 
 export default function BusinessSettingsModal({
