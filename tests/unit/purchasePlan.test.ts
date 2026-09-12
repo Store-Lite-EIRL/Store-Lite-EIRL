@@ -90,7 +90,7 @@ globalThis.fetch = mockFetch;
 function createValidPayload(overrides: Record<string, unknown> = {}) {
   return {
     token: 'ype_test_token_123',
-    planType: 'business_pro',
+    planType: 'lite_pago',
     period: 'monthly',
     businessId: 'biz_123',
     buyerEmail: 'test@example.com',
@@ -229,11 +229,11 @@ describe('POST /api/billing/purchase-plan', () => {
     expect(body).toHaveProperty('error');
   });
 
-  test('returns 400 for free plan (basico)', async () => {
+  test('returns 400 for free plan (lite)', async () => {
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(createValidPayload({ planType: 'basico' })),
+      body: JSON.stringify(createValidPayload({ planType: 'lite' })),
     });
 
     const response = await POST(request);

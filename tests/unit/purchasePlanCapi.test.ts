@@ -92,7 +92,7 @@ const UUID_V4_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9
 function createValidPayload(overrides: Record<string, unknown> = {}) {
   return {
     token: 'ype_test_token_123',
-    planType: 'business_pro',
+    planType: 'lite_pago',
     period: 'monthly',
     businessId: 'biz_123',
     buyerEmail: 'test@example.com',
@@ -167,7 +167,7 @@ describe('purchase-plan → Meta CAPI wiring', () => {
         customData: expect.objectContaining({
           value: body.amountTotal,
           currency: 'PEN',
-          plan_type: 'business_pro',
+          plan_type: 'lite_pago',
           period: 'monthly',
         }),
       }),

@@ -116,9 +116,9 @@ describe('POST /api/payment/create-order', () => {
     // Default mock: business is active
     mockBusinessFindFirst.mockResolvedValue({ isActive: true });
 
-    // Default mock: business has an active subscription (business_pro)
+    // Default mock: business has an active subscription (lite_pago)
     mockSubscriptionFindFirst.mockResolvedValue({
-      planType: 'business_pro',
+      planType: 'lite_pago',
       planEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días
     });
 

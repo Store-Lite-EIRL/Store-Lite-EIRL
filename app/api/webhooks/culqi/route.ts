@@ -134,7 +134,7 @@ function resolveRefundChargeId(
 
 /**
  * Marks a charge as refunded/failed on BOTH payment tables. Plan purchases
- * (plan_payments, S/59/99/149) are charged with the platform's own Culqi key,
+ * (plan_payments, S/39/79) are charged with the platform's own Culqi key,
  * so refund webhooks must update them too — otherwise plan refunds silently no-op.
  *
  * Status mapping: `refund.creation.succeeded` → 'refunded' (terminal, present in

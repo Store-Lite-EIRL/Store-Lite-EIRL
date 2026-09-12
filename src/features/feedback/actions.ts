@@ -43,17 +43,17 @@ export async function getFeedbackPriority(businessId: string): Promise<FeedbackP
   const rows = result as unknown as { plan_type: string }[];
   const planType = rows[0]?.plan_type;
 
-  // Enterprise Pro = high priority
-  if (planType === 'enterprise_pro') {
+  // Lite Plus = high priority
+  if (planType === 'lite_plus') {
     return 'high';
   }
 
-  // Basic plan = low priority
-  if (planType === 'basico' || !planType) {
+  // Lite (free) plan = low priority
+  if (planType === 'lite' || !planType) {
     return 'low';
   }
 
-  // Emprendedor, Business Pro = normal priority
+  // Lite Pago = normal priority
   return 'normal';
 }
 

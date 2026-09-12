@@ -5,7 +5,7 @@
 // Seller feedback system for Store Lite support.
 // Users submit categorized feedback (bugs, suggestions, questions).
 // Admin responds via email, responses stored in DB.
-// Priority based on plan: enterprise_pro = high, others = normal/low.
+// Priority based on plan: lite_plus = high, others = normal/low.
 // =====================================================
 
 import { index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
