@@ -18,7 +18,7 @@ const base = {
   clientUserAgent: 'test-agent',
   fbp: 'fb.1.1.111',
   fbc: 'fb.1.2.222',
-  customData: { value: 89.9, currency: 'PEN', plan_type: 'business_pro' },
+  customData: { value: 89.9, currency: 'PEN', plan_type: 'lite_pago' },
   now: NOW,
 };
 
@@ -41,7 +41,7 @@ describe('buildEventPayload', () => {
     expect(payload.custom_data).toEqual({
       value: 89.9,
       currency: 'PEN',
-      plan_type: 'business_pro',
+      plan_type: 'lite_pago',
     });
   });
 

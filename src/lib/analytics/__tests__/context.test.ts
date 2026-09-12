@@ -60,21 +60,21 @@ describe('getAnalyticsContext', () => {
   it('returns userId, businessId, and active-subscription plan when they exist', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-abc' } } });
     mockMembershipSingle.mockResolvedValue({ data: { business_id: 'biz-123' } });
-    mockSubscriptionSingle.mockResolvedValue({ data: { plan_type: 'emprendedor' } });
+    mockSubscriptionSingle.mockResolvedValue({ data: { plan_type: 'lite_pago' } });
 
     const ctx = await getAnalyticsContext();
 
     expect(ctx).toEqual({
       userId: 'user-abc',
       businessId: 'biz-123',
-      plan: 'emprendedor',
+      plan: 'lite_pago',
     });
   });
 
   it('queries business_team_members (not business_members) and business_subscriptions for plan', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-abc' } } });
     mockMembershipSingle.mockResolvedValue({ data: { business_id: 'biz-123' } });
-    mockSubscriptionSingle.mockResolvedValue({ data: { plan_type: 'pro' } });
+    mockSubscriptionSingle.mockResolvedValue({ data: { plan_type: 'lite' } });
 
     await getAnalyticsContext();
 

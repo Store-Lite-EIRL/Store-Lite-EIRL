@@ -119,7 +119,7 @@ export async function POST(request: Request) {
     const priceInCentimos = planConfig[period];
     if (priceInCentimos === 0) {
       return NextResponse.json(
-        { error: 'El plan Básico es gratuito y no requiere cobro' },
+        { error: `El plan ${planConfig.label} es gratuito y no requiere cobro` },
         { status: 400 },
       );
     }

@@ -259,7 +259,7 @@ export async function createBusinessAction(formData: FormData) {
 
       await tx.insert(businessSubscriptions).values({
         businessId: bizId,
-        planType: 'basico',
+        planType: 'lite',
         planStatus: 'active',
         planStartDate: new Date(),
         planEndDate: null,
