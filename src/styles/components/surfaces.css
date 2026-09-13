@@ -31,8 +31,30 @@
   box-shadow: none;
 }
 
-/* Dialog - ensure it appears above navbar (z-index: 1000) and other layout elements */
+/* Dialog — ensure it appears above navbar (z-index: 1000) and other layout elements.
+ *
+ * Material Web's host uses `display: contents`, so position/z-index on `md-dialog`
+ * are ignored (the host generates no box) and the internal scrim (position: fixed;
+ * z-index: 1) participates in the `body` stacking context — BELOW navbars that
+ * create their own stacking contexts. Result: the page dims but navbar/sections
+ * stay bright above the scrim.
+ *
+ * Fix: when open, give the host a real full-viewport box at a high z-index. The
+ * scrim then paints within that stacking context (above the navbar), while the
+ * native <dialog> still lives in the browser top layer (showModal) — immune to
+ * any z-index. Scoped to [open] so a closed dialog never blocks the page.
+ *
+ * NOTE: do NOT set `margin` here. Material Web's `:host { margin: auto }` is
+ * inherited by the internal `dialog { margin: inherit }`, and the browser only
+ * centers a modal dialog when margin is auto. Overriding it pins the dialog to
+ * the top-left corner. */
 md-dialog {
   --md-dialog-container-z-index: 10000;
+}
+
+md-dialog[open] {
+  display: block;
+  position: fixed;
+  inset: 0;
   z-index: 10000;
 }

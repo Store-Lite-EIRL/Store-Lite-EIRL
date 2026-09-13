@@ -29,21 +29,43 @@ export const Dialog = ({ id, className, children, open, onClose, ...props }: Dia
         (dialog as MdDialogElement & { type?: string }).type = props.type;
       }
 
-      if (open) {
-        if (typeof dialog.show === 'function') {
-          dialog.show();
+      const applyState = (shouldOpen: boolean) => {
+        const el = dialogRef.current;
+        if (!el) return;
+
+        if (shouldOpen) {
+          // The native <dialog> is ONLY modal when opened via show() (which
+          // calls showModal() internally). The "open" attribute renders it
+          // outside the browser top layer, so clicks pass through to the page
+          // behind — the MD3 scrim is pointer-events: none and cannot block.
+          if (typeof el.show === 'function') {
+            el.show();
+            document.body.style.overflow = 'hidden';
+          } else {
+            // md-dialog is registered lazily via MaterialWebInit's dynamic
+            // import. If this effect runs before registration, wait for the
+            // upgrade, then open it as a real modal.
+            customElements
+              .whenDefined('md-dialog')
+              .then(() => {
+                if (dialogRef.current) {
+                  dialogRef.current.show();
+                  document.body.style.overflow = 'hidden';
+                }
+              })
+              .catch((err) => {
+                console.error('md-dialog registration failed:', err);
+              });
+          }
+        } else if (typeof el.close === 'function') {
+          el.close();
+          document.body.style.overflow = '';
         } else {
-          dialog.setAttribute('open', 'true');
+          document.body.style.overflow = '';
         }
-        document.body.style.overflow = 'hidden';
-      } else {
-        if (typeof dialog.close === 'function') {
-          dialog.close();
-        } else {
-          dialog.removeAttribute('open');
-        }
-        document.body.style.overflow = '';
-      }
+      };
+
+      applyState(!!open);
     }
 
     return () => {
@@ -82,6 +104,9 @@ export const Dialog = ({ id, className, children, open, onClose, ...props }: Dia
   }, [onClose, props.type]);
 
   const dialogContent = (
+    // Host uses display:contents — position/z-index on md-dialog are no-ops.
+    // Modal blocking comes from the native top layer (showModal via show()),
+    // guaranteed by the effect above.
     <md-dialog ref={dialogRef} id={id} className={className} {...props}>
       {children}
     </md-dialog>
