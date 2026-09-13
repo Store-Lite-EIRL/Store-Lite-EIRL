@@ -55,7 +55,7 @@ export default async function PricingPage({
     });
     myBusinesses = rawBusinesses.map((b) => ({
       ...b,
-      planType: b.subscriptions?.[0]?.planType || 'basico',
+      planType: b.subscriptions?.[0]?.planType || 'lite',
       planEndDate: b.subscriptions?.[0]?.planEndDate,
     }));
   }
@@ -64,50 +64,37 @@ export default async function PricingPage({
 
   const plans: PricingCardProps[] = [
     {
-      title: 'Plan Emprendedor',
+      title: 'Lite Pago',
       description:
         'La base sólida e inteligente para formalizar y despegar tu primer gran proyecto.',
-      price: formatSoles(PLAN_PRICES.emprendedor.monthly),
-      marketingNote: 'Ahorra 10% con pago anual',
+      price: formatSoles(PLAN_PRICES.lite_pago.monthly),
+      annualPrice: formatSoles(PLAN_PRICES.lite_pago.annual),
+      marketingNote: 'Ahorra 2 meses con pago anual',
       period: 'mes',
       buttonText: 'Comenzar ahora',
-      buttonVariant: 'outlined',
-      features: [
-        { text: 'SEO avanzado: controla cómo te encuentra Google' },
-        { text: 'Tu propia tienda en Store Lite (subdominio)' },
-        { text: 'Catálogo de hasta 150 productos' },
-        { text: 'Gestión de pedidos: Vía WhatsApp y Chat directo' },
-        { text: 'Control total: Activa o desactiva tu negocio al instante' },
-      ],
-    },
-    {
-      title: 'Plan Business Pro',
-      description: 'Escala sin límites con herramientas avanzadas de personalización y equipo.',
-      price: formatSoles(PLAN_PRICES.business_pro.monthly),
-      marketingNote: 'Ahorra 10% con pago anual',
-      period: 'mes',
-      buttonText: 'Impulsar mi negocio',
       buttonVariant: 'filled',
       isHighlighted: true,
       badgeText: 'Más popular',
       badgeType: 'primary',
       features: [
-        { text: 'Incluye todo lo del plan Emprendedor' },
         { text: 'Pasarela completa: Pagos digitales y tarjetas bancarias' },
         { text: 'Almacenamiento premium para 300 productos' },
         { text: 'Personalización avanzada: Edición del negocio' },
-        { text: 'Colaboración élite: Equipo de trabajo con 2 usuarios adicionales' },
+        { text: 'SEO avanzado: controla cómo te encuentra Google' },
         { text: 'Centro de mando: Dashboard de ventas y métricas de progreso' },
+        { text: 'Colaboración élite: Equipo de trabajo con 2 usuarios adicionales' },
+        { text: 'Tu propia tienda en Store Lite (subdominio)' },
       ],
     },
     {
-      title: 'Plan Enterprise Pro',
+      title: 'Lite Plus',
       description:
         'Para marcas que necesitan el máximo rendimiento y todas las herramientas para escalar.',
-      price: formatSoles(PLAN_PRICES.enterprise_pro.monthly),
-      marketingNote: 'Ahorra 10% con pago anual',
+      price: formatSoles(PLAN_PRICES.lite_plus.monthly),
+      annualPrice: formatSoles(PLAN_PRICES.lite_plus.annual),
+      marketingNote: 'Ahorra 2 meses con pago anual',
       period: 'mes',
-      buttonText: 'Obtener máxima potencia',
+      buttonText: 'Impulsar mi negocio',
       buttonVariant: 'tonal',
       badgeText: 'Edición Limitada',
       badgeType: 'secondary',
@@ -178,8 +165,7 @@ export default async function PricingPage({
                 billeteras móviles, Cuotéalo BCP y PagoEfectivo.
               </li>
               <li>
-                Está incluida en los planes <strong>Business Pro</strong> y{' '}
-                <strong>Enterprise Pro</strong>.
+                Está incluida en los planes <strong>Lite Pago</strong> y <strong>Lite Plus</strong>.
               </li>
               <li>
                 Antes de activar pagos reales,{' '}

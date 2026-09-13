@@ -85,11 +85,13 @@
   grid-template-columns: 1fr;
   gap: 2rem;
   align-items: stretch;
+  justify-content: center;
 }
 
 @media (min-width: 768px) {
   .pricing-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 420px));
+    justify-content: center;
   }
 }
 
@@ -294,6 +296,46 @@
   text-decoration: line-through;
   margin-left: 0.75rem;
   font-weight: 500;
+}
+
+.pricing-billing-toggle {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  margin: 0 auto 1.5rem auto;
+  background: var(--md-sys-color-surface-container-high, rgba(0, 0, 0, 0.05));
+  border-radius: 999px;
+  width: fit-content;
+}
+
+.pricing-billing-option {
+  border: none;
+  background: transparent;
+  padding: 0.5rem 1.25rem;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #444746);
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.pricing-billing-option--active {
+  background: var(--md-sys-color-primary, #1a73e8);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.pricing-card--highlighted .pricing-billing-option {
+  color: var(--md-sys-color-on-primary-container, #062e6f);
+}
+
+.pricing-card--highlighted .pricing-billing-option--active {
+  background: var(--md-sys-color-primary, #1a73e8);
+  color: var(--md-sys-color-on-primary, #ffffff);
 }
 
 .pricing-features-list {
