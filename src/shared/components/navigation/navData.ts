@@ -65,7 +65,7 @@ export function buildNavItems(options: BuildNavItemsOptions): NavItemData[] {
       label: 'Dashboard',
       path: getBusinessPath(slug, '/dashboard'),
       permission: 'dashboard.view',
-      plan: 'basico', // Hidden when plan is 'basico'
+      plan: 'lite', // Hidden when plan is 'lite'
     },
     {
       id: 'settings',
@@ -83,7 +83,7 @@ export function buildNavItems(options: BuildNavItemsOptions): NavItemData[] {
     }
 
     // 2. Plan-based filtering
-    // Hide dashboard if plan is 'basico' (case-insensitive)
+    // Hide dashboard if plan is 'lite' (case-insensitive)
     if (item.plan && planName.toLowerCase() === item.plan.toLowerCase()) {
       return false;
     }
@@ -148,7 +148,7 @@ export function getAllNavItems(slug: string): NavItemData[] {
       label: 'Dashboard',
       path: getBusinessPath(slug, '/dashboard'),
       permission: 'dashboard.view',
-      plan: 'basico',
+      plan: 'lite',
     },
     {
       id: 'settings',

@@ -2,6 +2,7 @@
 // Checkout — Component-level tests
 // =====================================================
 
+import Checkout from '@/app/[slug]/(app)/components/Checkout';
 import type { CartItem } from '@/features/storage/context/CartContext';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -103,6 +104,22 @@ async function fillCheckoutAndGoToPay() {
   await user.type(emailInput, 'test@example.com');
 }
 
+/** Navigates to step 2 via "Recojo en Tienda" without filling name/email */
+async function goToPaymentStep(user: ReturnType<typeof userEvent.setup>) {
+  const tiendaBtn = screen.getByRole('button', { name: /Tienda/i });
+  await user.click(tiendaBtn);
+
+  const phoneInput = await screen.findByPlaceholderText(/Tu Tel[eé]fono/i);
+  await user.clear(phoneInput);
+  await user.type(phoneInput, '999888777');
+
+  const continueBtn = screen.getByText('Continuar');
+  await user.click(continueBtn);
+
+  const dniInput = await screen.findByPlaceholderText(/DNI/i);
+  await user.type(dniInput, '12345678');
+}
+
 // ── Suite ────────────────────────────────────────────
 
 describe('Checkout — Order creation before Culqi.open()', () => {
@@ -149,7 +166,6 @@ describe('Checkout — Order creation before Culqi.open()', () => {
     globalThis.fetch = fetchMock;
 
     const props = createCheckoutProps({ totalAmount: 1500 }); // > 1000
-    const Checkout = (await import('@/app/[slug]/(app)/components/Checkout')).default;
     render(<Checkout {...props} />);
 
     await fillCheckoutAndGoToPay();
@@ -182,7 +198,6 @@ describe('Checkout — Order creation before Culqi.open()', () => {
     globalThis.fetch = fetchMock;
 
     const props = createCheckoutProps({ totalAmount: 500 }); // <= 1000
-    const Checkout = (await import('@/app/[slug]/(app)/components/Checkout')).default;
     render(<Checkout {...props} />);
 
     await fillCheckoutAndGoToPay();
@@ -205,7 +220,6 @@ describe('Checkout — Order creation before Culqi.open()', () => {
     globalThis.fetch = fetchMock;
 
     const props = createCheckoutProps({ totalAmount: 1500 });
-    const Checkout = (await import('@/app/[slug]/(app)/components/Checkout')).default;
     render(<Checkout {...props} />);
 
     await fillCheckoutAndGoToPay();
@@ -222,6 +236,171 @@ describe('Checkout — Order creation before Culqi.open()', () => {
     const settingsCall = (window.Culqi.settings as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
     expect(settingsCall).toBeDefined();
     expect(settingsCall).not.toHaveProperty('order');
+  });
+});
+
+describe('Checkout — Google full-name prefill (R1)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    window.Culqi = {
+      publicKey: 'pk_test_xxx',
+      settings: vi.fn(),
+      options: vi.fn(),
+      open: vi.fn(),
+      close: vi.fn(),
+      culqi: vi.fn(),
+    } as unknown as Window['Culqi'] & {
+      settings: ReturnType<typeof vi.fn>;
+      options: ReturnType<typeof vi.fn>;
+      open: ReturnType<typeof vi.fn>;
+      close: ReturnType<typeof vi.fn>;
+    };
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true }),
+    });
+  });
+
+  function mockGoogleSession(fullName?: string) {
+    mockGetSession.mockResolvedValue({
+      data: {
+        session: {
+          user: {
+            id: 'google-user-1',
+            email: 'buyer@google.com',
+            app_metadata: { provider: 'google' },
+            user_metadata: fullName ? { full_name: fullName } : {},
+          },
+        },
+      },
+    });
+  }
+
+  test('prefills "Nombre completo" from Google full_name and stays editable', async () => {
+    const user = userEvent.setup();
+    mockGoogleSession('Ernesto Pérez');
+
+    render(<Checkout {...createCheckoutProps()} />);
+    await goToPaymentStep(user);
+
+    const nameInput = (await screen.findByPlaceholderText(/Nombre completo/i)) as HTMLInputElement;
+    await waitFor(() => {
+      expect(nameInput.value).toBe('Ernesto Pérez');
+    });
+
+    // Buyer can edit the prefilled value
+    await user.clear(nameInput);
+    await user.type(nameInput, 'Ana Lopez');
+    expect(nameInput.value).toBe('Ana Lopez');
+  });
+
+  test('leaves name field empty when Google session has no full_name', async () => {
+    const user = userEvent.setup();
+    mockGoogleSession();
+
+    render(<Checkout {...createCheckoutProps()} />);
+    await goToPaymentStep(user);
+
+    const nameInput = (await screen.findByPlaceholderText(/Nombre completo/i)) as HTMLInputElement;
+    expect(nameInput.value).toBe('');
+    expect(screen.queryByText('Ingresá tu nombre y apellido')).not.toBeInTheDocument();
+  });
+});
+
+describe('Checkout — Two-word buyer name validation (R2)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ data: { session: null } });
+
+    window.Culqi = {
+      publicKey: 'pk_test_xxx',
+      settings: vi.fn(),
+      options: vi.fn(),
+      open: vi.fn(),
+      close: vi.fn(),
+      culqi: vi.fn(),
+    } as unknown as Window['Culqi'] & {
+      settings: ReturnType<typeof vi.fn>;
+      options: ReturnType<typeof vi.fn>;
+      open: ReturnType<typeof vi.fn>;
+      close: ReturnType<typeof vi.fn>;
+    };
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true }),
+    });
+  });
+
+  test('shows inline two-word error and does NOT open Culqi for a single-token name', async () => {
+    const user = userEvent.setup();
+
+    render(<Checkout {...createCheckoutProps({ totalAmount: 500 })} />);
+    await goToPaymentStep(user);
+
+    const nameInput = screen.getByPlaceholderText(/Nombre completo/i);
+    await user.type(nameInput, 'Ernesto');
+
+    const emailInput = screen.getByPlaceholderText(/correo/i) as HTMLInputElement;
+    await user.clear(emailInput);
+    await user.type(emailInput, 'test@example.com');
+
+    const payBtn = screen.getByText(/Ir a Pagar/i);
+    fireEvent.click(payBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Ingresá tu nombre y apellido')).toBeInTheDocument();
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(window.Culqi.open).not.toHaveBeenCalled();
+  });
+
+  test('empty name keeps legacy toast handling and shows no two-word error', async () => {
+    const user = userEvent.setup();
+
+    render(<Checkout {...createCheckoutProps({ totalAmount: 500 })} />);
+    await goToPaymentStep(user);
+
+    // Leave the name field empty
+    const emailInput = screen.getByPlaceholderText(/correo/i) as HTMLInputElement;
+    await user.clear(emailInput);
+    await user.type(emailInput, 'test@example.com');
+
+    const payBtn = screen.getByText(/Ir a Pagar/i);
+    fireEvent.click(payBtn);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Por favor, ingresá tu nombre completo (mínimo 3 letras).'),
+      ).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Ingresá tu nombre y apellido')).not.toBeInTheDocument();
+    expect(window.Culqi.open).not.toHaveBeenCalled();
+  });
+
+  test('valid two-word name shows no inline error and opens Culqi', async () => {
+    const user = userEvent.setup();
+
+    render(<Checkout {...createCheckoutProps({ totalAmount: 500 })} />);
+    await goToPaymentStep(user);
+
+    const nameInput = screen.getByPlaceholderText(/Nombre completo/i);
+    await user.type(nameInput, 'Juan Perez');
+
+    const emailInput = screen.getByPlaceholderText(/correo/i) as HTMLInputElement;
+    await user.clear(emailInput);
+    await user.type(emailInput, 'test@example.com');
+
+    const payBtn = screen.getByText(/Ir a Pagar/i);
+    fireEvent.click(payBtn);
+
+    await waitFor(() => {
+      expect(window.Culqi.open).toHaveBeenCalled();
+    });
+    expect(screen.queryByText('Ingresá tu nombre y apellido')).not.toBeInTheDocument();
   });
 });
 
@@ -246,7 +425,6 @@ describe('Checkout — Culqi.order callback handling', () => {
   });
 
   test('sets paymentInstructions when Culqi.order is present', async () => {
-    const Checkout = (await import('@/app/[slug]/(app)/components/Checkout')).default;
     const props = createCheckoutProps({ totalAmount: 500 });
     render(<Checkout {...props} />);
 
@@ -288,7 +466,6 @@ describe('Checkout — Culqi.order callback handling', () => {
       }),
     });
 
-    const Checkout = (await import('@/app/[slug]/(app)/components/Checkout')).default;
     const props = createCheckoutProps({ totalAmount: 500 });
     render(<Checkout {...props} />);
 
@@ -335,7 +512,6 @@ describe('Checkout — Payment instructions overlay', () => {
   });
 
   test('renders CIP code for PagoEfectivo', async () => {
-    const Checkout = (await import('@/app/[slug]/(app)/components/Checkout')).default;
     const props = createCheckoutProps({ totalAmount: 500 });
     render(<Checkout {...props} />);
 
@@ -368,7 +544,6 @@ describe('Checkout — Payment instructions overlay', () => {
   });
 
   test('renders QR image for Billetera Móvil', async () => {
-    const Checkout = (await import('@/app/[slug]/(app)/components/Checkout')).default;
     const props = createCheckoutProps({ totalAmount: 500 });
     render(<Checkout {...props} />);
 
@@ -402,7 +577,6 @@ describe('Checkout — Payment instructions overlay', () => {
   });
 
   test('overlay is closable', async () => {
-    const Checkout = (await import('@/app/[slug]/(app)/components/Checkout')).default;
     const props = createCheckoutProps({ totalAmount: 500 });
     render(<Checkout {...props} />);
 

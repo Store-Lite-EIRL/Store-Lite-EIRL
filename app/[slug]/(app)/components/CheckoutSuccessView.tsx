@@ -32,7 +32,7 @@ interface CheckoutSuccessViewProps {
   businessCity?: string;
   businessLogoUrl?: string;
   email: string;
-  receiptRef: RefObject<HTMLDivElement | null>;
+  receiptRef?: RefObject<HTMLDivElement | null>;
   loading: boolean;
   showConfetti: boolean;
   onDownloadTicket: () => void;
@@ -157,37 +157,23 @@ export function CheckoutSuccessView({
                 totalAmount={finalTotal}
                 currency="S/"
                 orderNumber={completedOrder.orderNumber}
+                verificationUrl={`/${slug}/order/verify/${completedOrder.orderNumber}`}
                 paymentMethod={completedOrder.paymentMethod}
                 customerEmail={email}
                 customerDni={shippingInfo.dni}
                 customerPhone={shippingInfo.phone}
-                shippingType={
-                  shippingInfo.courier === 'recojo'
-                    ? 'pickup'
-                    : shippingInfo.courier === 'urbano_agencia'
-                      ? 'agency'
-                      : 'delivery'
-                }
+                shippingType={shippingInfo.courier === 'recojo' ? 'pickup' : 'delivery'}
                 shippingAddress={
                   shippingInfo.courier === 'recojo'
                     ? [businessAddress, businessCity].filter(Boolean).join(', ')
-                    : shippingInfo.courier === 'urbano_agencia'
-                      ? [
-                          shippingInfo.agency,
-                          shippingInfo.district,
-                          shippingInfo.province,
-                          shippingInfo.department,
-                        ]
-                          .filter(Boolean)
-                          .join(', ')
-                      : [
-                          shippingInfo.address,
-                          shippingInfo.district,
-                          shippingInfo.province,
-                          shippingInfo.department,
-                        ]
-                          .filter(Boolean)
-                          .join(', ')
+                    : [
+                        shippingInfo.address,
+                        shippingInfo.district,
+                        shippingInfo.province,
+                        shippingInfo.department,
+                      ]
+                        .filter(Boolean)
+                        .join(', ')
                 }
               />
             </div>
@@ -212,10 +198,6 @@ export function CheckoutSuccessView({
                 style={{
                   width: '100%',
                   borderRadius: '12px',
-                  background: loading ? '#6B7280' : '#0061A4',
-                  color: 'white',
-                  transition: 'all 0.2s ease',
-                  opacity: loading ? 0.8 : 1,
                 }}
               >
                 {loading ? (
@@ -231,8 +213,9 @@ export function CheckoutSuccessView({
                       style={{
                         width: '18px',
                         height: '18px',
-                        border: '2px solid rgba(255,255,255,0.3)',
-                        borderTopColor: 'white',
+                        border:
+                          '2px solid color-mix(in srgb, var(--md-sys-color-on-primary) 30%, transparent)',
+                        borderTopColor: 'var(--md-sys-color-on-primary)',
                         borderRadius: '50%',
                         animation: 'spin 0.8s linear infinite',
                       }}
@@ -240,17 +223,12 @@ export function CheckoutSuccessView({
                     Descargando imagen...
                   </span>
                 ) : (
-                  <span
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                    }}
-                  >
-                    <Icon size={20}>download</Icon>
+                  <>
+                    <Icon slot="icon" size={20}>
+                      download
+                    </Icon>
                     Descargar Ticket (PNG)
-                  </span>
+                  </>
                 )}
               </Button>
 
@@ -263,7 +241,9 @@ export function CheckoutSuccessView({
                   }}
                   style={{ width: '100%', borderRadius: '12px' }}
                 >
-                  <Icon size={20}>search</Icon>
+                  <Icon slot="icon" size={20}>
+                    search
+                  </Icon>
                   Ver mi Pedido
                 </Button>
               )}

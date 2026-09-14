@@ -2,13 +2,18 @@
 // Webhook order.status.changed — Unit tests
 // =====================================================
 
+import { POST } from '@/app/api/webhooks/culqi/route';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
 
-const mockUpdate = vi.fn();
-const mockSet = vi.fn();
-const mockWhere = vi.fn();
+const { mockUpdate, mockSet, mockWhere } = vi.hoisted(() => {
+  const mockUpdate = vi.fn();
+  const mockSet = vi.fn();
+  const mockWhere = vi.fn();
+
+  return { mockUpdate, mockSet, mockWhere };
+});
 
 vi.mock('@/core/database/client', () => ({
   db: {
@@ -65,8 +70,6 @@ describe('POST /api/webhooks/culqi — order.status.changed', () => {
   // ============================================================
 
   test('updates payment_orders to paid when paid status received', async () => {
-    const { POST } = await import('@/app/api/webhooks/culqi/route');
-
     const response = await POST(createWebhookRequest(createOrderStatusEvent()));
 
     expect(response.status).toBe(200);
@@ -83,8 +86,6 @@ describe('POST /api/webhooks/culqi — order.status.changed', () => {
   // ============================================================
 
   test('updates payment_orders to expired when expired status received', async () => {
-    const { POST } = await import('@/app/api/webhooks/culqi/route');
-
     const response = await POST(
       createWebhookRequest(
         createOrderStatusEvent({
@@ -105,8 +106,6 @@ describe('POST /api/webhooks/culqi — order.status.changed', () => {
   // ============================================================
 
   test('updates payment_orders to cancelled when cancelled status received', async () => {
-    const { POST } = await import('@/app/api/webhooks/culqi/route');
-
     const response = await POST(
       createWebhookRequest(
         createOrderStatusEvent({
@@ -132,8 +131,6 @@ describe('POST /api/webhooks/culqi — order.status.changed', () => {
 
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    const { POST } = await import('@/app/api/webhooks/culqi/route');
-
     const response = await POST(
       createWebhookRequest(
         createOrderStatusEvent({
@@ -158,8 +155,6 @@ describe('POST /api/webhooks/culqi — order.status.changed', () => {
 
   test('warns and continues when status is missing in payload', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-    const { POST } = await import('@/app/api/webhooks/culqi/route');
 
     const response = await POST(
       createWebhookRequest({
@@ -189,8 +184,6 @@ describe('POST /api/webhooks/culqi — order.status.changed', () => {
   test('warns and continues when unknown status string received', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    const { POST } = await import('@/app/api/webhooks/culqi/route');
-
     const response = await POST(
       createWebhookRequest(
         createOrderStatusEvent({
@@ -217,8 +210,6 @@ describe('POST /api/webhooks/culqi — order.status.changed', () => {
   // ============================================================
 
   test('marks payments and plan_payments as refunded on refund.creation.succeeded', async () => {
-    const { POST } = await import('@/app/api/webhooks/culqi/route');
-
     const response = await POST(
       createWebhookRequest({
         id: 'test-event-refund-success',
@@ -250,8 +241,6 @@ describe('POST /api/webhooks/culqi — order.status.changed', () => {
   // ============================================================
 
   test('handles legacy refund.created alias with charge_id lookup', async () => {
-    const { POST } = await import('@/app/api/webhooks/culqi/route');
-
     const response = await POST(
       createWebhookRequest({
         id: 'test-event-refund-legacy',
@@ -277,8 +266,6 @@ describe('POST /api/webhooks/culqi — order.status.changed', () => {
   // ============================================================
 
   test('marks both tables as failed on refund.creation.failed', async () => {
-    const { POST } = await import('@/app/api/webhooks/culqi/route');
-
     const response = await POST(
       createWebhookRequest({
         id: 'test-event-refund-failed',

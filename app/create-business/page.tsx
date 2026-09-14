@@ -124,7 +124,6 @@ export default function CreateBusinessPage() {
   const handleFileChange = (file: File | null) => {
     if (!file) {
       setFormData((prev) => ({ ...prev, logo: null }));
-      if (logoPreview) URL.revokeObjectURL(logoPreview);
       setLogoPreview(null);
       return;
     }

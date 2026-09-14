@@ -62,14 +62,6 @@ function WhatsAppIcon({ size = 18, style }: { size?: number; style?: React.CSSPr
   );
 }
 
-function PersonIcon({ size = 22, style }: { size?: number; style?: React.CSSProperties }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" style={style}>
-      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-    </svg>
-  );
-}
-
 function BusinessIcon({ size = 120, style }: { size?: number; style?: React.CSSProperties }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" style={style}>
@@ -143,8 +135,6 @@ export interface BusinessPreviewCardProps {
   email: string;
   description: string;
   taxId: string;
-  legalRepName: string;
-  legalRepRole: string;
   logoPreview?: string | null;
   storefrontTheme: StorefrontTheme;
   colorScheme?: StorefrontColorScheme;
@@ -164,36 +154,6 @@ export interface BusinessPreviewCardProps {
   /** Contract-only field: reserved for the storefront type label (D1). */
   storeType?: string;
 }
-
-const tokenizeTaxId = (taxId: string) => {
-  const input = taxId || '';
-  const length = input.length;
-
-  // Support both 11 and 20 digits
-  const targetLength = length > 11 ? 20 : 11;
-  const DEFAULT_ZEROS = '00000000000000000000'; // 20 zeros
-
-  if (length === 0) {
-    return DEFAULT_ZEROS.substring(0, 11);
-  }
-
-  // Typing state: progressive filling with zeros
-  if (length < targetLength) {
-    return input + DEFAULT_ZEROS.substring(0, targetLength - length);
-  }
-
-  // Final tokenized state: starts with x3bet, then mixed-case alphanumerics
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789';
-  let token = 'x3bet';
-  for (let i = 0; i < length; i++) {
-    const charCode = input.charCodeAt(i);
-    // Deterministic mixed-case randomness
-    const salt = (i + length) * 13;
-    const index = (charCode * 31 + salt) % alphabet.length;
-    token += alphabet[index];
-  }
-  return token;
-};
 
 const PreviewHeader = ({ logoPreview }: { logoPreview: string | null; sector: string }) => (
   <div
@@ -292,67 +252,7 @@ const PreviewMetadata = ({
           overflowWrap: 'anywhere',
         }}
       >
-        RUC: {tokenizeTaxId(taxId)}
-      </span>
-    </div>
-  </div>
-);
-
-const PreviewLegalRep = ({
-  name,
-  role,
-  isDark,
-}: {
-  name: string;
-  role: string;
-  isDark: boolean;
-}) => (
-  <div
-    className="flex-row gap-md flex-align-center"
-    style={{
-      padding: '14px 18px',
-      borderRadius: '24px',
-      backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.45)',
-      backdropFilter: 'blur(8px)',
-      border: `1px solid ${isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)'}`,
-      marginTop: '4px',
-    }}
-  >
-    <div
-      style={{
-        width: '42px',
-        height: '42px',
-        borderRadius: '50%',
-        backgroundColor: isDark ? '#FFF' : 'var(--md-sys-color-primary)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: isDark ? '#000' : 'var(--md-sys-color-on-primary)',
-        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-      }}
-    >
-      <PersonIcon size={22} />
-    </div>
-    <div className="flex-column">
-      <span
-        className="label-large"
-        style={{
-          fontWeight: 700,
-          color: isDark ? '#FFF' : 'rgba(0,0,0,0.9)',
-          overflowWrap: 'anywhere',
-        }}
-      >
-        {name || 'Nombre Representante'}
-      </span>
-      <span
-        className="label-small"
-        style={{
-          opacity: 0.75,
-          color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.6)',
-          overflowWrap: 'anywhere',
-        }}
-      >
-        {role || 'Cargo'}
+        RUC: {taxId}
       </span>
     </div>
   </div>
@@ -531,8 +431,6 @@ export const BusinessPreviewCard = ({
   email,
   description,
   taxId,
-  legalRepName,
-  legalRepRole,
   logoPreview,
   storefrontTheme,
   colorScheme,
@@ -750,8 +648,6 @@ export const BusinessPreviewCard = ({
             isDark={isDark}
             showVerifiedStyle={verificationStatus === undefined}
           />
-
-          <PreviewLegalRep name={legalRepName} role={legalRepRole} isDark={isDark} />
 
           <SocialLinksRow links={socialLinks} isDark={isDark} />
         </div>

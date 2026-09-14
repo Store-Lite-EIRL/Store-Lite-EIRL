@@ -1,5 +1,6 @@
 'use client';
 
+import { PERU_LOCATIONS } from '@/core/logistics/peruLocations';
 import type { CartItem } from '@/features/storage/context/CartContext';
 import { Icon } from '@/shared/components/ui';
 import { Select } from '@/shared/components/ui/inputs/Select';
@@ -19,7 +20,6 @@ interface CheckoutShippingStepProps {
   departments: SelectOption[];
   provinces: SelectOption[];
   districts: SelectOption[];
-  availableAgencies: SelectOption[];
   businessAddress?: string;
   businessCity?: string;
   onNext: () => void;
@@ -33,7 +33,6 @@ export function CheckoutShippingStep({
   departments,
   provinces,
   districts,
-  availableAgencies,
   businessAddress,
   businessCity,
   onNext,
@@ -44,7 +43,7 @@ export function CheckoutShippingStep({
       department: e.target.value,
       province: '',
       district: '',
-      agency: '',
+      ubigeo: '',
     }));
   };
 
@@ -53,16 +52,22 @@ export function CheckoutShippingStep({
       ...prev,
       province: e.target.value,
       district: '',
-      agency: '',
+      ubigeo: '',
     }));
   };
 
   const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onShippingInfoChange((prev) => ({
-      ...prev,
-      district: e.target.value,
-      agency: '',
-    }));
+    const districtName = e.target.value;
+    onShippingInfoChange((prev) => {
+      let ubigeo = '';
+      if (districtName) {
+        const dept = PERU_LOCATIONS.find((d) => d.name === prev.department);
+        const prov = dept?.provinces.find((p) => p.name === prev.province);
+        const dist = prov?.districts.find((d) => d.name === districtName);
+        ubigeo = dist?.id ?? '';
+      }
+      return { ...prev, district: districtName, ubigeo };
+    });
   };
 
   const handleCourierChange = (type: ShippingInfo['courier']) => {
@@ -72,6 +77,7 @@ export function CheckoutShippingStep({
       department: type === 'recojo' ? '' : prev.department,
       province: type === 'recojo' ? '' : prev.province,
       district: type === 'recojo' ? '' : prev.district,
+      ubigeo: type === 'recojo' ? '' : prev.ubigeo,
       address: type === 'recojo' ? '' : prev.address,
       agency: type === 'recojo' ? '' : prev.agency,
     }));
@@ -98,18 +104,11 @@ export function CheckoutShippingStep({
           <span>Tienda</span>
         </button>
         <button
-          className={`${styles.courierBtn} ${shippingInfo.courier === 'urbano_agencia' ? styles.courierActive : ''}`}
-          onClick={() => handleCourierChange('urbano_agencia')}
-        >
-          <Icon>package_2</Icon>
-          <span>Agencia</span>
-        </button>
-        <button
           className={`${styles.courierBtn} ${shippingInfo.courier === 'urbano_domicilio' ? styles.courierActive : ''}`}
           onClick={() => handleCourierChange('urbano_domicilio')}
         >
           <Icon>local_shipping</Icon>
-          <span>Domicilio</span>
+          <span>ENVÍO</span>
         </button>
       </div>
 
@@ -183,36 +182,18 @@ export function CheckoutShippingStep({
             </div>
           </div>
 
-          {shippingInfo.courier === 'urbano_agencia' ? (
-            <div className={styles.formGroup}>
-              <Select
-                label="Agencia Urbano"
-                outlined
-                value={shippingInfo.agency}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                  onShippingInfoChange((prev) => ({ ...prev, agency: e.target.value }))
-                }
-                options={availableAgencies}
-                disabled={!shippingInfo.district}
-              />
-              {availableAgencies.length === 0 && shippingInfo.district && (
-                <p className={styles.errorText}>No se encontraron agencias en este distrito.</p>
-              )}
-            </div>
-          ) : (
-            <div className={styles.formGroup}>
-              <input
-                type="text"
-                placeholder="Direccion exacta de entrega"
-                value={shippingInfo.address}
-                onChange={(e) =>
-                  onShippingInfoChange((prev) => ({ ...prev, address: e.target.value }))
-                }
-                className={styles.input}
-                required
-              />
-            </div>
-          )}
+          <div className={styles.formGroup}>
+            <input
+              type="text"
+              placeholder="Direccion exacta de entrega"
+              value={shippingInfo.address}
+              onChange={(e) =>
+                onShippingInfoChange((prev) => ({ ...prev, address: e.target.value }))
+              }
+              className={styles.input}
+              required
+            />
+          </div>
         </>
       )}
     </div>

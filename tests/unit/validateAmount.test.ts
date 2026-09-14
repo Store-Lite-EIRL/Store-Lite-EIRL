@@ -5,12 +5,17 @@
 // for the amount revalidation (fix-price-tampering).
 // =====================================================
 
+import { validateAmount } from '@/features/billing/validateAmount';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
-const mockSelect = vi.fn();
-const mockFrom = vi.fn();
-const mockWhere = vi.fn();
+const { mockSelect, mockFrom, mockWhere } = vi.hoisted(() => {
+  const mockSelect = vi.fn();
+  const mockFrom = vi.fn();
+  const mockWhere = vi.fn();
+
+  return { mockSelect, mockFrom, mockWhere };
+});
 
 mockFrom.mockReturnValue({ where: mockWhere });
 mockSelect.mockReturnValue({ from: mockFrom });
@@ -43,7 +48,6 @@ describe('validateAmount', () => {
 
   // Scenario 1 — single product, no sale price, amounts match
   test('valid single product (no secondPrice) matches client amount', async () => {
-    const { validateAmount } = await import('@/features/billing/validateAmount');
     mockWhere.mockResolvedValue([productRow()]);
 
     const result = await validateAmount({
@@ -57,7 +61,6 @@ describe('validateAmount', () => {
 
   // Scenario 2 — single product WITH secondPrice (sale price)
   test('uses secondPrice when present', async () => {
-    const { validateAmount } = await import('@/features/billing/validateAmount');
     mockWhere.mockResolvedValue([productRow({ price: '80.00', secondPrice: '50.00' })]);
 
     const result = await validateAmount({
@@ -71,7 +74,6 @@ describe('validateAmount', () => {
 
   // Scenario 3 — cart with multiple items, sum computed correctly
   test('computes cart total across multiple items', async () => {
-    const { validateAmount } = await import('@/features/billing/validateAmount');
     mockWhere.mockResolvedValue([
       productRow({ id: 'prod-A', price: '30.00', secondPrice: null }),
       productRow({ id: 'prod-B', price: '25.00', secondPrice: '20.00' }),
@@ -93,7 +95,6 @@ describe('validateAmount', () => {
 
   // Scenario 4 — amount mismatch (tampering detected)
   test('returns ok:false when client amount mismatches server amount', async () => {
-    const { validateAmount } = await import('@/features/billing/validateAmount');
     mockWhere.mockResolvedValue([productRow({ price: '50.00', secondPrice: null })]);
 
     const result = await validateAmount({
@@ -108,7 +109,6 @@ describe('validateAmount', () => {
 
   // Scenario 6 — product not found
   test('returns ok:false when product not found', async () => {
-    const { validateAmount } = await import('@/features/billing/validateAmount');
     mockWhere.mockResolvedValue([]);
 
     const result = await validateAmount({
@@ -123,7 +123,6 @@ describe('validateAmount', () => {
 
   // Scenario 7 — zero price (defensive check)
   test('returns ok:false when price is zero or negative', async () => {
-    const { validateAmount } = await import('@/features/billing/validateAmount');
     mockWhere.mockResolvedValue([
       productRow({ id: 'prod-zero', price: '0.00', secondPrice: null }),
     ]);

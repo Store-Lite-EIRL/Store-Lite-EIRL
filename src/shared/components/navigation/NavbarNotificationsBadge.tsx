@@ -1,13 +1,9 @@
 'use client';
 
-import { useNotifications } from '@/hooks/useNotifications';
+import { useNotificationsContext } from '@app/[slug]/(app)/context/NotificationsContext';
 
-interface NavbarNotificationsBadgeProps {
-  businessId: string;
-}
-
-export function NavbarNotificationsBadge({ businessId }: NavbarNotificationsBadgeProps) {
-  const { unreadCount } = useNotifications({ businessId, autoFetch: false, enableRealtime: true });
+export function NavbarNotificationsBadge() {
+  const { unreadCount } = useNotificationsContext();
 
   if (unreadCount === 0) return null;
 

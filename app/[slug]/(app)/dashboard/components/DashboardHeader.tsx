@@ -1,20 +1,19 @@
 import type { BusinessEntitlements } from '@/core/entitlements/plans';
+import { Star } from 'lucide-react';
 import Image from 'next/image';
 import styles from './DashboardHeader.module.css';
 import { NotificationBell } from './NotificationBell';
 
 const PLAN_LABELS: Record<string, string> = {
-  emprendedor: 'Emprendedor',
-  business_pro: 'Business Pro',
-  enterprise_pro: 'Enterprise Pro',
-  basico: 'Básico',
+  lite: 'Lite',
+  lite_pago: 'Lite Pago',
+  lite_plus: 'Lite Plus',
 };
 
 const PLAN_COLORS: Record<string, string> = {
-  emprendedor: 'var(--md-sys-color-primary)',
-  business_pro: '#7c3aed',
-  enterprise_pro: '#0891b2',
-  basico: 'var(--md-sys-color-outline)',
+  lite: 'var(--md-sys-color-outline)',
+  lite_pago: '#7c3aed',
+  lite_plus: '#0891b2',
 };
 
 interface DashboardHeaderProps {
@@ -75,6 +74,7 @@ export function DashboardHeader({
               className={styles.planBadge}
               style={{ '--plan-color': planColor } as React.CSSProperties}
             >
+              <Star className={styles.planIcon} aria-hidden="true" />
               {planLabel}
             </span>
             {entitlements.isActive ? (
@@ -87,7 +87,7 @@ export function DashboardHeader({
       </div>
 
       <div className={styles.actions}>
-        <NotificationBell businessId={businessId} />
+        <NotificationBell />
 
         {showExpiryWarning && (
           <div className={styles.expiryWarning}>

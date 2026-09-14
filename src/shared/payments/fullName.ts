@@ -18,7 +18,7 @@ export function splitFullName(fullName?: string | null): SplitFullNameResult {
   if (!name) return {};
 
   const firstSpace = name.indexOf(' ');
-  if (firstSpace === -1) return { first_name: name };
+  if (firstSpace === -1) return { first_name: name, last_name: name };
 
   return {
     first_name: name.slice(0, firstSpace),

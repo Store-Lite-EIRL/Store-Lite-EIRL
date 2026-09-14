@@ -1,3 +1,11 @@
+import * as mod from '@/core/database/schema';
+import {
+  orderStatusEnum,
+  paymentMethodEnum,
+  paymentOrders,
+  paymentOrdersRelations,
+} from '@/core/database/schema';
+import { getTableConfig } from 'drizzle-orm/pg-core';
 import { describe, expect, test } from 'vitest';
 
 // =====================================================
@@ -6,8 +14,6 @@ import { describe, expect, test } from 'vitest';
 
 describe('paymentMethodEnum', () => {
   test('includes all 6 payment methods', async () => {
-    const { paymentMethodEnum } = await import('@/core/database/schema');
-
     const values = paymentMethodEnum.enumValues;
     expect(values).toContain('card');
     expect(values).toContain('yape');
@@ -21,8 +27,6 @@ describe('paymentMethodEnum', () => {
 
 describe('orderStatusEnum', () => {
   test('includes all 4 order statuses', async () => {
-    const { orderStatusEnum } = await import('@/core/database/schema');
-
     const values = orderStatusEnum.enumValues;
     expect(values).toContain('pending');
     expect(values).toContain('paid');
@@ -52,17 +56,11 @@ describe('paymentOrders table', () => {
   ];
 
   test('table name is payment_orders', async () => {
-    const { paymentOrders } = await import('@/core/database/schema');
-    const { getTableConfig } = await import('drizzle-orm/pg-core');
-
     const config = getTableConfig(paymentOrders);
     expect(config.name).toBe('payment_orders');
   });
 
   test('defines all expected columns', async () => {
-    const { paymentOrders } = await import('@/core/database/schema');
-    const { getTableConfig } = await import('drizzle-orm/pg-core');
-
     const config = getTableConfig(paymentOrders);
     const columns = config.columns;
 
@@ -78,9 +76,6 @@ describe('paymentOrders table', () => {
   });
 
   test('has unique constraint on culqiOrderId (DB: culqi_order_id)', async () => {
-    const { paymentOrders } = await import('@/core/database/schema');
-    const { getTableConfig } = await import('drizzle-orm/pg-core');
-
     const config = getTableConfig(paymentOrders);
     const culqiCol = config.columns.find((c) => c.name === 'culqi_order_id');
 
@@ -90,9 +85,6 @@ describe('paymentOrders table', () => {
   });
 
   test('has foreign key constraint referencing businesses', async () => {
-    const { paymentOrders } = await import('@/core/database/schema');
-    const { getTableConfig } = await import('drizzle-orm/pg-core');
-
     const config = getTableConfig(paymentOrders);
     // Verify at least one FK exists (the business_id reference).
     expect(config.foreignKeys.length).toBeGreaterThanOrEqual(1);
@@ -102,9 +94,6 @@ describe('paymentOrders table', () => {
   });
 
   test('has indexes on culqiOrderId, businessId, and status', async () => {
-    const { paymentOrders } = await import('@/core/database/schema');
-    const { getTableConfig } = await import('drizzle-orm/pg-core');
-
     const config = getTableConfig(paymentOrders);
     const indexNames = config.indexes.map((idx) => idx.config.name);
 
@@ -117,16 +106,12 @@ describe('paymentOrders table', () => {
 
 describe('paymentOrdersRelations', () => {
   test('defines a belongs-to-business relation', async () => {
-    const { paymentOrdersRelations } = await import('@/core/database/schema');
-
     expect(paymentOrdersRelations).toBeDefined();
   });
 });
 
 describe('PaymentOrder types', () => {
   test('paymentOrders table is exported', async () => {
-    const mod = await import('@/core/database/schema');
-
     // Verify the table is exported (types like PaymentOrder are compile-time only)
     expect(mod.paymentOrders).toBeDefined();
   });

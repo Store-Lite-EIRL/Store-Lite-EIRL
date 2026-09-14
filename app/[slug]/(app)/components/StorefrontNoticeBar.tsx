@@ -39,8 +39,8 @@ export function StorefrontNoticeBar({
         <div className={`${styles.ownerPrompt} ${styles.ownerPromptInfo}`}>
           <span className={styles.ownerPromptIcon}>💡</span>
           <span>
-            Estás en el plan básico. Actualiza tu plan para aceptar pagos automáticos y acceder a
-            más beneficios.
+            Estás en el plan Lite. Actualiza tu plan para aceptar pagos automáticos y acceder a más
+            beneficios.
           </span>
         </div>
       )}

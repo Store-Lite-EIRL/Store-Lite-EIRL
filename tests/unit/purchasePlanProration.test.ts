@@ -5,29 +5,50 @@
 // for renewals, upgrades, downgrades, and first purchase.
 // =====================================================
 
+import { POST } from '@/app/api/billing/purchase-plan/route';
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
 
-const mockSaasIssuerFindFirst = vi.fn();
-const mockSubscriptionFindFirst = vi.fn();
-const mockReturning = vi.fn();
-const mockOnConflict = vi.fn();
-const mockValues = vi.fn(() => ({
-  returning: mockReturning,
-  onConflictDoUpdate: mockOnConflict,
-}));
-const mockInsert = vi.fn(() => ({ values: mockValues }));
+const {
+  mockSaasIssuerFindFirst,
+  mockSubscriptionFindFirst,
+  mockReturning,
+  mockOnConflict,
+  mockValues,
+  mockInsert,
+  mockTransaction,
+} = vi.hoisted(() => {
+  const mockSaasIssuerFindFirst = vi.fn();
+  const mockSubscriptionFindFirst = vi.fn();
+  const mockReturning = vi.fn();
+  const mockOnConflict = vi.fn();
+  const mockValues = vi.fn(() => ({
+    returning: mockReturning,
+    onConflictDoUpdate: mockOnConflict,
+  }));
+  const mockInsert = vi.fn(() => ({ values: mockValues }));
 
-const mockTransaction = vi.fn((callback) =>
-  callback({
-    insert: mockInsert,
-    query: {
-      businessSubscriptions: { findFirst: mockSubscriptionFindFirst },
-      saasIssuerConfig: { findFirst: mockSaasIssuerFindFirst },
-    },
-  }),
-);
+  const mockTransaction = vi.fn((callback) =>
+    callback({
+      insert: mockInsert,
+      query: {
+        businessSubscriptions: { findFirst: mockSubscriptionFindFirst },
+        saasIssuerConfig: { findFirst: mockSaasIssuerFindFirst },
+      },
+    }),
+  );
+
+  return {
+    mockSaasIssuerFindFirst,
+    mockSubscriptionFindFirst,
+    mockReturning,
+    mockOnConflict,
+    mockValues,
+    mockInsert,
+    mockTransaction,
+  };
+});
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
@@ -38,9 +59,12 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 vi.mock('@/features/storage/actions/authz', () => ({
-  requireOwnedBusinessById: vi
-    .fn()
-    .mockResolvedValue({ businessId: 'biz_123', ownerId: 'test-user-id', slug: 'test-business' }),
+  // original-impl form so restoreMocks keeps this resolved value across tests
+  requireOwnedBusinessById: vi.fn(async () => ({
+    businessId: 'biz_123',
+    ownerId: 'test-user-id',
+    slug: 'test-business',
+  })),
 }));
 
 vi.mock('@/core/database/client', () => ({
@@ -61,7 +85,7 @@ globalThis.fetch = mockFetch;
 function createValidPayload(overrides: Record<string, unknown> = {}) {
   return {
     token: 'ype_test_token_123',
-    planType: 'emprendedor',
+    planType: 'lite_pago',
     period: 'monthly',
     businessId: 'biz_123',
     buyerEmail: 'test@example.com',
@@ -128,19 +152,17 @@ describe('POST /api/billing/purchase-plan — proration', () => {
   // ============================================================
 
   test('renewing the same plan extends from current planEndDate (monthly)', async () => {
-    // Current subscription: emprendedor, ends 2026-07-15
+    // Current subscription: lite_pago, ends 2026-07-15
     mockSubscriptionFindFirst.mockResolvedValue({
-      planType: 'emprendedor',
+      planType: 'lite_pago',
       planEndDate: new Date('2026-07-15T00:00:00Z'),
       planStartDate: new Date('2026-01-01T00:00:00Z'),
     });
 
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(createValidPayload({ planType: 'emprendedor', period: 'monthly' })),
+      body: JSON.stringify(createValidPayload({ planType: 'lite_pago', period: 'monthly' })),
     });
 
     const response = await POST(request);
@@ -160,17 +182,15 @@ describe('POST /api/billing/purchase-plan — proration', () => {
 
   test('renewing the same plan extends from current planEndDate (annual)', async () => {
     mockSubscriptionFindFirst.mockResolvedValue({
-      planType: 'business_pro',
+      planType: 'lite_pago',
       planEndDate: new Date('2026-09-01T00:00:00Z'),
       planStartDate: new Date('2026-03-01T00:00:00Z'),
     });
 
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(createValidPayload({ planType: 'business_pro', period: 'annual' })),
+      body: JSON.stringify(createValidPayload({ planType: 'lite_pago', period: 'annual' })),
     });
 
     const response = await POST(request);
@@ -186,19 +206,17 @@ describe('POST /api/billing/purchase-plan — proration', () => {
   // ============================================================
 
   test('upgrading to a different plan resets dates from today', async () => {
-    // Current subscription: emprendedor, ends 2026-08-15
+    // Current subscription: lite_pago, ends 2026-08-15
     mockSubscriptionFindFirst.mockResolvedValue({
-      planType: 'emprendedor',
+      planType: 'lite_pago',
       planEndDate: new Date('2026-08-15T00:00:00Z'),
       planStartDate: new Date('2026-01-01T00:00:00Z'),
     });
 
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(createValidPayload({ planType: 'business_pro', period: 'monthly' })),
+      body: JSON.stringify(createValidPayload({ planType: 'lite_plus', period: 'monthly' })),
     });
 
     const response = await POST(request);
@@ -217,12 +235,10 @@ describe('POST /api/billing/purchase-plan — proration', () => {
     // No previous subscription
     mockSubscriptionFindFirst.mockResolvedValue(null);
 
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(createValidPayload({ planType: 'business_pro', period: 'monthly' })),
+      body: JSON.stringify(createValidPayload({ planType: 'lite_pago', period: 'monthly' })),
     });
 
     const response = await POST(request);
@@ -240,17 +256,15 @@ describe('POST /api/billing/purchase-plan — proration', () => {
   test('renewing when current plan is expired starts from today', async () => {
     // Current subscription exists but is expired
     mockSubscriptionFindFirst.mockResolvedValue({
-      planType: 'emprendedor',
+      planType: 'lite_pago',
       planEndDate: new Date('2026-01-01T00:00:00Z'), // expired
       planStartDate: new Date('2025-06-01T00:00:00Z'),
     });
 
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
-
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(createValidPayload({ planType: 'emprendedor', period: 'monthly' })),
+      body: JSON.stringify(createValidPayload({ planType: 'lite_pago', period: 'monthly' })),
     });
 
     const response = await POST(request);
@@ -267,8 +281,6 @@ describe('POST /api/billing/purchase-plan — proration', () => {
 
   test('wraps subscription read + write in a DB transaction', async () => {
     mockSubscriptionFindFirst.mockResolvedValue(null);
-
-    const { POST } = await import('@/app/api/billing/purchase-plan/route');
 
     const request = new Request('http://localhost/api/billing/purchase-plan', {
       method: 'POST',

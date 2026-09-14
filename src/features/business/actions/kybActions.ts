@@ -3,16 +3,11 @@
 import { db } from '@/core/database/client';
 import { businesses, verificationOtps } from '@/core/database/schema';
 import {
-  CreateVerifiedBusinessSchema,
   RequestOtpSchema,
   VerifyIdentitySchema,
   VerifyOtpSchema,
 } from '@/features/business/actions/kybSchemas';
-import { captureEvent } from '@/lib/analytics/capture';
-import { AnalyticsEvents } from '@/lib/analytics/taxonomy';
 import { getRucInfo, getRucRepresentatives } from '@/lib/factiliza/client';
-import { setSentryContext } from '@/lib/sentryContext';
-import { createClient } from '@/lib/supabase/server';
 import { checkOtpViaVerify, sendOtpViaVerify } from '@/lib/twilio/client';
 import { and, desc, eq, gt, sql } from 'drizzle-orm';
 
@@ -261,44 +256,11 @@ export async function verifyOtpAction(formData: FormData) {
 }
 
 // =====================================================
-// STEP 4: CREATE VERIFIED BUSINESS
+// STEP 4: CREATE VERIFIED BUSINESS (REMOVED)
 // =====================================================
-
-/**
- * Create business after all KYB steps are completed
- * This should only be called after identity, representative, and OTP verification
- */
-export async function createVerifiedBusinessAction(formData: FormData) {
-  try {
-    const rawData = Object.fromEntries(formData.entries());
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const parsed = CreateVerifiedBusinessSchema.parse(rawData);
-
-    // Business creation logic pending:
-    // 1. Verify all KYB steps are completed
-    // 2. Insert into businesses table
-    // 3. Set verification_status to 'verified'
-    // 4. Clean up used OTPs
-
-    // Fire-and-forget: capture business creation event
-    captureEvent(AnalyticsEvents.BUSINESS_CREATED).catch(() => {});
-
-    // Attach user context to Sentry. Business context is intentionally
-    // skipped while this action still returns a placeholder id — tagging a
-    // fake business_id would pollute multi-tenant error tracing.
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    setSentryContext(user ? { id: user.id, email: user.email } : undefined);
-
-    return {
-      success: true,
-      message: 'Negocio creado exitosamente',
-      data: { businessId: 'temp-id' }, // Replace with actual ID
-    };
-  } catch (error: unknown) {
-    console.error(`[KYB] Error creating business:`, error);
-    return { error: error instanceof Error ? error.message : 'Error al crear el negocio' };
-  }
-}
+//
+// NOTE: createVerifiedBusinessAction was removed. It was a placeholder that
+// never made it past `temp-id`, and business creation actually goes through
+// createBusinessAction (app/create-business/actions.ts), which now marks the
+// business as verified on insert since all KYB steps complete in real time.
+// See git history for the original placeholder implementation.

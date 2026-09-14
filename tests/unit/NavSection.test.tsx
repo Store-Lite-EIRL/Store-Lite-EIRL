@@ -80,7 +80,7 @@ const allItems: NavItemData[] = [
     label: 'Dashboard',
     path: '/mi-tienda/dashboard',
     permission: 'dashboard.view',
-    plan: 'basico',
+    plan: 'lite',
   },
   { id: 'settings', icon: 'settings', label: 'Ajustes', path: '/mi-tienda/settings' },
 ];
@@ -91,7 +91,7 @@ describe('NavSection', () => {
     vi.clearAllMocks();
   });
 
-  it('filters out dashboard for basico plan', () => {
+  it('filters out dashboard for lite plan', () => {
     render(
       <NavSection
         items={allItems}
@@ -99,7 +99,7 @@ describe('NavSection', () => {
         pathname="/mi-tienda"
         slug="mi-tienda"
         businessId="123"
-        planName="basico"
+        planName="lite"
         permissions={fullPermissions}
         isOwner={false}
         sectionHeader="Workspace"
@@ -114,7 +114,7 @@ describe('NavSection', () => {
     expect(screen.getByTestId('nav-item-settings')).toBeInTheDocument();
   });
 
-  it('shows dashboard for non-basico plans', () => {
+  it('shows dashboard for non-lite plans', () => {
     render(
       <NavSection
         items={allItems}
@@ -308,7 +308,7 @@ describe('NavSection', () => {
         pathname="/mi-tienda"
         slug="mi-tienda"
         businessId="123"
-        planName="basico"
+        planName="lite"
         permissions={permissions}
         isOwner={true}
         sectionHeader="Favorites"
@@ -316,7 +316,7 @@ describe('NavSection', () => {
       />,
     );
 
-    // Owner should see dashboard even on basico plan
+    // Owner should see dashboard even on lite plan
     expect(screen.getByTestId('nav-item-dashboard')).toBeInTheDocument();
   });
 
@@ -491,7 +491,7 @@ describe('NavSection', () => {
         pathname="/mi-tienda"
         slug="mi-tienda"
         businessId="123"
-        planName="basico" // Dashboard hidden on basico
+        planName="lite" // Dashboard hidden on lite
         permissions={permissions}
         isOwner={false}
         sectionHeader="Favorites"

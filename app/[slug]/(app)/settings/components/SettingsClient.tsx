@@ -84,7 +84,7 @@ function BusinessSection({
   permissions: Permission[];
 }) {
   const router = useRouter();
-  const canEditSlug = entitlements.plan !== 'basico';
+  const canEditSlug = entitlements.plan !== 'lite';
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
   const SLUG_MIN = 10;
@@ -255,7 +255,7 @@ function BusinessSection({
               <p className={styles.upgradeBannerTitle}>Funciones Premium</p>
               <p className={styles.upgradeBannerText}>
                 La edición de tu URL personalizada y la visibilidad de la tienda están disponibles a
-                partir del plan Emprendedor.
+                partir del plan Lite Pago.
               </p>
             </div>
           </div>
@@ -560,7 +560,7 @@ function PlanSection({
   const params = useParams();
   const slug = params.slug as string;
   const planKey = entitlements.plan;
-  const config = PLAN_CONFIG[planKey as keyof typeof PLAN_CONFIG] ?? PLAN_CONFIG.basico;
+  const config = PLAN_CONFIG[planKey as keyof typeof PLAN_CONFIG] ?? PLAN_CONFIG.lite;
   const remainingTime = getRemainingTime(entitlements.planEndDate);
 
   const features = [
@@ -1539,7 +1539,7 @@ export function SettingsClient({
               hasAccess = permissions.includes('business.edit');
               break;
             case 'payments': {
-              const isPremiumPlan = ['business_pro', 'enterprise_pro'].includes(entitlements.plan);
+              const isPremiumPlan = ['lite_pago', 'lite_plus'].includes(entitlements.plan);
               hasAccess = isPremiumPlan && permissions.includes('business.edit');
               break;
             }

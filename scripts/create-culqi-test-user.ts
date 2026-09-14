@@ -11,7 +11,7 @@
 //
 // Con --with-store también provisiona una TIENDA DEMO completa para que el
 // revisor entre y tenga un storefront funcional al instante (sin fricción de
-// onboarding): negocio + ajustes + suscripción activa (plan basico) + un
+// onboarding): negocio + ajustes + suscripción activa (plan lite) + un
 // producto demo listo para probar el checkout. Los datos demo (nombre,
 // slug, precio) son FIXTURES de prueba, no secretos; solo email/password
 // vienen del entorno/CLI. Idempotente: la tienda se busca por
@@ -232,7 +232,7 @@ async function upsertDemoBusinessSettings(
 }
 
 /**
- * Crea la suscripción basico/active si falta. Si ya existe y está activa,
+ * Crea la suscripción lite/active si falta. Si ya existe y está activa,
  * NO se toca (el revisor pudo upgradear el plan). Si existe pero quedó
  * inactiva/vencida, se reactiva (auto-curación).
  */
@@ -247,7 +247,7 @@ async function upsertDemoSubscription(
   if (!existing) {
     await ctx.db.insert(ctx.businessSubscriptions).values({
       businessId,
-      planType: 'basico',
+      planType: 'lite',
       planStatus: 'active',
       planStartDate: new Date(),
       planEndDate: null,
@@ -263,7 +263,7 @@ async function upsertDemoSubscription(
   await ctx.db
     .update(ctx.businessSubscriptions)
     .set({
-      planType: 'basico',
+      planType: 'lite',
       planStatus: 'active',
       planStartDate: existing.planStartDate ?? new Date(),
       planEndDate: null,
@@ -344,9 +344,9 @@ async function provisionDemoStore(ctx: ProvisionCtx, userId: string, email: stri
 
   const subAction = await upsertDemoSubscription(ctx, business.id);
   if (subAction === 'created') {
-    console.log('📦 Suscripción creada (basico / active)');
+    console.log('📦 Suscripción creada (lite / active)');
   } else if (subAction === 'healed') {
-    console.log('📦 Suscripción reactivada (basico / active)');
+    console.log('📦 Suscripción reactivada (lite / active)');
   } else {
     console.log('📦 Suscripción ya activa (se respeta el plan actual)');
   }

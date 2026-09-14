@@ -2,33 +2,61 @@
 // settingsActions — Plan enforcement unit tests
 // =====================================================
 
+import {
+  clearStorefrontTheme,
+  toggleBusinessActive,
+  updateBusinessSEO,
+  updateBusinessSlug,
+  updateCulqiCredentials,
+  updateStorefrontLayout,
+  updateStorefrontTheme,
+} from '@/app/[slug]/(app)/settings/actions';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
 
-const mockRequireAccessOnId = vi.fn();
+const mockRequireAccessOnId = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/storage/actions/authz', () => ({
   requireAccessOnId: mockRequireAccessOnId,
 }));
 
-const mockGetEntitlements = vi.fn();
+const mockGetEntitlements = vi.hoisted(() => vi.fn());
 
 vi.mock('@/core/entitlements', () => ({
   getBusinessEntitlements: mockGetEntitlements,
 }));
 
 // Each action may call these; we mock them minimally
-const mockDbQueryBusinessesFindFirst = vi.fn();
-const mockDbQueryBusinessSettingsFindFirst = vi.fn();
-const mockDbUpdate = vi.fn();
+const {
+  mockDbQueryBusinessesFindFirst,
+  mockDbQueryBusinessSettingsFindFirst,
+  mockDbUpdate,
+  mockDbTransaction,
+  mockDbInsert,
+  mockDbDelete,
+} = vi.hoisted(() => {
+  const mockDbQueryBusinessesFindFirst = vi.fn();
+  const mockDbQueryBusinessSettingsFindFirst = vi.fn();
+  const mockDbUpdate = vi.fn();
+  const mockDbTransaction = vi.fn();
+  const mockDbInsert = vi.fn();
+  const mockDbDelete = vi.fn();
+
+  return {
+    mockDbQueryBusinessesFindFirst,
+    mockDbQueryBusinessSettingsFindFirst,
+    mockDbUpdate,
+    mockDbTransaction,
+    mockDbInsert,
+    mockDbDelete,
+  };
+});
+
 const mockDbUpdateSet = vi.fn();
 const mockDbUpdateWhere = vi.fn();
-const mockDbTransaction = vi.fn();
-const mockDbInsert = vi.fn();
 const mockDbInsertValues = vi.fn();
 const mockDbInsertOnConflictDoNothing = vi.fn();
-const mockDbDelete = vi.fn();
 const mockDbDeleteWhere = vi.fn();
 
 vi.mock('@/core/database/client', () => ({
@@ -49,7 +77,8 @@ vi.mock('@/core/database/client', () => ({
 }));
 
 vi.mock('@/core/business/slug', () => ({
-  isBusinessSlugTaken: vi.fn().mockResolvedValue(false),
+  // original-impl form so restoreMocks keeps this resolved value across tests
+  isBusinessSlugTaken: vi.fn(async () => false),
 }));
 
 vi.mock('next/cache', () => ({
@@ -88,8 +117,8 @@ vi.mock('@/utils/crypto', () => ({
 
 const BUSINESS_ID = 'biz-test-123';
 
-const BASICO_ENTITLEMENTS = {
-  plan: 'basico' as const,
+const LITE_ENTITLEMENTS = {
+  plan: 'lite' as const,
   isActive: true,
   hasPaymentGateway: false,
   isPaymentConfigured: false,
@@ -107,7 +136,7 @@ const BASICO_ENTITLEMENTS = {
 };
 
 const PREMIUM_ENTITLEMENTS = {
-  plan: 'business_pro' as const,
+  plan: 'lite_pago' as const,
   isActive: true,
   hasPaymentGateway: true,
   isPaymentConfigured: true,
@@ -165,14 +194,12 @@ describe('settings actions — plan enforcement', () => {
   });
 
   // ============================================================
-  // PLAN ENFORCEMENT — basico returns error for all 7 actions
+  // PLAN ENFORCEMENT — lite returns error for all 7 actions
   // ============================================================
 
   describe('updateBusinessSlug', () => {
-    test('returns error when plan is basico', async () => {
-      mockGetEntitlements.mockResolvedValue(BASICO_ENTITLEMENTS);
-
-      const { updateBusinessSlug } = await import('@/app/[slug]/(app)/settings/actions');
+    test('returns error when plan is lite', async () => {
+      mockGetEntitlements.mockResolvedValue(LITE_ENTITLEMENTS);
 
       const result = await updateBusinessSlug(BUSINESS_ID, 'new-slug-valid');
 
@@ -186,14 +213,12 @@ describe('settings actions — plan enforcement', () => {
       expect(mockDbQueryBusinessesFindFirst).not.toHaveBeenCalled();
     });
 
-    test('proceeds when plan is business_pro', async () => {
+    test('proceeds when plan is lite_pago', async () => {
       mockGetEntitlements.mockResolvedValue(PREMIUM_ENTITLEMENTS);
       mockDbQueryBusinessesFindFirst.mockResolvedValue({
         id: BUSINESS_ID,
         slug: 'old-slug',
       });
-
-      const { updateBusinessSlug } = await import('@/app/[slug]/(app)/settings/actions');
 
       const result = await updateBusinessSlug(BUSINESS_ID, 'new-slug-valid');
 
@@ -204,10 +229,8 @@ describe('settings actions — plan enforcement', () => {
   });
 
   describe('toggleBusinessActive', () => {
-    test('returns error when plan is basico', async () => {
-      mockGetEntitlements.mockResolvedValue(BASICO_ENTITLEMENTS);
-
-      const { toggleBusinessActive } = await import('@/app/[slug]/(app)/settings/actions');
+    test('returns error when plan is lite', async () => {
+      mockGetEntitlements.mockResolvedValue(LITE_ENTITLEMENTS);
 
       const result = await toggleBusinessActive(BUSINESS_ID, true);
 
@@ -219,10 +242,8 @@ describe('settings actions — plan enforcement', () => {
       expect(mockGetEntitlements).toHaveBeenCalledWith(BUSINESS_ID);
     });
 
-    test('proceeds when plan is business_pro', async () => {
+    test('proceeds when plan is lite_pago', async () => {
       mockGetEntitlements.mockResolvedValue(PREMIUM_ENTITLEMENTS);
-
-      const { toggleBusinessActive } = await import('@/app/[slug]/(app)/settings/actions');
 
       const result = await toggleBusinessActive(BUSINESS_ID, true);
 
@@ -237,10 +258,8 @@ describe('settings actions — plan enforcement', () => {
       seoDescription: 'Test description',
     };
 
-    test('returns error when plan is basico', async () => {
-      mockGetEntitlements.mockResolvedValue(BASICO_ENTITLEMENTS);
-
-      const { updateBusinessSEO } = await import('@/app/[slug]/(app)/settings/actions');
+    test('returns error when plan is lite', async () => {
+      mockGetEntitlements.mockResolvedValue(LITE_ENTITLEMENTS);
 
       const result = await updateBusinessSEO(BUSINESS_ID, seoData);
 
@@ -252,10 +271,8 @@ describe('settings actions — plan enforcement', () => {
       expect(mockGetEntitlements).toHaveBeenCalledWith(BUSINESS_ID);
     });
 
-    test('proceeds when plan is business_pro', async () => {
+    test('proceeds when plan is lite_pago', async () => {
       mockGetEntitlements.mockResolvedValue(PREMIUM_ENTITLEMENTS);
-
-      const { updateBusinessSEO } = await import('@/app/[slug]/(app)/settings/actions');
 
       const result = await updateBusinessSEO(BUSINESS_ID, seoData);
 
@@ -267,10 +284,8 @@ describe('settings actions — plan enforcement', () => {
   describe('updateStorefrontLayout', () => {
     const layout = { type: 'grid' };
 
-    test('returns error when plan is basico', async () => {
-      mockGetEntitlements.mockResolvedValue(BASICO_ENTITLEMENTS);
-
-      const { updateStorefrontLayout } = await import('@/app/[slug]/(app)/settings/actions');
+    test('returns error when plan is lite', async () => {
+      mockGetEntitlements.mockResolvedValue(LITE_ENTITLEMENTS);
 
       const result = await updateStorefrontLayout(BUSINESS_ID, 'test-slug', layout);
 
@@ -282,10 +297,10 @@ describe('settings actions — plan enforcement', () => {
       expect(mockGetEntitlements).toHaveBeenCalledWith(BUSINESS_ID);
     });
 
-    test('returns error when plan is emprendedor', async () => {
+    test('returns error when plan is lite (legacy emprendedor fixture)', async () => {
       mockGetEntitlements.mockResolvedValue({
-        ...BASICO_ENTITLEMENTS,
-        plan: 'emprendedor' as const,
+        ...LITE_ENTITLEMENTS,
+        plan: 'lite' as const,
         hasPaymentGateway: true,
         seoEnabled: true,
         dashboardEnabled: true,
@@ -293,8 +308,6 @@ describe('settings actions — plan enforcement', () => {
         maxProducts: 150,
         maxTeamMembers: 3,
       });
-
-      const { updateStorefrontLayout } = await import('@/app/[slug]/(app)/settings/actions');
 
       const result = await updateStorefrontLayout(BUSINESS_ID, 'test-slug', layout);
 
@@ -304,11 +317,9 @@ describe('settings actions — plan enforcement', () => {
       });
     });
 
-    test('proceeds when plan is business_pro', async () => {
+    test('proceeds when plan is lite_pago', async () => {
       mockGetEntitlements.mockResolvedValue(PREMIUM_ENTITLEMENTS);
       mockDbQueryBusinessSettingsFindFirst.mockResolvedValue(null);
-
-      const { updateStorefrontLayout } = await import('@/app/[slug]/(app)/settings/actions');
 
       const result = await updateStorefrontLayout(BUSINESS_ID, 'test-slug', layout);
 
@@ -320,10 +331,8 @@ describe('settings actions — plan enforcement', () => {
   describe('updateStorefrontTheme', () => {
     const theme = { colors: { primary: '#ff0000' } };
 
-    test('returns error when plan is basico', async () => {
-      mockGetEntitlements.mockResolvedValue(BASICO_ENTITLEMENTS);
-
-      const { updateStorefrontTheme } = await import('@/app/[slug]/(app)/settings/actions');
+    test('returns error when plan is lite', async () => {
+      mockGetEntitlements.mockResolvedValue(LITE_ENTITLEMENTS);
 
       const result = await updateStorefrontTheme(BUSINESS_ID, 'test-slug', theme, 'light');
 
@@ -335,10 +344,10 @@ describe('settings actions — plan enforcement', () => {
       expect(mockGetEntitlements).toHaveBeenCalledWith(BUSINESS_ID);
     });
 
-    test('returns error when plan is emprendedor', async () => {
+    test('returns error when plan is lite (legacy emprendedor fixture)', async () => {
       mockGetEntitlements.mockResolvedValue({
-        ...BASICO_ENTITLEMENTS,
-        plan: 'emprendedor' as const,
+        ...LITE_ENTITLEMENTS,
+        plan: 'lite' as const,
         hasPaymentGateway: true,
         seoEnabled: true,
         dashboardEnabled: true,
@@ -346,8 +355,6 @@ describe('settings actions — plan enforcement', () => {
         maxProducts: 150,
         maxTeamMembers: 3,
       });
-
-      const { updateStorefrontTheme } = await import('@/app/[slug]/(app)/settings/actions');
 
       const result = await updateStorefrontTheme(BUSINESS_ID, 'test-slug', theme, 'light');
 
@@ -357,11 +364,9 @@ describe('settings actions — plan enforcement', () => {
       });
     });
 
-    test('proceeds when plan is business_pro', async () => {
+    test('proceeds when plan is lite_pago', async () => {
       mockGetEntitlements.mockResolvedValue(PREMIUM_ENTITLEMENTS);
       mockDbQueryBusinessSettingsFindFirst.mockResolvedValue(null);
-
-      const { updateStorefrontTheme } = await import('@/app/[slug]/(app)/settings/actions');
 
       const result = await updateStorefrontTheme(BUSINESS_ID, 'test-slug', theme, 'light');
 
@@ -371,10 +376,8 @@ describe('settings actions — plan enforcement', () => {
   });
 
   describe('clearStorefrontTheme', () => {
-    test('returns error when plan is basico', async () => {
-      mockGetEntitlements.mockResolvedValue(BASICO_ENTITLEMENTS);
-
-      const { clearStorefrontTheme } = await import('@/app/[slug]/(app)/settings/actions');
+    test('returns error when plan is lite', async () => {
+      mockGetEntitlements.mockResolvedValue(LITE_ENTITLEMENTS);
 
       const result = await clearStorefrontTheme(BUSINESS_ID, 'test-slug');
 
@@ -386,10 +389,10 @@ describe('settings actions — plan enforcement', () => {
       expect(mockGetEntitlements).toHaveBeenCalledWith(BUSINESS_ID);
     });
 
-    test('returns error when plan is emprendedor', async () => {
+    test('returns error when plan is lite (legacy emprendedor fixture)', async () => {
       mockGetEntitlements.mockResolvedValue({
-        ...BASICO_ENTITLEMENTS,
-        plan: 'emprendedor' as const,
+        ...LITE_ENTITLEMENTS,
+        plan: 'lite' as const,
         hasPaymentGateway: true,
         seoEnabled: true,
         dashboardEnabled: true,
@@ -397,8 +400,6 @@ describe('settings actions — plan enforcement', () => {
         maxProducts: 150,
         maxTeamMembers: 3,
       });
-
-      const { clearStorefrontTheme } = await import('@/app/[slug]/(app)/settings/actions');
 
       const result = await clearStorefrontTheme(BUSINESS_ID, 'test-slug');
 
@@ -408,11 +409,9 @@ describe('settings actions — plan enforcement', () => {
       });
     });
 
-    test('proceeds when plan is business_pro', async () => {
+    test('proceeds when plan is lite_pago', async () => {
       mockGetEntitlements.mockResolvedValue(PREMIUM_ENTITLEMENTS);
       mockDbQueryBusinessSettingsFindFirst.mockResolvedValue(null);
-
-      const { clearStorefrontTheme } = await import('@/app/[slug]/(app)/settings/actions');
 
       const result = await clearStorefrontTheme(BUSINESS_ID, 'test-slug');
 
@@ -425,10 +424,8 @@ describe('settings actions — plan enforcement', () => {
     const publicKey = 'pk_test_abc123';
     const secretKey = 'sk_test_xyz789';
 
-    test('returns error when plan is basico (hasPaymentGateway=false)', async () => {
-      mockGetEntitlements.mockResolvedValue(BASICO_ENTITLEMENTS);
-
-      const { updateCulqiCredentials } = await import('@/app/[slug]/(app)/settings/actions');
+    test('returns error when plan is lite (hasPaymentGateway=false)', async () => {
+      mockGetEntitlements.mockResolvedValue(LITE_ENTITLEMENTS);
 
       const result = await updateCulqiCredentials(BUSINESS_ID, publicKey, secretKey);
 
@@ -440,10 +437,10 @@ describe('settings actions — plan enforcement', () => {
       expect(mockGetEntitlements).toHaveBeenCalledWith(BUSINESS_ID);
     });
 
-    test('returns error when plan is emprendedor (hasPaymentGateway=false)', async () => {
+    test('returns error when plan is lite (legacy emprendedor fixture, no payment gateway)', async () => {
       mockGetEntitlements.mockResolvedValue({
-        ...BASICO_ENTITLEMENTS,
-        plan: 'emprendedor' as const,
+        ...LITE_ENTITLEMENTS,
+        plan: 'lite' as const,
         hasPaymentGateway: false,
         seoEnabled: true,
         dashboardEnabled: true,
@@ -451,8 +448,6 @@ describe('settings actions — plan enforcement', () => {
         maxProducts: 150,
         maxTeamMembers: 3,
       });
-
-      const { updateCulqiCredentials } = await import('@/app/[slug]/(app)/settings/actions');
 
       const result = await updateCulqiCredentials(BUSINESS_ID, publicKey, secretKey);
 
@@ -462,11 +457,9 @@ describe('settings actions — plan enforcement', () => {
       });
     });
 
-    test('proceeds when plan is business_pro (hasPaymentGateway=true)', async () => {
+    test('proceeds when plan is lite_pago (hasPaymentGateway=true)', async () => {
       mockGetEntitlements.mockResolvedValue(PREMIUM_ENTITLEMENTS);
       mockDbQueryBusinessSettingsFindFirst.mockResolvedValue({ id: 'settings-1' });
-
-      const { updateCulqiCredentials } = await import('@/app/[slug]/(app)/settings/actions');
 
       const result = await updateCulqiCredentials(BUSINESS_ID, publicKey, secretKey);
 
@@ -487,8 +480,6 @@ describe('settings actions — plan enforcement', () => {
         slug: 'old-slug',
       });
 
-      const { updateBusinessSlug } = await import('@/app/[slug]/(app)/settings/actions');
-
       // Call with only 2 args (no plan)
       const result = await updateBusinessSlug(BUSINESS_ID, 'new-slug-valid');
 
@@ -498,8 +489,6 @@ describe('settings actions — plan enforcement', () => {
     test('toggleBusinessActive works without plan param', async () => {
       mockGetEntitlements.mockResolvedValue(PREMIUM_ENTITLEMENTS);
 
-      const { toggleBusinessActive } = await import('@/app/[slug]/(app)/settings/actions');
-
       const result = await toggleBusinessActive(BUSINESS_ID, false);
 
       expect(result.success).toBe(true);
@@ -508,8 +497,6 @@ describe('settings actions — plan enforcement', () => {
     test('updateCulqiCredentials works without plan param', async () => {
       mockGetEntitlements.mockResolvedValue(PREMIUM_ENTITLEMENTS);
       mockDbQueryBusinessSettingsFindFirst.mockResolvedValue({ id: 'settings-1' });
-
-      const { updateCulqiCredentials } = await import('@/app/[slug]/(app)/settings/actions');
 
       const result = await updateCulqiCredentials(BUSINESS_ID, 'pk_test_abc', 'sk_test_xyz');
 

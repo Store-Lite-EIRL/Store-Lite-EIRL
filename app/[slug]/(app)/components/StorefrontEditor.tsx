@@ -21,6 +21,8 @@ interface StorefrontEditorProps {
   storefrontTheme: StorefrontTheme;
   onThemeChange: (theme: StorefrontTheme) => void;
   onPreviewSchemeChange?: (scheme: StorefrontColorScheme | undefined) => void;
+  onOpen?: () => void;
+  onClose?: () => void;
   detectedColorScheme: StorefrontColorScheme;
   /** The scheme currently active on the page (from toggle or OS default). */
   currentScheme?: StorefrontColorScheme;
@@ -62,6 +64,8 @@ export function StorefrontEditor({
   storefrontTheme,
   onThemeChange,
   onPreviewSchemeChange,
+  onOpen,
+  onClose,
   detectedColorScheme,
   currentScheme,
   defaultScheme,
@@ -114,7 +118,8 @@ export function StorefrontEditor({
   // stays in the scheme the user was editing after the editor closes.
   const handleClose = useCallback(() => {
     setOpen(false);
-  }, []);
+    onClose?.();
+  }, [onClose]);
 
   // Close on Escape
   useEffect(() => {
@@ -357,7 +362,14 @@ export function StorefrontEditor({
   return (
     <>
       {/* FAB */}
-      <button className={styles.fab} onClick={() => setOpen(true)} aria-label="Personalizar tienda">
+      <button
+        className={styles.fab}
+        onClick={() => {
+          setOpen(true);
+          onOpen?.();
+        }}
+        aria-label="Personalizar tienda"
+      >
         <Icon>settings</Icon>
       </button>
 

@@ -136,6 +136,27 @@ describe('StorefrontAboutSection — public profile', () => {
     }
   });
 
+  it('does not render the legal representative name/role on the public card (Ley 29733)', () => {
+    renderSection(fullBusiness);
+
+    expect(screen.queryByText('Ana Torres')).toBeNull();
+    expect(screen.queryByText('Gerente')).toBeNull();
+  });
+
+  it('renders the real RUC on the public card instead of a token (DL 1524)', () => {
+    renderSection(fullBusiness);
+
+    expect(screen.getByText(/20123456789/)).toBeDefined();
+    expect(screen.queryByText(/x3bet/)).toBeNull();
+  });
+
+  it('renders no tokenized RUC fallback for an empty taxId', () => {
+    renderSection(sparseBusiness);
+
+    expect(screen.queryByText(/x3bet/)).toBeNull();
+    expect(screen.queryByText(/00000000000/)).toBeNull();
+  });
+
   it('renders no empty rows or links for a sparse business (R1)', () => {
     renderSection(sparseBusiness);
 

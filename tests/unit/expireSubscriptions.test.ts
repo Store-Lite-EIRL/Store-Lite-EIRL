@@ -7,14 +7,19 @@
 // for each expired business.
 // =====================================================
 
+import { expireSubscriptions } from '@/core/entitlements/expireSubscriptions';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
 
-const mockReturningChain = vi.fn();
-const mockWhereChain = vi.fn(() => ({ returning: mockReturningChain }));
-const mockSetChain = vi.fn(() => ({ where: mockWhereChain }));
-const mockUpdate = vi.fn(() => ({ set: mockSetChain }));
+const { mockReturningChain, mockWhereChain, mockSetChain, mockUpdate } = vi.hoisted(() => {
+  const mockReturningChain = vi.fn();
+  const mockWhereChain = vi.fn(() => ({ returning: mockReturningChain }));
+  const mockSetChain = vi.fn(() => ({ where: mockWhereChain }));
+  const mockUpdate = vi.fn(() => ({ set: mockSetChain }));
+
+  return { mockReturningChain, mockWhereChain, mockSetChain, mockUpdate };
+});
 
 vi.mock('@/core/database/client', () => ({
   db: {
@@ -22,7 +27,7 @@ vi.mock('@/core/database/client', () => ({
   },
 }));
 
-const mockEnforceProductLimit = vi.fn();
+const mockEnforceProductLimit = vi.hoisted(() => vi.fn());
 
 vi.mock('@/core/entitlements/enforceProductLimit', () => ({
   enforceProductLimit: mockEnforceProductLimit,
@@ -42,8 +47,6 @@ describe('expireSubscriptions', () => {
       { id: 'sub_3', businessId: 'biz_3' },
     ]);
     mockEnforceProductLimit.mockResolvedValue(5);
-
-    const { expireSubscriptions } = await import('@/core/entitlements/expireSubscriptions');
 
     const result = await expireSubscriptions();
 
@@ -66,8 +69,6 @@ describe('expireSubscriptions', () => {
   test('returns 0 when no subscriptions are expired', async () => {
     mockReturningChain.mockResolvedValue([]);
 
-    const { expireSubscriptions } = await import('@/core/entitlements/expireSubscriptions');
-
     const result = await expireSubscriptions();
 
     expect(result).toEqual({ expired: 0, productsDisabled: 0 });
@@ -81,8 +82,6 @@ describe('expireSubscriptions', () => {
     ]);
     mockEnforceProductLimit.mockResolvedValue(3);
 
-    const { expireSubscriptions } = await import('@/core/entitlements/expireSubscriptions');
-
     const first = await expireSubscriptions();
     const second = await expireSubscriptions();
 
@@ -94,8 +93,6 @@ describe('expireSubscriptions', () => {
   test('does not update subscriptions that are already inactive', async () => {
     mockReturningChain.mockResolvedValue([]);
 
-    const { expireSubscriptions } = await import('@/core/entitlements/expireSubscriptions');
-
     const result = await expireSubscriptions();
 
     expect(result).toEqual({ expired: 0, productsDisabled: 0 });
@@ -105,8 +102,6 @@ describe('expireSubscriptions', () => {
   test('returns productsDisabled as 0 when expired business has no excess products', async () => {
     mockReturningChain.mockResolvedValue([{ id: 'sub_1', businessId: 'biz_1' }]);
     mockEnforceProductLimit.mockResolvedValue(0);
-
-    const { expireSubscriptions } = await import('@/core/entitlements/expireSubscriptions');
 
     const result = await expireSubscriptions();
 
@@ -125,8 +120,6 @@ describe('expireSubscriptions', () => {
       .mockResolvedValueOnce(10)
       .mockResolvedValueOnce(0)
       .mockResolvedValueOnce(3);
-
-    const { expireSubscriptions } = await import('@/core/entitlements/expireSubscriptions');
 
     const result = await expireSubscriptions();
 

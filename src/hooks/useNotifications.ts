@@ -19,7 +19,6 @@ export interface UseNotificationsOptions {
   businessId: string;
   autoFetch?: boolean;
   enableRealtime?: boolean;
-  onNewNotification?: (notification: Notification) => void;
 }
 
 export interface UseNotificationsReturn {
@@ -34,12 +33,18 @@ export interface UseNotificationsReturn {
   refresh: () => Promise<void>;
 }
 
+// Internal options type — includes onNewNotification for provider use only.
+// Consumers should use UseNotificationsOptions (without onNewNotification).
+interface UseNotificationsInternalOptions extends UseNotificationsOptions {
+  onNewNotification?: (notification: Notification) => void;
+}
+
 export function useNotifications({
   businessId,
   autoFetch = true,
   enableRealtime = true,
   onNewNotification,
-}: UseNotificationsOptions): UseNotificationsReturn {
+}: UseNotificationsInternalOptions): UseNotificationsReturn {
   const hookId = useId().replace(/:/g, '');
   const supabase = useMemo(() => createClient(), []);
 

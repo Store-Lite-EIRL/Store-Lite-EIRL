@@ -25,6 +25,7 @@
   background-position: var(--storefront-bg-position, 0 0);
   background-repeat: var(--storefront-bg-repeat, repeat);
   background-blend-mode: var(--storefront-bg-blend-mode, normal);
+  transition: background-color 300ms ease;
   -webkit-mask-image: var(--storefront-mask-image, none);
   mask-image: var(--storefront-mask-image, none);
   -webkit-mask-size: var(--storefront-mask-size, auto);

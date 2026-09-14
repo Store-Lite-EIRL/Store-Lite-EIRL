@@ -59,10 +59,6 @@ export default async function NotificationsPage({ params }: Props) {
   const availableCategoryIds = getAvailableCategoryIds(entitlements);
 
   return (
-    <NotificationsClient
-      businessId={business.id}
-      businessName={business.name}
-      availableCategoryIds={availableCategoryIds}
-    />
+    <NotificationsClient businessName={business.name} availableCategoryIds={availableCategoryIds} />
   );
 }

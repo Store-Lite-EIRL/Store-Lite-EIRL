@@ -42,7 +42,7 @@ export async function updateBusinessSlug(
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
-  if (entitlements.plan === 'basico') {
+  if (entitlements.plan === 'lite') {
     return { success: false, error: 'Funcion disponible solo para planes superiores.' };
   }
 
@@ -150,7 +150,7 @@ export async function toggleBusinessActive(
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
-  if (entitlements.plan === 'basico') {
+  if (entitlements.plan === 'lite') {
     return { success: false, error: 'Funcion disponible solo para planes superiores.' };
   }
 
@@ -199,7 +199,7 @@ export async function updateBusinessSEO(
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
-  if (entitlements.plan === 'basico') {
+  if (entitlements.plan === 'lite') {
     return { success: false, error: 'Funcion disponible solo para planes superiores.' };
   }
 
@@ -238,7 +238,7 @@ export async function updateStorefrontLayout(
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
-  if (entitlements.plan === 'basico' || entitlements.plan === 'emprendedor') {
+  if (entitlements.plan === 'lite') {
     return {
       success: false,
       error: 'Funcion disponible solo para planes con personalizacion de storefront.',
@@ -310,7 +310,7 @@ export async function updateStorefrontTheme(
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
-  if (entitlements.plan === 'basico' || entitlements.plan === 'emprendedor') {
+  if (entitlements.plan === 'lite') {
     return {
       success: false,
       error: 'Funcion disponible solo para planes con personalizacion de storefront.',
@@ -386,7 +386,7 @@ export async function clearStorefrontTheme(businessId: string, slug: string): Pr
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
-  if (entitlements.plan === 'basico' || entitlements.plan === 'emprendedor') {
+  if (entitlements.plan === 'lite') {
     return {
       success: false,
       error: 'Funcion disponible solo para planes con personalizacion de storefront.',

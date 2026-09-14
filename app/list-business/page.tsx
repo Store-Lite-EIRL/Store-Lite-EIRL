@@ -75,7 +75,7 @@ export default async function ListBusinessPage() {
 
   const ownedBusinesses = rawOwnedBusinesses.map((b) => ({
     ...b,
-    planType: b.subscriptions?.[0]?.planType || 'basico',
+    planType: b.subscriptions?.[0]?.planType || 'lite',
     isTeam: false,
   }));
 
@@ -84,7 +84,7 @@ export default async function ListBusinessPage() {
       if (!m.business) return null;
       return {
         ...m.business,
-        planType: m.business.subscriptions?.[0]?.planType || 'basico',
+        planType: m.business.subscriptions?.[0]?.planType || 'lite',
         isTeam: true,
       };
     })

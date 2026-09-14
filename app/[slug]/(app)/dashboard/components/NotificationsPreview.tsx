@@ -1,8 +1,8 @@
 'use client';
 
-import { useNotifications } from '@/hooks/useNotifications';
 import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
 import { Checkbox } from '@/shared/components/ui/inputs/Checkbox';
+import { useNotificationsContext } from '@app/[slug]/(app)/context/NotificationsContext';
 import {
   Bell,
   CheckCheck,
@@ -16,10 +16,6 @@ import {
 import { useState } from 'react';
 import styles from './NotificationsPreview.module.css';
 
-interface NotificationsPreviewProps {
-  businessId: string;
-}
-
 const CATEGORIES = [
   { id: 'all', label: 'Todas', icon: Bell },
   { id: 'chat', label: 'Chat', icon: MessageSquare },
@@ -29,7 +25,7 @@ const CATEGORIES = [
   { id: 'sistema', label: 'Sistema', icon: Info },
 ] as const;
 
-export function NotificationsPreview({ businessId }: NotificationsPreviewProps) {
+export function NotificationsPreview() {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [showReadAlert, setShowReadAlert] = useState(false);
   const {
@@ -39,7 +35,7 @@ export function NotificationsPreview({ businessId }: NotificationsPreviewProps) 
     isLoading,
     markAsRead,
     markAllAsRead,
-  } = useNotifications({ businessId });
+  } = useNotificationsContext();
 
   const handleMarkAsRead = (id: string) => {
     markAsRead(id);
