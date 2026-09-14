@@ -172,7 +172,6 @@ export function ChatSidebar({
               <Icon size={22}>person</Icon>
             </div>
           )}
-          {chat.online && <span className={styles.onlineBadge} />}
         </div>
 
         {/* Chat Info */}

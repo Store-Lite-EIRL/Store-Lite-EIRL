@@ -8,8 +8,12 @@ interface LegalSectionProps {
   legalRepRole: string;
   legalRepPhone: string;
   legalRepEmail: string;
+  locked: boolean;
   handleChange: (field: string, value: string) => void;
 }
+
+const LOCKED_NOTICE =
+  'Este campo está bloqueado porque el negocio/producto tiene pagos registrados.';
 
 export const LegalSection: React.FC<LegalSectionProps> = ({
   taxId,
@@ -18,6 +22,7 @@ export const LegalSection: React.FC<LegalSectionProps> = ({
   legalRepRole,
   legalRepPhone,
   legalRepEmail,
+  locked,
   handleChange,
 }) => {
   return (
@@ -63,11 +68,14 @@ export const LegalSection: React.FC<LegalSectionProps> = ({
           <md-outlined-text-field
             suppressHydrationWarning
             value={legalRepRole}
+            disabled={locked}
+            className={locked ? styles.disabledField : undefined}
             onInput={(e: React.FormEvent<HTMLInputElement>) =>
               handleChange('legalRepRole', (e.target as HTMLInputElement).value)
             }
             placeholder="Ej. Gerente General"
           />
+          {locked && <p className={styles.fieldNotice}>{LOCKED_NOTICE}</p>}
         </div>
       </div>
 

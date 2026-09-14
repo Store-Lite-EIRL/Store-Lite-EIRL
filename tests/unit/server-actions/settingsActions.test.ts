@@ -27,6 +27,13 @@ vi.mock('@/core/entitlements', () => ({
   getBusinessEntitlements: mockGetEntitlements,
 }));
 
+// Payment lock guard — actions.ts now calls hasLockingPayments; default to unlocked
+const mockHasLockingPayments = vi.hoisted(() => vi.fn());
+
+vi.mock('@/core/orders/paymentGuards', () => ({
+  hasLockingPayments: mockHasLockingPayments,
+}));
+
 // Each action may call these; we mock them minimally
 const {
   mockDbQueryBusinessesFindFirst,
@@ -191,6 +198,9 @@ describe('settings actions — plan enforcement', () => {
         return await cb(tx);
       },
     );
+
+    // Business has no locking payment history (paymentGuards suite covers locking)
+    mockHasLockingPayments.mockResolvedValue(false);
   });
 
   // ============================================================

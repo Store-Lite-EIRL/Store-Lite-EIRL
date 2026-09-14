@@ -378,7 +378,7 @@ function BusinessPageContentUI({
   // Sync theme CSS vars to document root so parent elements (layout, main-area)
   // can see --storefront-bg, --storefront-bg-image, and all MD colors
   // useLayoutEffect ensures vars are applied synchronously BEFORE paint,
-  // preventing the flicker from cleanup → re-apply of CSS custom properties.
+  // preventing the flicker from cleanup â†’ re-apply of CSS custom properties.
   useLayoutEffect(() => {
     const root = document.documentElement;
     const entries = Object.entries(themeStyles) as [string, string][];
@@ -413,7 +413,7 @@ function BusinessPageContentUI({
       root.style.backgroundAttachment = 'fixed';
 
       // Make <body> transparent so the <html> pattern/gradient shows through
-      // the entire viewport — including margins, the sidebar column, and areas
+      // the entire viewport â€” including margins, the sidebar column, and areas
       // outside .storefrontThemeRoot.
       document.body.style.backgroundColor = 'transparent';
     } else {
@@ -449,7 +449,7 @@ function BusinessPageContentUI({
         setViewerTheme(stored);
       }
     } catch {
-      // Safari private mode — no-op
+      // Safari private mode â€” no-op
     }
   }, [business.slug]);
 
@@ -459,7 +459,7 @@ function BusinessPageContentUI({
     try {
       localStorage.setItem(`storefront-theme-${business.slug}`, viewerTheme);
     } catch {
-      // Safari private mode — no-op
+      // Safari private mode â€” no-op
     }
   }, [viewerTheme, business.slug]);
 
@@ -493,7 +493,7 @@ function BusinessPageContentUI({
         setPreviewScheme(stored);
       }
     } catch {
-      // Safari private mode — no-op
+      // Safari private mode â€” no-op
     }
   }, [isStaff, business.slug]);
 
@@ -502,12 +502,12 @@ function BusinessPageContentUI({
       setPreviewScheme(scheme);
       if (scheme) {
         setViewerTheme(scheme);
-        setTheme(scheme); // 'light' | 'dark' — same values
+        setTheme(scheme); // 'light' | 'dark' â€” same values
         try {
           localStorage.setItem(`storefront-preview-scheme-${business.slug}`, scheme);
           localStorage.setItem(`storefront-theme-${business.slug}`, scheme);
         } catch {
-          // Safari private mode — no-op
+          // Safari private mode â€” no-op
         }
       }
     },
@@ -573,6 +573,7 @@ function BusinessPageContentUI({
           detectedColorScheme={effectiveTheme as StorefrontColorScheme}
           previewScheme={previewScheme}
           defaultScheme={defaultScheme}
+          onEditorOpenChange={setIsEditorOpen}
         />
       )}
       {isStaff && (

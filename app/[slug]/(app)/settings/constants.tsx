@@ -77,6 +77,7 @@ export interface SettingsClientProps {
   initialStorefrontTheme: StorefrontTheme;
   initialHasCustomTheme?: boolean;
   initialScheme?: 'light' | 'dark';
+  businessLocked: boolean;
   role: string;
   permissions: Permission[];
   isOwner: boolean;

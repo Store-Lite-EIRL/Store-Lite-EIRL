@@ -5,6 +5,7 @@ import { isBusinessSlugTaken } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { businesses, businessSettings, businessSlugAliases } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements';
+import { FROZEN_FIELD_MESSAGE, hasLockingPayments } from '@/core/orders/paymentGuards';
 import {
   type StorefrontLayout,
   type StorefrontTheme,
@@ -44,6 +45,11 @@ export async function updateBusinessSlug(
   const entitlements = await getBusinessEntitlements(businessId);
   if (entitlements.plan === 'lite') {
     return { success: false, error: 'Funcion disponible solo para planes superiores.' };
+  }
+
+  // Payment lock guard — slug is an identity field
+  if (await hasLockingPayments({ businessId })) {
+    return { success: false, error: FROZEN_FIELD_MESSAGE };
   }
 
   if (newSlug.length < 10 || newSlug.length > 30) {

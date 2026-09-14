@@ -7,6 +7,7 @@
 // =====================================================
 
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
+import { DEFAULT_PLAN, resolvePlan } from '@/core/entitlements/plans';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
@@ -80,8 +81,6 @@ describe('getBusinessEntitlements', () => {
     mockSubscriptionFindFirst.mockResolvedValue(
       makeSubscription({ planType: 'business_pro' }), // legacy DB value
     );
-
-    const { getBusinessEntitlements } = await import('@/core/entitlements/getBusinessEntitlements');
 
     const result = await getBusinessEntitlements('biz_123');
 
@@ -175,26 +174,20 @@ describe('getBusinessEntitlements', () => {
 // ── resolvePlan (migration shim) ─────────────────────
 
 describe('resolvePlan', () => {
-  test('passes new catalog keys through unchanged', async () => {
-    const { resolvePlan } = await import('@/core/entitlements/plans');
-
+  test('passes new catalog keys through unchanged', () => {
     expect(resolvePlan('lite')).toBe('lite');
     expect(resolvePlan('lite_pago')).toBe('lite_pago');
     expect(resolvePlan('lite_plus')).toBe('lite_plus');
   });
 
-  test('maps legacy keys to their lite replacements', async () => {
-    const { resolvePlan } = await import('@/core/entitlements/plans');
-
+  test('maps legacy keys to their lite replacements', () => {
     expect(resolvePlan('basico')).toBe('lite');
     expect(resolvePlan('emprendedor')).toBe('lite_pago');
     expect(resolvePlan('business_pro')).toBe('lite_pago');
     expect(resolvePlan('enterprise_pro')).toBe('lite_plus');
   });
 
-  test('falls back to DEFAULT_PLAN for unknown keys', async () => {
-    const { DEFAULT_PLAN, resolvePlan } = await import('@/core/entitlements/plans');
-
+  test('falls back to DEFAULT_PLAN for unknown keys', () => {
     expect(resolvePlan('enterprise_ai')).toBe(DEFAULT_PLAN);
     expect(resolvePlan('future_mystery_plan')).toBe(DEFAULT_PLAN);
     expect(resolvePlan('')).toBe(DEFAULT_PLAN);

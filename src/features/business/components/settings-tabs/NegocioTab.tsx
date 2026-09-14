@@ -28,6 +28,7 @@ interface NegocioTabProps {
   isUpdatingLogo: boolean;
   isSaving: boolean;
   hasChanges: boolean;
+  locked: boolean;
   handleSave: () => void;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
@@ -40,6 +41,7 @@ export const NegocioTab: React.FC<NegocioTabProps> = ({
   isUpdatingLogo,
   isSaving,
   hasChanges,
+  locked,
   handleSave,
   handleFileChange,
   fileInputRef,
@@ -61,6 +63,7 @@ export const NegocioTab: React.FC<NegocioTabProps> = ({
             storeType={formData.storeType}
             logoPreview={logoPreview}
             isUpdatingLogo={isUpdatingLogo}
+            locked={locked}
             handleChange={handleSectionChange}
             handleFileClick={() => fileInputRef.current?.click()}
           />
@@ -71,6 +74,7 @@ export const NegocioTab: React.FC<NegocioTabProps> = ({
             address={formData.address}
             city={formData.city}
             country={formData.country}
+            locked={locked}
             handleChange={handleSectionChange}
           />
 
@@ -81,6 +85,7 @@ export const NegocioTab: React.FC<NegocioTabProps> = ({
             legalRepRole={formData.legalRepRole}
             legalRepPhone={formData.legalRepPhone}
             legalRepEmail={formData.legalRepEmail}
+            locked={locked}
             handleChange={handleSectionChange}
           />
 

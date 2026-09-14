@@ -93,7 +93,6 @@ export interface Chat {
   time: string;
   lastMessageAt: string; // ISO timestamp for sorting by recency
   unread: number;
-  online: boolean;
   avatarUrl: string;
   status?: string;
   email?: string;
@@ -235,7 +234,6 @@ export function ChatClient({
                   ? new Date(s.createdAt).toISOString()
                   : new Date().toISOString(),
               unread: 0,
-              online: true,
               avatarUrl: s.guestAvatarUrl || '',
               status: s.status ?? 'active',
               email: s.guestEmail || undefined,
@@ -330,7 +328,6 @@ export function ChatClient({
             time: `${padTwo(now.getHours())}:${padTwo(now.getMinutes())}`,
             lastMessageAt: now.toISOString(),
             unread: 0,
-            online: true,
             status: (newSession.status as string) ?? 'active',
             email: (newSession.guest_email as string) || undefined,
             isGoogleAuth: !!newSession.auth_user_id,
@@ -519,7 +516,6 @@ export function ChatClient({
                     ? new Date(s.createdAt).toISOString()
                     : new Date().toISOString(),
                 unread: 0,
-                online: true,
                 avatarUrl: s.guestAvatarUrl || '',
                 status: s.status ?? 'active',
                 email: s.guestEmail || undefined,

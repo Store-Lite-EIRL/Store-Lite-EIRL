@@ -9,16 +9,21 @@ interface BasicInfoSectionProps {
   description: string;
   brand: string;
   nameError?: string;
+  hasPayments?: boolean;
   onNameChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onBrandChange: (value: string) => void;
 }
+
+const LOCKED_NOTICE =
+  'Este campo está bloqueado porque el negocio/producto tiene pagos registrados.';
 
 export const BasicInfoSection = ({
   name,
   description,
   brand,
   nameError,
+  hasPayments = false,
   onNameChange,
   onDescriptionChange,
   onBrandChange,
@@ -35,10 +40,14 @@ export const BasicInfoSection = ({
             error={!!nameError}
             errorText={nameError}
             maxLength={MAX_NAME_LENGTH}
-            supportingText={!nameError ? 'Ej: Camiseta de Algodón Blanca' : undefined}
+            disabled={hasPayments}
+            supportingText={
+              !nameError && !hasPayments ? 'Ej: Camiseta de Algodón Blanca' : undefined
+            }
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onNameChange(e.target.value)}
             style={{ width: '100%' }}
           />
+          {hasPayments && <p className="form-locked-notice">{LOCKED_NOTICE}</p>}
         </div>
         <div>
           <TextField
