@@ -33,13 +33,10 @@ html {
   scroll-behavior: smooth;
 }
 
-body {
-  background: var(--landing-bg);
-  color: var(--landing-text);
-}
-
 .landing-page-root {
   min-height: 100vh;
+  background: var(--landing-bg);
+  color: var(--landing-text);
 }
 
 .landing-nav {
