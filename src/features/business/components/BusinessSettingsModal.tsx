@@ -52,6 +52,7 @@ export default function BusinessSettingsModal({
     isUpdatingLogo,
     isSaving,
     hasChanges,
+    locked,
     alert,
     handleSave,
     handleLogoUpload,
@@ -138,6 +139,7 @@ export default function BusinessSettingsModal({
             isUpdatingLogo={isUpdatingLogo}
             isSaving={isSaving}
             hasChanges={hasChanges}
+            locked={locked}
             handleSave={handleSave}
             handleFileChange={handleFileChange}
             fileInputRef={fileInputRef}

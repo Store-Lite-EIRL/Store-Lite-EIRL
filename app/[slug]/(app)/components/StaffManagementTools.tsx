@@ -29,6 +29,7 @@ interface StaffManagementToolsProps {
   detectedColorScheme: StorefrontColorScheme;
   previewScheme?: StorefrontColorScheme;
   defaultScheme?: 'light' | 'dark';
+  onEditorOpenChange?: (open: boolean) => void;
 }
 
 export function StaffManagementTools({
@@ -49,6 +50,7 @@ export function StaffManagementTools({
   detectedColorScheme,
   previewScheme,
   defaultScheme,
+  onEditorOpenChange,
 }: StaffManagementToolsProps) {
   const initialProduct = isEditOpen && previewProduct ? mapToStorageProduct(previewProduct) : null;
   return (
@@ -75,6 +77,7 @@ export function StaffManagementTools({
         detectedColorScheme={detectedColorScheme}
         currentScheme={previewScheme}
         defaultScheme={defaultScheme}
+        onOpenChange={onEditorOpenChange}
       />
     </>
   );

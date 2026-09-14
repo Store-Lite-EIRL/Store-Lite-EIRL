@@ -1,6 +1,7 @@
 'use client';
 
 import type { Business } from '@/types/business';
+import { getBusinessLockState } from '@app/actions/business';
 import { useEffect, useState } from 'react';
 import { useBusinessActions } from './useBusinessActions';
 import { useLogoManager } from './useLogoManager';
@@ -25,6 +26,7 @@ const getInitialFormData = (business: Business | null) => ({
 export function useBusinessSettings(business: Business | null, open: boolean) {
   const [formData, setFormData] = useState(getInitialFormData(business));
   const [isSaving, setIsSaving] = useState(false);
+  const [locked, setLocked] = useState(false);
 
   const { alert, setAlert, handleSave, closeAlert } = useBusinessActions(isSaving, setIsSaving);
   const { logoPreview, setLogoPreview, isUpdatingLogo, handleLogoUpload } = useLogoManager(
@@ -33,6 +35,18 @@ export function useBusinessSettings(business: Business | null, open: boolean) {
     business?.logoUrl || null,
     setAlert,
   );
+
+  // Fetch payment lock state when the modal opens (UX mirror — server guards are authoritative)
+  useEffect(() => {
+    if (!open || !business?.id) return;
+    let cancelled = false;
+    getBusinessLockState(business.id).then((res) => {
+      if (!cancelled) setLocked(res.locked);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, business?.id]);
 
   // Sync state when business prop changes
   useEffect(() => {
@@ -67,6 +81,7 @@ export function useBusinessSettings(business: Business | null, open: boolean) {
     isUpdatingLogo,
     isSaving,
     hasChanges,
+    locked,
     alert,
     setAlert,
     handleSave: onSave,

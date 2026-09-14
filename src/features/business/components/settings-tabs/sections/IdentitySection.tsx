@@ -12,9 +12,13 @@ interface IdentitySectionProps {
   storeType: string;
   logoPreview: string | null;
   isUpdatingLogo: boolean;
+  locked: boolean;
   handleChange: (field: string, value: string) => void;
   handleFileClick: () => void;
 }
+
+const LOCKED_NOTICE =
+  'Este campo está bloqueado porque el negocio/producto tiene pagos registrados.';
 
 export const IdentitySection: React.FC<IdentitySectionProps> = ({
   name,
@@ -22,6 +26,7 @@ export const IdentitySection: React.FC<IdentitySectionProps> = ({
   storeType,
   logoPreview,
   isUpdatingLogo,
+  locked,
   handleChange,
   handleFileClick,
 }) => {
@@ -74,11 +79,14 @@ export const IdentitySection: React.FC<IdentitySectionProps> = ({
           <md-outlined-text-field
             suppressHydrationWarning
             value={name}
+            disabled={locked}
+            className={locked ? styles.disabledField : undefined}
             onInput={(e: React.FormEvent<HTMLInputElement>) =>
               handleChange('name', (e.target as HTMLInputElement).value)
             }
             placeholder="Ej. Mi Tienda"
           />
+          {locked && <p className={styles.fieldNotice}>{LOCKED_NOTICE}</p>}
         </div>
 
         <div className={styles.formField}>

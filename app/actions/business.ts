@@ -3,6 +3,7 @@
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businesses } from '@/core/database/schema';
+import { FROZEN_FIELD_MESSAGE, hasLockingPayments } from '@/core/orders/paymentGuards';
 import type { ActionState as BaseActionState } from '@/types/actions';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
@@ -191,17 +192,31 @@ export async function updateBusinessData(
   } = await supabaseUser.auth.getUser();
   if (!user) return { error: 'No autorizado. Por favor, inicia sesión.' };
 
-  // 2. Verify ownership
+  // 2. Verify ownership — include identity fields for guard diff
   const business = await db.query.businesses.findFirst({
     where: eq(businesses.id, businessId),
-    columns: { ownerId: true },
+    columns: {
+      ownerId: true,
+      name: true,
+      taxId: true,
+      legalRepName: true,
+      legalRepRole: true,
+      legalRepPhone: true,
+      legalRepEmail: true,
+      address: true,
+      departamento: true,
+      provincia: true,
+      distrito: true,
+      city: true,
+      country: true,
+    },
   });
   if (!business || business.ownerId !== user.id) {
     return { error: 'No tienes permiso para editar este negocio.' };
   }
 
   try {
-    // 3. Sanitize whatsappNumber if present
+    // 3. Sanitize whatsappNumber if present (runs before zod)
     const sanitizedData = { ...data };
     if (sanitizedData.whatsappNumber !== undefined) {
       const raw = sanitizedData.whatsappNumber;
@@ -212,7 +227,43 @@ export async function updateBusinessData(
       sanitizedData.whatsappNumber = cleaned ? '+' + cleaned : '';
     }
 
-    // 4. Update DB record
+    // 4. Zod validation
+    const { updateBusinessDataSchema } = await import('@/features/business/schemas');
+    const parsed = updateBusinessDataSchema.safeParse(sanitizedData);
+    if (!parsed.success) {
+      const firstError = parsed.error.issues[0]?.message;
+      return { error: firstError || 'Datos inválidos.' };
+    }
+
+    // 5. Payment lock guard
+    if (await hasLockingPayments({ businessId })) {
+      const IDENTITY_KEYS = [
+        'name',
+        'taxId',
+        'legalRepName',
+        'legalRepRole',
+        'legalRepPhone',
+        'legalRepEmail',
+        'address',
+        'departamento',
+        'provincia',
+        'distrito',
+        'city',
+        'country',
+      ] as const;
+
+      for (const key of IDENTITY_KEYS) {
+        const incoming = sanitizedData[key];
+        if (incoming !== undefined) {
+          const current = business[key as keyof typeof business];
+          if (String(incoming) !== String(current ?? '')) {
+            return { error: FROZEN_FIELD_MESSAGE };
+          }
+        }
+      }
+    }
+
+    // 6. Update DB record
     await db
       .update(businesses)
       .set({
@@ -228,6 +279,22 @@ export async function updateBusinessData(
   } catch (err) {
     console.error('Server Action Error:', err);
     return { error: 'Error inesperado al actualizar la información del negocio.' };
+  }
+}
+
+/**
+ * Returns whether a business has locking payment history.
+ * Used by the UI to mirror frozen fields (UX only — server guards are authoritative).
+ */
+export async function getBusinessLockState(
+  businessId: string,
+): Promise<{ locked: boolean; error?: string }> {
+  try {
+    const locked = await hasLockingPayments({ businessId });
+    return { locked };
+  } catch (error) {
+    console.error('getBusinessLockState:', error);
+    return { locked: false, error: 'Error al verificar el estado del negocio.' };
   }
 }
 

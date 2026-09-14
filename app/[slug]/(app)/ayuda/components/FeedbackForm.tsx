@@ -70,7 +70,14 @@ export function FeedbackForm({ businessId, priority, onSuccess }: FeedbackFormPr
   const [isPending, startTransition] = useTransition();
 
   const handleSubmit = () => {
-    if (!requestType || !category || !subject.trim() || !message.trim()) return;
+    if (
+      !requestType ||
+      !category ||
+      !subject.trim() ||
+      !message.trim() ||
+      (!contactEmail.trim() && !contactPhone.trim())
+    )
+      return;
 
     startTransition(async () => {
       try {
@@ -184,6 +191,28 @@ export function FeedbackForm({ businessId, priority, onSuccess }: FeedbackFormPr
         </div>
       </div>
 
+      {/* Contact Info (Moved Up) */}
+      <div className={styles.categorySelect}>
+        <span className={styles.categoryLabel}>Datos de contacto</span>
+        <p className={styles.categoryDescription}>
+          Necesitamos al menos un dato para poder responderte.
+        </p>
+        <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
+          <TextField
+            label="Email"
+            value={contactEmail}
+            placeholder="tu@email.com"
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) => setContactEmail(e.target.value)}
+          />
+          <TextField
+            label="Teléfono"
+            value={contactPhone}
+            placeholder="+51 999 999 999"
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) => setContactPhone(e.target.value)}
+          />
+        </div>
+      </div>
+
       {/* Subject */}
       <TextField
         label="Asunto"
@@ -204,34 +233,19 @@ export function FeedbackForm({ businessId, priority, onSuccess }: FeedbackFormPr
         supportingText={`${message.length}/5,000 caracteres`}
       />
 
-      {/* Contact Info */}
-      <div className={styles.categorySelect}>
-        <span className={styles.categoryLabel}>Datos de contacto (opcional)</span>
-        <p className={styles.categoryDescription}>
-          Para que podamos contactarte directamente por email o teléfono.
-        </p>
-        <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
-          <TextField
-            label="Email"
-            value={contactEmail}
-            placeholder="tu@email.com"
-            onInput={(e: React.ChangeEvent<HTMLInputElement>) => setContactEmail(e.target.value)}
-          />
-          <TextField
-            label="Teléfono"
-            value={contactPhone}
-            placeholder="+51 999 999 999"
-            onInput={(e: React.ChangeEvent<HTMLInputElement>) => setContactPhone(e.target.value)}
-          />
-        </div>
-      </div>
-
       {/* Actions */}
       <div className={styles.formActions}>
         <Button
           variant="filled"
           onClick={handleSubmit}
-          disabled={isPending || !requestType || !category || !subject.trim() || !message.trim()}
+          disabled={
+            isPending ||
+            !requestType ||
+            !category ||
+            !subject.trim() ||
+            !message.trim() ||
+            (!contactEmail.trim() && !contactPhone.trim())
+          }
         >
           <Icon slot="icon" size={21}>
             {isPending ? 'sync' : 'send'}

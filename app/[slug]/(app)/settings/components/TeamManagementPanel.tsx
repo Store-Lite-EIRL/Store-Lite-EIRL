@@ -97,16 +97,9 @@ export function TeamManagementPanel({
     });
   }, [business.id, showSuccess, showError, startTransition, setInvitationCode]);
 
-  // Rotación automática del código (cada 60 segundos)
-  useEffect(() => {
-    if (!invitationCode || !isOwner || !canAddMembers) return;
-
-    const interval = setInterval(() => {
-      handleGenerateCode();
-    }, 60000); // 1 minuto
-
-    return () => clearInterval(interval);
-  }, [invitationCode, isOwner, handleGenerateCode, canAddMembers]);
+  // La rotación automática fue removida porque causaba que los códigos expiraran
+  // antes de que los invitados pudieran usarlos, y llenaba la base de datos de códigos.
+  // Ahora cada código dura 24 horas y tiene 1 solo uso.
 
   const handleRevokeCode = () => {
     if (!invitationCode) return;
@@ -277,29 +270,53 @@ export function TeamManagementPanel({
           {/* Members List */}
           <Card variant="elevated" className={styles.teamMembersCard}>
             <div className={styles.teamMembersHeader}>
-              <span className={styles.teamMembersTitle}>Miembros</span>
+              <span className={styles.teamMembersTitle}>Invitados del equipo</span>
               <span className={styles.teamMembersCount}>
-                {currentMemberCount}/{maxMembers === -1 ? '∞' : maxMembers}
+                {Math.max(0, currentMemberCount - 1)} /{' '}
+                {maxMembers === -1 ? '∞' : Math.max(0, maxMembers - 1)}
               </span>
             </div>
             {members.map((member, index) => (
               <React.Fragment key={member.userId}>
                 {index > 0 && <div className={styles.teamMemberDivider} />}
-                <div className={styles.teamMemberItem}>
+                <div
+                  className={styles.teamMemberItem}
+                  style={
+                    member.role === 'owner'
+                      ? {
+                          backgroundColor: 'var(--md-sys-color-surface-container-highest)',
+                          borderRadius: '12px',
+                          padding: '12px 16px',
+                          borderLeft: '4px solid var(--md-sys-color-primary)',
+                        }
+                      : undefined
+                  }
+                >
                   <div
                     className={`${styles.teamMemberAvatar} ${member.role === 'owner' ? styles.teamMemberAvatarOwner : ''}`}
                   >
                     {(member.fullName || '?').charAt(0).toUpperCase()}
                   </div>
                   <div className={styles.teamMemberInfo}>
-                    <span className={styles.teamMemberName}>{member.fullName || 'Sin nombre'}</span>
+                    <span
+                      className={styles.teamMemberName}
+                      style={member.role === 'owner' ? { fontWeight: 700 } : undefined}
+                    >
+                      {member.fullName || 'Sin nombre'} {member.role === 'owner' && '(Tú)'}
+                    </span>
                     <span className={styles.teamMemberEmail}>{member.email || 'Sin email'}</span>
                   </div>
                   <div className={styles.teamMemberMeta}>
                     {member.role === 'owner' ? (
-                      <span className={`${styles.teamRoleBadge} ${styles.teamRoleBadgeOwner}`}>
+                      <span
+                        className={`${styles.teamRoleBadge} ${styles.teamRoleBadgeOwner}`}
+                        style={{
+                          backgroundColor: 'var(--md-sys-color-primary)',
+                          color: 'var(--md-sys-color-on-primary)',
+                        }}
+                      >
                         <Icon size={14}>star</Icon>
-                        Owner
+                        DUEÑO
                       </span>
                     ) : (
                       <>
@@ -356,34 +373,75 @@ export function TeamManagementPanel({
                 <div className={styles.teamInviteContent}>
                   <p className={styles.teamMemberEmail} style={{ padding: 0, margin: 0 }}>
                     {invitationCode
-                      ? 'Compartí este código con quienes quieras invitar. Por seguridad, rota automáticamente.'
+                      ? 'Compartí este código con quien quieras invitar. Por seguridad, caduca automáticamente en 24 horas.'
                       : 'Generá un código para invitar a nuevos miembros al equipo.'}
                   </p>
 
                   {invitationCode ? (
-                    <div className={styles.teamInviteCodeDisplay}>
-                      <div className={styles.teamInviteRotation}>
-                        <Icon size={16} className={styles.rotatingIcon}>
-                          sync
-                        </Icon>
-                        Protección activa — rotación automática
+                    <div
+                      className={styles.teamInviteCodeDisplay}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '16px',
+                        backgroundColor: 'var(--md-sys-color-surface-container)',
+                        borderRadius: '12px',
+                        marginTop: '16px',
+                        border: '1px dashed var(--md-sys-color-outline-variant)',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'flex-start',
+                          gap: '4px',
+                        }}
+                      >
+                        <span
+                          className={styles.teamInviteCode}
+                          style={{
+                            margin: 0,
+                            padding: 0,
+                            border: 'none',
+                            background: 'transparent',
+                            fontSize: '24px',
+                            letterSpacing: '1px',
+                          }}
+                        >
+                          {invitationCode}
+                        </span>
+                        <div
+                          className={styles.teamInviteRotation}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            color: 'var(--md-sys-color-on-surface-variant)',
+                            fontSize: '13px',
+                            padding: 0,
+                          }}
+                        >
+                          <Icon size={14}>schedule</Icon> Válido por 24hs — Un solo uso
+                        </div>
                       </div>
-                      <span className={styles.teamInviteCode} onClick={handleCopyCode}>
-                        {invitationCode}
-                      </span>
-                      <div className={styles.teamInviteActions}>
+                      <div
+                        className={styles.teamInviteActions}
+                        style={{ display: 'flex', gap: '8px', margin: 0 }}
+                      >
                         <Button variant="tonal" onClick={handleCopyCode}>
                           <Icon slot="icon" size={20}>
                             content_copy
-                          </Icon>
-                          Copiar código
+                          </Icon>{' '}
+                          Copiar
                         </Button>
-                        <Button variant="text" onClick={handleRevokeCode} disabled={isPending}>
-                          <Icon slot="icon" size={20}>
+                        <IconButton onClick={handleRevokeCode} disabled={isPending} title="Revocar">
+                          <Icon size={20} style={{ color: 'var(--md-sys-color-error)' }}>
                             block
                           </Icon>
-                          Revocar
-                        </Button>
+                        </IconButton>
                       </div>
                     </div>
                   ) : (

@@ -109,3 +109,27 @@
   color: var(--md-sys-color-on-surface-variant);
   font-size: 0.875rem;
 }
+
+.lockBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-variant);
+  color: var(--md-sys-color-on-surface);
+}
+
+.lockBannerTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.lockBannerText {
+  font-size: 0.875rem;
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+}

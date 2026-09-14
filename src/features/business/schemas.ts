@@ -41,3 +41,42 @@ export const createBusinessSchema = z.object({
 });
 
 export type CreateBusinessInput = z.infer<typeof createBusinessSchema>;
+
+/**
+ * Schema for the canonical `updateBusinessData` server action.
+ * All fields optional — the modal always submits all fields, so
+ * the action diffs incoming values against DB current.
+ * whatsappNumber is excluded: the existing 9-digit normalize in
+ * the action runs before zod.
+ */
+export const updateBusinessDataSchema = z.object({
+  name: z
+    .string()
+    .min(3, 'El nombre del negocio debe tener al menos 3 caracteres')
+    .max(100, 'El nombre del negocio es demasiado largo')
+    .optional(),
+  taxId: z
+    .string()
+    .min(11, 'El RUC/NIT debe tener al menos 11 caracteres')
+    .max(20, 'El RUC/NIT es demasiado largo')
+    .regex(/^[a-zA-Z0-9]+$/, 'El RUC/NIT solo debe contener letras y números')
+    .optional(),
+  description: z.string().max(500, 'La descripción es demasiado larga').optional(),
+  address: z.string().max(255, 'La dirección es demasiado larga').optional(),
+  city: z.string().optional(),
+  departamento: z.string().optional(),
+  provincia: z.string().optional(),
+  distrito: z.string().optional(),
+  storeType: z.string().optional(),
+  country: z.string().optional(),
+  email: z.string().email('Email institucional no válido').optional(),
+  legalRepName: z.string().min(3, 'El nombre del representante es obligatorio').optional(),
+  legalRepRole: z.string().min(2, 'El cargo del representante es obligatorio').optional(),
+  legalRepPhone: z
+    .string()
+    .regex(/^\+?[1-9]\d{8,14}$/, 'El celular del representante no es válido')
+    .optional(),
+  legalRepEmail: z.string().email('Email del representante no válido').optional(),
+});
+
+export type UpdateBusinessDataInput = z.infer<typeof updateBusinessDataSchema>;

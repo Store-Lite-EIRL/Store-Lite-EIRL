@@ -72,6 +72,7 @@
 }
 
 .discountSwitch {
+  /* ── Selected state (ON) ── */
   --md-switch-selected-track-color: color-mix(
     in srgb,
     var(--md-sys-color-primary) 64%,
@@ -96,6 +97,35 @@
   --md-switch-selected-hover-handle-color: var(--md-sys-color-on-primary);
   --md-switch-selected-focus-handle-color: var(--md-sys-color-on-primary);
   --md-switch-selected-pressed-handle-color: var(--md-sys-color-on-primary);
+
+  /* ── Unselected state (OFF) — explicit overrides prevent invisible
+     switch when the user customizes the storefront theme colors ── */
+  --md-switch-unselected-track-color: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface) 12%,
+    var(--md-sys-color-surface) 88%
+  );
+  --md-switch-unselected-hover-track-color: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface) 16%,
+    var(--md-sys-color-surface) 84%
+  );
+  --md-switch-unselected-focus-track-color: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface) 16%,
+    var(--md-sys-color-surface) 84%
+  );
+  --md-switch-unselected-pressed-track-color: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface) 20%,
+    var(--md-sys-color-surface) 80%
+  );
+  /* --md-sys-color-on-surface-variant is guaranteed by the storefront
+     theme builder (outline is NOT) and adapts per scheme */
+  --md-switch-unselected-handle-color: var(--md-sys-color-on-surface-variant);
+  --md-switch-unselected-hover-handle-color: var(--md-sys-color-on-surface-variant);
+  --md-switch-unselected-focus-handle-color: var(--md-sys-color-on-surface-variant);
+  --md-switch-unselected-pressed-handle-color: var(--md-sys-color-on-surface-variant);
 }
 
 .switchLabelText {

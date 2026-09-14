@@ -10,10 +10,14 @@ interface StockPriceSectionProps {
   currencySymbol: string;
   stockError?: string;
   priceError?: string;
+  hasPayments?: boolean;
   onStockChange: (value: string) => void;
   onPriceChange: (value: string) => void;
   onSecondPriceChange: (value: string) => void;
 }
+
+const LOCKED_NOTICE =
+  'Este campo está bloqueado porque el negocio/producto tiene pagos registrados.';
 
 export const StockPriceSection = ({
   stock,
@@ -22,6 +26,7 @@ export const StockPriceSection = ({
   currencySymbol,
   stockError,
   priceError,
+  hasPayments = false,
   onStockChange,
   onPriceChange,
   onSecondPriceChange,
@@ -51,24 +56,31 @@ export const StockPriceSection = ({
         value={price}
         error={!!priceError}
         errorText={priceError}
-        supportingText={!priceError ? 'Por unidad' : undefined}
+        disabled={hasPayments}
+        supportingText={!priceError && !hasPayments ? 'Por unidad' : undefined}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => onPriceChange(e.target.value)}
         style={{ flex: 1 }}
       />
     </div>
     <div className="form-fields" style={{ marginTop: '16px' }}>
-      <TextField
-        label="Precio de Oferta (Opcional)"
-        variant="outlined"
-        prefixText={currencySymbol}
-        type="number"
-        min={0}
-        step="0.01"
-        value={secondPrice}
-        supportingText="Si se llena, se mostrará como precio rebajado"
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onSecondPriceChange(e.target.value)}
-        style={{ width: '100%' }}
-      />
+      <div style={{ width: '100%' }}>
+        <TextField
+          label="Precio de Oferta (Opcional)"
+          variant="outlined"
+          prefixText={currencySymbol}
+          type="number"
+          min={0}
+          step="0.01"
+          value={secondPrice}
+          disabled={hasPayments}
+          supportingText={
+            !hasPayments ? 'Si se llena, se mostrará como precio rebajado' : undefined
+          }
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onSecondPriceChange(e.target.value)}
+          style={{ width: '100%' }}
+        />
+        {hasPayments && <p className="form-locked-notice">{LOCKED_NOTICE}</p>}
+      </div>
     </div>
   </div>
 );

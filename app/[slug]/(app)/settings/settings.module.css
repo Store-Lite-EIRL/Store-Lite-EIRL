@@ -545,6 +545,13 @@
   margin: 0;
 }
 
+.slugLockedNotice {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--md-sys-color-error, #b3261e);
+}
+
 .slugEditContent {
   padding: 0 16px 16px 16px;
 }
@@ -1393,13 +1400,13 @@
 
 /* ── Character Counter ─────────────────────────────────────────────────── */
 .charCounter {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: -12px;
+  margin-top: 4px;
   padding-bottom: 8px;
 }
 
 .charCountText {
+  display: block;
+  text-align: right;
   font-size: 11px;
   color: var(--md-sys-color-on-surface-variant);
   font-weight: 500;

@@ -75,16 +75,19 @@ import { TeamManagementPanel } from './TeamManagementPanel';
 function BusinessSection({
   business,
   entitlements,
+  businessLocked,
   isOwner,
   permissions,
 }: {
   business: SettingsBusiness;
   entitlements: Entitlements;
+  businessLocked: boolean;
   isOwner: boolean;
   permissions: Permission[];
 }) {
   const router = useRouter();
-  const canEditSlug = entitlements.plan !== 'lite';
+  const canEditSlug = entitlements.plan !== 'lite' && !businessLocked;
+  const isLitePlan = entitlements.plan === 'lite';
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
   const SLUG_MIN = 10;
@@ -245,7 +248,7 @@ function BusinessSection({
         </div>
       </div>
 
-      {!canEditSlug && (
+      {isLitePlan && (
         <Card variant="outlined" className={styles.upgradeBanner}>
           <div className={styles.upgradeBannerContent}>
             <Icon size={24} style={{ color: 'var(--md-sys-color-primary)' } as React.CSSProperties}>
@@ -380,6 +383,11 @@ function BusinessSection({
             <p className={styles.slugCardSupporting}>
               Este es el enlace público que verán tus clientes.
             </p>
+            {businessLocked && (
+              <p className={styles.slugLockedNotice}>
+                Este campo está bloqueado porque el negocio/producto tiene pagos registrados.
+              </p>
+            )}
           </div>
           {(isOwner || permissions.includes('business.edit')) && canEditSlug && !isEditingSlug && (
             <Button variant="tonal" onClick={() => setIsEditingSlug(true)}>
@@ -1503,6 +1511,7 @@ export function SettingsClient({
   initialStorefrontTheme,
   initialHasCustomTheme = false,
   initialScheme,
+  businessLocked,
   role,
   permissions,
   isOwner,
@@ -1550,10 +1559,30 @@ export function SettingsClient({
     );
   }, [isOwner, permissions, entitlements]);
 
-  const accessibleItems = navItemsWithAccess.filter((i) => i.hasAccess);
+  const accessibleItems = React.useMemo(
+    () => navItemsWithAccess.filter((i) => i.hasAccess),
+    [navItemsWithAccess],
+  );
   const [active, setActive] = useState<Section>(
     accessibleItems.length > 0 ? accessibleItems[0].id : 'business',
   );
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`settings_tab_${business.id}`);
+      if (saved && accessibleItems.some((i) => i.id === saved)) {
+        setActive(saved as Section);
+      }
+    }
+  }, [business.id, accessibleItems]);
+
+  useEffect(() => {
+    if (isMounted && typeof window !== 'undefined') {
+      localStorage.setItem(`settings_tab_${business.id}`, active);
+    }
+  }, [active, business.id, isMounted]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
@@ -1608,6 +1637,7 @@ export function SettingsClient({
                   <BusinessSection
                     business={business}
                     entitlements={entitlements}
+                    businessLocked={businessLocked}
                     isOwner={isOwner}
                     permissions={permissions}
                   />

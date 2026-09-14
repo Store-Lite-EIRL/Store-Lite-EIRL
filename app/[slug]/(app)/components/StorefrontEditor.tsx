@@ -28,6 +28,9 @@ interface StorefrontEditorProps {
   currentScheme?: StorefrontColorScheme;
   /** Business default scheme from DB (themeMode). Used as initial scheme tab. */
   defaultScheme?: 'light' | 'dark';
+  /** Called whenever the editor opens or closes. Lets the page know the
+   *  customize editor is active so reverse theme sync can be skipped. */
+  onOpenChange?: (open: boolean) => void;
 }
 
 // NOTE: Built-in overlays (dots, lines, etc.) and custom CSS textarea were removed in V2.
@@ -69,9 +72,16 @@ export function StorefrontEditor({
   detectedColorScheme,
   currentScheme,
   defaultScheme,
+  onOpenChange,
 }: StorefrontEditorProps) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Notify the page when the editor opens/closes so reverse theme sync
+  // can be skipped while the storefront is being customized.
+  useEffect(() => {
+    onOpenChange?.(open);
+  }, [open, onOpenChange]);
   const [feedback, setFeedback] = useState<{ message: string; error?: boolean } | null>(null);
   const [isPatternBrowserOpen, setIsPatternBrowserOpen] = useState(false);
   const [, setOverlayPending] = useState(false);

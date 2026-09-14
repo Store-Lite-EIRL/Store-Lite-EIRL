@@ -532,7 +532,7 @@ export function ChatDialog({
             {authLoading || isStarting || isAwaitingAuth
               ? 'Cargando...'
               : step === 'chat'
-                ? 'En línea'
+                ? 'Chat abierto'
                 : 'Identifícate para chatear'}
           </p>
         </div>

@@ -94,8 +94,8 @@ export default function LandingNav() {
           <Link href="/auth" className="login-link">
             Iniciar sesión
           </Link>
-          <Link href="/auth" className="btn-primary-glow nav-cta">
-            Crear mi tienda <span className="arrow">→</span>
+          <Link href="/auth" className="btn-primary-glow">
+            Crear mi tienda
           </Link>
         </div>
 
