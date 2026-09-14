@@ -1,9 +1,9 @@
 // =====================================================
-// BACKFILL: Insert basico subscriptions for existing businesses
+// BACKFILL: Insert lite subscriptions for existing businesses
 // =====================================================
 // Description: Existing businesses created before the auto-subscription
 // feature have no row in business_subscriptions. This script finds
-// all such businesses and inserts a basico (free tier) subscription
+// all such businesses and inserts a lite (free tier) subscription
 // for each one.
 // =====================================================
 // Ejecutar: npx tsx scripts/backfill-basico-subscriptions.ts
@@ -32,17 +32,17 @@ async function main() {
       process.exit(0);
     }
 
-    // Insert basico subscription for each business without one
+    // Insert lite subscription for each business without one
     await db.execute(sql`
       INSERT INTO business_subscriptions (business_id, plan_type, plan_status, plan_start_date, plan_end_date, cancel_at_period_end)
-      SELECT b.id, 'basico', 'active', NOW(), NULL, FALSE
+      SELECT b.id, 'lite', 'active', NOW(), NULL, FALSE
       FROM businesses b
       LEFT JOIN business_subscriptions bs ON b.id = bs.business_id
       WHERE bs.business_id IS NULL
       ON CONFLICT (business_id) DO NOTHING
     `);
 
-    console.log(`✅ Inserted ${count} basico subscriptions`);
+    console.log(`✅ Inserted ${count} lite subscriptions`);
     console.log('🎉 Backfill complete.');
   } catch (e) {
     console.error('❌ Error:', e instanceof Error ? e.message : e);

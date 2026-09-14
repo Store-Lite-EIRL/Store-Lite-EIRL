@@ -188,7 +188,7 @@ export const businessSubscriptions = pgTable(
     businessId: uuid('business_id')
       .notNull()
       .references(() => businesses.id, { onDelete: 'cascade' }),
-    planType: subscriptionPlanEnum('plan_type').notNull().default('basico'),
+    planType: subscriptionPlanEnum('plan_type').notNull().default('lite'),
     planStatus: subscriptionStatusEnum('plan_status').notNull().default('inactive'),
     planStartDate: timestamp('plan_start_date', { withTimezone: true }),
     planEndDate: timestamp('plan_end_date', { withTimezone: true }),

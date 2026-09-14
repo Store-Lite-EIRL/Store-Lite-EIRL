@@ -1,11 +1,6 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export interface Database {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: '14.5';
-  };
   public: {
     Tables: {
       activity_log: {
@@ -887,8 +882,8 @@ export interface Database {
           content: string;
           created_at: string | null;
           id: string;
-          is_from_store: boolean | null;
-          is_read: boolean | null;
+          is_from_store: boolean;
+          is_read: boolean;
           payment_id: string | null;
           session_id: string;
         };
@@ -896,8 +891,8 @@ export interface Database {
           content: string;
           created_at?: string | null;
           id?: string;
-          is_from_store?: boolean | null;
-          is_read?: boolean | null;
+          is_from_store?: boolean;
+          is_read?: boolean;
           payment_id?: string | null;
           session_id: string;
         };
@@ -905,8 +900,8 @@ export interface Database {
           content?: string;
           created_at?: string | null;
           id?: string;
-          is_from_store?: boolean | null;
-          is_read?: boolean | null;
+          is_from_store?: boolean;
+          is_read?: boolean;
           payment_id?: string | null;
           session_id?: string;
         };
@@ -2020,7 +2015,15 @@ export interface Database {
         | 'en_reparto';
       plan_payment_status: 'pending' | 'paid' | 'failed' | 'refunded' | 'disputed';
       shipping_type: 'agencia' | 'domicilio' | 'recojo';
-      subscription_plan: 'basico' | 'emprendedor' | 'business_pro' | 'enterprise_ai';
+      subscription_plan:
+        | 'basico'
+        | 'emprendedor'
+        | 'business_pro'
+        | 'enterprise_ai'
+        | 'enterprise_pro'
+        | 'lite'
+        | 'lite_pago'
+        | 'lite_plus';
       subscription_status: 'active' | 'inactive' | 'past_due' | 'canceled' | 'expired' | 'trialing';
       theme_mode: 'light' | 'dark';
     };
@@ -2230,7 +2233,16 @@ export const Constants = {
       ],
       plan_payment_status: ['pending', 'paid', 'failed', 'refunded', 'disputed'],
       shipping_type: ['agencia', 'domicilio', 'recojo'],
-      subscription_plan: ['basico', 'emprendedor', 'business_pro', 'enterprise_ai'],
+      subscription_plan: [
+        'basico',
+        'emprendedor',
+        'business_pro',
+        'enterprise_ai',
+        'enterprise_pro',
+        'lite',
+        'lite_pago',
+        'lite_plus',
+      ],
       subscription_status: ['active', 'inactive', 'past_due', 'canceled', 'expired', 'trialing'],
       theme_mode: ['light', 'dark'],
     },

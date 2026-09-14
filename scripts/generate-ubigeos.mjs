@@ -28,7 +28,7 @@
  */
 
 import { writeFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -193,9 +193,7 @@ function validate(departments) {
   const allDistNames = [];
 
   if (departments.length !== EXPECTED.departments) {
-    errors.push(
-      `Department count: expected ${EXPECTED.departments}, got ${departments.length}`,
-    );
+    errors.push(`Department count: expected ${EXPECTED.departments}, got ${departments.length}`);
   }
 
   let totalProvinces = 0;
@@ -221,9 +219,7 @@ function validate(departments) {
     for (const prov of dept.provinces) {
       // Province id format
       if (!/^\d{4}$/.test(prov.id)) {
-        errors.push(
-          `Province ${prov.name} (dept ${dept.id}): id "${prov.id}" is not 4 digits`,
-        );
+        errors.push(`Province ${prov.name} (dept ${dept.id}): id "${prov.id}" is not 4 digits`);
       }
       if (allProvIds.includes(prov.id)) {
         errors.push(`Duplicate province id: ${prov.id} (${prov.name})`);
@@ -237,9 +233,7 @@ function validate(departments) {
 
       // Every province must have at least 1 district
       if (prov.districts.length === 0) {
-        errors.push(
-          `Province ${prov.id} (${prov.name}): has 0 districts`,
-        );
+        errors.push(`Province ${prov.id} (${prov.name}): has 0 districts`);
       }
 
       totalDistricts += prov.districts.length;
@@ -247,9 +241,7 @@ function validate(departments) {
       for (const dist of prov.districts) {
         // District id format
         if (!/^\d{6}$/.test(dist.id)) {
-          errors.push(
-            `District ${dist.name} (prov ${prov.id}): id "${dist.id}" is not 6 digits`,
-          );
+          errors.push(`District ${dist.name} (prov ${prov.id}): id "${dist.id}" is not 6 digits`);
         }
         if (allDistIds.includes(dist.id)) {
           errors.push(`Duplicate district id: ${dist.id} (${dist.name})`);
@@ -265,14 +257,10 @@ function validate(departments) {
   }
 
   if (totalProvinces !== EXPECTED.provinces) {
-    errors.push(
-      `Province count: expected ${EXPECTED.provinces}, got ${totalProvinces}`,
-    );
+    errors.push(`Province count: expected ${EXPECTED.provinces}, got ${totalProvinces}`);
   }
   if (totalDistricts !== EXPECTED.districts) {
-    errors.push(
-      `District count: expected ${EXPECTED.districts}, got ${totalDistricts}`,
-    );
+    errors.push(`District count: expected ${EXPECTED.districts}, got ${totalDistricts}`);
   }
 
   return {
@@ -292,10 +280,7 @@ async function main() {
   console.log('=== Peru Ubigeo Generator ===\n');
 
   // Fetch raw data
-  const [ineiRaw, reniecRaw] = await Promise.all([
-    fetchJSON(INEI_URL),
-    fetchJSON(RENIEC_URL),
-  ]);
+  const [ineiRaw, reniecRaw] = await Promise.all([fetchJSON(INEI_URL), fetchJSON(RENIEC_URL)]);
 
   console.log(`INEI entries: ${ineiRaw.length}`);
   console.log(`RENIEC entries: ${reniecRaw.length}\n`);
@@ -304,9 +289,7 @@ async function main() {
   const departments = transform(ineiRaw);
 
   // Cross-validate: ensure all RENIEC districts exist in INEI
-  const reniecDistricts = reniecRaw.filter(
-    (e) => e.provincia !== '00' && e.distrito !== '00',
-  );
+  const reniecDistricts = reniecRaw.filter((e) => e.provincia !== '00' && e.distrito !== '00');
   const ineiDistIds = new Set();
   for (const dept of departments) {
     for (const prov of dept.provinces) {
@@ -343,15 +326,9 @@ async function main() {
   }
 
   console.log('Validation PASSED');
-  console.log(
-    `  Departments: ${counts.departments} (expected ${EXPECTED.departments})`,
-  );
-  console.log(
-    `  Provinces:   ${counts.provinces} (expected ${EXPECTED.provinces})`,
-  );
-  console.log(
-    `  Districts:   ${counts.districts} (expected ${EXPECTED.districts})`,
-  );
+  console.log(`  Departments: ${counts.departments} (expected ${EXPECTED.departments})`);
+  console.log(`  Provinces:   ${counts.provinces} (expected ${EXPECTED.provinces})`);
+  console.log(`  Districts:   ${counts.districts} (expected ${EXPECTED.districts})`);
 
   // Write clean JSON (no comments — must be importable by TypeScript)
   const json = JSON.stringify(departments, null, 2);
@@ -364,11 +341,14 @@ async function main() {
     description: 'Peru Ubigeo Catalog — Complete Official Data',
     source: INEI_URL,
     crossReference: RENIEC_URL,
-    sourceNote: 'INEI 2025 via jmc-software-x/public-ubigeo-pe (GitHub, publicly maintained, official INEI/RENIEC data)',
+    sourceNote:
+      'INEI 2025 via jmc-software-x/public-ubigeo-pe (GitHub, publicly maintained, official INEI/RENIEC data)',
     officialCounts: { departments: 25, provinces: 196, districts: 1874 },
     generated: timestamp,
-    structure: 'Array of { id (2-digit dept), name, provinces: [{ id (4-digit prov), name, districts: [{ id (6-digit dist), name }] }] }',
-    notes: 'All IDs are official INEI ubigeo codes. Names are UPPERCASE UTF-8 with accents preserved from official sources.',
+    structure:
+      'Array of { id (2-digit dept), name, provinces: [{ id (4-digit prov), name, districts: [{ id (6-digit dist), name }] }] }',
+    notes:
+      'All IDs are official INEI ubigeo codes. Names are UPPERCASE UTF-8 with accents preserved from official sources.',
   };
   const metadataPath = resolve(PROJECT_ROOT, 'src', 'core', 'logistics', 'ubigeos.meta.json');
   writeFileSync(metadataPath, JSON.stringify(metadata, null, 2) + '\n', 'utf8');

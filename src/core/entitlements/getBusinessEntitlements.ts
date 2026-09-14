@@ -12,7 +12,13 @@ import { businessSettings, businessSubscriptions, businesses } from '@/core/data
 import { and, desc, eq } from 'drizzle-orm';
 
 import { enforceProductLimit } from './enforceProductLimit';
-import { DEFAULT_PLAN, PLAN_ENTITLEMENTS, type BusinessEntitlements, type PlanType } from './plans';
+import {
+  DEFAULT_PLAN,
+  PLAN_ENTITLEMENTS,
+  resolvePlan,
+  type BusinessEntitlements,
+  type PlanType,
+} from './plans';
 
 /**
  * Calcula los entitlements de un negocio según su plan de suscripción activo.
@@ -43,7 +49,8 @@ export async function getBusinessEntitlements(businessId: string): Promise<Busin
   const isExpired = subscription?.planEndDate instanceof Date && subscription.planEndDate < now;
 
   // Track previous plan for enforcement comparison
-  const previousPlan = !subscription ? null : (subscription.planType as PlanType);
+  // (resolvePlan shims legacy DB keys during the pricing-restructure rollout)
+  const previousPlan = !subscription ? null : resolvePlan(subscription.planType);
 
   let plan: PlanType;
   if (!subscription || isExpired) {
@@ -54,7 +61,7 @@ export async function getBusinessEntitlements(businessId: string): Promise<Busin
     }
     plan = DEFAULT_PLAN;
   } else {
-    plan = subscription.planType as PlanType;
+    plan = resolvePlan(subscription.planType);
   }
 
   // Safety net: ensure product count is within plan limits on degradation
