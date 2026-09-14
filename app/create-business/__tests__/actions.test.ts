@@ -95,7 +95,7 @@ function buildValidFormData(): FormData {
 }
 
 describe('createBusinessAction', () => {
-  it('inserts a basico subscription after business creation', async () => {
+  it('inserts a lite subscription after business creation', async () => {
     vi.clearAllMocks();
 
     const email = 'test@example.com';
