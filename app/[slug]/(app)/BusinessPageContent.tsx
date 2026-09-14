@@ -80,7 +80,7 @@ export default function BusinessPageContent({
 
   const mappedCategories = categories.map((c) => ({ id: c.id, name: c.name }));
 
-  // El staff (dueÃ±o + miembros con acceso) hereda las capacidades de gestiÃ³n en el context
+  // El staff (dueño + miembros con acceso) hereda las capacidades de gestión en el context
   return (
     <StorageProvider
       businessSlug={business.slug}
@@ -125,7 +125,7 @@ function BusinessPageContentUI({
   previewCardTheme,
   defaultScheme,
 }: BusinessPageContentProps) {
-  // Pagos habilitados para compra automÃ¡tica solo si plan+credenciales estÃ¡n listos.
+  // Pagos habilitados para compra automática solo si plan+credenciales están listos.
   const paymentsEnabled = hasPaymentGateway && isPaymentConfigured;
 
   const [activeTab, setActiveTab] = useState('products');
@@ -417,7 +417,7 @@ function BusinessPageContentUI({
       // outside .storefrontThemeRoot.
       document.body.style.backgroundColor = 'transparent';
     } else {
-      // Sin imagen de fondo: <html> hereda el color sÃ³lido normal.
+      // Sin imagen de fondo: <html> hereda el color sólido normal.
       root.style.backgroundColor = '';
       root.style.backgroundImage = '';
       root.style.backgroundSize = '';
