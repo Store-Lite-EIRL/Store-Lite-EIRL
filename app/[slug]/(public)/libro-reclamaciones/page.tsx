@@ -67,12 +67,25 @@ export default async function ComplaintBookPage({ params }: ComplaintPageProps) 
       {complaintContactEmail && (
         <Card
           variant="outlined"
-          style={{ padding: '1rem', marginBottom: '24px', backgroundColor: '#f0f9ff' }}
+          style={{
+            padding: '1rem',
+            marginBottom: '24px',
+            backgroundColor: 'var(--md-sys-color-secondary-container)',
+          }}
         >
-          <p style={{ margin: 0, fontSize: '0.875rem', color: '#1e40af' }}>
+          <p
+            style={{
+              margin: 0,
+              fontSize: '0.875rem',
+              color: 'var(--md-sys-color-on-secondary-container)',
+            }}
+          >
             <strong>Contacto directo:</strong> Si prefieres, también puedes comunicarte directamente
             al{' '}
-            <a href={`mailto:${complaintContactEmail}`} style={{ color: '#1e40af' }}>
+            <a
+              href={`mailto:${complaintContactEmail}`}
+              style={{ color: 'var(--md-sys-color-on-secondary-container)' }}
+            >
               {complaintContactEmail}
             </a>
           </p>
