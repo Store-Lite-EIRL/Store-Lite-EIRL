@@ -38,12 +38,12 @@ export async function generateInvitationCode(
 
   const userId = ownership.userId!;
 
-  // 2. Check entitlements (must be business_pro or enterprise_pro)
+  // 2. Check entitlements (must be lite_pago or lite_plus)
   const entitlements = await getBusinessEntitlements(businessId);
   if (entitlements.maxTeamMembers <= 1) {
     return {
       success: false,
-      error: 'Tu plan no incluye la función de equipos. Actualiza a Business Pro o superior.',
+      error: 'Tu plan no incluye la función de equipos. Actualiza a Lite Pago o superior.',
     };
   }
 

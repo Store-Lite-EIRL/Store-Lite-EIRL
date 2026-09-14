@@ -127,10 +127,9 @@ export async function GET(request: Request) {
 
 function getPlanLabel(planType: string): string {
   const labels: Record<string, string> = {
-    basico: 'Básico',
-    emprendedor: 'Emprendedor',
-    business_pro: 'Business Pro',
-    enterprise_pro: 'Enterprise Pro',
+    lite: 'Lite',
+    lite_pago: 'Lite Pago',
+    lite_plus: 'Lite Plus',
   };
   return labels[planType] ?? planType;
 }

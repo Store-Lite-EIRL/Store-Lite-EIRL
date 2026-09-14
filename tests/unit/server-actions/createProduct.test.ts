@@ -118,7 +118,7 @@ function validInput(overrides: Record<string, unknown> = {}) {
 }
 
 const DEFAULT_ENTITLEMENTS = {
-  plan: 'emprendedor' as const,
+  plan: 'lite_pago' as const,
   isActive: true,
   hasPaymentGateway: true,
   isPaymentConfigured: true,

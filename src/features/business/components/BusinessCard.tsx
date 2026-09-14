@@ -103,7 +103,7 @@ export default function BusinessCard({ biz, onDelete, onEdit, index = 0 }: Busin
         onClick={handleSelect}
       >
         {/* Top Left Badge (Store Type, Plan & TEAM) */}
-        {(biz.storeType || (biz.planType && biz.planType !== 'basico') || biz.isTeam) && (
+        {(biz.storeType || (biz.planType && biz.planType !== 'lite') || biz.isTeam) && (
           <div className={styles.cardBadge}>
             {biz.isTeam && (
               <span className={styles.teamBadge}>
@@ -112,7 +112,7 @@ export default function BusinessCard({ biz, onDelete, onEdit, index = 0 }: Busin
               </span>
             )}
             {biz.storeType && <span className={styles.businessTypeBadge}>{biz.storeType}</span>}
-            {biz.planType && biz.planType !== 'basico' && (
+            {biz.planType && biz.planType !== 'lite' && (
               <span
                 style={{
                   background: 'var(--md-sys-color-tertiary-container)',

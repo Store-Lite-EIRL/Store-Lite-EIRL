@@ -256,7 +256,7 @@ export default function Navbar({
   // Filter items based on permissions and plan
   const getVisibleItems = (items: NavItem[]) => {
     return items.filter((item) => {
-      if (item.id === 'dashboard' && planName === 'basico') return false;
+      if (item.id === 'dashboard' && planName === 'lite') return false;
       if (isOwner) return true;
       if (item.id === 'chat') return can('chat.view');
       if (item.id === 'notifications') return can('notifications.view');

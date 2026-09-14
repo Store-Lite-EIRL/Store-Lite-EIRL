@@ -50,7 +50,7 @@ import Navbar from '../../src/shared/components/navigation/Navbar';
 
 function renderNavbar(businessId?: string) {
   return render(
-    <Navbar isCollapsed={false} onToggle={vi.fn()} planName="basico" businessId={businessId} />,
+    <Navbar isCollapsed={false} onToggle={vi.fn()} planName="lite" businessId={businessId} />,
   );
 }
 
