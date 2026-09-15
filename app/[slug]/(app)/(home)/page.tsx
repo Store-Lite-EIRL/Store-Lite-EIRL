@@ -1,5 +1,6 @@
 'use server';
 
+import { getBusinessTrustScore } from '@/actions/business/getBusinessTrustScore';
 import { replaceSlugInPath, resolveBusinessSlug } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { businessSettings, productCategories } from '@/core/database/schema';
@@ -166,6 +167,11 @@ export default async function BusinessPage({ params }: Props) {
   const effectiveStorefrontTheme = savedStorefrontTheme ?? createDefaultStorefrontTheme();
   const ssrThemeStyleTag = buildStorefrontThemeStyleTag(effectiveStorefrontTheme, defaultScheme);
 
+  // DS 011 customer-facing trust signal: same data source as the complaint
+  // banner (getBusinessTrustScore). Returns null when ENABLE_AUTO_DEACTIVATION
+  // is off, which ALSO gates the badge — mirroring the banner's gating.
+  const trustSignal = await getBusinessTrustScore(business.id);
+
   return (
     <>
       {jsonLd && (
@@ -199,6 +205,7 @@ export default async function BusinessPage({ params }: Props) {
         businessRuc={business.taxId ?? undefined}
         businessAddress={business.address ?? undefined}
         defaultScheme={settings?.themeMode ?? 'light'}
+        trustSignal={trustSignal}
       />
     </>
   );

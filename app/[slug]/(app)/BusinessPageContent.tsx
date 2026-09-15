@@ -1,5 +1,6 @@
 'use client';
 
+import type { BusinessTrustScore } from '@/actions/business/getBusinessTrustScore';
 import type {
   StorefrontColorScheme,
   StorefrontLayout,
@@ -38,6 +39,7 @@ import { LookupOrderModal } from './components/LookupOrderModal';
 import ProductPreviewSheet from './components/ProductPreviewSheet';
 import { StaffManagementTools } from './components/StaffManagementTools';
 import { StorefrontProductGridSection } from './components/StorefrontProductGridSection';
+import StorefrontTrustBadge from './components/StorefrontTrustBadge';
 import { mapToStorageProduct } from './components/mapToStorageProduct';
 import { resolveActiveScheme } from './components/schemeResolution';
 import { useStorefrontViewerTheme } from './components/useStorefrontViewerTheme';
@@ -63,6 +65,8 @@ interface BusinessPageContentProps {
   businessRuc?: string;
   businessAddress?: string;
   businessId?: string;
+  /** DS 011 trust signal (same source as the complaint banner); null when flag off. */
+  trustSignal?: BusinessTrustScore | null;
 }
 
 type OwnerSheetSaveArgs = [StorageProduct, SaveProductPayload, SaveProductMediaItem[], boolean];
@@ -82,6 +86,7 @@ export default function BusinessPageContent({
   storefrontTheme,
   previewCardTheme,
   defaultScheme,
+  trustSignal = null,
 }: BusinessPageContentProps) {
   const mappedProducts: StorageProduct[] = products.map(mapToStorageProduct);
 
@@ -111,6 +116,7 @@ export default function BusinessPageContent({
         storefrontTheme={storefrontTheme}
         previewCardTheme={previewCardTheme}
         defaultScheme={defaultScheme}
+        trustSignal={trustSignal}
       />
     </StorageProvider>
   );
@@ -131,6 +137,7 @@ function BusinessPageContentUI({
   storefrontTheme,
   previewCardTheme,
   defaultScheme,
+  trustSignal = null,
 }: BusinessPageContentProps) {
   // Pagos habilitados para compra automática solo si plan+credenciales están listos.
   const paymentsEnabled = hasPaymentGateway && isPaymentConfigured;
@@ -490,6 +497,8 @@ function BusinessPageContentUI({
   return (
     <>
       <div className={`page-container ${styles.storefrontThemeRoot}`} style={themeStyles}>
+        {/* DS 011 customer-facing trust signal (badge) — same data as the banner */}
+        <StorefrontTrustBadge trustSignal={trustSignal} />
         {storefrontLayout.sections.map(renderStorefrontSection)}
       </div>
       <ProductPreviewSheet
