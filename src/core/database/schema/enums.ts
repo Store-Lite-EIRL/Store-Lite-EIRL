@@ -194,3 +194,20 @@ export const feedbackRequestTypeEnum = pgEnum('feedback_request_type', [
   'feedback',
   'complaint',
 ]);
+
+// =====================================================
+// AUTO-DEACTIVATION ENUMS
+// =====================================================
+
+export const deactivationReasonEnum = pgEnum('deactivation_reason', [
+  'verified_complaints',
+  'incomplete_orders',
+]);
+
+export const appealStatusEnum = pgEnum('appeal_status', ['pending', 'approved', 'rejected']);
+
+export const complaintScoreTierEnum = pgEnum('complaint_score_tier', [
+  'verified',
+  'under_review',
+  'rejected',
+]);
