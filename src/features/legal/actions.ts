@@ -13,6 +13,8 @@ import { revalidatePath } from 'next/cache';
 
 import type { z } from 'zod';
 
+import { calculateComplaintScore, updateComplaintScore } from '@/lib/complaintScoring';
+import { processComplaintSubmission } from '@/lib/deactivation';
 import { complaintFormSchema, complaintResponseSchema, legalContentSchema } from './schemas';
 import type { ComplaintRecord } from './types';
 
@@ -117,10 +119,24 @@ function addBusinessDays(date: Date, days: number): Date {
 // storage target for the platform-level Libro de Reclamaciones.
 const PLATFORM_BUSINESS_SLUG = 'devkittop';
 
+type ComplaintActionState = ActionState & {
+  ticketNumber?: string;
+  emailFailed?: boolean;
+  score?: number;
+  tier?: 'verified' | 'under_review' | 'rejected';
+  breakdown?: {
+    linkedToOrder: boolean;
+    buyerKycVerified: boolean;
+    culqiChargeback: boolean;
+    slaExpired: boolean;
+    patternSimilar: boolean;
+  };
+};
+
 async function createComplaintRecord(
   business: { id: string; name: string | null },
   formData: z.infer<typeof complaintFormSchema>,
-): Promise<ActionState & { ticketNumber?: string; emailFailed?: boolean }> {
+): Promise<ComplaintActionState> {
   const parsed = complaintFormSchema.safeParse(formData);
   if (!parsed.success) {
     const fieldErrors: Record<string, string> = {};
@@ -261,10 +277,33 @@ async function createComplaintRecord(
     emailFailed = true;
   }
 
+  // Calculate complaint score and check for deactivation triggers (feature flag guarded)
+  let scoreResult: Awaited<ReturnType<typeof calculateComplaintScore>> | null = null;
+  if (process.env.ENABLE_AUTO_DEACTIVATION === 'true') {
+    try {
+      scoreResult = await calculateComplaintScore(record.id, businessId);
+      await updateComplaintScore(record.id, scoreResult);
+      // Check for deactivation trigger (async, non-blocking)
+      await processComplaintSubmission(record.id, businessId);
+    } catch (scoringError) {
+      console.error('[legal] Error calculating complaint score:', scoringError);
+      // Don't fail the complaint submission if scoring fails
+    }
+  }
+
   return {
     success: true,
     ticketNumber,
     emailFailed,
+    score: scoreResult?.score ?? 0,
+    tier: scoreResult?.tier ?? 'rejected',
+    breakdown: scoreResult?.breakdown ?? {
+      linkedToOrder: false,
+      buyerKycVerified: false,
+      culqiChargeback: false,
+      slaExpired: false,
+      patternSimilar: false,
+    },
   };
 }
 
@@ -275,7 +314,21 @@ async function createComplaintRecord(
 export async function submitComplaint(
   slug: string,
   formData: z.infer<typeof complaintFormSchema>,
-): Promise<ActionState & { ticketNumber?: string; emailFailed?: boolean }> {
+): Promise<
+  ActionState & {
+    ticketNumber?: string;
+    emailFailed?: boolean;
+    score?: number;
+    tier?: 'verified' | 'under_review' | 'rejected';
+    breakdown?: {
+      linkedToOrder: boolean;
+      buyerKycVerified: boolean;
+      culqiChargeback: boolean;
+      slaExpired: boolean;
+      patternSimilar: boolean;
+    };
+  }
+> {
   try {
     const business = await db.query.businesses.findFirst({
       where: eq(businesses.slug, slug),
@@ -303,7 +356,21 @@ export async function submitComplaint(
 
 export async function submitPlatformComplaint(
   formData: z.infer<typeof complaintFormSchema>,
-): Promise<ActionState & { ticketNumber?: string; emailFailed?: boolean }> {
+): Promise<
+  ActionState & {
+    ticketNumber?: string;
+    emailFailed?: boolean;
+    score?: number;
+    tier?: 'verified' | 'under_review' | 'rejected';
+    breakdown?: {
+      linkedToOrder: boolean;
+      buyerKycVerified: boolean;
+      culqiChargeback: boolean;
+      slaExpired: boolean;
+      patternSimilar: boolean;
+    };
+  }
+> {
   try {
     const business = await db.query.businesses.findFirst({
       where: eq(businesses.slug, PLATFORM_BUSINESS_SLUG),

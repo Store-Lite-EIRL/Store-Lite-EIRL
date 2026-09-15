@@ -10,6 +10,8 @@ import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_V2,
 } from '@/core/orders/orderStatus';
+import { processOrderCompletion } from '@/lib/deactivation';
+import { checkIncompleteOrderDeactivation } from '@/lib/incompleteOrderRate';
 import { createBusinessNotification } from '@/lib/notifications';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { and, eq, lt } from 'drizzle-orm';
@@ -332,6 +334,22 @@ export async function confirmFinalization(
 
     revalidatePath(`/${slug}/dashboard`, 'page');
     revalidatePath(`/${slug}/order/${token}`, 'page');
+
+    // Check incomplete order rate and trigger deactivation if needed (feature flag guarded)
+    if (process.env.ENABLE_AUTO_DEACTIVATION === 'true') {
+      try {
+        const deactivationCheck = await checkIncompleteOrderDeactivation(payment.businessId);
+        if (deactivationCheck.shouldDeactivate) {
+          await processOrderCompletion(payment.businessId);
+        }
+      } catch (deactivationError) {
+        console.error(
+          '[confirmFinalization] Error checking incomplete order rate:',
+          deactivationError,
+        );
+        // Don't fail the confirmation if deactivation check fails
+      }
+    }
 
     return {
       success: true,
