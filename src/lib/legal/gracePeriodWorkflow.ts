@@ -20,6 +20,7 @@ import { desc, eq } from 'drizzle-orm';
 import { db } from '@/core/database/client';
 import type { Business } from '@/core/database/schema';
 import { appeals, businesses, deactivationNotices } from '@/core/database/schema';
+import { computeDeactivationWindows } from '@/lib/complaintScoringCore';
 import { sendEmail, type SendEmailParams } from '@/lib/email/resend';
 import {
   appealDecisionNotice,
@@ -27,12 +28,6 @@ import {
   deactivationNotice,
   gracePeriodNotice,
 } from '@/lib/legal/notificationTemplates';
-
-// Grace period is 72 hours from the deactivation notification.
-const GRACE_PERIOD_MS = 72 * 60 * 60 * 1000;
-// Appeal window: 10 business days, approximated as 10 calendar days to
-// stay consistent with the value used by executeDeactivation().
-const APPEAL_DEADLINE_MS = 10 * 24 * 60 * 60 * 1000;
 
 export type DeactivationReason = 'verified_complaints' | 'incomplete_orders';
 
@@ -166,8 +161,8 @@ export async function triggerGracePeriodNotifications(
     }
 
     const now = new Date();
-    const graceUntil = new Date(now.getTime() + GRACE_PERIOD_MS);
-    const appealDeadline = new Date(now.getTime() + APPEAL_DEADLINE_MS);
+    // DS 011 timeline: 72h calendar grace period + 10 BUSINESS days appeal window.
+    const { gracePeriodEndsAt: graceUntil, appealDeadline } = computeDeactivationWindows(now);
 
     const businessInfo = toBusinessInfo(business);
     const subject = `Notificación de Desactivación de Cuenta - ${business.name}`;

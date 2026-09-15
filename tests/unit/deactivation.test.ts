@@ -92,6 +92,11 @@ vi.mock('@/lib/incompleteOrderRateCore', () => ({
   get30DayWindowStart: vi.fn(() => new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)),
 }));
 
+vi.mock('@/lib/legal/gracePeriodWorkflow', () => ({
+  triggerGracePeriodNotifications: vi.fn(),
+  sendAppealReceivedNotification: vi.fn(),
+}));
+
 import { db } from '@/core/database/client';
 import {
   checkComplaintDeactivation,
@@ -105,9 +110,23 @@ import {
 } from '@/lib/deactivation';
 
 describe('Deactivation Core Logic', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     process.env.ENABLE_AUTO_DEACTIVATION = 'true';
+
+    // DS 011 written-notification workflow mocks (re-seeded: restoreMocks resets
+    // vi.fn implementations between tests).
+    const { triggerGracePeriodNotifications, sendAppealReceivedNotification } =
+      await import('@/lib/legal/gracePeriodWorkflow');
+    (triggerGracePeriodNotifications as any).mockResolvedValue({
+      success: true,
+      noticeId: 'notice-1',
+      graceUntil: new Date(),
+    });
+    (sendAppealReceivedNotification as any).mockResolvedValue({
+      success: true,
+      noticeId: 'notice-1',
+    });
   });
 
   afterEach(() => {
@@ -294,6 +313,88 @@ describe('Deactivation Core Logic', () => {
 
       // Verify business was updated
       expect(mockUpdate).toHaveBeenCalled();
+    });
+
+    it('runs the DS 011 written-notification flow and returns its notice id', async () => {
+      (db.query.businesses.findFirst as any).mockResolvedValue({
+        isActive: true,
+        appealStatus: null,
+      });
+      (db.query.deactivationNotices.findFirst as any).mockResolvedValue(null);
+      (db.query.appeals.findFirst as any).mockResolvedValue(null);
+
+      const { triggerGracePeriodNotifications } = await import('@/lib/legal/gracePeriodWorkflow');
+      (triggerGracePeriodNotifications as any).mockResolvedValue({
+        success: true,
+        noticeId: 'notice-flow-1',
+        graceUntil: new Date(),
+      });
+
+      const result = await executeDeactivation('biz-1', {
+        shouldDeactivate: true,
+        reason: 'verified_complaints',
+        complaintCount: 3,
+        evidence: { complaintIds: ['c1', 'c2', 'c3'] },
+      });
+
+      expect(triggerGracePeriodNotifications).toHaveBeenCalledTimes(1);
+      expect(triggerGracePeriodNotifications).toHaveBeenCalledWith('biz-1', 'verified_complaints', [
+        'c1',
+        'c2',
+        'c3',
+      ]);
+      expect(result).toMatchObject({ success: true, deactivationNoticeId: 'notice-flow-1' });
+      expect(result.gracePeriodEndsAt).toBeInstanceOf(Date);
+      expect(result.appealDeadline).toBeInstanceOf(Date);
+    });
+
+    it('still deactivates when the written-notification flow fails (non-fatal)', async () => {
+      (db.query.businesses.findFirst as any).mockResolvedValue({
+        isActive: true,
+        appealStatus: null,
+      });
+      (db.query.deactivationNotices.findFirst as any).mockResolvedValue(null);
+      (db.query.appeals.findFirst as any).mockResolvedValue(null);
+
+      const { triggerGracePeriodNotifications } = await import('@/lib/legal/gracePeriodWorkflow');
+      (triggerGracePeriodNotifications as any).mockResolvedValue({
+        success: false,
+        error: 'SMTP down',
+      });
+
+      const result = await executeDeactivation('biz-1', {
+        shouldDeactivate: true,
+        reason: 'verified_complaints',
+        complaintCount: 3,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
+      expect(triggerGracePeriodNotifications).toHaveBeenCalled();
+    });
+
+    it('runs the written-notification flow for the incomplete_orders entry point', async () => {
+      (db.query.businesses.findFirst as any).mockResolvedValue({
+        isActive: true,
+        appealStatus: null,
+      });
+      (db.query.deactivationNotices.findFirst as any).mockResolvedValue(null);
+      (db.query.appeals.findFirst as any).mockResolvedValue(null);
+
+      const { triggerGracePeriodNotifications } = await import('@/lib/legal/gracePeriodWorkflow');
+
+      const result = await executeDeactivation('biz-1', {
+        shouldDeactivate: true,
+        reason: 'incomplete_orders',
+        incompleteOrderRate: 5000,
+      });
+
+      expect(result.success).toBe(true);
+      expect(triggerGracePeriodNotifications).toHaveBeenCalledWith(
+        'biz-1',
+        'incomplete_orders',
+        [],
+      );
     });
   });
 
@@ -490,6 +591,73 @@ describe('Deactivation Core Logic', () => {
 
       expect(result.success).toBe(true);
       expect(result.appealId).toBe('appeal-1');
+    });
+
+    it('sends the appeal-received written notification after submission', async () => {
+      const appealDeadline = new Date(Date.now() + 12 * 24 * 60 * 60 * 1000);
+      (db.query.deactivationNotices.findFirst as any).mockResolvedValue({
+        id: 'notice-1',
+        gracePeriodEndsAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        appealDeadline,
+      });
+      (db.query.appeals.findFirst as any).mockResolvedValue(null);
+
+      const mockInsert = vi.fn().mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{ id: 'appeal-1' }]),
+        }),
+      });
+      (db as any).insert = mockInsert;
+
+      const { sendAppealReceivedNotification } = await import('@/lib/legal/gracePeriodWorkflow');
+
+      const result = await submitAppeal({
+        businessId: 'biz-1',
+        deactivationNoticeId: 'notice-1',
+        sellerStatement: 'Statement',
+        sellerEvidence: { documents: [], arguments: [] },
+      });
+
+      expect(result.success).toBe(true);
+      expect(sendAppealReceivedNotification).toHaveBeenCalledTimes(1);
+      expect(sendAppealReceivedNotification).toHaveBeenCalledWith(
+        'biz-1',
+        'appeal-1',
+        appealDeadline,
+      );
+    });
+
+    it('submission succeeds even when the appeal-received notification fails (non-fatal)', async () => {
+      (db.query.deactivationNotices.findFirst as any).mockResolvedValue({
+        id: 'notice-1',
+        gracePeriodEndsAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        appealDeadline: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000),
+      });
+      (db.query.appeals.findFirst as any).mockResolvedValue(null);
+
+      const mockInsert = vi.fn().mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{ id: 'appeal-2' }]),
+        }),
+      });
+      (db as any).insert = mockInsert;
+
+      const { sendAppealReceivedNotification } = await import('@/lib/legal/gracePeriodWorkflow');
+      (sendAppealReceivedNotification as any).mockResolvedValue({
+        success: false,
+        error: 'SMTP down',
+      });
+
+      const result = await submitAppeal({
+        businessId: 'biz-1',
+        deactivationNoticeId: 'notice-1',
+        sellerStatement: 'Statement',
+        sellerEvidence: { documents: [], arguments: [] },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
+      expect(sendAppealReceivedNotification).toHaveBeenCalled();
     });
   });
 

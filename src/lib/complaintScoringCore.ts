@@ -23,6 +23,10 @@ export const SLA_BUSINESS_DAYS = 15;
 export const PATTERN_WINDOW_DAYS = 30;
 export const PATTERN_THRESHOLD = 3;
 
+// DS 011-2011-PCM deactivation timeline
+export const GRACE_PERIOD_HOURS = 72; // calendar hours (72h grace period)
+export const APPEAL_BUSINESS_DAYS = 10; // "10 días hábiles" per DS 011
+
 /**
  * Add business days to a date (skip weekends)
  */
@@ -37,6 +41,22 @@ export function addBusinessDays(date: Date, days: number): Date {
     }
   }
   return result;
+}
+
+/**
+ * Compute the DS 011-2011-PCM timeline windows for a soft deactivation:
+ *  - gracePeriodEndsAt: 72 CALENDAR hours from `now` (the grace period)
+ *  - appealDeadline: 10 BUSINESS days from `now` (weekends skipped,
+ *    "10 días hábiles" per DS 011-2011-PCM)
+ */
+export function computeDeactivationWindows(now: Date): {
+  gracePeriodEndsAt: Date;
+  appealDeadline: Date;
+} {
+  return {
+    gracePeriodEndsAt: new Date(now.getTime() + GRACE_PERIOD_HOURS * 60 * 60 * 1000),
+    appealDeadline: addBusinessDays(now, APPEAL_BUSINESS_DAYS),
+  };
 }
 
 /**

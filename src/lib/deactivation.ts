@@ -14,7 +14,12 @@ import {
 } from '@/core/database/schema';
 import { and, eq, gte, lt } from 'drizzle-orm';
 
+import {
+  sendAppealReceivedNotification,
+  triggerGracePeriodNotifications,
+} from '@/lib/legal/gracePeriodWorkflow';
 import { calculateComplaintScore, updateComplaintScore } from './complaintScoring';
+import { computeDeactivationWindows } from './complaintScoringCore';
 import { checkIncompleteOrderDeactivation } from './incompleteOrderRate';
 import { get30DayWindowStart } from './incompleteOrderRateCore';
 
@@ -138,31 +143,15 @@ export async function executeDeactivation(
 
   try {
     const now = new Date();
-    const gracePeriodEndsAt = new Date(now.getTime() + 72 * 60 * 60 * 1000); // 72 hours
-    const appealDeadline = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000); // 10 business days (approx 14 calendar days)
+    // DS 011 timeline: 72h calendar grace period + 10 BUSINESS days appeal window.
+    const { gracePeriodEndsAt, appealDeadline } = computeDeactivationWindows(now);
 
-    // Create deactivation notice
     // trigger.reason is guaranteed to be non-null when shouldDeactivate is true
     const reason = trigger.reason as 'verified_complaints' | 'incomplete_orders';
-    const [notice] = await db
-      .insert(deactivationNotices)
-      .values({
-        businessId,
-        reason,
-        complaintCount: trigger.complaintCount ?? 0,
-        incompleteOrderRate: trigger.incompleteOrderRate ?? null,
-        evidence: {
-          complaintIds: trigger.evidence?.complaintIds ?? [],
-          orderIds: trigger.evidence?.orderIds ?? [],
-          scoreBreakdown: trigger.evidence?.scoreBreakdown,
-        },
-        gracePeriodEndsAt,
-        appealDeadline,
-        isResolved: false,
-      })
-      .returning({ id: deactivationNotices.id });
 
-    // Update business
+    // Deactivate the business first: this is the source of truth for the
+    // soft-deactivation (works for every entry point: verified complaints,
+    // incomplete order rate, penalties).
     await db
       .update(businesses)
       .set({
@@ -175,12 +164,32 @@ export async function executeDeactivation(
       })
       .where(eq(businesses.id, businessId));
 
-    // Written notification email (DS 011 compliance) sent async via notification system
-    // See: src/features/notifications/actions.ts
+    // DS 011-2011-PCM written notification (NON-FATAL): the workflow inserts
+    // the deactivation_notices row WITH notificationSentAt and sends the
+    // written-notification email. Email or notification failures must NOT
+    // fail the deactivation itself — the DB record is the compliance trail.
+    let deactivationNoticeId: string | undefined;
+    try {
+      const noticeResult = await triggerGracePeriodNotifications(
+        businessId,
+        reason,
+        trigger.evidence?.complaintIds ?? [],
+      );
+      if (noticeResult.success && noticeResult.noticeId) {
+        deactivationNoticeId = noticeResult.noticeId;
+      } else {
+        console.warn(
+          '[Deactivation] Written notification flow failed (non-fatal):',
+          noticeResult.error,
+        );
+      }
+    } catch (error) {
+      console.warn('[Deactivation] Written notification flow threw (non-fatal):', error);
+    }
 
     return {
       success: true,
-      deactivationNoticeId: notice.id,
+      deactivationNoticeId,
       gracePeriodEndsAt,
       appealDeadline,
     };
@@ -301,6 +310,21 @@ export async function submitAppeal(
         slaBreached: false,
       })
       .returning({ id: appeals.id });
+
+    // DS 011 written confirmation of appeal receipt (NON-FATAL): a written
+    // notification DURING the 72h grace period. A failure must not fail the
+    // appeal submission — the deactivation notice row is the compliance trail.
+    try {
+      const notifyResult = await sendAppealReceivedNotification(businessId, appeal.id, slaDeadline);
+      if (!notifyResult.success) {
+        console.warn(
+          '[Appeal] Appeal-received notification failed (non-fatal):',
+          notifyResult.error,
+        );
+      }
+    } catch (error) {
+      console.warn('[Appeal] Appeal-received notification threw (non-fatal):', error);
+    }
 
     return { success: true, appealId: appeal.id };
   } catch (error) {
