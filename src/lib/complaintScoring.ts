@@ -93,6 +93,7 @@ export async function calculateComplaintScore(
         id: true,
         buyerDni: true,
         culqiChargeId: true,
+        status: true,
       },
     });
 
@@ -103,8 +104,12 @@ export async function calculateComplaintScore(
         score += SCORE_WEIGHTS.buyerKycVerified;
       }
 
-      // Factor 3: Culqi chargeback/dispute (+40)
-      if (order.culqiChargeId) {
+      // Factor 3: Culqi chargeback/dispute (+40) — DS 011 §1 requires
+      // "Prueba financiera objetiva". The REAL dispute signal is the linked
+      // payment being in the 'disputed' status (the customer contested the
+      // charge). A culqiChargeId alone only proves a transaction existed
+      // (already scored by linkedToOrder) — it is NOT proof of a dispute.
+      if (order.status === 'disputed') {
         breakdown.culqiChargeback = true;
         score += SCORE_WEIGHTS.culqiChargeback;
       }

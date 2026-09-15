@@ -124,7 +124,9 @@ describe('calculateComplaintScore — DB-layer paths', () => {
   it('looks up the linked order and credits KYC (+25) and chargeback (+40)', async () => {
     state.seed({
       complaints: [makeComplaint({ linkedOrderId: 'pay-1' })],
-      payments: [makePayment({ buyerDni: '12345678', culqiChargeId: 'chr_abc' })],
+      payments: [
+        makePayment({ buyerDni: '12345678', culqiChargeId: 'chr_abc', status: 'disputed' }),
+      ],
     });
 
     const result = await calculateComplaintScore('c1', 'biz-1');
@@ -136,6 +138,38 @@ describe('calculateComplaintScore — DB-layer paths', () => {
       buyerKycVerified: true,
       culqiChargeback: true,
     });
+  });
+
+  it('credits the chargeback factor (+40) from the linked payment status alone when it is "disputed"', async () => {
+    // DS 011 §1: "Chargeback/disputa en Culqi +40 — Prueba financiera objetiva".
+    // The REAL dispute signal is the order being in 'disputed' state; a Culqi
+    // charge id without a dispute is NOT proof of a contestation.
+    state.seed({
+      complaints: [makeComplaint({ linkedOrderId: 'pay-1' })],
+      payments: [makePayment({ status: 'disputed' })], // no culqiChargeId
+    });
+
+    const result = await calculateComplaintScore('c1', 'biz-1');
+
+    expect(result.score).toBe(70); // 30 linked + 40 chargeback
+    expect(result.tier).toBe('verified');
+    expect(result.breakdown.culqiChargeback).toBe(true);
+  });
+
+  it('does NOT credit +40 when the linked payment has a culqiChargeId but is NOT disputed', async () => {
+    // Data-semantics guard: a charge id merely proves a transaction exists
+    // (already covered by the linkedToOrder factor); only an actual dispute
+    // status may award the financial-dispute evidence.
+    state.seed({
+      complaints: [makeComplaint({ linkedOrderId: 'pay-1' })],
+      payments: [makePayment({ buyerDni: '12345678', culqiChargeId: 'chr_abc', status: 'paid' })],
+    });
+
+    const result = await calculateComplaintScore('c1', 'biz-1');
+
+    expect(result.score).toBe(55); // 30 linked + 25 KYC, NO chargeback
+    expect(result.tier).toBe('under_review');
+    expect(result.breakdown.culqiChargeback).toBe(false);
   });
 
   it('does NOT credit KYC/chargeback when the linked order has neither DNI nor charge id', async () => {
