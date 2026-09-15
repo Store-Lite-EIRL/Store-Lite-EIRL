@@ -36,6 +36,8 @@ export interface PricingCardProps {
   title: string;
   description: string;
   price: string;
+  /** Precio anual (un mes de contrato anual) — si se pasa, se muestra el toggle Mensual/Anual. */
+  annualPrice?: string;
   originalPrice?: string;
   marketingNote?: string;
   period: string;
@@ -52,15 +54,16 @@ export interface PricingCardProps {
 type PaymentStep = 'select' | 'billing' | 'payment' | 'success';
 
 const planLabels: Record<string, string> = {
-  emprendedor: 'Emprendedor',
-  business_pro: 'Business Pro',
-  enterprise_pro: 'Enterprise Pro',
+  lite: 'Lite',
+  lite_pago: 'Lite Pago',
+  lite_plus: 'Lite Plus',
 };
 
 export function PricingCard({
   title,
   description,
   price,
+  annualPrice,
   originalPrice,
   marketingNote,
   period,
@@ -77,6 +80,12 @@ export function PricingCard({
   const [step, setStep] = React.useState<PaymentStep>('select');
   const [selectedBusiness, setSelectedBusiness] = React.useState('');
   const [orderDetails, setOrderDetails] = React.useState({ id: '', date: '', time: '' });
+
+  // Toggle Mensual/Anual: cuando existe annualPrice, el usuario puede elegir.
+  // price = mensual; annualPrice = costo del período anual completo (S/ 390 → "390").
+  const [isAnnual, setIsAnnual] = React.useState(false);
+  const displayPrice = isAnnual && annualPrice ? annualPrice : price;
+  const displayPeriod = isAnnual ? 'anual' : period;
 
   // Datos SUNAT
   const [buyerEmail, setBuyerEmail] = React.useState('');
@@ -117,7 +126,7 @@ export function PricingCard({
     setStep('select');
 
     // Meta pixel: checkout intent, browser-only (own event id, CAPI has no twin)
-    trackInitiateCheckout({ value: Number(price), currency: 'PEN' }, generateEventId());
+    trackInitiateCheckout({ value: Number(displayPrice), currency: 'PEN' }, generateEventId());
 
     // Pre-cargar Culqi asíncronamente mientras el usuario selecciona negocio
     loadCulqiScript(process.env.NEXT_PUBLIC_CULQI_PK || '').catch((e) =>
@@ -155,14 +164,15 @@ export function PricingCard({
   const selectedBusinessData = businesses.find((b) => b.id === selectedBusiness);
   const selectedBusinessName = selectedBusinessData?.name;
   const hasActivePlan = Boolean(
-    selectedBusinessData?.planType && selectedBusinessData.planType !== 'basico',
+    selectedBusinessData?.planType && selectedBusinessData.planType !== 'lite',
   );
 
   const handleCulqiToken = async (token: string) => {
-    let planEnum: 'basico' | 'emprendedor' | 'business_pro' | 'enterprise_pro' = 'basico';
-    if (title.toLowerCase().includes('emprendedor')) planEnum = 'emprendedor';
-    if (title.toLowerCase().includes('business pro')) planEnum = 'business_pro';
-    if (title.toLowerCase().includes('enterprise')) planEnum = 'enterprise_pro';
+    let planEnum: 'lite' | 'lite_pago' | 'lite_plus' = 'lite';
+    // Orden importa: chequear primero las cadenas más largas porque "Lite Pago" y
+    // "Lite Plus" contienen "Lite".
+    if (title.toLowerCase().includes('lite pago')) planEnum = 'lite_pago';
+    else if (title.toLowerCase().includes('lite plus')) planEnum = 'lite_plus';
 
     setIsPaymentDialogOpen(true); // Asegurarse de que el modal siga abierto
     setStep('payment');
@@ -170,7 +180,7 @@ export function PricingCard({
     const res = await purchase({
       token,
       planType: planEnum,
-      period: period === 'mes' ? 'monthly' : 'annual',
+      period: displayPeriod === 'anual' ? 'annual' : 'monthly',
       businessId: selectedBusiness,
       buyerEmail,
       buyerFullName,
@@ -181,7 +191,7 @@ export function PricingCard({
 
     if (res) {
       // Meta pixel+server twin: same event_id as the CAPI Purchase (dedup).
-      trackPurchase({ value: Number(price), currency: 'PEN' }, res.eventId);
+      trackPurchase({ value: Number(displayPrice), currency: 'PEN' }, res.eventId);
 
       setStep('success');
       confetti({
@@ -194,7 +204,7 @@ export function PricingCard({
 
   // El precio mostrado es el TOTAL FINAL (incluye IGV 18%).
   // Desglosamos subtotal e IGV para Culqi y la boleta.
-  const totalSoles = Number(price);
+  const totalSoles = Number(displayPrice);
   const { subtotalSoles, igvSoles } = splitIgv(totalSoles);
 
   return (
@@ -205,11 +215,36 @@ export function PricingCard({
           badgeType={badgeType}
           title={title}
           description={description}
-          price={price}
-          period={period}
-          originalPrice={originalPrice}
+          price={displayPrice}
+          period={displayPeriod}
+          originalPrice={
+            isAnnual && annualPrice
+              ? price // Tachado: precio mensual cuando se ve el anual
+              : originalPrice
+          }
           marketingNote={marketingNote}
         />
+
+        {annualPrice && (
+          <div className="pricing-billing-toggle" role="group" aria-label="Período de facturación">
+            <button
+              type="button"
+              className={`pricing-billing-option ${!isAnnual ? 'pricing-billing-option--active' : ''}`}
+              onClick={() => setIsAnnual(false)}
+              aria-pressed={!isAnnual}
+            >
+              Mensual
+            </button>
+            <button
+              type="button"
+              className={`pricing-billing-option ${isAnnual ? 'pricing-billing-option--active' : ''}`}
+              onClick={() => setIsAnnual(true)}
+              aria-pressed={isAnnual}
+            >
+              Anual
+            </button>
+          </div>
+        )}
 
         <PricingFeaturesList features={features} />
 
@@ -222,26 +257,30 @@ export function PricingCard({
 
       <Dialog open={isPaymentDialogOpen} onClose={handleCloseDialog}>
         <div slot="headline">Suscripción a {title}</div>
-        <PaymentDialogContent
-          step={step}
-          title={title}
-          businesses={businesses}
-          selectedBusiness={selectedBusiness}
-          onSelectedBusinessChange={setSelectedBusiness}
-          hasActivePlan={hasActivePlan}
-          buyerEmail={buyerEmail}
-          buyerFullName={buyerFullName}
-          buyerDocumentType={buyerDocumentType}
-          buyerDocumentNumber={buyerDocumentNumber}
-          buyerAddress={buyerAddress}
-          orderDetails={orderDetails}
-          selectedBusinessName={selectedBusinessName}
-          period={period}
-          price={price}
-          isProcessing={isProcessing}
-          error={error}
-          result={result}
-        />
+        <div slot="content">
+          <PaymentDialogContent
+            step={step}
+            title={title}
+            businesses={businesses}
+            selectedBusiness={selectedBusiness}
+            onSelectedBusinessChange={setSelectedBusiness}
+            hasActivePlan={hasActivePlan}
+            buyerEmail={buyerEmail}
+            buyerFullName={buyerFullName}
+            buyerDocumentType={buyerDocumentType}
+            buyerDocumentNumber={buyerDocumentNumber}
+            buyerAddress={buyerAddress}
+            orderDetails={orderDetails}
+            selectedBusinessName={selectedBusinessName}
+            period={displayPeriod}
+            price={displayPrice}
+            subtotalSoles={subtotalSoles}
+            igvSoles={igvSoles}
+            isProcessing={isProcessing}
+            error={error}
+            result={result}
+          />
+        </div>
         <PaymentDialogActions
           step={step}
           onStepChange={setStep}
@@ -252,7 +291,7 @@ export function PricingCard({
           buyerDocumentNumber={buyerDocumentNumber}
           buyerAddress={buyerAddress}
           isProcessing={isProcessing}
-          price={price}
+          price={displayPrice}
           onPay={handlePay}
           onClose={handleCloseDialog}
         />
@@ -261,9 +300,9 @@ export function PricingCard({
       {/* Culqi Checkout - Montado permanentemente fuera del dialog para evitar problemas de z-index y background */}
       <CulqiCheckoutNode
         title={title}
-        price={price}
+        price={displayPrice}
         selectedBusinessName={selectedBusinessName}
-        period={period}
+        period={displayPeriod}
         buyerFullName={buyerFullName}
         buyerEmail={buyerEmail}
         isProcessing={isProcessing}
@@ -281,7 +320,7 @@ export function PricingCard({
         buyerDocumentType={buyerDocumentType}
         buyerDocumentNumber={buyerDocumentNumber}
         title={title}
-        period={period}
+        period={displayPeriod}
         subtotalSoles={subtotalSoles}
         igvSoles={igvSoles}
         totalSoles={totalSoles}
@@ -403,7 +442,7 @@ function SelectBusinessStepContent({
           options={[
             { value: '', label: 'Selecciona una opcion...' },
             ...businesses.map((biz) => {
-              const hasPlan = biz.planType && biz.planType !== 'basico';
+              const hasPlan = biz.planType && biz.planType !== 'lite';
               const planText = hasPlan
                 ? ` (Plan Actual: ${planLabels[biz.planType as string] || biz.planType})`
                 : '';
@@ -624,26 +663,65 @@ function BillingStepContent({
 
 interface PaymentStepContentProps {
   step: PaymentStep;
+  title: string;
   orderDetails: { id: string; date: string; time: string };
   selectedBusinessName: string | undefined;
   period: string;
   price: string;
+  subtotalSoles: number;
+  igvSoles: number;
   isProcessing: boolean;
   error: string | null;
 }
 
+const currencyFormatter = new Intl.NumberFormat('es-PE', {
+  style: 'currency',
+  currency: 'PEN',
+  minimumFractionDigits: 2,
+});
+
+/** Formatea una fecha en español para el pre-ticket. */
+function formatPlanDate(date: Date): string {
+  return date.toLocaleDateString('es-PE', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'America/Lima',
+  });
+}
+
+/**
+ * Fechas estimadas del periodo contratado, calculadas desde hoy.
+ * Solo UI de pre-ticket: la fecha real de activación la confirma el
+ * servidor tras el pago (planActivatedUntil).
+ */
+function getPlanPeriodDates(period: string): { start: string; end: string } {
+  const start = new Date();
+  const end = new Date(start);
+  if (period === 'anual' || period === 'annual') {
+    end.setFullYear(end.getFullYear() + 1);
+  } else {
+    end.setMonth(end.getMonth() + 1);
+  }
+  return { start: formatPlanDate(start), end: formatPlanDate(end) };
+}
+
 function PaymentStepContent({
   step,
+  title,
   orderDetails,
   selectedBusinessName,
   period,
   price,
+  subtotalSoles,
+  igvSoles,
   isProcessing,
   error,
 }: PaymentStepContentProps) {
   if (step !== 'payment') {
     return null;
   }
+  const planDates = getPlanPeriodDates(period);
   return (
     <div
       style={{
@@ -653,6 +731,7 @@ function PaymentStepContent({
         marginBottom: '1rem',
       }}
     >
+      {/* ── Pre-ticket del plan a comprar ── */}
       <div
         style={{
           padding: '1rem',
@@ -661,6 +740,23 @@ function PaymentStepContent({
           border: '1px solid var(--md-sys-color-outline-variant)',
         }}
       >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: '12px',
+            paddingBottom: '12px',
+            borderBottom: '1px dashed var(--md-sys-color-outline-variant)',
+          }}
+        >
+          <span style={{ fontWeight: '600', color: 'var(--md-sys-color-on-surface)' }}>
+            Plan {title}
+          </span>
+          <span style={{ fontSize: '0.875rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
+            {period === 'mes' ? 'Mensual' : 'Anual'}
+          </span>
+        </div>
+
         <div
           style={{
             display: 'flex',
@@ -674,7 +770,7 @@ function PaymentStepContent({
               color: 'var(--md-sys-color-on-surface-variant)',
             }}
           >
-            ID de Orden:
+            N° de Ticket:
           </span>
           <span style={{ fontSize: '0.875rem', fontFamily: 'monospace' }}>{orderDetails.id}</span>
         </div>
@@ -691,11 +787,26 @@ function PaymentStepContent({
               color: 'var(--md-sys-color-on-surface-variant)',
             }}
           >
-            Fecha y Hora:
+            Negocio:
           </span>
-          <span style={{ fontSize: '0.875rem' }}>
-            {orderDetails.date} {orderDetails.time}
+          <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>{selectedBusinessName}</span>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: '8px',
+          }}
+        >
+          <span
+            style={{
+              fontSize: '0.875rem',
+              color: 'var(--md-sys-color-on-surface-variant)',
+            }}
+          >
+            Fecha de inicio:
           </span>
+          <span style={{ fontSize: '0.875rem' }}>{planDates.start}</span>
         </div>
         <div
           style={{
@@ -712,10 +823,48 @@ function PaymentStepContent({
               color: 'var(--md-sys-color-on-surface-variant)',
             }}
           >
-            Negocio:
+            Fecha de vencimiento:
           </span>
-          <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>{selectedBusinessName}</span>
+          <span style={{ fontSize: '0.875rem' }}>{planDates.end}</span>
         </div>
+
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: '6px',
+          }}
+        >
+          <span
+            style={{
+              fontSize: '0.875rem',
+              color: 'var(--md-sys-color-on-surface-variant)',
+            }}
+          >
+            Subtotal:
+          </span>
+          <span style={{ fontSize: '0.875rem' }}>{currencyFormatter.format(subtotalSoles)}</span>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: '12px',
+            paddingBottom: '12px',
+            borderBottom: '1px dashed var(--md-sys-color-outline-variant)',
+          }}
+        >
+          <span
+            style={{
+              fontSize: '0.875rem',
+              color: 'var(--md-sys-color-on-surface-variant)',
+            }}
+          >
+            IGV (18%):
+          </span>
+          <span style={{ fontSize: '0.875rem' }}>{currencyFormatter.format(igvSoles)}</span>
+        </div>
+
         <div
           style={{
             display: 'flex',
@@ -724,7 +873,7 @@ function PaymentStepContent({
           }}
         >
           <span style={{ fontWeight: '500', color: 'var(--md-sys-color-on-surface)' }}>
-            Total a Pagar ({period})
+            Total a Pagar ({period === 'mes' ? 'mensual' : 'anual'})
           </span>
           <span
             style={{
@@ -1020,6 +1169,8 @@ interface PaymentDialogContentProps {
   selectedBusinessName: string | undefined;
   period: string;
   price: string;
+  subtotalSoles: number;
+  igvSoles: number;
   isProcessing: boolean;
   error: string | null;
   result: PurchasePlanResult | null;
@@ -1041,6 +1192,8 @@ function PaymentDialogContent({
   selectedBusinessName,
   period,
   price,
+  subtotalSoles,
+  igvSoles,
   isProcessing,
   error,
   result,
@@ -1064,10 +1217,13 @@ function PaymentDialogContent({
       />
       <PaymentStepContent
         step={step}
+        title={title}
         orderDetails={orderDetails}
         selectedBusinessName={selectedBusinessName}
         period={period}
         price={price}
+        subtotalSoles={subtotalSoles}
+        igvSoles={igvSoles}
         isProcessing={isProcessing}
         error={error}
       />

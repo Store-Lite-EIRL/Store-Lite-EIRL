@@ -10,10 +10,9 @@ import { StoreLogo } from '@/shared/components/ui/data-display/StoreLogo';
 import { Barcode } from '../../../shared/components/ui/data-display/receipt/Barcode';
 
 const PLAN_LABELS: Record<string, string> = {
-  basico: 'Básico',
-  emprendedor: 'Emprendedor',
-  business_pro: 'Business Pro',
-  enterprise_pro: 'Enterprise Pro',
+  lite: 'Lite',
+  lite_pago: 'Lite Pago',
+  lite_plus: 'Lite Plus',
 };
 
 interface PlanTicketTemplateProps {

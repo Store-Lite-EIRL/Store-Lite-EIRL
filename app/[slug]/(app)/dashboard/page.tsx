@@ -13,7 +13,9 @@ import {
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
 import { isValidPaymentStatus } from '@/core/orders/isValidPaymentStatus';
 import type { OrderStatusValue } from '@/core/orders/orderStatus';
-import { and, count, desc, eq, gt, gte, lt, lte, sql, sum } from 'drizzle-orm';
+import { ORDER_STATUS } from '@/core/orders/orderStatus';
+import { hasLockingPayments } from '@/core/orders/paymentGuards';
+import { and, count, desc, eq, gt, gte, inArray, lt, lte, sql, sum } from 'drizzle-orm';
 import { notFound, redirect } from 'next/navigation';
 
 import { DashboardHeader } from './components/DashboardHeader';
@@ -78,6 +80,18 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const sixtyDaysAgo = new Date(now);
   sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+  // ─── Statuses that represent a successful, paid sale ───
+  // Excludes: pending (not paid), failed (not paid), refund_requested / refunded (money returned)
+  const SOLD_STATUSES: OrderStatusValue[] = [
+    ORDER_STATUS.PAID,
+    ORDER_STATUS.VALIDANDO,
+    ORDER_STATUS.EN_REPARTO,
+    ORDER_STATUS.DELIVERED,
+    ORDER_STATUS.NOT_DELIVERED,
+    ORDER_STATUS.COMPLETED,
+    ORDER_STATUS.DISPUTED,
+  ];
 
   // ─── Filters for Recent Orders ───
   const orderFilters = [eq(payments.businessId, business.id)];
@@ -159,7 +173,7 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
       db
         .select({ count: count() })
         .from(payments)
-        .where(and(eq(payments.businessId, business.id), eq(payments.status, 'paid'))),
+        .where(and(eq(payments.businessId, business.id), inArray(payments.status, SOLD_STATUSES))),
       // Out of Stock & Low Stock Counts
       db
         .select({ count: count() })
@@ -176,6 +190,8 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
         .select({ count: count() })
         .from(products)
         .where(and(eq(products.businessId, business.id), gte(products.createdAt, sevenDaysAgo))),
+      // Locked state: payments that freeze identity/product edits
+      hasLockingPayments({ businessId: business.id }),
     ]),
 
     // Group 2: Inventory Lists
@@ -213,7 +229,7 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
         .where(
           and(
             eq(payments.businessId, business.id),
-            eq(payments.status, 'paid'),
+            inArray(payments.status, SOLD_STATUSES),
             gte(payments.createdAt, startOfToday),
           ),
         ),
@@ -223,7 +239,7 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
         .where(
           and(
             eq(payments.businessId, business.id),
-            eq(payments.status, 'paid'),
+            inArray(payments.status, SOLD_STATUSES),
             gte(payments.createdAt, startOfYesterday),
             lt(payments.createdAt, startOfToday),
           ),
@@ -236,7 +252,7 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
         .where(
           and(
             eq(payments.businessId, business.id),
-            eq(payments.status, 'paid'),
+            inArray(payments.status, SOLD_STATUSES),
             gte(payments.createdAt, sevenDaysAgo),
           ),
         ),
@@ -246,7 +262,7 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
         .where(
           and(
             eq(payments.businessId, business.id),
-            eq(payments.status, 'paid'),
+            inArray(payments.status, SOLD_STATUSES),
             gte(payments.createdAt, fourteenDaysAgo),
             lt(payments.createdAt, sevenDaysAgo),
           ),
@@ -259,7 +275,7 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
         .where(
           and(
             eq(payments.businessId, business.id),
-            eq(payments.status, 'paid'),
+            inArray(payments.status, SOLD_STATUSES),
             gte(payments.createdAt, thirtyDaysAgo),
           ),
         ),
@@ -269,7 +285,7 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
         .where(
           and(
             eq(payments.businessId, business.id),
-            eq(payments.status, 'paid'),
+            inArray(payments.status, SOLD_STATUSES),
             gte(payments.createdAt, sixtyDaysAgo),
             lt(payments.createdAt, thirtyDaysAgo),
           ),
@@ -280,7 +296,7 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
         .select({ name: products.title, count: count(payments.id) })
         .from(payments)
         .innerJoin(products, eq(payments.productId, products.id))
-        .where(and(eq(payments.businessId, business.id), eq(payments.status, 'paid')))
+        .where(and(eq(payments.businessId, business.id), inArray(payments.status, SOLD_STATUSES)))
         .groupBy(products.title)
         .orderBy(desc(count(payments.id)))
         .limit(5),
@@ -291,7 +307,7 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
         .from(payments)
         .innerJoin(products, eq(payments.productId, products.id))
         .innerJoin(productCategories, eq(products.categoryId, productCategories.id))
-        .where(and(eq(payments.businessId, business.id), eq(payments.status, 'paid')))
+        .where(and(eq(payments.businessId, business.id), inArray(payments.status, SOLD_STATUSES)))
         .groupBy(productCategories.name)
         .orderBy(desc(count(payments.id)))
         .limit(5),
@@ -306,7 +322,7 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
         .where(
           and(
             eq(payments.businessId, business.id),
-            eq(payments.status, 'paid'),
+            inArray(payments.status, SOLD_STATUSES),
             gte(payments.createdAt, sevenDaysAgo),
           ),
         )
@@ -345,6 +361,7 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
   const _outOfStockCount = counts[6][0]?.count || 0;
   const _lowStockCount = counts[7][0]?.count || 0;
   const _addedThisWeekCount = counts[8][0]?.count || 0;
+  const businessLocked = counts[9];
 
   const topLiked = inventoryData[0];
   const outOfStock = inventoryData[1];
@@ -500,6 +517,17 @@ export default async function Dashboard({ params, searchParams }: DashboardProps
         entitlements={entitlements}
         planEndDate={planEndDate}
       />
+
+      {businessLocked && (
+        <div className={styles.lockBanner} role="status">
+          <p className={styles.lockBannerTitle}>Algunas funciones están desactivadas</p>
+          <p className={styles.lockBannerText}>
+            Para proteger la información que ven tus clientes, la edición de los datos de identidad
+            del negocio (nombre, RUC, dirección, URL) está bloqueada porque el negocio tiene pagos
+            registrados. Puedes seguir editando logo, descripción, contacto, stock y disponibilidad.
+          </p>
+        </div>
+      )}
 
       <StatCards
         totalProducts={productsCount}

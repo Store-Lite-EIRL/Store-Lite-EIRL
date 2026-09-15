@@ -29,8 +29,6 @@ const baseProps = {
   email: 'hola@mitienda.com',
   description: 'Ropa moderna para todos.',
   taxId: '20123456789',
-  legalRepName: 'Ana Torres',
-  legalRepRole: 'Gerente',
   storefrontTheme: {},
 };
 
@@ -67,6 +65,20 @@ describe('BusinessPreviewCard — public profile props', () => {
     render(<BusinessPreviewCard {...baseProps} verificationStatus="unverified" />);
 
     expect(screen.queryByText('Verificado')).toBeNull();
+  });
+
+  it('does not render the legal representative block on the public card (Ley 29733)', () => {
+    render(<BusinessPreviewCard {...baseProps} />);
+
+    expect(screen.queryByText('Ana Torres')).toBeNull();
+    expect(screen.queryByText('Gerente')).toBeNull();
+  });
+
+  it('renders the real RUC instead of a tokenized hash (DL 1524)', () => {
+    render(<BusinessPreviewCard {...baseProps} />);
+
+    expect(screen.getByText(/20123456789/)).toBeDefined();
+    expect(screen.queryByText(/x3bet/)).toBeNull();
   });
 
   it('renders social links as safe external anchors when socialLinks is provided', () => {

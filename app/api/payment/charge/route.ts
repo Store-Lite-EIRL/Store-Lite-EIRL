@@ -44,6 +44,7 @@ interface ShippingInfoData {
   agency?: string | null;
   reference?: string | null;
   courier?: string;
+  ubigeo?: string;
 }
 
 // ─── Helper: Resolve and validate Culqi secret key ──────────────────
@@ -378,6 +379,7 @@ export async function POST(request: Request) {
             shippingAgency: rawShipping.agency ?? null,
             shippingPhone: rawShipping.phone ?? null,
             shippingReference: rawShipping.reference ?? null,
+            shippingUbigeo: rawShipping.ubigeo ?? null,
             metadata: {
               ...metadata,
               culqiId: culqiChargeId,

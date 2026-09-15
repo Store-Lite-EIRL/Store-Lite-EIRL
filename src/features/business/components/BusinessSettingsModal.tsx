@@ -2,6 +2,7 @@
 
 import { Icon } from '@/shared/components/ui/data-display';
 import { AlertSnackbar } from '@/shared/components/ui/feedback';
+import { ImageCropModal } from '@/shared/components/ui/inputs/ImageCropModal';
 import type { Business } from '@/types/business';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useBusinessSettings } from '../hooks/useBusinessSettings';
@@ -21,7 +22,7 @@ interface BusinessSettingsModalProps {
 
 type TabType = 'negocio' | 'productos' | 'resultados' | 'equipo' | 'peligro';
 
-const PREMIUM_PLANS = ['business_pro', 'enterprise_pro'];
+const PREMIUM_PLANS = ['lite_pago', 'lite_plus'];
 const PREMIUM_TABS: TabType[] = ['resultados', 'equipo'];
 
 export default function BusinessSettingsModal({
@@ -32,6 +33,7 @@ export default function BusinessSettingsModal({
 }: BusinessSettingsModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('negocio');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [logoToCrop, setLogoToCrop] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const hasPremium = planType ? PREMIUM_PLANS.includes(planType) : false;
@@ -50,6 +52,7 @@ export default function BusinessSettingsModal({
     isUpdatingLogo,
     isSaving,
     hasChanges,
+    locked,
     alert,
     handleSave,
     handleLogoUpload,
@@ -93,7 +96,8 @@ export default function BusinessSettingsModal({
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    handleLogoUpload(file);
+    setLogoToCrop(file);
+    e.target.value = '';
   };
 
   const handleDeleteClick = () => setDeleteDialogOpen(true);
@@ -135,6 +139,7 @@ export default function BusinessSettingsModal({
             isUpdatingLogo={isUpdatingLogo}
             isSaving={isSaving}
             hasChanges={hasChanges}
+            locked={locked}
             handleSave={handleSave}
             handleFileChange={handleFileChange}
             fileInputRef={fileInputRef}
@@ -177,6 +182,14 @@ export default function BusinessSettingsModal({
 
   return (
     <div className={`${styles.overlay} ${open ? styles.overlayOpen : ''}`}>
+      <ImageCropModal
+        file={logoToCrop}
+        onCancel={() => setLogoToCrop(null)}
+        onApply={(file) => {
+          setLogoToCrop(null);
+          void handleLogoUpload(file);
+        }}
+      />
       <div className={styles.modalContainer}>
         <div className={styles.sidebar}>
           <div className={styles.sidebarContent}>

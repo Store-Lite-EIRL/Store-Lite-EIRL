@@ -246,8 +246,6 @@ export default function AboutSection({
             email={business.email || ''}
             description={business.description || ''}
             taxId={business.taxId || ''}
-            legalRepName={business.legalRepName || ''}
-            legalRepRole={business.legalRepRole || ''}
             logoPreview={business.logoUrl}
             storefrontTheme={previewCardTheme || storefrontTheme || createDefaultStorefrontTheme()}
             colorScheme={storefrontColorScheme}

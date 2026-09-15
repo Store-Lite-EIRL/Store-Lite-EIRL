@@ -1,16 +1,16 @@
 'use client';
 
 import { PERU_LOCATIONS } from '@/core/logistics/peruLocations';
-import { URBANO_AGENCIES } from '@/core/logistics/urbanoAgencies';
 import type { CartItem } from '@/features/storage/context/CartContext';
 import { createClient } from '@/lib/supabase/client';
 import { AlertSnackbar, Icon } from '@/shared/components/ui';
+import { prefillBuyerName } from '@/shared/payments/buyerName';
 import type { AuthTokenResponse } from '@supabase/supabase-js';
 import { useParams, useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { downloadLocally, generateTicketBlob, uploadTicket } from '../services/ticketService';
+import { downloadTicketFromUrl, requestServerTicket } from '../services/ticketService';
 import styles from './Checkout.module.css';
 import { CheckoutPaymentStep } from './CheckoutPaymentStep';
 import { CheckoutShippingStep } from './CheckoutShippingStep';
@@ -41,6 +41,7 @@ export interface ShippingInfo {
   department: string;
   province: string;
   district: string;
+  ubigeo?: string;
   agency?: string;
   address?: string;
   reference?: string;
@@ -99,6 +100,7 @@ export default function Checkout({
     department: '',
     province: '',
     district: '',
+    ubigeo: '',
     agency: '',
     address: '',
     reference: '',
@@ -167,6 +169,8 @@ export default function Checkout({
           });
           // Pre-fill email but user can still edit it
           setEmail(user.email || '');
+          // Pre-fill buyer name from Google profile when the field is empty
+          setCustomerName((prev) => prefillBuyerName(prev, user.user_metadata?.full_name));
         }
       } catch (err) {
         console.error('[Checkout] Error checking session:', err);
@@ -201,6 +205,8 @@ export default function Checkout({
                 avatarUrl: user.user_metadata?.avatar_url || null,
               });
               setEmail(user.email || '');
+              // Pre-fill buyer name from Google profile when the field is empty
+              setCustomerName((prev) => prefillBuyerName(prev, user.user_metadata?.full_name));
             }
           })
           .catch((err: unknown) => {
@@ -253,13 +259,6 @@ export default function Checkout({
     PERU_LOCATIONS.find((d) => d.name === shippingInfo.department)
       ?.provinces.find((p) => p.name === shippingInfo.province)
       ?.districts.map((d) => ({ value: d.name, label: d.name })) || [];
-
-  const availableAgencies = URBANO_AGENCIES.filter((agency) => {
-    const dept = PERU_LOCATIONS.find((d) => d.name === shippingInfo.department);
-    const prov = dept?.provinces.find((p) => p.name === shippingInfo.province);
-    const dist = prov?.districts.find((d) => d.name === shippingInfo.district);
-    return agency.districtId === dist?.id;
-  }).map((a) => ({ value: a.name, label: a.name }));
 
   // Mount effect
   useEffect(() => {
@@ -359,15 +358,6 @@ export default function Checkout({
           });
           return;
         }
-        if (shippingInfo.courier === 'urbano_agencia' && !shippingInfo.agency) {
-          setAlert({
-            open: true,
-            description: 'Seleccioná una agencia Urbano para el envío.',
-            color: 'warning',
-            icon: 'location_on',
-          });
-          return;
-        }
         if (shippingInfo.courier === 'urbano_domicilio' && !shippingInfo.address?.trim()) {
           setAlert({
             open: true,
@@ -389,16 +379,19 @@ export default function Checkout({
 
   // ─── handleDownloadTicket ───
   const handleDownloadTicket = useCallback(async () => {
-    if (!receiptRef.current) return;
+    if (!completedOrder?.orderNumber) return;
 
     try {
       setLoading(true);
 
-      const blob = await generateTicketBlob(receiptRef);
-      const orderNumber = completedOrder?.orderNumber || 'compra';
+      const orderNumber = completedOrder.orderNumber;
+      const result = await requestServerTicket(orderNumber, true);
 
-      await uploadTicket(blob, orderNumber);
-      downloadLocally(blob, orderNumber);
+      if (!result.success || !result.publicUrl) {
+        throw new Error(result.error || 'No se pudo generar el ticket');
+      }
+
+      await downloadTicketFromUrl(result.publicUrl, orderNumber);
 
       setAlert({
         open: true,
@@ -417,7 +410,7 @@ export default function Checkout({
     } finally {
       setLoading(false);
     }
-  }, [receiptRef, completedOrder]);
+  }, [completedOrder]);
 
   // ─── handleClose ───
   const handleClose = useCallback(() => {
@@ -578,7 +571,6 @@ export default function Checkout({
               departments={departments}
               provinces={provinces}
               districts={districts}
-              availableAgencies={availableAgencies}
               businessAddress={businessAddress}
               businessCity={businessCity}
               onNext={() => setStep(2)}

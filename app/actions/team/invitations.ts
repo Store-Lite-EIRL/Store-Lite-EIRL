@@ -38,12 +38,12 @@ export async function generateInvitationCode(
 
   const userId = ownership.userId!;
 
-  // 2. Check entitlements (must be business_pro or enterprise_pro)
+  // 2. Check entitlements (must be lite_pago or lite_plus)
   const entitlements = await getBusinessEntitlements(businessId);
   if (entitlements.maxTeamMembers <= 1) {
     return {
       success: false,
-      error: 'Tu plan no incluye la función de equipos. Actualiza a Business Pro o superior.',
+      error: 'Tu plan no incluye la función de equipos. Actualiza a Lite Pago o superior.',
     };
   }
 
@@ -56,37 +56,34 @@ export async function generateInvitationCode(
     };
   }
 
-  // 4. Check rate limit - max 3 active codes per business
-  const activeCodes = await db.query.businessInvitations.findMany({
-    where: and(
-      eq(businessInvitations.businessId, businessId),
-      or(isNull(businessInvitations.expiresAt), sql`${businessInvitations.expiresAt} > now()`),
-    ),
-    columns: { id: true },
-  });
-
-  if (activeCodes.length >= 3) {
-    return {
-      success: false,
-      error: 'Tienes demasiados códigos activos. Elimina uno antes de generar uno nuevo.',
-    };
+  // 4. Invalidate old codes (soft delete by setting expires_at to now)
+  try {
+    await db
+      .update(businessInvitations)
+      .set({ expiresAt: new Date() })
+      .where(
+        and(
+          eq(businessInvitations.businessId, businessId),
+          or(isNull(businessInvitations.expiresAt), sql`${businessInvitations.expiresAt} > now()`),
+        ),
+      );
+  } catch (err) {
+    console.error('[generateInvitationCode] Error invalidating old codes:', err);
   }
 
   // 5. Generate and save new code
   const code = generateCode();
   const codeHash = await hashCode(code);
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
 
   try {
-    // Invalidate old codes (soft delete by setting expires_at to now)
-    // Note: We keep them for audit but they won't be valid anymore
-
     await db.insert(businessInvitations).values({
       businessId,
       code,
       codeHash,
-      maxUses: null, // unlimited
+      maxUses: 1, // 1 use per invitation
       usedCount: 0,
-      expiresAt: null, // never expires
+      expiresAt,
       createdBy: userId,
     });
 
@@ -149,13 +146,10 @@ export async function getInvitationCode(
 /**
  * Revoke/delete an invitation code
  */
-export async function revokeInvitationCode(
-  businessId: string,
-  invitationId: string,
-): Promise<ActionState> {
+export async function revokeInvitationCode(businessId: string, code: string): Promise<ActionState> {
   // 0. Validate input
   const { revokeInvitationSchema } = await import('@/features/team/schemas');
-  const validation = revokeInvitationSchema.safeParse({ businessId, invitationId });
+  const validation = revokeInvitationSchema.safeParse({ businessId, code });
   if (!validation.success) {
     return { success: false, error: validation.error.issues[0]?.message };
   }
@@ -170,10 +164,7 @@ export async function revokeInvitationCode(
       .update(businessInvitations)
       .set({ expiresAt: new Date() }) // Invalidate by setting expiry to now
       .where(
-        and(
-          eq(businessInvitations.id, invitationId),
-          eq(businessInvitations.businessId, businessId),
-        ),
+        and(eq(businessInvitations.code, code), eq(businessInvitations.businessId, businessId)),
       );
 
     revalidatePath(`/${businessId}/settings`, 'page');

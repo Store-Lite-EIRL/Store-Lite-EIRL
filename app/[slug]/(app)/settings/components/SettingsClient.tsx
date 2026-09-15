@@ -21,7 +21,9 @@ import {
   Switch,
   TextField,
 } from '@/shared/components/ui';
+import { ImageCropModal } from '@/shared/components/ui/inputs/ImageCropModal';
 import { buildStoreDescription, buildStoreTitle } from '@/shared/seo/buildStorefrontMeta';
+import { compressImageToMaxSize } from '@/shared/utils/image';
 import { getBusinessPath } from '@/shared/utils/url';
 import { useParams, useRouter } from 'next/navigation';
 import React, {
@@ -73,16 +75,19 @@ import { TeamManagementPanel } from './TeamManagementPanel';
 function BusinessSection({
   business,
   entitlements,
+  businessLocked,
   isOwner,
   permissions,
 }: {
   business: SettingsBusiness;
   entitlements: Entitlements;
+  businessLocked: boolean;
   isOwner: boolean;
   permissions: Permission[];
 }) {
   const router = useRouter();
-  const canEditSlug = entitlements.plan !== 'basico';
+  const canEditSlug = entitlements.plan !== 'lite' && !businessLocked;
+  const isLitePlan = entitlements.plan === 'lite';
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
   const SLUG_MIN = 10;
@@ -116,31 +121,14 @@ function BusinessSection({
     [business.id, business.slug],
   );
   const [localLogoUrl, setLocalLogoUrl] = useState<string | null>(null);
+  const [avatarToCrop, setAvatarToCrop] = useState<File | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   const AVATAR_MAX_SIZE = 5 * 1024 * 1024; // 5MB
-  const AVATAR_MAX_WIDTH = 2048;
-  const AVATAR_MAX_HEIGHT = 2048;
   const ALLOWED_AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
-  function getImageDimensions(file: File): Promise<{ width: number; height: number } | null> {
-    return new Promise((resolve) => {
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-        resolve({ width: img.naturalWidth, height: img.naturalHeight });
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        resolve(null);
-      };
-      img.src = url;
-    });
-  }
-
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -160,24 +148,18 @@ function BusinessSection({
       return;
     }
 
-    // Validate image dimensions
-    const dimensions = await getImageDimensions(file);
-    if (!dimensions) {
-      setAvatarError('No se pudo leer la imagen.');
-      e.target.value = '';
-      return;
-    }
-    if (dimensions.width > AVATAR_MAX_WIDTH || dimensions.height > AVATAR_MAX_HEIGHT) {
-      setAvatarError(`La imagen no debe superar ${AVATAR_MAX_WIDTH}×${AVATAR_MAX_HEIGHT} px.`);
-      e.target.value = '';
-      return;
-    }
+    setAvatarToCrop(file);
+    e.target.value = '';
+  };
 
-    // Upload
+  const handleCroppedAvatar = async (file: File) => {
+    setAvatarToCrop(null);
+    setAvatarError(null);
     setIsUploadingAvatar(true);
     try {
+      const compressedFile = await compressImageToMaxSize(file);
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', compressedFile);
       const result = await updateBusinessLogo(business.id, business.slug, formData);
       if (result.success && result.url) {
         setLocalLogoUrl(result.url);
@@ -189,7 +171,6 @@ function BusinessSection({
       setAvatarError('Error inesperado al subir el avatar.');
     } finally {
       setIsUploadingAvatar(false);
-      e.target.value = '';
     }
   };
 
@@ -249,6 +230,11 @@ function BusinessSection({
 
   return (
     <div className={styles.sectionArea}>
+      <ImageCropModal
+        file={avatarToCrop}
+        onCancel={() => setAvatarToCrop(null)}
+        onApply={(file) => void handleCroppedAvatar(file)}
+      />
       <div className={styles.businessHero}>
         <div className={styles.businessHeroIcon}>
           <Icon size={28}>store</Icon>
@@ -262,7 +248,7 @@ function BusinessSection({
         </div>
       </div>
 
-      {!canEditSlug && (
+      {isLitePlan && (
         <Card variant="outlined" className={styles.upgradeBanner}>
           <div className={styles.upgradeBannerContent}>
             <Icon size={24} style={{ color: 'var(--md-sys-color-primary)' } as React.CSSProperties}>
@@ -272,7 +258,7 @@ function BusinessSection({
               <p className={styles.upgradeBannerTitle}>Funciones Premium</p>
               <p className={styles.upgradeBannerText}>
                 La edición de tu URL personalizada y la visibilidad de la tienda están disponibles a
-                partir del plan Emprendedor.
+                partir del plan Lite Pago.
               </p>
             </div>
           </div>
@@ -306,6 +292,7 @@ function BusinessSection({
             role="button"
             tabIndex={0}
             aria-label="Cambiar foto de perfil"
+            data-uploading={isUploadingAvatar || undefined}
             onClick={() => !isUploadingAvatar && avatarInputRef.current?.click()}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') avatarInputRef.current?.click();
@@ -396,6 +383,11 @@ function BusinessSection({
             <p className={styles.slugCardSupporting}>
               Este es el enlace público que verán tus clientes.
             </p>
+            {businessLocked && (
+              <p className={styles.slugLockedNotice}>
+                Este campo está bloqueado porque el negocio/producto tiene pagos registrados.
+              </p>
+            )}
           </div>
           {(isOwner || permissions.includes('business.edit')) && canEditSlug && !isEditingSlug && (
             <Button variant="tonal" onClick={() => setIsEditingSlug(true)}>
@@ -576,7 +568,7 @@ function PlanSection({
   const params = useParams();
   const slug = params.slug as string;
   const planKey = entitlements.plan;
-  const config = PLAN_CONFIG[planKey as keyof typeof PLAN_CONFIG] ?? PLAN_CONFIG.basico;
+  const config = PLAN_CONFIG[planKey as keyof typeof PLAN_CONFIG] ?? PLAN_CONFIG.lite;
   const remainingTime = getRemainingTime(entitlements.planEndDate);
 
   const features = [
@@ -1519,6 +1511,7 @@ export function SettingsClient({
   initialStorefrontTheme,
   initialHasCustomTheme = false,
   initialScheme,
+  businessLocked,
   role,
   permissions,
   isOwner,
@@ -1555,7 +1548,7 @@ export function SettingsClient({
               hasAccess = permissions.includes('business.edit');
               break;
             case 'payments': {
-              const isPremiumPlan = ['business_pro', 'enterprise_pro'].includes(entitlements.plan);
+              const isPremiumPlan = ['lite_pago', 'lite_plus'].includes(entitlements.plan);
               hasAccess = isPremiumPlan && permissions.includes('business.edit');
               break;
             }
@@ -1566,10 +1559,30 @@ export function SettingsClient({
     );
   }, [isOwner, permissions, entitlements]);
 
-  const accessibleItems = navItemsWithAccess.filter((i) => i.hasAccess);
+  const accessibleItems = React.useMemo(
+    () => navItemsWithAccess.filter((i) => i.hasAccess),
+    [navItemsWithAccess],
+  );
   const [active, setActive] = useState<Section>(
     accessibleItems.length > 0 ? accessibleItems[0].id : 'business',
   );
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`settings_tab_${business.id}`);
+      if (saved && accessibleItems.some((i) => i.id === saved)) {
+        setActive(saved as Section);
+      }
+    }
+  }, [business.id, accessibleItems]);
+
+  useEffect(() => {
+    if (isMounted && typeof window !== 'undefined') {
+      localStorage.setItem(`settings_tab_${business.id}`, active);
+    }
+  }, [active, business.id, isMounted]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
@@ -1624,6 +1637,7 @@ export function SettingsClient({
                   <BusinessSection
                     business={business}
                     entitlements={entitlements}
+                    businessLocked={businessLocked}
                     isOwner={isOwner}
                     permissions={permissions}
                   />

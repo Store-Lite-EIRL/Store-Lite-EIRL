@@ -48,12 +48,6 @@ export default function SolutionsSection() {
       icon: 'credit_card',
     },
     {
-      name: 'Urbano',
-      category: 'Envíos',
-      description: 'Envíos rápidos a todo el Perú',
-      icon: 'local_shipping',
-    },
-    {
       name: 'Instagram',
       category: 'Ventas',
       description: 'Vende directamente por Instagram',

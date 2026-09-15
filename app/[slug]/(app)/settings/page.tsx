@@ -8,6 +8,7 @@ import {
   products,
 } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements/getBusinessEntitlements';
+import { hasLockingPayments } from '@/core/orders/paymentGuards';
 import {
   getStorefrontLayoutFromPreferences,
   getStorefrontThemeFromPreferences,
@@ -78,6 +79,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
   // ------------------------------
 
   const entitlements = await getBusinessEntitlements(business.id);
+  const businessLocked = await hasLockingPayments({ businessId: business.id });
   const settings = await db.query.businessSettings.findFirst({
     where: eq(businessSettings.businessId, business.id),
     columns: {
@@ -129,6 +131,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
       initialStorefrontTheme={getStorefrontThemeFromPreferences(settings?.preferences)}
       initialHasCustomTheme={hasCustomStorefrontTheme(settings?.preferences)}
       initialScheme={settings?.themeMode ?? 'light'}
+      businessLocked={businessLocked}
       role={role}
       permissions={permissions}
       isOwner={isOwner}

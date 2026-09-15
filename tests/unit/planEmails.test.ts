@@ -41,8 +41,8 @@ function makePlanPayment(overrides: Record<string, unknown> = {}) {
     buyerFullName: 'ACME SAC',
     buyerDocumentType: 'RUC',
     buyerDocumentNumber: '20123456789',
-    planType: 'business_pro',
-    amountTotal: '149.00',
+    planType: 'lite_plus',
+    amountTotal: '79.00',
     ticketSeries: 'B001',
     ticketCorrelative: 42,
     ticketUrl: 'https://example.com/tickets/boleta.png',
@@ -74,8 +74,8 @@ describe('sendPlanPurchaseConfirmationEmail', () => {
 
     const html = mockSendEmail.mock.calls[0][0].html;
     expect(html).toContain('B001-00000042');
-    expect(html).toContain('S/ 149.00');
-    expect(html).toContain('Business Pro');
+    expect(html).toContain('S/ 79.00');
+    expect(html).toContain('Lite Plus');
   });
 
   test('renders the plan end date line prominently', async () => {

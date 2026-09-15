@@ -6,6 +6,7 @@ import type {
 } from '@/features/payment/hooks/useCulqiCallback';
 import { useCulqiCallback, YAPE_LIMITS } from '@/features/payment/hooks/useCulqiCallback';
 import type { CartItem } from '@/features/storage/context/CartContext';
+import { validateBuyerName } from '@/shared/payments/buyerName';
 import { loadCulqiScript } from '@/shared/payments/culqiScript';
 import { createOrder } from '@/shared/payments/paymentApi';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -120,10 +121,15 @@ export function useCheckoutPayment({
       return;
     }
 
-    // Nombre completo: requerido, mínimo 3 caracteres, solo letras y espacios
+    // Nombre completo: empty keeps legacy handling; non-empty must be a two-word Spanish-letters name
     const trimmedName = customerName.trim();
-    if (trimmedName.length < 3 || !/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(trimmedName)) {
+    if (!trimmedName) {
       onError('Por favor, ingresá tu nombre completo (mínimo 3 letras).');
+      return;
+    }
+    const nameError = validateBuyerName(trimmedName);
+    if (nameError) {
+      onError(nameError);
       return;
     }
 

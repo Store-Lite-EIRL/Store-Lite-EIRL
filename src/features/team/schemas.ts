@@ -16,7 +16,7 @@ export const businessIdParamSchema = z.object({
 
 export const revokeInvitationSchema = z.object({
   businessId: businessIdSchema,
-  invitationId: z.string().uuid('ID de invitación inválido'),
+  code: codeSchema,
 });
 
 export const memberActionSchema = z.object({

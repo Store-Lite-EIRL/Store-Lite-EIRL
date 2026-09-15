@@ -1,5 +1,6 @@
 'use client';
 
+import type { BusinessTrustScore } from '@/actions/business/getBusinessTrustScore';
 import type {
   StorefrontColorScheme,
   StorefrontLayout,
@@ -16,13 +17,19 @@ import type { ProductWithRelations } from '@/features/products/types/productType
 import { StorageProvider, useStorage } from '@/features/storage/context/StorageContext';
 import type { Product as StorageProduct } from '@/features/storage/data';
 import { AlertSnackbar } from '@/shared/components/ui';
-import { useTheme } from '@/shared/context/ThemeContext';
 import type { Business } from '@/types/business';
 import type { ProductCategory } from '@/types/product';
 import type { SaveProductMediaItem, SaveProductPayload } from '@/types/storage';
 import { useRouter } from 'next/navigation';
 import { posthog } from 'posthog-js';
-import { useCallback, useEffect, useLayoutEffect, useState, type CSSProperties } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+} from 'react';
 import FeaturedItems from '../../(main)/home/FeaturedItems';
 import Hero from '../../(main)/home/Hero';
 import styles from './BusinessPageContent.module.css';
@@ -32,8 +39,10 @@ import { LookupOrderModal } from './components/LookupOrderModal';
 import ProductPreviewSheet from './components/ProductPreviewSheet';
 import { StaffManagementTools } from './components/StaffManagementTools';
 import { StorefrontProductGridSection } from './components/StorefrontProductGridSection';
+import StorefrontTrustBadge from './components/StorefrontTrustBadge';
 import { mapToStorageProduct } from './components/mapToStorageProduct';
 import { resolveActiveScheme } from './components/schemeResolution';
+import { useStorefrontViewerTheme } from './components/useStorefrontViewerTheme';
 
 interface BusinessPageContentProps {
   business: Business;
@@ -56,6 +65,8 @@ interface BusinessPageContentProps {
   businessRuc?: string;
   businessAddress?: string;
   businessId?: string;
+  /** DS 011 trust signal (same source as the complaint banner); null when flag off. */
+  trustSignal?: BusinessTrustScore | null;
 }
 
 type OwnerSheetSaveArgs = [StorageProduct, SaveProductPayload, SaveProductMediaItem[], boolean];
@@ -75,6 +86,7 @@ export default function BusinessPageContent({
   storefrontTheme,
   previewCardTheme,
   defaultScheme,
+  trustSignal = null,
 }: BusinessPageContentProps) {
   const mappedProducts: StorageProduct[] = products.map(mapToStorageProduct);
 
@@ -104,6 +116,7 @@ export default function BusinessPageContent({
         storefrontTheme={storefrontTheme}
         previewCardTheme={previewCardTheme}
         defaultScheme={defaultScheme}
+        trustSignal={trustSignal}
       />
     </StorageProvider>
   );
@@ -124,6 +137,7 @@ function BusinessPageContentUI({
   storefrontTheme,
   previewCardTheme,
   defaultScheme,
+  trustSignal = null,
 }: BusinessPageContentProps) {
   // Pagos habilitados para compra automática solo si plan+credenciales están listos.
   const paymentsEnabled = hasPaymentGateway && isPaymentConfigured;
@@ -138,12 +152,13 @@ function BusinessPageContentUI({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [showLookupModal, setShowLookupModal] = useState(false);
-  const { effectiveTheme, setTheme } = useTheme();
   const [editableTheme, setEditableTheme] = useState<StorefrontTheme>(
     () => storefrontTheme ?? createDefaultStorefrontTheme(),
   );
   const [previewScheme, setPreviewScheme] = useState<StorefrontColorScheme | undefined>(undefined);
-  const [viewerTheme, setViewerTheme] = useState<'light' | 'dark' | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const { effectiveTheme, viewerTheme, setViewerTheme, handleViewerThemeToggle, setTheme } =
+    useStorefrontViewerTheme({ slug: business.slug, editorOpen: isEditorOpen });
   const [alert, setAlert] = useState<{
     open: boolean;
     description: string;
@@ -366,28 +381,32 @@ function BusinessPageContentUI({
     }
   };
 
-  const activeScheme = resolveActiveScheme(
-    viewerTheme,
-    previewScheme,
-    defaultScheme ?? (effectiveTheme as StorefrontColorScheme),
+  const activeScheme = useMemo(
+    () =>
+      resolveActiveScheme(
+        viewerTheme,
+        previewScheme,
+        defaultScheme ?? (effectiveTheme as StorefrontColorScheme),
+      ),
+    [viewerTheme, previewScheme, defaultScheme, effectiveTheme],
   );
-  const themeStyles = buildStorefrontThemeVars(editableTheme, activeScheme) as CSSProperties &
-    Record<string, string>;
+  const themeStyles = useMemo(
+    () =>
+      buildStorefrontThemeVars(editableTheme, activeScheme) as CSSProperties &
+        Record<string, string>,
+    [editableTheme, activeScheme],
+  );
 
   // Sync theme CSS vars to document root so parent elements (layout, main-area)
   // can see --storefront-bg, --storefront-bg-image, and all MD colors
   // useLayoutEffect ensures vars are applied synchronously BEFORE paint,
-  // preventing the flicker from cleanup → re-apply of CSS custom properties.
+  // preventing the flicker from cleanup â†’ re-apply of CSS custom properties.
   useLayoutEffect(() => {
     const root = document.documentElement;
     const entries = Object.entries(themeStyles) as [string, string][];
 
     // 1. Set all CSS vars on root (affects layout/main-area/storefront)
     entries.forEach(([key, value]) => root.style.setProperty(key, value));
-
-    // Enable smooth theme transitions on background properties
-    root.style.transition = 'background-color 300ms ease, background-image 300ms ease';
-    document.body.style.transition = 'background-color 300ms ease';
 
     // 2. Recompute the ORIGINAL background (themeStyles has it stripped so
     //    ::before doesn't double-paint). HTML handles the pattern exclusively.
@@ -416,7 +435,7 @@ function BusinessPageContentUI({
       root.style.backgroundAttachment = 'fixed';
 
       // Make <body> transparent so the <html> pattern/gradient shows through
-      // the entire viewport — including margins, the sidebar column, and areas
+      // the entire viewport â€” including margins, the sidebar column, and areas
       // outside .storefrontThemeRoot.
       document.body.style.backgroundColor = 'transparent';
     } else {
@@ -440,43 +459,9 @@ function BusinessPageContentUI({
       root.style.backgroundPosition = '';
       root.style.backgroundRepeat = '';
       root.style.backgroundAttachment = '';
-      root.style.transition = '';
       document.body.style.backgroundColor = '';
-      document.body.style.transition = '';
     };
   }, [themeStyles, editableTheme, activeScheme]);
-
-  // Read stored theme preference from localStorage on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(`storefront-theme-${business.slug}`);
-      if (stored === 'light' || stored === 'dark') {
-        setViewerTheme(stored);
-      }
-    } catch {
-      // Safari private mode — no-op
-    }
-  }, [business.slug]);
-
-  // Persist viewer theme choice to localStorage whenever it changes
-  useEffect(() => {
-    if (viewerTheme === null) return;
-    try {
-      localStorage.setItem(`storefront-theme-${business.slug}`, viewerTheme);
-    } catch {
-      // Safari private mode — no-op
-    }
-  }, [viewerTheme, business.slug]);
-
-  const handleViewerThemeToggle = useCallback(() => {
-    setViewerTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  }, []);
-
-  // Sync viewer theme to global app-theme so all pages reflect the change
-  useEffect(() => {
-    if (viewerTheme === null) return;
-    setTheme(viewerTheme);
-  }, [viewerTheme, setTheme]);
 
   // Read stored preview scheme from localStorage on mount (staff only)
   // Mirrors the same localStorage pattern as viewerTheme above.
@@ -488,7 +473,7 @@ function BusinessPageContentUI({
         setPreviewScheme(stored);
       }
     } catch {
-      // Safari private mode — no-op
+      // Safari private mode â€” no-op
     }
   }, [isStaff, business.slug]);
 
@@ -497,21 +482,23 @@ function BusinessPageContentUI({
       setPreviewScheme(scheme);
       if (scheme) {
         setViewerTheme(scheme);
-        setTheme(scheme); // 'light' | 'dark' — same values
+        setTheme(scheme); // 'light' | 'dark' â€” same values
         try {
           localStorage.setItem(`storefront-preview-scheme-${business.slug}`, scheme);
           localStorage.setItem(`storefront-theme-${business.slug}`, scheme);
         } catch {
-          // Safari private mode — no-op
+          // Safari private mode â€” no-op
         }
       }
     },
-    [business.slug, setTheme],
+    [business.slug, setTheme, setViewerTheme],
   );
 
   return (
     <>
       <div className={`page-container ${styles.storefrontThemeRoot}`} style={themeStyles}>
+        {/* DS 011 customer-facing trust signal (badge) — same data as the banner */}
+        <StorefrontTrustBadge trustSignal={trustSignal} />
         {storefrontLayout.sections.map(renderStorefrontSection)}
       </div>
       <ProductPreviewSheet
@@ -563,9 +550,12 @@ function BusinessPageContentUI({
           editableTheme={editableTheme}
           onThemeChange={setEditableTheme}
           onPreviewSchemeChange={handlePreviewSchemeChange}
+          onEditorClose={() => setIsEditorOpen(false)}
+          onEditorOpen={() => setIsEditorOpen(true)}
           detectedColorScheme={effectiveTheme as StorefrontColorScheme}
           previewScheme={previewScheme}
           defaultScheme={defaultScheme}
+          onEditorOpenChange={setIsEditorOpen}
         />
       )}
       {isStaff && (

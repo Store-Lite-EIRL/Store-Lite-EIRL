@@ -302,7 +302,6 @@ export function ChatWindow({
                 <Icon size={22}>person</Icon>
               </div>
             )}
-            {session.online && <span className={styles.onlineBadge} />}
           </div>
           <div className={styles.userDetails}>
             <div className={styles.userNameRow}>
@@ -320,10 +319,6 @@ export function ChatWindow({
             </div>
             <div className={styles.userMeta}>
               <span className={styles.userEmail}>{session.email || 'Sin correo'}</span>
-              <span className={styles.userDot}>·</span>
-              <span className={styles.userStatus}>
-                {session.online ? 'En línea' : 'Desconectado'}
-              </span>
             </div>
           </div>
         </div>

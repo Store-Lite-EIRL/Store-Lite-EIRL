@@ -59,3 +59,28 @@ export const complaintResponseSchema = z.object({
     .min(1, 'La respuesta no puede estar vacía')
     .max(5000, 'La respuesta no puede exceder 5,000 caracteres'),
 });
+
+// ── Admin appeal review (LEGAL-003) ──
+// Server-action input for resolving a seller appeal against
+// auto-deactivation. Notes are mandatory when rejecting so the
+// written decision always carries the grounds (DS 011-2011-PCM).
+export const appealReviewInputSchema = z
+  .object({
+    appealId: z.string().uuid('appealId must be a valid UUID'),
+    decision: z.enum(['approved', 'rejected']),
+    adminNotes: z.string().max(2000, 'Admin notes cannot exceed 2,000 characters').optional(),
+    // Test-only override: pins the resolution timestamp so
+    // reviews are deterministic in automated tests.
+    decisionTimestampOverride: z.date().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.decision === 'rejected' && !data.adminNotes?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['adminNotes'],
+        message: 'Admin notes are required when rejecting an appeal',
+      });
+    }
+  });
+
+export type AppealReviewInput = z.infer<typeof appealReviewInputSchema>;

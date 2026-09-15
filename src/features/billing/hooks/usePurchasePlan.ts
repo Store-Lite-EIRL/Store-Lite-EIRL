@@ -14,7 +14,7 @@ import { useCallback, useRef, useState } from 'react';
 
 export interface PurchasePlanData {
   token: string;
-  planType: 'basico' | 'emprendedor' | 'business_pro' | 'enterprise_pro';
+  planType: 'lite' | 'lite_pago' | 'lite_plus';
   period: 'monthly' | 'annual';
   businessId: string;
   buyerEmail: string;

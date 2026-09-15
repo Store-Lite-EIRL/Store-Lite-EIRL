@@ -29,6 +29,7 @@ interface CreateProductSheetProps {
   ) => Promise<void>;
   nextId?: string;
   initialProduct?: Product | null;
+  hasPayments?: boolean;
   onSavingChange?: (isSaving: boolean) => void;
 }
 
@@ -38,6 +39,7 @@ export const CreateProductSheet = ({
   onSave,
   nextId,
   initialProduct = null,
+  hasPayments = false,
   onSavingChange,
 }: CreateProductSheetProps) => {
   const isEditMode = Boolean(initialProduct);
@@ -174,6 +176,7 @@ export const CreateProductSheet = ({
             description={form.description}
             brand={form.brand}
             nameError={errors.name}
+            hasPayments={hasPayments}
             onNameChange={(v) => setField('name', v)}
             onDescriptionChange={(v) => setField('description', v)}
             onBrandChange={(v) => setField('brand', v)}
@@ -204,6 +207,7 @@ export const CreateProductSheet = ({
             currencySymbol={currencySymbol}
             stockError={errors.stock}
             priceError={errors.price}
+            hasPayments={hasPayments}
             onStockChange={(v) => setField('stock', v)}
             onPriceChange={(v) => setField('price', v)}
             onSecondPriceChange={(v) => setField('secondPrice', v)}

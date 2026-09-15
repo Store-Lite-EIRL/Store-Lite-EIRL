@@ -5,31 +5,66 @@
 // the Culqi charge request body for the token flow.
 // =====================================================
 
+import { POST } from '@/app/api/payment/charge/route';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // ── Mocks (must be before module imports — vi.mock is hoisted) ──
 
-const mockBusinessFindFirst = vi.fn();
-const mockBusinessSettingsFindFirst = vi.fn();
-const mockPaymentsFindFirst = vi.fn();
-const mockProductsFindFirst = vi.fn();
+const {
+  mockBusinessFindFirst,
+  mockBusinessSettingsFindFirst,
+  mockPaymentsFindFirst,
+  mockProductsFindFirst,
+  mockProductsSelectWhere,
+  mockProductsSelectFrom,
+  mockProductsSelect,
+  mockTxReturning,
+  mockTxValues,
+  mockTxInsert,
+  mockTxSet,
+  mockTxWhere,
+  mockTxUpdate,
+  mockTransaction,
+} = vi.hoisted(() => {
+  const mockBusinessFindFirst = vi.fn();
+  const mockBusinessSettingsFindFirst = vi.fn();
+  const mockPaymentsFindFirst = vi.fn();
+  const mockProductsFindFirst = vi.fn();
 
-const mockProductsSelectWhere = vi.fn();
-const mockProductsSelectFrom = vi.fn(() => ({ where: mockProductsSelectWhere }));
-const mockProductsSelect = vi.fn(() => ({ from: mockProductsSelectFrom }));
+  const mockProductsSelectWhere = vi.fn();
+  const mockProductsSelectFrom = vi.fn(() => ({ where: mockProductsSelectWhere }));
+  const mockProductsSelect = vi.fn(() => ({ from: mockProductsSelectFrom }));
 
-const mockTxReturning = vi.fn();
-const mockTxValues = vi.fn(() => ({ returning: mockTxReturning }));
-const mockTxInsert = vi.fn(() => ({ values: mockTxValues }));
-const mockTxSet = vi.fn(() => ({ where: mockTxWhere }));
-const mockTxWhere = vi.fn();
-const mockTxUpdate = vi.fn(() => ({ set: mockTxSet }));
-const mockTransaction = vi.fn(async (callback: (tx: unknown) => Promise<unknown>) =>
-  callback({
-    insert: mockTxInsert,
-    update: mockTxUpdate,
-  }),
-);
+  const mockTxReturning = vi.fn();
+  const mockTxValues = vi.fn(() => ({ returning: mockTxReturning }));
+  const mockTxInsert = vi.fn(() => ({ values: mockTxValues }));
+  const mockTxSet = vi.fn(() => ({ where: mockTxWhere }));
+  const mockTxWhere = vi.fn();
+  const mockTxUpdate = vi.fn(() => ({ set: mockTxSet }));
+  const mockTransaction = vi.fn(async (callback: (tx: unknown) => Promise<unknown>) =>
+    callback({
+      insert: mockTxInsert,
+      update: mockTxUpdate,
+    }),
+  );
+
+  return {
+    mockBusinessFindFirst,
+    mockBusinessSettingsFindFirst,
+    mockPaymentsFindFirst,
+    mockProductsFindFirst,
+    mockProductsSelectWhere,
+    mockProductsSelectFrom,
+    mockProductsSelect,
+    mockTxReturning,
+    mockTxValues,
+    mockTxInsert,
+    mockTxSet,
+    mockTxWhere,
+    mockTxUpdate,
+    mockTransaction,
+  };
+});
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
@@ -53,19 +88,21 @@ vi.mock('@/core/database/client', () => ({
 }));
 
 vi.mock('@/core/entitlements/getBusinessEntitlements', () => ({
-  getBusinessEntitlements: vi.fn().mockResolvedValue({ hasPaymentGateway: true }),
+  // original-impl form so restoreMocks keeps this resolved value across tests
+  getBusinessEntitlements: vi.fn(async () => ({ hasPaymentGateway: true })),
 }));
 
 vi.mock('@/core/payments/idempotency', () => ({
-  reserveIdempotencyKey: vi.fn().mockResolvedValue({ type: 'reserved', key: 'idem-1' }),
-  completeIdempotencyKey: vi.fn().mockResolvedValue(undefined),
+  // original-impl form so restoreMocks keeps these resolved values across tests
+  reserveIdempotencyKey: vi.fn(async () => ({ type: 'reserved', key: 'idem-1' })),
+  completeIdempotencyKey: vi.fn(async () => undefined),
 }));
 
 vi.mock('@/core/payments/rateLimiter', () => ({
   paymentRateLimiter: { check: vi.fn(() => true) },
 }));
 
-const mockDecrypt = vi.fn();
+const mockDecrypt = vi.hoisted(() => vi.fn());
 vi.mock('@/utils/crypto', () => ({
   decrypt: mockDecrypt,
 }));
@@ -89,7 +126,7 @@ vi.mock('@/core/utils/trackingToken', () => ({
 }));
 
 const mockFetch = vi.fn();
-globalThis.fetch = mockFetch;
+vi.stubGlobal('fetch', mockFetch);
 
 // ── Helpers ──────────────────────────────────────────
 
@@ -176,8 +213,6 @@ describe('POST /api/payment/charge', () => {
   // ============================================================
 
   test('sends antifraud_details with split customerName, phone_number and real email', async () => {
-    const { POST } = await import('@/app/api/payment/charge/route');
-
     const request = new Request('http://localhost/api/payment/charge', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -207,8 +242,6 @@ describe('POST /api/payment/charge', () => {
   });
 
   test('omits first_name/last_name keys when customerName is missing', async () => {
-    const { POST } = await import('@/app/api/payment/charge/route');
-
     const request = new Request('http://localhost/api/payment/charge', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -227,8 +260,6 @@ describe('POST /api/payment/charge', () => {
   });
 
   test('uses cliente@culqi.com fallback email only when email is truly absent', async () => {
-    const { POST } = await import('@/app/api/payment/charge/route');
-
     const request = new Request('http://localhost/api/payment/charge', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -250,8 +281,6 @@ describe('POST /api/payment/charge', () => {
   // ============================================================
 
   test('rejects tampered amount that does not match product price (400)', async () => {
-    const { POST } = await import('@/app/api/payment/charge/route');
-
     // Product price is 50.00 soles = 5000 cents
     mockProductsSelectWhere.mockResolvedValue([
       {
@@ -278,8 +307,6 @@ describe('POST /api/payment/charge', () => {
   });
 
   test('accepts correct amount that matches product price (200)', async () => {
-    const { POST } = await import('@/app/api/payment/charge/route');
-
     // Product price is 50.00 soles = 5000 cents
     mockProductsSelectWhere.mockResolvedValue([
       {

@@ -1,5 +1,6 @@
 'use client';
 
+import { compressImageToMaxSize } from '@/shared/utils/image';
 import { updateBusinessLogo } from '@app/actions/business';
 import { useState } from 'react';
 import type { AlertState } from './useBusinessActions';
@@ -17,11 +18,11 @@ export function useLogoManager(
     if (!businessId || !businessSlug) return;
 
     setIsUpdatingLogo(true);
-    const formDataObj = new FormData();
-    formDataObj.append('file', file);
-
     const objectUrl = URL.createObjectURL(file);
     try {
+      const compressedFile = await compressImageToMaxSize(file);
+      const formDataObj = new FormData();
+      formDataObj.append('file', compressedFile);
       const result = await updateBusinessLogo(businessId, businessSlug, formDataObj);
       if (result.success) {
         setLogoPreview(result.url || objectUrl);

@@ -45,12 +45,20 @@ export function StorefrontThemeEditor({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [usePlatformColors, setUsePlatformColors] = useState(!initialHasCustomTheme);
-  const [storefrontTheme, setStorefrontTheme] = useState<StorefrontTheme>(
+  const [storefrontTheme, setStorefrontTheme] = useState<StorefrontTheme>(() =>
     normalizeStorefrontTheme(initialStorefrontTheme),
   );
   const [scheme, setScheme] = useState<StorefrontColorScheme>(initialScheme ?? 'light');
   const currentConfig = storefrontTheme[scheme];
   const { feedback, showSuccess, showError, close: closeFeedback } = useSnackbarFeedback();
+
+  // ── Dirty tracking snapshots ──
+  // Captured at the same time as the state initializers so they are
+  // guaranteed to match on the first render (no serialization mismatch).
+  const [savedPlatformColors, setSavedPlatformColors] = useState(!initialHasCustomTheme);
+  const [savedThemeJson, setSavedThemeJson] = useState(() =>
+    JSON.stringify(normalizeStorefrontTheme(initialStorefrontTheme)),
+  );
 
   const handleSaveTheme = () => {
     startTransition(async () => {
@@ -67,27 +75,24 @@ export function StorefrontThemeEditor({
       }
 
       if ('storefrontTheme' in result && result.storefrontTheme) {
-        setStorefrontTheme(normalizeStorefrontTheme(result.storefrontTheme));
+        const updated = normalizeStorefrontTheme(result.storefrontTheme);
+        setStorefrontTheme(updated);
+        setSavedThemeJson(JSON.stringify(updated));
+      } else {
+        // clearStorefrontTheme — snapshot stays in sync
+        setSavedThemeJson(JSON.stringify(storefrontTheme));
       }
 
+      setSavedPlatformColors(usePlatformColors);
       showSuccess('La apariencia pública del storefront se actualizó correctamente.');
       router.refresh();
     });
   };
 
-  // Dirty state: detectar si hay cambios respecto al estado inicial guardado
-  const initialPlatformColors = !initialHasCustomTheme;
-  const bgChanged =
-    JSON.stringify(currentConfig.background) !==
-    JSON.stringify(initialStorefrontTheme[scheme].background);
-  const themeChanged =
-    storefrontTheme.fontFamily !== initialStorefrontTheme.fontFamily ||
-    currentConfig.palette.primary !== initialStorefrontTheme[scheme].palette.primary ||
-    currentConfig.palette.secondary !== initialStorefrontTheme[scheme].palette.secondary ||
-    currentConfig.palette.accent !== initialStorefrontTheme[scheme].palette.accent ||
-    bgChanged;
+  // Dirty state: comparar contra snapshots guardados (no contra props)
+  const themeChanged = JSON.stringify(storefrontTheme) !== savedThemeJson;
   const hasChanges =
-    usePlatformColors !== initialPlatformColors || (!usePlatformColors && themeChanged);
+    usePlatformColors !== savedPlatformColors || (!usePlatformColors && themeChanged);
 
   const canSave = isOwner || permissions.includes('storefront.edit');
 

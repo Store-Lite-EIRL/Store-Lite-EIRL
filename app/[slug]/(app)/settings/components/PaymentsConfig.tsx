@@ -71,7 +71,7 @@ export function PaymentsConfig({
   const isConfigured = business.culqiPublicKey && business.culqiSecretKey;
   const isTestKeys = business.culqiPublicKey?.startsWith('pk_test_');
 
-  const isPremiumPlan = ['business_pro', 'enterprise_pro'].includes(entitlements.plan);
+  const isPremiumPlan = ['lite_pago', 'lite_plus'].includes(entitlements.plan);
 
   const hero = (
     <div className={styles.businessHero}>
@@ -110,7 +110,7 @@ export function PaymentsConfig({
         >
           Culqi es la pasarela de pagos que procesa los cobros de su tienda: tarjetas (Visa,
           Mastercard, American Express), Yape, Plin, billeteras móviles y más. Está disponible en
-          los planes Business Pro o Enterprise Pro.
+          los planes Lite Pago o Lite Plus.
         </p>
         <p
           style={{

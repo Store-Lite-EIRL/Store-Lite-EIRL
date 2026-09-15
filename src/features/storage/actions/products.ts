@@ -3,6 +3,7 @@
 import { db } from '@/core/database/client';
 import { productCategories, productLikes, productMedia, products } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements';
+import { FROZEN_FIELD_MESSAGE, hasLockingPayments } from '@/core/orders/paymentGuards';
 import { captureEvent } from '@/lib/analytics/capture';
 import { AnalyticsEvents } from '@/lib/analytics/taxonomy';
 import { logError } from '@/lib/errorHandling';
@@ -353,11 +354,28 @@ export async function updateProduct(
 
     const existingProduct = await db.query.products.findFirst({
       where: (table, { and, eq }) => and(eq(table.id, productId), eq(table.businessId, businessId)),
-      columns: { id: true, stock: true, title: true, isAvailable: true },
+      columns: {
+        id: true,
+        stock: true,
+        title: true,
+        isAvailable: true,
+        price: true,
+        secondPrice: true,
+      },
     });
 
     if (!existingProduct) {
       throw new Error('Producto no encontrado o no autorizado');
+    }
+
+    // Payment lock guard — title and price frozen when payments exist
+    if (
+      (await hasLockingPayments({ productId })) &&
+      (normalizedProduct.name !== existingProduct.title ||
+        String(normalizedProduct.price) !== existingProduct.price ||
+        String(normalizedProduct.secondPrice ?? '') !== String(existingProduct.secondPrice ?? ''))
+    ) {
+      return { success: false, productId: null, error: FROZEN_FIELD_MESSAGE };
     }
 
     // 🚫 PLAN CHECK: Si se está habilitando un producto que estaba desactivado,
@@ -485,6 +503,22 @@ export async function updateProduct(
       productId: null,
       error: error instanceof Error ? error.message : 'Error al actualizar producto',
     };
+  }
+}
+
+/**
+ * Returns whether a product has locking payment history.
+ * Used by the UI to mirror frozen fields (UX only — server guards are authoritative).
+ */
+export async function getProductLockState(
+  productId: string,
+): Promise<{ locked: boolean; error?: string }> {
+  try {
+    const locked = await hasLockingPayments({ productId });
+    return { locked };
+  } catch (error) {
+    logError('getProductLockState', error);
+    return { locked: false, error: 'Error al verificar el estado del producto.' };
   }
 }
 

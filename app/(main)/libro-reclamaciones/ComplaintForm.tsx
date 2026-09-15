@@ -145,7 +145,7 @@ export function ComplaintForm() {
   if (step === 'success') {
     return (
       <Card variant="outlined" style={{ padding: '2rem', textAlign: 'center' }}>
-        <Icon size={64} style={{ color: '#16a34a', marginBottom: '1rem' }}>
+        <Icon size={64} style={{ color: 'var(--md-sys-color-primary)', marginBottom: '1rem' }}>
           check_circle
         </Icon>
         <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 8px' }}>
@@ -157,8 +157,8 @@ export function ComplaintForm() {
 
         <div
           style={{
-            backgroundColor: '#f0fdf4',
-            border: '1px solid #bbf7d0',
+            backgroundColor: 'var(--md-sys-color-surface-container-high)',
+            border: '1px solid var(--md-sys-color-outline-variant)',
             borderRadius: '12px',
             padding: '1.5rem',
             marginBottom: '1.5rem',
@@ -167,7 +167,7 @@ export function ComplaintForm() {
           <p
             style={{
               fontSize: '0.8rem',
-              color: '#166534',
+              color: 'var(--md-sys-color-on-surface-variant)',
               textTransform: 'uppercase',
               letterSpacing: '1px',
               fontWeight: 600,
@@ -180,7 +180,7 @@ export function ComplaintForm() {
             style={{
               fontSize: '1.75rem',
               fontWeight: 700,
-              color: '#16a34a',
+              color: 'var(--md-sys-color-primary)',
               margin: 0,
               fontFamily: 'monospace',
             }}
@@ -192,14 +192,20 @@ export function ComplaintForm() {
         {emailFailed && (
           <div
             style={{
-              backgroundColor: '#fefce8',
-              border: '1px solid #fde047',
+              backgroundColor: 'var(--md-sys-color-surface-variant)',
+              border: '1px solid var(--md-sys-color-outline-variant)',
               borderRadius: '8px',
               padding: '12px 16px',
               marginBottom: '1rem',
             }}
           >
-            <p style={{ fontSize: '0.875rem', color: '#854d0e', margin: 0 }}>
+            <p
+              style={{
+                fontSize: '0.875rem',
+                color: 'var(--md-sys-color-on-surface-variant)',
+                margin: 0,
+              }}
+            >
               No se pudo enviar el correo de confirmación, pero su reclamo quedó registrado con
               éxito. Guarde el código para hacer seguimiento.
             </p>

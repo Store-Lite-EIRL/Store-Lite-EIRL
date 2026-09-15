@@ -2,6 +2,7 @@
 
 import { clearBusinessSessionData, STORAGE_KEY } from '@/hooks/useBusinessSession';
 import { createClient } from '@/lib/supabase/client';
+import { useTheme } from '@/shared/context/ThemeContext';
 import { getBusinessPath } from '@/shared/utils/url';
 import '@/styles/components/navbar.css';
 import Link from 'next/link';
@@ -18,6 +19,39 @@ interface NavbarProps {
   businessId?: string;
   businessName?: string;
   businessLogoUrl?: string;
+  businessCoverUrl?: string;
+}
+
+const PLAN_LABELS: Record<string, string> = {
+  basico: 'Básico',
+  emprendedor: 'Emprendedor',
+  business_pro: 'Business PRO',
+  enterprise_pro: 'Enterprise PRO',
+};
+
+interface NavLinkItem {
+  id: string;
+  icon: string;
+  label: string;
+  path: string;
+}
+
+interface NavActionItem {
+  id: string;
+  icon: string;
+  label: string;
+  action: 'toggle-theme';
+}
+
+type NavItem = NavLinkItem | NavActionItem;
+
+function isLinkItem(item: NavItem): item is NavLinkItem {
+  return 'path' in item;
+}
+
+function formatPlanName(planName: string): string {
+  const normalizedPlan = planName.trim().toLowerCase();
+  return PLAN_LABELS[normalizedPlan] ?? planName.replace(/_/g, ' ').replace(/\bpro\b/gi, 'PRO');
 }
 
 export default function Navbar({
@@ -27,12 +61,18 @@ export default function Navbar({
   businessId,
   businessName,
   businessLogoUrl,
+  businessCoverUrl,
 }: NavbarProps) {
   const pathname = usePathname();
   const params = useParams();
   const router = useRouter();
   const slug = params?.slug as string;
   const { can, isOwner } = usePermissions();
+  const { effectiveTheme, setTheme } = useTheme();
+
+  const toggleTheme = () => {
+    setTheme(effectiveTheme === 'dark' ? 'light' : 'dark');
+  };
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
@@ -138,7 +178,7 @@ export default function Navbar({
   };
 
   // Define sections with their items
-  const sections = [
+  const sections: { id: string; title: string; icon: string; items: NavItem[] }[] = [
     {
       id: 'principal',
       title: 'Principal',
@@ -179,6 +219,12 @@ export default function Navbar({
       icon: 'tune',
       items: [
         {
+          id: 'theme',
+          icon: effectiveTheme === 'dark' ? 'light_mode' : 'dark_mode',
+          label: 'Tema',
+          action: 'toggle-theme',
+        },
+        {
           id: 'feedback',
           icon: 'feedback',
           label: 'Ayuda',
@@ -208,9 +254,9 @@ export default function Navbar({
   };
 
   // Filter items based on permissions and plan
-  const getVisibleItems = (items: (typeof sections)[0]['items']) => {
+  const getVisibleItems = (items: NavItem[]) => {
     return items.filter((item) => {
-      if (item.id === 'dashboard' && planName === 'basico') return false;
+      if (item.id === 'dashboard' && planName === 'lite') return false;
       if (isOwner) return true;
       if (item.id === 'chat') return can('chat.view');
       if (item.id === 'notifications') return can('notifications.view');
@@ -222,7 +268,7 @@ export default function Navbar({
 
   // Mobile render logic extracted to avoid IIFE in JSX
   const renderMobileItems = () => {
-    const allVisibleItems = sections.flatMap((s) => getVisibleItems(s.items));
+    const allVisibleItems = sections.flatMap((s) => getVisibleItems(s.items)).filter(isLinkItem);
     const hasChat = allVisibleItems.some((i) => i.id === 'chat');
     const hasNotifications = allVisibleItems.some((i) => i.id === 'notifications');
 
@@ -275,6 +321,18 @@ export default function Navbar({
                   <md-icon>notifications</md-icon>
                   <span>Notificaciones</span>
                 </Link>
+                <button
+                  className="navbar__mobile-popup-item"
+                  onClick={toggleTheme}
+                  aria-label="Tema"
+                  title="Tema"
+                  suppressHydrationWarning
+                >
+                  <md-icon suppressHydrationWarning>
+                    {effectiveTheme === 'dark' ? 'light_mode' : 'dark_mode'}
+                  </md-icon>
+                  <span>Tema</span>
+                </button>
                 <Link
                   href={getBusinessPath(slug, '/ayuda')}
                   className="navbar__mobile-popup-item"
@@ -303,9 +361,7 @@ export default function Navbar({
             <md-icon className="navbar__item-icon" suppressHydrationWarning>
               {item.icon}
             </md-icon>
-            {item.id === 'notifications' && businessId && (
-              <NavbarNotificationsBadge businessId={businessId} />
-            )}
+            {item.id === 'notifications' && businessId && <NavbarNotificationsBadge />}
           </span>
           {!isCollapsed && (
             <span className="navbar__item-label" suppressHydrationWarning>
@@ -323,25 +379,63 @@ export default function Navbar({
         <div className="navbar__header">
           {!isCollapsed && businessName && (
             <div className="navbar__business-header">
-              {businessLogoUrl && (
-                <img src={businessLogoUrl} alt={businessName} className="navbar__business-logo" />
-              )}
+              <div className="navbar__business-media">
+                {businessLogoUrl && (
+                  <img src={businessLogoUrl} alt={businessName} className="navbar__business-logo" />
+                )}
+                {businessCoverUrl && (
+                  <img
+                    src={businessCoverUrl}
+                    alt=""
+                    aria-hidden="true"
+                    className="navbar__business-cover"
+                  />
+                )}
+              </div>
+              <button
+                className="navbar__item--toggle-small navbar__item--toggle-business"
+                onClick={onToggle}
+                aria-label="Contraer"
+                title="Contraer"
+              >
+                <Icon size={18}>chevron_left</Icon>
+              </button>
               <div className="navbar__business-text">
                 <span className="navbar__business-name">{businessName}</span>
-                <span className="navbar__plan-badge-small">{planName}</span>
+                <div className="navbar__plan-row">
+                  <span className="navbar__plan-badge-small">
+                    <Icon size={14} aria-hidden="true">
+                      star
+                    </Icon>
+                    {formatPlanName(planName)}
+                  </span>
+                  <span className="navbar__status-active">
+                    <span className="navbar__status-dot" aria-hidden="true" />
+                    ACTIVO
+                  </span>
+                </div>
               </div>
             </div>
           )}
-          <button
-            className={`navbar__item--toggle-small ${isCollapsed ? 'collapsed' : ''}`}
-            onClick={onToggle}
-            aria-label={isCollapsed ? 'Expandir' : 'Contraer'}
-            title={isCollapsed ? 'Expandir' : 'Contraer'}
-          >
-            <Icon size={isCollapsed ? 28 : 18}>
-              {isCollapsed ? 'chevron_right' : 'chevron_left'}
-            </Icon>
-          </button>
+          {isCollapsed && (
+            <div className="navbar__collapsed-brand">
+              {businessLogoUrl && (
+                <img
+                  src={businessLogoUrl}
+                  alt={businessName ?? 'Negocio'}
+                  className="navbar__business-logo navbar__business-logo--collapsed"
+                />
+              )}
+              <button
+                className="navbar__item--toggle-small navbar__item--toggle-collapsed"
+                onClick={onToggle}
+                aria-label="Expandir"
+                title="Expandir"
+              >
+                <Icon size={20}>chevron_right</Icon>
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="navbar__divider" />
@@ -383,30 +477,52 @@ export default function Navbar({
                     </button>
                     {isExpanded && (
                       <div className="navbar__section-items">
-                        {visibleItems.map((item) => (
-                          <Link
-                            key={item.id}
-                            href={item.path}
-                            className={`navbar__item navbar__item--${item.id} ${isActive(item.path) ? 'navbar__item--active' : ''}`}
-                            aria-label={item.label}
-                            title={item.label}
-                            suppressHydrationWarning
-                          >
-                            <span className="navbar__item-icon-wrapper">
-                              <md-icon className="navbar__item-icon" suppressHydrationWarning>
-                                {item.icon}
-                              </md-icon>
-                              {item.id === 'notifications' && businessId && (
-                                <NavbarNotificationsBadge businessId={businessId} />
-                              )}
-                            </span>
-                            {!isCollapsed && (
-                              <span className="navbar__item-label" suppressHydrationWarning>
-                                {item.label}
+                        {visibleItems.map((item) =>
+                          isLinkItem(item) ? (
+                            <Link
+                              key={item.id}
+                              href={item.path}
+                              className={`navbar__item navbar__item--${item.id} ${isActive(item.path) ? 'navbar__item--active' : ''}`}
+                              aria-label={item.label}
+                              title={item.label}
+                              suppressHydrationWarning
+                            >
+                              <span className="navbar__item-icon-wrapper">
+                                <md-icon className="navbar__item-icon" suppressHydrationWarning>
+                                  {item.icon}
+                                </md-icon>
+                                {item.id === 'notifications' && businessId && (
+                                  <NavbarNotificationsBadge />
+                                )}
                               </span>
-                            )}
-                          </Link>
-                        ))}
+                              {!isCollapsed && (
+                                <span className="navbar__item-label" suppressHydrationWarning>
+                                  {item.label}
+                                </span>
+                              )}
+                            </Link>
+                          ) : (
+                            <button
+                              key={item.id}
+                              className={`navbar__item navbar__item--action ${effectiveTheme === 'dark' ? 'navbar__item--action-dark' : ''}`}
+                              onClick={toggleTheme}
+                              aria-label={item.label}
+                              title={`${item.label} — ${effectiveTheme === 'dark' ? 'cambiar a claro' : 'cambiar a oscuro'}`}
+                              suppressHydrationWarning
+                            >
+                              <span className="navbar__item-icon-wrapper">
+                                <md-icon className="navbar__item-icon" suppressHydrationWarning>
+                                  {item.icon}
+                                </md-icon>
+                              </span>
+                              {!isCollapsed && (
+                                <span className="navbar__item-label" suppressHydrationWarning>
+                                  {item.label}
+                                </span>
+                              )}
+                            </button>
+                          ),
+                        )}
                       </div>
                     )}
                   </div>

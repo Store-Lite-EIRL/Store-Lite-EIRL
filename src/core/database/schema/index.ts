@@ -5,6 +5,7 @@
 export * from './businesses';
 export * from './chat';
 export * from './complaints';
+export * from './deactivation';
 export * from './enums';
 export * from './feedback';
 export * from './imports';

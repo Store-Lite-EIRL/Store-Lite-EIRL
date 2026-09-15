@@ -89,7 +89,7 @@
 
 /* ─── Link de contacto (de AboutSection.module.css) ─── */
 .contactLink {
-  color: var(--storefront-primary, var(--md-sys-color-primary));
+  color: var(--md-sys-color-on-surface-variant);
   text-decoration: none;
   font-weight: 500;
   font-size: 1.1rem;

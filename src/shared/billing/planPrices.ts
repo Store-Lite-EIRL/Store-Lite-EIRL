@@ -7,7 +7,7 @@
 // desglosa internamente: subtotal = total / 1.18; igv = total - subtotal.
 // =====================================================
 
-export type PlanKey = 'basico' | 'emprendedor' | 'business_pro' | 'enterprise_pro';
+export type PlanKey = 'lite' | 'lite_pago' | 'lite_plus';
 
 export interface PlanPrice {
   monthly: number; // céntimos, total final incluye IGV
@@ -16,10 +16,16 @@ export interface PlanPrice {
 }
 
 export const PLAN_PRICES: Record<PlanKey, PlanPrice> = {
-  basico: { monthly: 0, annual: 0, label: 'Básico' },
-  emprendedor: { monthly: 5900, annual: 59000, label: 'Emprendedor' }, // S/ 59.00 / S/ 590.00
-  business_pro: { monthly: 9900, annual: 99000, label: 'Business Pro' }, // S/ 99.00 / S/ 990.00
-  enterprise_pro: { monthly: 14900, annual: 149000, label: 'Enterprise Pro' }, // S/ 149.00 / S/ 1490.00
+  lite: { monthly: 0, annual: 0, label: 'Lite' },
+  lite_pago: { monthly: 3900, annual: 39000, label: 'Lite Pago' }, // S/ 39.00 / S/ 390.00
+  lite_plus: { monthly: 7900, annual: 79000, label: 'Lite Plus' }, // S/ 79.00 / S/ 790.00
+};
+
+// Convenience map for UI: plan key → display label (source: PLAN_PRICES).
+export const PLAN_LABELS: Record<PlanKey, string> = {
+  lite: PLAN_PRICES.lite.label,
+  lite_pago: PLAN_PRICES.lite_pago.label,
+  lite_plus: PLAN_PRICES.lite_plus.label,
 };
 
 export const IGV_RATE = 0.18;

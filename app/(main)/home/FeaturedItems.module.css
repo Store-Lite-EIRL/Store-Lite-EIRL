@@ -9,6 +9,7 @@
 
 .sectionHeader {
   margin-bottom: 0.75rem;
+  text-align: center;
 }
 
 .sectionTitle {
@@ -24,13 +25,11 @@
 .itemsContainer {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 0.75rem;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-  padding: 0.25rem 0.25rem 0.75rem 0.25rem;
+  padding: 0.25rem 0 0.5rem 0;
   width: 100%;
 }
 

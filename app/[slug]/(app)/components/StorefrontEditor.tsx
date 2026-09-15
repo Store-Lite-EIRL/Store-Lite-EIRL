@@ -21,11 +21,16 @@ interface StorefrontEditorProps {
   storefrontTheme: StorefrontTheme;
   onThemeChange: (theme: StorefrontTheme) => void;
   onPreviewSchemeChange?: (scheme: StorefrontColorScheme | undefined) => void;
+  onOpen?: () => void;
+  onClose?: () => void;
   detectedColorScheme: StorefrontColorScheme;
   /** The scheme currently active on the page (from toggle or OS default). */
   currentScheme?: StorefrontColorScheme;
   /** Business default scheme from DB (themeMode). Used as initial scheme tab. */
   defaultScheme?: 'light' | 'dark';
+  /** Called whenever the editor opens or closes. Lets the page know the
+   *  customize editor is active so reverse theme sync can be skipped. */
+  onOpenChange?: (open: boolean) => void;
 }
 
 // NOTE: Built-in overlays (dots, lines, etc.) and custom CSS textarea were removed in V2.
@@ -62,12 +67,21 @@ export function StorefrontEditor({
   storefrontTheme,
   onThemeChange,
   onPreviewSchemeChange,
+  onOpen,
+  onClose,
   detectedColorScheme,
   currentScheme,
   defaultScheme,
+  onOpenChange,
 }: StorefrontEditorProps) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Notify the page when the editor opens/closes so reverse theme sync
+  // can be skipped while the storefront is being customized.
+  useEffect(() => {
+    onOpenChange?.(open);
+  }, [open, onOpenChange]);
   const [feedback, setFeedback] = useState<{ message: string; error?: boolean } | null>(null);
   const [isPatternBrowserOpen, setIsPatternBrowserOpen] = useState(false);
   const [, setOverlayPending] = useState(false);
@@ -114,7 +128,8 @@ export function StorefrontEditor({
   // stays in the scheme the user was editing after the editor closes.
   const handleClose = useCallback(() => {
     setOpen(false);
-  }, []);
+    onClose?.();
+  }, [onClose]);
 
   // Close on Escape
   useEffect(() => {
@@ -357,7 +372,14 @@ export function StorefrontEditor({
   return (
     <>
       {/* FAB */}
-      <button className={styles.fab} onClick={() => setOpen(true)} aria-label="Personalizar tienda">
+      <button
+        className={styles.fab}
+        onClick={() => {
+          setOpen(true);
+          onOpen?.();
+        }}
+        aria-label="Personalizar tienda"
+      >
         <Icon>settings</Icon>
       </button>
 

@@ -6,7 +6,35 @@
 // Consulta docs/ENTITLEMENTS_GUIDE.md antes de modificar.
 // =====================================================
 
-export type PlanType = 'basico' | 'emprendedor' | 'business_pro' | 'enterprise_pro';
+export type PlanType = 'lite' | 'lite_pago' | 'lite_plus';
+
+/**
+ * Resolves any stored plan key to the current 3-plan catalog.
+ *
+ * migration-compat: legacy DB rows (basico, emprendedor, business_pro,
+ * enterprise_pro) still exist for a while after the pricing restructure —
+ * PG enums cannot drop values, so they survive in plan_type columns.
+ * resolvePlan is the single shim that maps them; unknown keys degrade to
+ * DEFAULT_PLAN. Remove this function (and switch back to direct casts) once
+ * all legacy rows have been migrated or the enum is rebuilt.
+ */
+export function resolvePlan(plan: string | null | undefined): PlanType {
+  switch (plan) {
+    case 'lite':
+    case 'lite_pago':
+    case 'lite_plus':
+      return plan;
+    case 'basico':
+      return 'lite';
+    case 'emprendedor':
+    case 'business_pro':
+      return 'lite_pago';
+    case 'enterprise_pro':
+      return 'lite_plus';
+    default:
+      return DEFAULT_PLAN;
+  }
+}
 
 /**
  * Todos los permisos/límites que un negocio puede tener.
@@ -77,7 +105,8 @@ export const PLAN_ENTITLEMENTS: Record<
     'plan' | 'isActive' | 'isPaymentConfigured' | 'culqiPublicKey' | 'planEndDate'
   >
 > = {
-  basico: {
+  // Free tier — formerly "basico"
+  lite: {
     hasPaymentGateway: false,
     maxProducts: 50,
     maxCategories: 7, // máximo
@@ -90,20 +119,8 @@ export const PLAN_ENTITLEMENTS: Record<
     maxTeamMembers: 1,
   },
 
-  emprendedor: {
-    hasPaymentGateway: false,
-    maxProducts: 150,
-    maxCategories: 7, // máximo
-    canImportProducts: true,
-    canCustomizeStorefront: false,
-    chatEnabled: true,
-    dashboardEnabled: true,
-    seoEnabled: true,
-    canUseAIAssistant: false,
-    maxTeamMembers: 2, // Owner + 1 invitado
-  },
-
-  business_pro: {
+  // Paid entry tier — absorbs legacy "emprendedor" AND "business_pro"
+  lite_pago: {
     hasPaymentGateway: true,
     maxProducts: 300,
     maxCategories: 7, // máximo
@@ -116,7 +133,8 @@ export const PLAN_ENTITLEMENTS: Record<
     maxTeamMembers: 3, // Owner + 2 invitados
   },
 
-  enterprise_pro: {
+  // Top tier — formerly "enterprise_pro"
+  lite_plus: {
     hasPaymentGateway: true,
     maxProducts: 600,
     maxCategories: 7, // máximo
@@ -132,6 +150,6 @@ export const PLAN_ENTITLEMENTS: Record<
 
 /**
  * Entitlements por defecto cuando no hay suscripción activa.
- * Un negocio sin suscripción se trata como "basico".
+ * Un negocio sin suscripción se trata como "lite" (free tier).
  */
-export const DEFAULT_PLAN: PlanType = 'basico';
+export const DEFAULT_PLAN: PlanType = 'lite';

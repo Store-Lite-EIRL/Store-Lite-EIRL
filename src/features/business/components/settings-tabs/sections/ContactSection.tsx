@@ -7,8 +7,12 @@ interface ContactSectionProps {
   address: string;
   city: string;
   country: string;
+  locked: boolean;
   handleChange: (field: string, value: string) => void;
 }
+
+const LOCKED_NOTICE =
+  'Este campo está bloqueado porque el negocio/producto tiene pagos registrados.';
 
 export const ContactSection: React.FC<ContactSectionProps> = ({
   whatsappNumber,
@@ -16,6 +20,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
   address,
   city,
   country,
+  locked,
   handleChange,
 }) => {
   return (
@@ -62,11 +67,14 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           <md-outlined-text-field
             suppressHydrationWarning
             value={city}
+            disabled={locked}
+            className={locked ? styles.disabledField : undefined}
             onInput={(e: React.FormEvent<HTMLInputElement>) =>
               handleChange('city', (e.target as HTMLInputElement).value)
             }
             placeholder="Lima"
           />
+          {locked && <p className={styles.fieldNotice}>{LOCKED_NOTICE}</p>}
         </div>
         <div className={styles.formField}>
           <label className={styles.label}>País</label>

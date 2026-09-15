@@ -17,6 +17,8 @@ import {
   PENALTY_B_TITLE,
   PenaltyType,
 } from '@/core/penalties/penaltyTypes';
+import { processOrderCompletion } from '@/lib/deactivation';
+import { checkIncompleteOrderDeactivation } from '@/lib/incompleteOrderRate';
 import { transition } from './orderService';
 import type { OrderStatusV2 } from './orderStatus';
 import { ORDER_STATUS, ORDER_STATUS_V2 } from './orderStatus';
@@ -304,5 +306,18 @@ async function handlePenalty(
         penaltyCount: sql`${businesses.penaltyCount} + 1`,
       })
       .where(eq(businesses.id, order.businessId));
+  }
+
+  // Check incomplete order rate and trigger deactivation if needed (feature flag guarded)
+  if (process.env.ENABLE_AUTO_DEACTIVATION === 'true') {
+    try {
+      const deactivationCheck = await checkIncompleteOrderDeactivation(order.businessId!);
+      if (deactivationCheck.shouldDeactivate) {
+        await processOrderCompletion(order.businessId!);
+      }
+    } catch (deactivationError) {
+      console.error('[handlePenalty] Error checking incomplete order rate:', deactivationError);
+      // Don't fail the penalty processing if deactivation check fails
+    }
   }
 }

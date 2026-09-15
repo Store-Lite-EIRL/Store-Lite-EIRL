@@ -5,6 +5,7 @@ import { isBusinessSlugTaken } from '@/core/business/slug';
 import { db } from '@/core/database/client';
 import { businesses, businessSettings, businessSlugAliases } from '@/core/database/schema';
 import { getBusinessEntitlements } from '@/core/entitlements';
+import { FROZEN_FIELD_MESSAGE, hasLockingPayments } from '@/core/orders/paymentGuards';
 import {
   type StorefrontLayout,
   type StorefrontTheme,
@@ -42,8 +43,13 @@ export async function updateBusinessSlug(
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
-  if (entitlements.plan === 'basico') {
+  if (entitlements.plan === 'lite') {
     return { success: false, error: 'Funcion disponible solo para planes superiores.' };
+  }
+
+  // Payment lock guard — slug is an identity field
+  if (await hasLockingPayments({ businessId })) {
+    return { success: false, error: FROZEN_FIELD_MESSAGE };
   }
 
   if (newSlug.length < 10 || newSlug.length > 30) {
@@ -150,7 +156,7 @@ export async function toggleBusinessActive(
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
-  if (entitlements.plan === 'basico') {
+  if (entitlements.plan === 'lite') {
     return { success: false, error: 'Funcion disponible solo para planes superiores.' };
   }
 
@@ -199,7 +205,7 @@ export async function updateBusinessSEO(
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
-  if (entitlements.plan === 'basico') {
+  if (entitlements.plan === 'lite') {
     return { success: false, error: 'Funcion disponible solo para planes superiores.' };
   }
 
@@ -238,7 +244,7 @@ export async function updateStorefrontLayout(
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
-  if (entitlements.plan === 'basico' || entitlements.plan === 'emprendedor') {
+  if (entitlements.plan === 'lite') {
     return {
       success: false,
       error: 'Funcion disponible solo para planes con personalizacion de storefront.',
@@ -310,7 +316,7 @@ export async function updateStorefrontTheme(
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
-  if (entitlements.plan === 'basico' || entitlements.plan === 'emprendedor') {
+  if (entitlements.plan === 'lite') {
     return {
       success: false,
       error: 'Funcion disponible solo para planes con personalizacion de storefront.',
@@ -386,7 +392,7 @@ export async function clearStorefrontTheme(businessId: string, slug: string): Pr
   }
 
   const entitlements = await getBusinessEntitlements(businessId);
-  if (entitlements.plan === 'basico' || entitlements.plan === 'emprendedor') {
+  if (entitlements.plan === 'lite') {
     return {
       success: false,
       error: 'Funcion disponible solo para planes con personalizacion de storefront.',

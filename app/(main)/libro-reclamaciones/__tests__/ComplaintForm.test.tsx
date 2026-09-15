@@ -90,8 +90,9 @@ describe('ComplaintForm (platform)', () => {
 
     await user.click(screen.getByRole('button', { name: 'Presentar reclamo' }));
 
-    expect(screen.getByText('El apellido es obligatorio.')).toBeInTheDocument();
-    expect(screen.getByText('Corrija los errores en el formulario.')).toBeInTheDocument();
+    // Validation errors render inside startTransition (deferred priority) — wait for them
+    expect(await screen.findByText('El apellido es obligatorio.')).toBeInTheDocument();
+    expect(await screen.findByText('Corrija los errores en el formulario.')).toBeInTheDocument();
     expect(submitPlatformComplaintMock).not.toHaveBeenCalled();
   });
 

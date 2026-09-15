@@ -133,6 +133,14 @@
   text-transform: none;
 }
 
+/* Notice shown under fields frozen by payment history */
+.form-locked-notice {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--md-sys-color-error, #b3261e);
+}
+
 .form-fields {
   display: flex;
   flex-direction: column;

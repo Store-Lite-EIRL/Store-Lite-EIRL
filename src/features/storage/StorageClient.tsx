@@ -14,6 +14,7 @@ import { TablePagination } from './components/TablePagination';
 
 // Hooks & Logic
 import type { SaveProductMediaItem, SaveProductPayload } from '@/types/storage';
+import { getProductLockState } from './actions/products';
 import { StorageProvider, useStorage } from './context/StorageContext';
 import type { Product } from './data';
 import { useExtraColumns } from './hooks/useExtraColumns';
@@ -30,6 +31,7 @@ function StorageContent({ businessId }: { businessId: string }) {
   // Create/Edit sheet state
   const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
+  const [productLocked, setProductLocked] = useState(false);
 
   // Alert State
   const [alert, setAlert] = useState<{
@@ -104,9 +106,12 @@ function StorageContent({ businessId }: { businessId: string }) {
   };
 
   // --- Create/Edit handlers ---
-  const handleEditClick = (product: Product) => {
+  const handleEditClick = async (product: Product) => {
     setProductToEdit(product);
     setIsCreateSheetOpen(true);
+    // Fetch payment lock state to mirror frozen title/price fields (UX only — server guards are authoritative)
+    const res = await getProductLockState(product.id);
+    setProductLocked(res.locked);
   };
 
   const handleSaveProduct = async (
@@ -136,6 +141,7 @@ function StorageContent({ businessId }: { businessId: string }) {
   const handleCloseProductSheet = () => {
     setIsCreateSheetOpen(false);
     setProductToEdit(null);
+    setProductLocked(false);
   };
 
   return (
@@ -145,9 +151,9 @@ function StorageContent({ businessId }: { businessId: string }) {
         allProducts={allFilteredProducts}
         onAddProduct={() => {
           setProductToEdit(null);
+          setProductLocked(false);
           setIsCreateSheetOpen(true);
         }}
-        businessId={businessId}
       />
 
       <main className="storage-content" style={{ position: 'relative' }}>
@@ -195,6 +201,7 @@ function StorageContent({ businessId }: { businessId: string }) {
         onSave={handleSaveProduct}
         nextId={''}
         initialProduct={productToEdit}
+        hasPayments={productLocked}
       />
     </>
   );

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
@@ -73,6 +73,16 @@ import {
 
 // Get the mocked db
 const { db } = await import('@/core/database/client');
+
+// Mock complaint scoring and deactivation modules
+vi.mock('@/lib/complaintScoring', () => ({
+  calculateComplaintScore: vi.fn(),
+  updateComplaintScore: vi.fn(),
+}));
+
+vi.mock('@/lib/deactivation', () => ({
+  processComplaintSubmission: vi.fn(),
+}));
 
 // Shared valid complaint payload (platform & per-store)
 const validForm = {
@@ -209,6 +219,118 @@ describe('submitComplaint', () => {
     expect(deadline.getDay()).toBe(1); // Monday
     expect(deadline.getMonth()).toBe(7); // August (0-indexed)
     expect(deadline.getDate()).toBe(3);
+  });
+
+  describe('complaint scoring integration', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mocks.selectRows.length = 0;
+      process.env.ENABLE_AUTO_DEACTIVATION = 'true';
+    });
+
+    afterEach(() => {
+      delete process.env.ENABLE_AUTO_DEACTIVATION;
+    });
+
+    it('calls calculateComplaintScore after successful complaint submission', async () => {
+      const { calculateComplaintScore } = await import('@/lib/complaintScoring');
+      const { processComplaintSubmission } = await import('@/lib/deactivation');
+
+      (calculateComplaintScore as any).mockResolvedValue({
+        score: 75,
+        tier: 'verified',
+        breakdown: {
+          linkedToOrder: true,
+          buyerKycVerified: true,
+          culqiChargeback: false,
+          slaExpired: false,
+          patternSimilar: false,
+        },
+      });
+      (processComplaintSubmission as any).mockResolvedValue(undefined);
+
+      mocks.businessesFindFirst.mockResolvedValue({
+        id: 'bus-123',
+        name: 'Mi Tienda',
+      });
+      seedSelectQueueRows([], []);
+      mocks.insertReturning.mockResolvedValue([{ id: 'record-1' }]);
+
+      const result = await submitComplaint('test-slug', validForm);
+
+      expect(result.success).toBe(true);
+      expect(calculateComplaintScore).toHaveBeenCalledWith('record-1', 'bus-123');
+      expect(processComplaintSubmission).toHaveBeenCalledWith('record-1', 'bus-123');
+    });
+
+    it('returns scoring result in action output when feature flag enabled', async () => {
+      const { calculateComplaintScore } = await import('@/lib/complaintScoring');
+      const { processComplaintSubmission } = await import('@/lib/deactivation');
+
+      (calculateComplaintScore as any).mockResolvedValue({
+        score: 85,
+        tier: 'verified',
+        breakdown: {
+          linkedToOrder: true,
+          buyerKycVerified: true,
+          culqiChargeback: true,
+          slaExpired: false,
+          patternSimilar: false,
+        },
+      });
+      (processComplaintSubmission as any).mockResolvedValue(undefined);
+
+      mocks.businessesFindFirst.mockResolvedValue({
+        id: 'bus-123',
+        name: 'Mi Tienda',
+      });
+      seedSelectQueueRows([], []);
+      mocks.insertReturning.mockResolvedValue([{ id: 'record-2' }]);
+
+      const result = await submitComplaint('test-slug', validForm);
+
+      expect(result.success).toBe(true);
+      expect(result.score).toBe(85);
+      expect(result.tier).toBe('verified');
+      expect(result.breakdown).toEqual({
+        linkedToOrder: true,
+        buyerKycVerified: true,
+        culqiChargeback: true,
+        slaExpired: false,
+        patternSimilar: false,
+      });
+    });
+
+    it('returns score 0 and rejected tier when feature flag disabled', async () => {
+      process.env.ENABLE_AUTO_DEACTIVATION = 'false';
+
+      const { calculateComplaintScore } = await import('@/lib/complaintScoring');
+      const { processComplaintSubmission } = await import('@/lib/deactivation');
+
+      mocks.businessesFindFirst.mockResolvedValue({
+        id: 'bus-123',
+        name: 'Mi Tienda',
+      });
+      seedSelectQueueRows([], []);
+      mocks.insertReturning.mockResolvedValue([{ id: 'record-3' }]);
+
+      const result = await submitComplaint('test-slug', validForm);
+
+      expect(result.success).toBe(true);
+      expect(calculateComplaintScore).not.toHaveBeenCalled();
+      expect(processComplaintSubmission).not.toHaveBeenCalled();
+      expect(result.score).toBe(0);
+      expect(result.tier).toBe('rejected');
+      expect(result.breakdown).toEqual({
+        linkedToOrder: false,
+        buyerKycVerified: false,
+        culqiChargeback: false,
+        slaExpired: false,
+        patternSimilar: false,
+      });
+
+      delete process.env.ENABLE_AUTO_DEACTIVATION;
+    });
   });
 });
 

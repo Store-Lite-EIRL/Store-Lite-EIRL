@@ -27,6 +27,7 @@ vi.mock('@/core/database/client', () => ({
 
 import CulqiReadinessCheck from '@/app/[slug]/(app)/settings/components/CulqiReadinessCheck';
 import * as culqiReadiness from '@/features/settings/actions/culqiReadiness';
+import { checkCulqiReadiness } from '@/features/settings/actions/culqiReadiness';
 import { evaluateCulqiReadiness } from '@/features/settings/lib/culqiReadiness';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
@@ -93,7 +94,6 @@ describe('checkCulqiReadiness', () => {
     mockProductsFindMany.mockResolvedValue(products);
     mockProductMediaFindMany.mockResolvedValue(media.flat());
 
-    const { checkCulqiReadiness } = await import('@/features/settings/actions/culqiReadiness');
     const result = await checkCulqiReadiness('business-1');
 
     expect(result.ready).toBe(true);
@@ -107,7 +107,6 @@ describe('checkCulqiReadiness', () => {
     mockProductsFindMany.mockResolvedValue([]);
     mockProductMediaFindMany.mockResolvedValue([]);
 
-    const { checkCulqiReadiness } = await import('@/features/settings/actions/culqiReadiness');
     const result = await checkCulqiReadiness('business-1');
 
     const productCount = result.checks.find((c) => c.id === 'product_count')!;
@@ -121,7 +120,6 @@ describe('checkCulqiReadiness', () => {
     mockProductsFindMany.mockResolvedValue(makeProducts(3));
     mockProductMediaFindMany.mockResolvedValue([]);
 
-    const { checkCulqiReadiness } = await import('@/features/settings/actions/culqiReadiness');
     const result = await checkCulqiReadiness('business-1');
 
     const productCount = result.checks.find((c) => c.id === 'product_count')!;
@@ -136,7 +134,6 @@ describe('checkCulqiReadiness', () => {
     mockProductsFindMany.mockResolvedValue(products);
     mockProductMediaFindMany.mockResolvedValue(makeMedia(products[0].id));
 
-    const { checkCulqiReadiness } = await import('@/features/settings/actions/culqiReadiness');
     const result = await checkCulqiReadiness('business-1');
 
     const check = result.checks.find((c) => c.id === 'product_images')!;
@@ -151,7 +148,6 @@ describe('checkCulqiReadiness', () => {
     mockProductsFindMany.mockResolvedValue(products);
     mockProductMediaFindMany.mockResolvedValue(products.map((p) => makeMedia(p.id)).flat());
 
-    const { checkCulqiReadiness } = await import('@/features/settings/actions/culqiReadiness');
     const result = await checkCulqiReadiness('business-1');
 
     const check = result.checks.find((c) => c.id === 'product_descriptions')!;
@@ -166,7 +162,6 @@ describe('checkCulqiReadiness', () => {
     mockProductsFindMany.mockResolvedValue(products);
     mockProductMediaFindMany.mockResolvedValue(products.map((p) => makeMedia(p.id)).flat());
 
-    const { checkCulqiReadiness } = await import('@/features/settings/actions/culqiReadiness');
     const result = await checkCulqiReadiness('business-1');
 
     const check = result.checks.find((c) => c.id === 'product_prices')!;
@@ -186,7 +181,6 @@ describe('checkCulqiReadiness', () => {
         .flat(),
     );
 
-    const { checkCulqiReadiness } = await import('@/features/settings/actions/culqiReadiness');
     const result = await checkCulqiReadiness('business-1');
 
     const check = result.checks.find((c) => c.id === 'terms')!;
@@ -205,7 +199,6 @@ describe('checkCulqiReadiness', () => {
         .flat(),
     );
 
-    const { checkCulqiReadiness } = await import('@/features/settings/actions/culqiReadiness');
     const result = await checkCulqiReadiness('business-1');
 
     const check = result.checks.find((c) => c.id === 'returns')!;
@@ -230,7 +223,6 @@ describe('checkCulqiReadiness', () => {
         .flat(),
     );
 
-    const { checkCulqiReadiness } = await import('@/features/settings/actions/culqiReadiness');
     const result = await checkCulqiReadiness('business-1');
 
     const check = result.checks.find((c) => c.id === 'complaints_book')!;
@@ -247,7 +239,6 @@ describe('checkCulqiReadiness', () => {
         .flat(),
     );
 
-    const { checkCulqiReadiness } = await import('@/features/settings/actions/culqiReadiness');
     const result = await checkCulqiReadiness('business-1');
 
     const check = result.checks.find((c) => c.id === 'contact_info')!;
@@ -264,7 +255,6 @@ describe('checkCulqiReadiness', () => {
         .flat(),
     );
 
-    const { checkCulqiReadiness } = await import('@/features/settings/actions/culqiReadiness');
     const result = await checkCulqiReadiness('business-1');
 
     const check = result.checks.find((c) => c.id === 'social_media')!;
@@ -277,7 +267,6 @@ describe('checkCulqiReadiness', () => {
     mockProductsFindMany.mockResolvedValue([]);
     mockProductMediaFindMany.mockResolvedValue([]);
 
-    const { checkCulqiReadiness } = await import('@/features/settings/actions/culqiReadiness');
     const result = await checkCulqiReadiness('business-1');
 
     expect(result.ready).toBe(false);

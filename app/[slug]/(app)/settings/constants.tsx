@@ -77,6 +77,7 @@ export interface SettingsClientProps {
   initialStorefrontTheme: StorefrontTheme;
   initialHasCustomTheme?: boolean;
   initialScheme?: 'light' | 'dark';
+  businessLocked: boolean;
   role: string;
   permissions: Permission[];
   isOwner: boolean;
@@ -106,30 +107,24 @@ export const PLAN_CONFIG: Record<
   string,
   { gradient: string; icon: string; label: string; color: string }
 > = {
-  basico: {
+  lite: {
     gradient:
       'linear-gradient(135deg, var(--md-sys-color-secondary-container), var(--md-sys-color-secondary))',
     icon: 'shopping_cart',
-    label: 'Básico',
+    label: 'Lite',
     color: 'var(--md-sys-color-on-secondary-container)',
   },
-  emprendedor: {
+  lite_pago: {
     gradient:
       'linear-gradient(135deg, var(--md-sys-color-tertiary-container), var(--md-sys-color-tertiary))',
     icon: 'rocket_launch',
-    label: 'Emprendedor',
+    label: 'Lite Pago',
     color: 'var(--md-sys-color-on-tertiary-container)',
   },
-  business_pro: {
-    gradient: 'linear-gradient(135deg, #1a73e8, #0d47a1)',
-    icon: 'diamond',
-    label: 'Business Pro',
-    color: '#fff',
-  },
-  enterprise_pro: {
+  lite_plus: {
     gradient: 'linear-gradient(135deg, #7b2ff7, #4a148c)',
     icon: 'auto_awesome',
-    label: 'Enterprise Pro',
+    label: 'Lite Plus',
     color: '#fff',
   },
 };

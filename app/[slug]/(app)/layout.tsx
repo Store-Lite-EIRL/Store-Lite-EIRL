@@ -110,6 +110,7 @@ export default async function AppGroupLayout({ children, modal, params }: AppLay
         navbarBusinessId={business.id}
         navbarBusinessName={business.name}
         navbarBusinessLogoUrl={business.logoUrl ?? undefined}
+        navbarBusinessCoverUrl={business.coverImageUrl ?? undefined}
       >
         {children}
         {modal}

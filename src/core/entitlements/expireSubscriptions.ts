@@ -11,7 +11,7 @@ import { db } from '@/core/database/client';
 import { businessSubscriptions } from '@/core/database/schema';
 import { and, eq, lt } from 'drizzle-orm';
 import { enforceProductLimit } from './enforceProductLimit';
-import { PLAN_ENTITLEMENTS } from './plans';
+import { DEFAULT_PLAN, PLAN_ENTITLEMENTS } from './plans';
 
 export async function expireSubscriptions(): Promise<{
   expired: number;
@@ -33,7 +33,7 @@ export async function expireSubscriptions(): Promise<{
 
   let productsDisabled = 0;
   if (result.length > 0) {
-    const maxAllowed = PLAN_ENTITLEMENTS.basico.maxProducts;
+    const maxAllowed = PLAN_ENTITLEMENTS[DEFAULT_PLAN].maxProducts;
     for (const sub of result) {
       const disabled = await enforceProductLimit(sub.businessId, maxAllowed);
       productsDisabled += disabled;

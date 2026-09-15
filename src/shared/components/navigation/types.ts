@@ -25,7 +25,7 @@ export interface NavItemData {
   /** Required permission to view this item */
   permission?: Permission;
 
-  /** Plan name that hides this item (e.g., 'basico' hides dashboard) */
+  /** Plan name that hides this item (e.g., 'lite' hides dashboard) */
   plan?: string;
 
   /** Badge text (e.g., notification count) */

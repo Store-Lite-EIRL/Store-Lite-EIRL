@@ -20,7 +20,12 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
-import { subscriptionPlanEnum, subscriptionStatusEnum } from './enums';
+import {
+  appealStatusEnum,
+  deactivationReasonEnum,
+  subscriptionPlanEnum,
+  subscriptionStatusEnum,
+} from './enums';
 import { profiles } from './profiles';
 
 // =====================================================
@@ -82,6 +87,12 @@ export const businesses = pgTable(
     penaltyCount: integer('penalty_count').notNull().default(0),
     blacklisted: boolean('blacklisted').notNull().default(false),
     blacklistedAt: timestamp('blacklisted_at', { withTimezone: true }),
+
+    // ── Auto-Deactivation (DS 011-2011-PCM) ──
+    deactivationReason: deactivationReasonEnum('deactivation_reason'),
+    deactivationDate: timestamp('deactivation_date', { withTimezone: true }),
+    appealStatus: appealStatusEnum('appeal_status'),
+    gracePeriodEndsAt: timestamp('grace_period_ends_at', { withTimezone: true }),
   },
   (table) => ({
     // nameCheck: check(
@@ -109,6 +120,9 @@ export const businesses = pgTable(
     isActiveIdx: index('idx_businesses_is_active')
       .on(table.isActive)
       .where(sql`${table.isActive} = true`),
+    deactivationReasonIdx: index('idx_businesses_deactivation_reason').on(table.deactivationReason),
+    appealStatusIdx: index('idx_businesses_appeal_status').on(table.appealStatus),
+    gracePeriodEndsAtIdx: index('idx_businesses_grace_period_ends_at').on(table.gracePeriodEndsAt),
     createdAtIdx: index('idx_businesses_created_at').on(table.createdAt.desc()),
   }),
 );
@@ -188,7 +202,7 @@ export const businessSubscriptions = pgTable(
     businessId: uuid('business_id')
       .notNull()
       .references(() => businesses.id, { onDelete: 'cascade' }),
-    planType: subscriptionPlanEnum('plan_type').notNull().default('basico'),
+    planType: subscriptionPlanEnum('plan_type').notNull().default('lite'),
     planStatus: subscriptionStatusEnum('plan_status').notNull().default('inactive'),
     planStartDate: timestamp('plan_start_date', { withTimezone: true }),
     planEndDate: timestamp('plan_end_date', { withTimezone: true }),

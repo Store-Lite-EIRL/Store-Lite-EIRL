@@ -30,10 +30,10 @@ describe('buildNavItems', () => {
     ]);
   });
 
-  it('hides dashboard for basico plan', () => {
+  it('hides dashboard for lite plan', () => {
     const items = buildNavItems({
       slug: mockSlug,
-      planName: 'basico',
+      planName: 'lite',
       permissions: fullPermissions,
       isOwner: false,
     });
@@ -42,7 +42,7 @@ describe('buildNavItems', () => {
     expect(items).toHaveLength(6);
   });
 
-  it('shows dashboard for non-basico plans', () => {
+  it('shows dashboard for non-lite plans', () => {
     const items = buildNavItems({
       slug: mockSlug,
       planName: 'pro',
@@ -154,7 +154,7 @@ describe('buildNavItems', () => {
   it('case-insensitive plan matching', () => {
     const items = buildNavItems({
       slug: mockSlug,
-      planName: 'BASICO',
+      planName: 'LITE',
       permissions: fullPermissions,
       isOwner: false,
     });
@@ -164,9 +164,9 @@ describe('buildNavItems', () => {
 
   it('owner bypasses plan filter', () => {
     const permissions: Permission[] = [];
-    const items = buildNavItems({ slug: mockSlug, planName: 'basico', permissions, isOwner: true });
+    const items = buildNavItems({ slug: mockSlug, planName: 'lite', permissions, isOwner: true });
 
-    // Owner should see dashboard even on basico plan
+    // Owner should see dashboard even on lite plan
     expect(items.find((i) => i.id === 'dashboard')).toBeDefined();
   });
 
@@ -217,7 +217,7 @@ describe('getAllNavItems', () => {
     const dashboardItem = items.find((i) => i.id === 'dashboard');
 
     expect(chatItem?.permission).toBe('chat.view');
-    expect(dashboardItem?.plan).toBe('basico');
+    expect(dashboardItem?.plan).toBe('lite');
   });
 
   it('includes badge property for notifications', () => {
