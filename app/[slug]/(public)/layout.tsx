@@ -28,6 +28,7 @@ export default async function PublicLayout({
           verifiedComplaints30d={trustScore.verifiedComplaints30d}
           deactivationRisk={trustScore.deactivationRisk}
           businessName={trustScore.businessName}
+          incompleteRate30d={trustScore.incompleteRate30d}
         />
       )}
       {children}

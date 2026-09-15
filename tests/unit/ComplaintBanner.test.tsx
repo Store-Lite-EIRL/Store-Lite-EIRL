@@ -45,6 +45,35 @@ describe('ComplaintBanner', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows an honest incomplete-orders message (with rate) instead of "0 denuncias" when risk is incomplete_orders with no verified complaints', () => {
+    render(
+      <ComplaintBanner
+        verifiedComplaints30d={0}
+        deactivationRisk="incomplete_orders"
+        businessName="Test Business"
+        incompleteRate30d={6000}
+      />,
+    );
+    expect(screen.getByText('Pedidos incompletos este mes (60%)')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Este negocio tiene 0 denuncias verificadas en los últimos 30 días'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('falls back to the generic incomplete-orders message when the rate is not provided', () => {
+    render(
+      <ComplaintBanner
+        verifiedComplaints30d={0}
+        deactivationRisk="incomplete_orders"
+        businessName="Test Business"
+      />,
+    );
+    expect(screen.getByText('Pedidos incompletos este mes')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Este negocio tiene 0 denuncias verificadas en los últimos 30 días'),
+    ).not.toBeInTheDocument();
+  });
+
   it('does not render when no risk and < 2 complaints', () => {
     render(
       <ComplaintBanner
