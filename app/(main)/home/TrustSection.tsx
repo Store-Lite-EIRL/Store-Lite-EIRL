@@ -1,50 +1,50 @@
+import styles from './TrustSection.module.css';
+
+const TRUST_ITEMS = [
+  {
+    icon: 'lock',
+    title: 'Pagos seguros',
+    description: 'Procesado por Culqi (PCI DSS).',
+  },
+  {
+    icon: 'shield',
+    title: 'Datos seguros',
+    description: 'Encriptación SSL y almacenamiento seguro.',
+  },
+  {
+    icon: 'verified',
+    title: 'Legalizado',
+    description: 'Cumple con normativas SUNAT.',
+  },
+  {
+    icon: 'autorenew',
+    title: 'Sin permanencia',
+    description: 'Cancela cuando quieras.',
+  },
+] as const;
+
 export default function TrustSection() {
-  const badges = [
-    {
-      icon: 'lock',
-      title: 'Datos seguros',
-      description: 'Encriptación SSL y almacenamiento seguro',
-    },
-    {
-      icon: 'gavel',
-      title: 'Legalizado',
-      description: 'Cumple con normativas SUNAT',
-    },
-    {
-      icon: 'credit_card',
-      title: 'Pagos seguros',
-      description: 'Procesado por Culqi (PCI DSS)',
-    },
-    {
-      icon: 'restore',
-      title: 'Sin permanencia',
-      description: 'Cancela cuando quieras',
-    },
-  ];
-
   return (
-    <section className="landing-section" id="trust">
-      <div className="section-container">
-        <div className="trust-content">
-          <div className="trust-text">
-            <h3>Confía tranquilo</h3>
-            <p>
-              Tu negocio y tus clientes están protegidos. Usamos estándares de seguridad bancarios y
-              cumplimos con la ley.
-            </p>
-          </div>
+    <section className={styles.section}>
+      <div className={styles.wrap}>
+        <div className={styles.sectionHead}>
+          <h2>Confía tranquilo</h2>
+          <p>
+            Tu negocio y tus clientes están protegidos. Usamos estándares de seguridad bancaria y
+            cumplimos con la ley.
+          </p>
+        </div>
 
-          <div className="trust-badges">
-            {badges.map((badge) => (
-              <div className="trust-badge" key={badge.title}>
-                <span className="material-symbols-outlined trust-icon">{badge.icon}</span>
-                <div className="trust-info">
-                  <strong>{badge.title}</strong>
-                  <span>{badge.description}</span>
-                </div>
+        <div className={styles.trustRow}>
+          {TRUST_ITEMS.map((item) => (
+            <div className={styles.trustItem} key={item.title}>
+              <div className={styles.trustIcon}>
+                <span className="material-symbols-rounded">{item.icon}</span>
               </div>
-            ))}
-          </div>
+              <h4>{item.title}</h4>
+              <p>{item.description}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
