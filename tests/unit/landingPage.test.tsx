@@ -12,6 +12,7 @@
 
 import HomePage from '@/app/page';
 import { AuthProvider } from '@/features/auth';
+import { ThemeProvider } from '@/shared/context/ThemeContext';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -56,7 +57,9 @@ vi.mock('@/lib/supabase/client', () => ({
 function renderLanding() {
   return render(
     <AuthProvider>
-      <HomePage />
+      <ThemeProvider>
+        <HomePage />
+      </ThemeProvider>
     </AuthProvider>,
   );
 }
@@ -80,6 +83,34 @@ beforeEach(() => {
       data: { subscription: { unsubscribe: vi.fn() } },
     }),
   );
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: query === '(prefers-color-scheme: dark)',
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+
+  // Scroll-spy in FloatingNav requires IntersectionObserver (jsdom has none).
+  class MockIntersectionObserver implements IntersectionObserver {
+    readonly root = null;
+    readonly rootMargin = '';
+    readonly thresholds = [];
+    disconnect = vi.fn();
+    observe = vi.fn();
+    unobserve = vi.fn();
+    takeRecords = vi.fn(() => []);
+  }
+  Object.defineProperty(window, 'IntersectionObserver', {
+    writable: true,
+    value: MockIntersectionObserver,
+  });
 });
 
 // ── Tests ────────────────────────────────────────────
@@ -94,7 +125,7 @@ describe('Landing page — crawlable server-rendered content', () => {
     const createLinks = screen.getAllByRole('link', { name: /crear mi tienda/i });
     expect(createLinks.length).toBeGreaterThan(0);
     expect(createLinks[0]).toHaveAttribute('href', '/auth');
-    expect(screen.getByRole('link', { name: /ver planes/i })).toHaveAttribute('href', '/pricing');
+    expect(screen.getByRole('link', { name: /ver planes/i })).toHaveAttribute('href', '#pricing');
 
     // No redirect for anonymous visitors
     expect(mockRouter.replace).not.toHaveBeenCalled();

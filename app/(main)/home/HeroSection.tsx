@@ -42,7 +42,7 @@ export default function HeroSection() {
               <Link href="/auth" className={`${styles.btn} ${styles.btnPrimary}`}>
                 Crear mi tienda gratis
               </Link>
-              <Link href="#planes" className={`${styles.btn} ${styles.btnOutline}`}>
+              <Link href="#pricing" className={`${styles.btn} ${styles.btnOutline}`}>
                 Ver planes
               </Link>
             </div>

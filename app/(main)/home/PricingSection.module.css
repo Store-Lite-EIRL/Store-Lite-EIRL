@@ -248,3 +248,20 @@
   line-height: 1.55;
   font-weight: 400;
 }
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .toggleButton,
+  .toggleButton :global(.material-symbols-rounded) {
+    transition: none;
+  }
+
+  .btn {
+    transition: none;
+  }
+
+  .btn:hover,
+  .toggleButton:hover {
+    transform: none;
+  }
+}

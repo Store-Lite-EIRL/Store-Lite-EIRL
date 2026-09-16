@@ -98,6 +98,12 @@
   cursor: pointer;
 }
 
+.faq summary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
 .faq summary::-webkit-details-marker {
   display: none;
 }
@@ -120,4 +126,11 @@
   line-height: 1.55;
   font-weight: 400;
   color: var(--color-text-muted);
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .faq summary :global(.material-symbols-rounded) {
+    transition: none;
+  }
 }

@@ -33,7 +33,7 @@ describe('HeroSection — hero copy, CTAs and feature cards', () => {
     expect(primary).toHaveAttribute('href', '/auth');
 
     const outline = screen.getByRole('link', { name: 'Ver planes' });
-    expect(outline).toHaveAttribute('href', '#planes');
+    expect(outline).toHaveAttribute('href', '#pricing');
   });
 
   it('renders the three feature cards with titles and descriptions from the mockup', () => {

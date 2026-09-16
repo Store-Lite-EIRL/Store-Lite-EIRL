@@ -60,6 +60,14 @@
   color: var(--color-text);
 }
 
+.contactItem:focus-visible,
+.footerColumn a:focus-visible,
+.footerCta:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
 .contactItem :global(.material-symbols-outlined) {
   font-size: 1.1rem;
   color: var(--color-primary);
@@ -180,5 +188,20 @@
 
   .footerBottom {
     flex-wrap: wrap;
+  }
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .contactItem,
+  .footerColumn a,
+  .footerCta,
+  .footerCta :global(.material-symbols-outlined) {
+    transition: none;
+  }
+
+  .footerCta:hover,
+  .footerCta:hover :global(.material-symbols-outlined) {
+    transform: none;
   }
 }
