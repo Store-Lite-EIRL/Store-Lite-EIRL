@@ -74,7 +74,7 @@ describe('tokens.css - Design System Tokens', () => {
   const lightThemeRegexes = lightThemeTokens.map(
     (token) =>
       new RegExp(
-        `(:root|html\\[data-theme="light"\\])\\s*\\{[^}]*${token.replace('--', '\\-\\-')}\\s*:`,
+        `(:root|html\\[data-theme=["']light["']\\])\\s*\\{[^}]*${token.replace('--', '\\-\\-')}\\s*:`,
         'm',
       ),
   );
@@ -82,7 +82,7 @@ describe('tokens.css - Design System Tokens', () => {
   const darkThemeRegexes = darkThemeTokens.map(
     (token) =>
       new RegExp(
-        `html\\[data-theme="dark"\\]\\s*\\{[^}]*${token.replace('--', '\\-\\-')}\\s*:`,
+        `html\\[data-theme=["']dark["']\\]\\s*\\{[^}]*${token.replace('--', '\\-\\-')}\\s*:`,
         'm',
       ),
   );
