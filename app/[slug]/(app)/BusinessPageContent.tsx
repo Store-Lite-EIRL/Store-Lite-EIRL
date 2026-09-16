@@ -1,5 +1,6 @@
 'use client';
 
+import type { BusinessTrustScore } from '@/actions/business/getBusinessTrustScore';
 import type {
   StorefrontColorScheme,
   StorefrontLayout,
@@ -16,13 +17,19 @@ import type { ProductWithRelations } from '@/features/products/types/productType
 import { StorageProvider, useStorage } from '@/features/storage/context/StorageContext';
 import type { Product as StorageProduct } from '@/features/storage/data';
 import { AlertSnackbar } from '@/shared/components/ui';
-import { useTheme } from '@/shared/context/ThemeContext';
 import type { Business } from '@/types/business';
 import type { ProductCategory } from '@/types/product';
 import type { SaveProductMediaItem, SaveProductPayload } from '@/types/storage';
 import { useRouter } from 'next/navigation';
 import { posthog } from 'posthog-js';
-import { useCallback, useEffect, useLayoutEffect, useState, type CSSProperties } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+} from 'react';
 import FeaturedItems from '../../(main)/home/FeaturedItems';
 import Hero from '../../(main)/home/Hero';
 import styles from './BusinessPageContent.module.css';
@@ -32,8 +39,10 @@ import { LookupOrderModal } from './components/LookupOrderModal';
 import ProductPreviewSheet from './components/ProductPreviewSheet';
 import { StaffManagementTools } from './components/StaffManagementTools';
 import { StorefrontProductGridSection } from './components/StorefrontProductGridSection';
+import StorefrontTrustBadge from './components/StorefrontTrustBadge';
 import { mapToStorageProduct } from './components/mapToStorageProduct';
 import { resolveActiveScheme } from './components/schemeResolution';
+import { useStorefrontViewerTheme } from './components/useStorefrontViewerTheme';
 
 interface BusinessPageContentProps {
   business: Business;
@@ -56,6 +65,8 @@ interface BusinessPageContentProps {
   businessRuc?: string;
   businessAddress?: string;
   businessId?: string;
+  /** DS 011 trust signal (same source as the complaint banner); null when flag off. */
+  trustSignal?: BusinessTrustScore | null;
 }
 
 type OwnerSheetSaveArgs = [StorageProduct, SaveProductPayload, SaveProductMediaItem[], boolean];
@@ -75,6 +86,7 @@ export default function BusinessPageContent({
   storefrontTheme,
   previewCardTheme,
   defaultScheme,
+  trustSignal = null,
 }: BusinessPageContentProps) {
   const mappedProducts: StorageProduct[] = products.map(mapToStorageProduct);
 
@@ -104,6 +116,7 @@ export default function BusinessPageContent({
         storefrontTheme={storefrontTheme}
         previewCardTheme={previewCardTheme}
         defaultScheme={defaultScheme}
+        trustSignal={trustSignal}
       />
     </StorageProvider>
   );
@@ -124,6 +137,7 @@ function BusinessPageContentUI({
   storefrontTheme,
   previewCardTheme,
   defaultScheme,
+  trustSignal = null,
 }: BusinessPageContentProps) {
   // Pagos habilitados para compra automática solo si plan+credenciales están listos.
   const paymentsEnabled = hasPaymentGateway && isPaymentConfigured;
@@ -138,13 +152,13 @@ function BusinessPageContentUI({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [showLookupModal, setShowLookupModal] = useState(false);
-  const { effectiveTheme, setTheme } = useTheme();
   const [editableTheme, setEditableTheme] = useState<StorefrontTheme>(
     () => storefrontTheme ?? createDefaultStorefrontTheme(),
   );
   const [previewScheme, setPreviewScheme] = useState<StorefrontColorScheme | undefined>(undefined);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [viewerTheme, setViewerTheme] = useState<'light' | 'dark' | null>(null);
+  const { effectiveTheme, viewerTheme, setViewerTheme, handleViewerThemeToggle, setTheme } =
+    useStorefrontViewerTheme({ slug: business.slug, editorOpen: isEditorOpen });
   const [alert, setAlert] = useState<{
     open: boolean;
     description: string;
@@ -367,13 +381,21 @@ function BusinessPageContentUI({
     }
   };
 
-  const activeScheme = resolveActiveScheme(
-    viewerTheme,
-    previewScheme,
-    defaultScheme ?? (effectiveTheme as StorefrontColorScheme),
+  const activeScheme = useMemo(
+    () =>
+      resolveActiveScheme(
+        viewerTheme,
+        previewScheme,
+        defaultScheme ?? (effectiveTheme as StorefrontColorScheme),
+      ),
+    [viewerTheme, previewScheme, defaultScheme, effectiveTheme],
   );
-  const themeStyles = buildStorefrontThemeVars(editableTheme, activeScheme) as CSSProperties &
-    Record<string, string>;
+  const themeStyles = useMemo(
+    () =>
+      buildStorefrontThemeVars(editableTheme, activeScheme) as CSSProperties &
+        Record<string, string>,
+    [editableTheme, activeScheme],
+  );
 
   // Sync theme CSS vars to document root so parent elements (layout, main-area)
   // can see --storefront-bg, --storefront-bg-image, and all MD colors
@@ -441,48 +463,6 @@ function BusinessPageContentUI({
     };
   }, [themeStyles, editableTheme, activeScheme]);
 
-  // Read stored theme preference from localStorage on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(`storefront-theme-${business.slug}`);
-      if (stored === 'light' || stored === 'dark') {
-        setViewerTheme(stored);
-      }
-    } catch {
-      // Safari private mode â€” no-op
-    }
-  }, [business.slug]);
-
-  // Persist viewer theme choice to localStorage whenever it changes
-  useEffect(() => {
-    if (viewerTheme === null) return;
-    try {
-      localStorage.setItem(`storefront-theme-${business.slug}`, viewerTheme);
-    } catch {
-      // Safari private mode â€” no-op
-    }
-  }, [viewerTheme, business.slug]);
-
-  const handleViewerThemeToggle = useCallback(() => {
-    setViewerTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  }, []);
-
-  // Sync viewer theme → global app-theme so all pages reflect the change
-  useEffect(() => {
-    if (viewerTheme === null) return;
-    setTheme(viewerTheme);
-  }, [viewerTheme, setTheme]);
-
-  // Reverse sync: when the global theme changes (navbar toggle / settings),
-  // propagate it to the storefront viewer — but only when the customize
-  // editor is NOT open. This prevents the navbar toggle from becoming a
-  // no-op after "Personalizar Tienda" has set viewerTheme.
-  useEffect(() => {
-    if (isEditorOpen) return;
-    if (viewerTheme === effectiveTheme) return;
-    setViewerTheme(effectiveTheme);
-  }, [effectiveTheme, isEditorOpen, viewerTheme]);
-
   // Read stored preview scheme from localStorage on mount (staff only)
   // Mirrors the same localStorage pattern as viewerTheme above.
   useEffect(() => {
@@ -511,12 +491,14 @@ function BusinessPageContentUI({
         }
       }
     },
-    [business.slug, setTheme],
+    [business.slug, setTheme, setViewerTheme],
   );
 
   return (
     <>
       <div className={`page-container ${styles.storefrontThemeRoot}`} style={themeStyles}>
+        {/* DS 011 customer-facing trust signal (badge) — same data as the banner */}
+        <StorefrontTrustBadge trustSignal={trustSignal} />
         {storefrontLayout.sections.map(renderStorefrontSection)}
       </div>
       <ProductPreviewSheet

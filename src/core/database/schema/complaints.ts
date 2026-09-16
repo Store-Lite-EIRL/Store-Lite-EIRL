@@ -9,9 +9,21 @@
 // =====================================================
 
 import { sql } from 'drizzle-orm';
-import { boolean, index, numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  numeric,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 import { businesses } from './businesses';
+import { complaintScoreTierEnum } from './enums';
+import { payments } from './orders';
 
 // =====================================================
 // TABLE: complaint_book_records
@@ -64,6 +76,28 @@ export const complaintBookRecords = pgTable(
     adminResponse: text('admin_response'),
     adminRespondedAt: timestamp('admin_responded_at', { withTimezone: true }),
 
+    // ── Auto-Deactivation Scoring (DS 011-2011-PCM) ──
+    // Score 0-100 based on weighted factors
+    score: integer('score').default(0),
+    // Tier: 'verified' (>=60), 'under_review' (30-59), 'rejected' (<30)
+    scoreTier: complaintScoreTierEnum('score_tier').default('rejected'),
+    // Weight breakdown for audit trail
+    scoreBreakdown: jsonb('score_breakdown')
+      .$type<{
+        linkedToOrder: boolean;
+        buyerKycVerified: boolean;
+        culqiChargeback: boolean;
+        slaExpired: boolean;
+        patternSimilar: boolean;
+      }>()
+      .default(sql`'{}'`),
+    // Whether this complaint counts toward deactivation threshold
+    isVerified: boolean('is_verified').notNull().default(false),
+    verifiedAt: timestamp('verified_at', { withTimezone: true }),
+
+    // ── Linked Order (for scoring) ──
+    linkedOrderId: uuid('linked_order_id').references(() => payments.id, { onDelete: 'set null' }),
+
     // ── Email confirmation ──
     emailSentAt: timestamp('email_sent_at', { withTimezone: true }),
 
@@ -82,6 +116,13 @@ export const complaintBookRecords = pgTable(
     activeRecordsIdx: index('idx_cbr_active')
       .on(table.businessId, table.status)
       .where(sql`deleted_at IS NULL`),
+    // Auto-deactivation scoring indexes
+    scoreTierIdx: index('idx_cbr_score_tier').on(table.businessId, table.scoreTier),
+    isVerifiedIdx: index('idx_cbr_is_verified')
+      .on(table.businessId, table.isVerified)
+      .where(sql`${table.isVerified} = true`),
+    linkedOrderIdIdx: index('idx_cbr_linked_order_id').on(table.linkedOrderId),
+    verifiedAtIdx: index('idx_cbr_verified_at').on(table.verifiedAt.desc()),
   }),
 );
 
