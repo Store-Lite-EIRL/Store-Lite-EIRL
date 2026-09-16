@@ -1,0 +1,149 @@
+@import './tokens.css';
+
+/* ---------- Product dashboard mockup ---------- */
+.productFrame {
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Topbar */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dots {
+  display: flex;
+  gap: 6px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-border);
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.topbar :global(.material-symbols-rounded) {
+  font-size: 18px;
+  color: var(--color-text-muted);
+}
+
+/* Body */
+.body {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  min-height: 360px;
+}
+
+.side {
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 0;
+}
+
+.iconWrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.iconActive {
+  background: var(--gradient-primary);
+  color: #fff;
+  box-shadow: var(--shadow-glow);
+}
+
+.main {
+  padding: 22px;
+}
+
+/* Metric cards */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.card {
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.cardNumber {
+  font-family: var(--font-brand);
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.cardLabel {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* Chart */
+.chart {
+  margin-top: 14px;
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 112px;
+}
+
+.bar {
+  flex: 1;
+  background: var(--accent-blue);
+  border-radius: 6px 6px 0 0;
+}
+
+.barHi {
+  background: var(--gradient-primary);
+}
+
+/* Order list */
+.list {
+  margin-top: 14px;
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  padding: 6px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 12px 13px;
+  font-size: 13px;
+}
+
+.status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  background: var(--accent-blue);
+  color: #fff;
+}
