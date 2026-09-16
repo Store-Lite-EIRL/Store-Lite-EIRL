@@ -1,4 +1,4 @@
-import styles from './FAQSection.module.css';
+import styles from './FaqSection.module.css';
 
 const FAQS = [
   {
