@@ -1,0 +1,214 @@
+@import './tokens.css';
+
+/* ---------- Section shell ---------- */
+.section {
+  padding: 96px 0;
+}
+
+@media (max-width: 760px) {
+  .section {
+    padding: 60px 0;
+  }
+}
+
+.wrap {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+}
+
+@media (min-width: 1024px) {
+  .wrap {
+    padding: 0 80px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .wrap {
+    padding: 0 64px;
+  }
+}
+
+/* ---------- Section head ---------- */
+.sectionHead {
+  max-width: 56ch;
+}
+
+.sectionHead h2 {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: clamp(24px, 2.6vw, 34px);
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.sectionHead p {
+  margin: 0;
+  margin-top: 12px;
+  font-family: var(--font-plain);
+  font-size: 17px;
+  line-height: 1.6;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+/* Eyebrow icon tile */
+.eyebrowIcon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--gradient-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-glow);
+}
+
+.eyebrowIcon :global(.material-symbols-rounded) {
+  font-size: 24px;
+  line-height: 1;
+}
+
+/* ---------- Problem/solution cards ---------- */
+.cardGrid {
+  margin-top: 44px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+@media (max-width: 960px) {
+  .cardGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .cardGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.infoCard {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.infoCard:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+}
+
+.iconChip {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--accent-blue);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.issue {
+  margin-top: 16px;
+  font-weight: 600;
+}
+
+.fixRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.fixRow :global(.material-symbols-rounded) {
+  color: var(--color-primary);
+  font-size: 20px;
+  margin-top: 1px;
+}
+
+.fixRow p {
+  margin: 0;
+  font-family: var(--font-plain);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+
+/* ---------- Integrations ---------- */
+.intTitle {
+  margin: 64px 0 0;
+  font-family: var(--font-brand);
+  font-size: 21px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.intRow {
+  margin-top: 32px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .intRow {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .intRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.intChip {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+
+.intChipIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+}
+
+.intName {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.intCat {
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.intMore {
+  margin-top: 20px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-family: var(--font-plain);
+  font-size: 14.5px;
+  line-height: 1.55;
+}
