@@ -1,61 +1,33 @@
-export default function StatsSection() {
-  const stats = [
-    {
-      value: '50+',
-      label: 'Tiendas activas',
-      description: 'Emprendedores arrancando',
-      icon: 'storefront',
-    },
-    {
-      value: '2K+',
-      label: 'Productos',
-      description: 'Productos publicados',
-      icon: 'inventory_2',
-    },
-    {
-      value: '99%',
-      label: 'Uptime',
-      description: 'Plataforma siempre disponible',
-      icon: 'verified',
-    },
-    {
-      value: '24h',
-      label: 'Soporte',
-      description: 'Tiempo de respuesta',
-      icon: 'support_agent',
-    },
-  ];
+import styles from './StatsSection.module.css';
 
+const STATS = [
+  { value: '50+', label: 'Tiendas activas' },
+  { value: '2K+', label: 'Productos publicados' },
+  { value: '99%', label: 'Uptime' },
+  { value: '24h', label: 'Soporte' },
+] as const;
+
+export default function StatsSection() {
   return (
-    <section className="landing-section" id="stats">
-      <div className="section-container">
-        <div className="stats-header">
-          <span className="section-eyebrow">Números reales</span>
-          <h2 className="section-title-landing">Lo que va generando</h2>
-          <p className="section-description">
-            Acabamos de arrancar y ya tenemos traction. Estos son los números actuales.
-          </p>
+    <section className={styles.section}>
+      <div className={styles.wrap}>
+        <div className={styles.sectionHead}>
+          <h2>Lo que va generando</h2>
+          <p>Acabamos de arrancar y ya tenemos tracción. Estos son los números actuales.</p>
         </div>
 
-        <div className="stats-grid">
-          {stats.map((stat) => (
-            <div className="stat-card" key={stat.label}>
-              <div className="stat-icon-wrapper">
-                <span className="material-symbols-outlined stat-icon">{stat.icon}</span>
-              </div>
-              <div className="stat-value">{stat.value}</div>
-              <div className="stat-label">{stat.label}</div>
-              <p className="stat-description">{stat.description}</p>
+        <div className={styles.statsGrid}>
+          {STATS.map((stat) => (
+            <div className={styles.statCard} key={stat.label}>
+              <div className={styles.statNumber}>{stat.value}</div>
+              <div className={styles.statLabel}>{stat.label}</div>
             </div>
           ))}
         </div>
 
-        <div className="stats-footer">
-          <p>
-            <span className="stats-emoji">🚀</span>
-            <strong>Nuevas tiendas cada semana</strong> ·{' '}
-            <span className="stats-growth">Y creciendo</span>
-          </p>
+        <div className={styles.statsNote}>
+          <span className="material-symbols-rounded">trending_up</span>
+          <span>Nuevas tiendas cada semana · seguimos creciendo</span>
         </div>
       </div>
     </section>
