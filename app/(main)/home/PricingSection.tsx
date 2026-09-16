@@ -5,7 +5,19 @@ import styles from './PricingSection.module.css';
 
 type BillingPeriod = 'monthly' | 'annual';
 
-const PLANS = [
+interface Plan {
+  name: string;
+  featured: boolean;
+  tag?: string;
+  price: string;
+  period: string;
+  description: string;
+  features: readonly string[];
+  cta: string;
+  ctaVariant: 'primary' | 'outline';
+}
+
+const PLANS: Plan[] = [
   {
     name: 'Lite Pago',
     featured: true,
@@ -39,7 +51,7 @@ const PLANS = [
     cta: 'Obtener máxima potencia',
     ctaVariant: 'outline',
   },
-] as const;
+];
 
 export default function PricingSection() {
   const [period, setPeriod] = useState<BillingPeriod>('monthly');
