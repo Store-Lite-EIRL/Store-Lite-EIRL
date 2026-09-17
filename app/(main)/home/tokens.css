@@ -21,9 +21,9 @@ html[data-theme='light'] {
   --shadow-glow: 0 0 24px rgba(19, 91, 236, 0.4);
 
   /* === Border Radius (4) === */
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
+  --radius-s: 10px;
+  --radius-m: 16px;
+  --radius-l: 22px;
   --radius-full: 999px;
 
   /* === Layout (2) === */
@@ -55,6 +55,12 @@ html[data-theme='light'] {
   --glow-purple: rgba(19, 91, 236, 0.35);
   --glow-orange: rgba(147, 51, 234, 0.22);
   --glow-blue: rgba(19, 91, 236, 0.15);
+
+  /* Page-level background: paints the canvas with the theme bg token */
+  html,
+  body {
+    background-color: var(--color-bg);
+  }
 }
 
 html[data-theme='dark'] {
@@ -79,9 +85,9 @@ html[data-theme='dark'] {
   --shadow-glow: 0 0 24px rgba(19, 91, 236, 0.4);
 
   /* === Border Radius (4) === */
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
+  --radius-s: 10px;
+  --radius-m: 16px;
+  --radius-l: 22px;
   --radius-full: 999px;
 
   /* === Layout (2) === */
@@ -113,4 +119,10 @@ html[data-theme='dark'] {
   --glow-purple: rgba(19, 91, 236, 0.35);
   --glow-orange: rgba(147, 51, 234, 0.22);
   --glow-blue: rgba(19, 91, 236, 0.15);
+
+  /* Page-level background: paints the canvas with the theme bg token */
+  html,
+  body {
+    background-color: var(--color-bg);
+  }
 }
