@@ -14,11 +14,6 @@ const FEATURES = [
     title: 'Operación clara',
     description: 'Inventario, pedidos y comunicación en un solo flujo.',
   },
-  {
-    emoji: '🚀',
-    title: 'Escala real',
-    description: 'Una base sólida para crecer sin rehacer todo después.',
-  },
 ] as const;
 
 export default function HeroSection() {
@@ -30,7 +25,9 @@ export default function HeroSection() {
       <div className={styles.wrap}>
         <div className={styles.heroGrid}>
           <div className={styles.copy}>
-            <h1 className={styles.typeDisplay}>Completa tu negocio con Store Lite</h1>
+            <h1 className={styles.typeDisplay}>
+              Completa tu negocio con <span className={styles.brandName}>Store Lite</span>
+            </h1>
             <p className={`${styles.typeBodyLg} ${styles.textSecondary} ${styles.subtitle}`}>
               Store Lite te da todo lo que necesitas para que tu marca se vea profesional desde el
               primer clic: catálogo, pagos y pedidos, sin depender de un programador.
