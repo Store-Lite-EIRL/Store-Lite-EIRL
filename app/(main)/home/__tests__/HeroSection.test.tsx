@@ -16,7 +16,7 @@ describe('HeroSection — hero copy, CTAs and feature cards', () => {
     expect(
       screen.getByRole('heading', {
         level: 1,
-        name: 'Tu vitrina digital, lista para vender desde el día uno',
+        name: 'Completa tu negocio con Store Lite',
       }),
     ).toBeInTheDocument();
     expect(

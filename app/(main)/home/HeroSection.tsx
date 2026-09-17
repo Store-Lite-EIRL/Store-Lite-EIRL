@@ -30,9 +30,7 @@ export default function HeroSection() {
       <div className={styles.wrap}>
         <div className={styles.heroGrid}>
           <div className={styles.copy}>
-            <h1 className={styles.typeDisplay}>
-              Tu vitrina digital, lista para vender desde el día uno
-            </h1>
+            <h1 className={styles.typeDisplay}>Completa tu negocio con Store Lite</h1>
             <p className={`${styles.typeBodyLg} ${styles.textSecondary} ${styles.subtitle}`}>
               Store Lite te da todo lo que necesitas para que tu marca se vea profesional desde el
               primer clic: catálogo, pagos y pedidos, sin depender de un programador.
