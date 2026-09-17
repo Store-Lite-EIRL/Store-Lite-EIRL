@@ -12,49 +12,54 @@ describe('app/layout.tsx - Fonts via next/font', () => {
     layoutContent = readFileSync(layoutPath, 'utf-8');
   });
 
-  describe('Sora font (brand)', () => {
-    it('should import Sora from next/font/google', () => {
-      expect(layoutContent).toMatch(/import.*Sora.*from.*['"]next\/font\/google['"]/);
+  describe('Self-hosted fonts (localFont)', () => {
+    it('should NOT import any font from next/font/google', () => {
+      expect(layoutContent).not.toMatch(/next\/font\/google/);
     });
 
-    it('should define Sora with variable --font-sora', () => {
-      expect(layoutContent).toMatch(/variable:\s*['"]--font-sora['"]/);
+    it('should import localFont from next/font/local', () => {
+      expect(layoutContent).toMatch(/import\s+localFont\s+from\s*['"]next\/font\/local['"]/);
     });
 
-    it('should apply Sora variable to html className', () => {
-      expect(layoutContent).toMatch(/\$\{.*\.variable.*\}/);
-    });
-  });
-
-  describe('Inter font (plain)', () => {
-    it('should import Inter from next/font/google', () => {
-      expect(layoutContent).toMatch(/import.*Inter.*from.*['"]next\/font\/google['"]/);
-    });
-
-    it('should define Inter with variable --font-inter', () => {
-      expect(layoutContent).toMatch(/variable:\s*['"]--font-inter['"]/);
+    it('should define all six font families with localFont', () => {
+      const localFontCalls = layoutContent.match(/localFont\(\{/g);
+      expect(localFontCalls).toHaveLength(6);
     });
   });
 
-  describe('Roboto Mono font (mono)', () => {
-    it('should import Roboto_Mono from next/font/google', () => {
-      expect(layoutContent).toMatch(/import.*Roboto_Mono.*from.*['"]next\/font\/google['"]/);
-    });
+  describe('Font CSS variables', () => {
+    const variables = [
+      '--font-sora',
+      '--font-storefront-inter',
+      '--font-storefront-roboto',
+      '--font-roboto-mono',
+      '--font-google-sans-flex',
+      '--font-storefront-poppins',
+    ];
 
-    it('should define Roboto_Mono with variable --font-roboto-mono', () => {
-      expect(layoutContent).toMatch(/variable:\s*['"]--font-roboto-mono['"]/);
+    variables.forEach((variable) => {
+      it(`should define variable ${variable}`, () => {
+        expect(layoutContent).toMatch(new RegExp(`variable:\\s*['"]${variable}['"]`));
+      });
     });
   });
 
   describe('Font display and fallback', () => {
-    it('should set display: swap for all fonts', () => {
+    it('should set display: swap for all six fonts', () => {
       const swapMatches = layoutContent.match(/display:\s*['"]swap['"]/g);
-      expect(swapMatches).toBeTruthy();
-      expect((swapMatches || []).length).toBeGreaterThanOrEqual(3);
+      expect(swapMatches).toHaveLength(6);
     });
 
     it('should define fallback fonts', () => {
       expect(layoutContent).toMatch(/fallback:.*system-ui/);
+    });
+  });
+
+  describe('html className', () => {
+    it('should apply all six font variables to html className', () => {
+      expect(layoutContent).toMatch(
+        /\$\{sora\.variable\}\s+\$\{inter\.variable\}\s+\$\{roboto\.variable\}\s+\$\{roboto_mono\.variable\}\s+\$\{google_sans_flex\.variable\}\s+\$\{poppins\.variable\}/,
+      );
     });
   });
 });

@@ -9,32 +9,47 @@ import { ThemeProvider } from '@/shared/context/ThemeContext';
 import { CSPostHogProvider } from '@/shared/providers/PostHogProvider';
 import { buildSiteJsonLd, SITE_DESCRIPTION, SITE_NAME } from '@/shared/utils/siteJsonLd';
 import type { Metadata } from 'next';
-import { Inter, Roboto_Mono, Sora } from 'next/font/google';
 import localFont from 'next/font/local';
 import './globals.css';
 
-const sora = Sora({
-  subsets: ['latin'],
-
+// All fonts are self-hosted via next/font/local so builds never depend on
+// network fetches from Google Fonts and CSS variables stay stable for the
+// project-wide token files (theme-fonts.css, landing tokens).
+const sora = localFont({
+  src: './fonts/sora.woff2',
   display: 'swap',
   variable: '--font-sora',
+  adjustFontFallback: false,
   fallback: ['system-ui', 'sans-serif'],
+  weight: '100 800',
 });
 
-const inter = Inter({
-  subsets: ['latin'],
-
+const inter = localFont({
+  src: './fonts/inter.woff2',
   display: 'swap',
-  variable: '--font-inter',
+  variable: '--font-storefront-inter',
+  adjustFontFallback: false,
   fallback: ['system-ui', 'sans-serif'],
+  weight: '100 900',
 });
 
-const roboto_mono = Roboto_Mono({
-  subsets: ['latin'],
+const roboto = localFont({
+  src: [
+    { path: './fonts/roboto-400.woff2', weight: '400', style: 'normal' },
+    { path: './fonts/roboto-500.woff2', weight: '500', style: 'normal' },
+    { path: './fonts/roboto-700.woff2', weight: '700', style: 'normal' },
+  ],
+  display: 'swap',
+  variable: '--font-storefront-roboto',
+});
 
+const roboto_mono = localFont({
+  src: './fonts/roboto-mono.woff2',
   display: 'swap',
   variable: '--font-roboto-mono',
+  adjustFontFallback: false,
   fallback: ['ui-monospace', 'SFMono-Regular', 'monospace'],
+  weight: '100 700',
 });
 
 const google_sans_flex = localFont({
@@ -89,7 +104,7 @@ export default function RootLayout({
     <html
       lang="es"
       suppressHydrationWarning
-      className={`${sora.variable} ${inter.variable} ${roboto_mono.variable} ${google_sans_flex.variable} ${poppins.variable}`}
+      className={`${sora.variable} ${inter.variable} ${roboto.variable} ${roboto_mono.variable} ${google_sans_flex.variable} ${poppins.variable}`}
     >
       <head>
         {/* FOUC prevention - runs before any styles */}
