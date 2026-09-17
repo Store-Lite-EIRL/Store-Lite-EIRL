@@ -34,8 +34,7 @@ export default function HeroSection() {
               Tu vitrina digital, lista para vender desde el día uno
             </h1>
             <p className={`${styles.typeBodyLg} ${styles.textSecondary} ${styles.subtitle}`}>
-              Store Lite te da todo lo que necesitas para que tu marca se vea profesional desde el
-              primer clic: catálogo, pagos y pedidos, sin depender de un programador.
+              Catálogo, pagos y pedidos en una sola herramienta — sin depender de un programador.
             </p>
 
             <div className={styles.actions}>

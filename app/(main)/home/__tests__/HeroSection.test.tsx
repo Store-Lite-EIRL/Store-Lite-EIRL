@@ -20,9 +20,7 @@ describe('HeroSection — hero copy, CTAs and feature cards', () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        /Store Lite te da todo lo que necesitas para que tu marca se vea profesional/,
-      ),
+      screen.getByText(/Catálogo, pagos y pedidos en una sola herramienta/),
     ).toBeInTheDocument();
   });
 
