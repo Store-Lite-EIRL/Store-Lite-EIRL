@@ -48,7 +48,7 @@ describe('HeroSection.module.css — token usage and structure', () => {
       expect(blob2).toContain('width: 320px');
       expect(blob2).toContain('height: 320px');
       expect(blob2).toContain('background: var(--accent-violet)');
-      expect(blob2).toContain('bottom: -120px');
+      expect(blob2).toContain('bottom: -60px');
       expect(blob2).toContain('left: -100px');
     });
   });
@@ -69,11 +69,11 @@ describe('HeroSection.module.css — token usage and structure', () => {
   });
 
   describe('typography', () => {
-    it('renders the display heading in brand font with a 34–58px fluid clamp', () => {
+    it('renders the display heading in brand font with a 40–72px fluid clamp', () => {
       const displayBlock = cssContent.match(/\.typeDisplay\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(displayBlock).toContain('font-family: var(--font-brand)');
-      expect(displayBlock).toContain('clamp(34px, 4.8vw, 58px)');
-      expect(displayBlock).toContain('font-weight: 700');
+      expect(displayBlock).toContain('clamp(40px, 5.5vw, 72px)');
+      expect(displayBlock).toContain('font-weight: 800');
     });
 
     it('renders the body copy in plain font, muted color, 34ch max width and 12px top margin', () => {
