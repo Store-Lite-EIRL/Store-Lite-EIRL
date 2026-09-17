@@ -122,7 +122,7 @@ describe('Landing page — crawlable server-rendered content', () => {
 
     // Hero copy must be present in the rendered tree (crawlable HTML)
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Completa tu negocio con Store Lite',
+      'Enfócate en vender con Store Lite',
     );
     const createLinks = screen.getAllByRole('link', { name: /crear mi tienda/i });
     expect(createLinks.length).toBeGreaterThan(0);
@@ -142,7 +142,7 @@ describe('Landing page — crawlable server-rendered content', () => {
     // always see real content regardless of session.
     await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledWith('/onboarding'));
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Completa tu negocio con Store Lite',
+      'Enfócate en vender con Store Lite',
     );
   });
 });
