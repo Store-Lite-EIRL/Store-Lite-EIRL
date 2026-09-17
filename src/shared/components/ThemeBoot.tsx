@@ -5,6 +5,15 @@ import { useEffect } from 'react';
 export function ThemeBoot() {
   useEffect(() => {
     try {
+      const classes = [
+        'light',
+        'light-medium-contrast',
+        'light-high-contrast',
+        'dark',
+        'dark-medium-contrast',
+        'dark-high-contrast',
+      ];
+
       const storedTheme = localStorage.getItem('app-theme') || 'system';
       const storedScheme = localStorage.getItem('app-color-scheme') || 'default';
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -18,6 +27,8 @@ export function ThemeBoot() {
             : '';
       const nextClass = resolvedTheme + suffix;
 
+      document.body.classList.remove(...classes);
+      document.body.classList.add(nextClass);
       document.documentElement.setAttribute('data-theme', resolvedTheme);
       document.documentElement.style.colorScheme = resolvedTheme;
     } catch (error) {

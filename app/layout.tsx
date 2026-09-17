@@ -103,7 +103,7 @@ export default function RootLayout({
                   var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                   var resolvedTheme = storedTheme === 'system' ? (prefersDark ? 'dark' : 'light') : storedTheme;
                   var suffix = storedScheme === 'medium' ? '-medium-contrast' : storedScheme === 'high' ? '-high-contrast' : '';
-                  document.documentElement.setAttribute('data-theme', resolvedTheme + suffix);
+                  document.documentElement.setAttribute('data-theme', resolvedTheme);
                   document.documentElement.style.colorScheme = resolvedTheme;
                 } catch (e) {}
               })();
