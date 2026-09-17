@@ -89,7 +89,7 @@ describe('PricingSection.module.css — token usage and structure', () => {
     it('styles the plan as a surface tile with radius-lg and relative position', () => {
       const planBlock = cssContent.match(/\.plan\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(planBlock).toContain('background: var(--color-surface)');
-      expect(planBlock).toContain('border-radius: var(--radius-lg)');
+      expect(planBlock).toContain('border-radius: var(--radius-l)');
       expect(planBlock).toContain('padding: 34px');
       expect(planBlock).toContain('position: relative');
       expect(planBlock).toContain('box-shadow: var(--shadow-sm)');
@@ -204,8 +204,8 @@ describe('PricingSection.module.css — token usage and structure', () => {
       '--shadow-sm',
       '--shadow-lg',
       '--shadow-glow',
-      '--radius-md',
-      '--radius-lg',
+      '--radius-m',
+      '--radius-l',
       '--radius-full',
       '--font-brand',
       '--font-plain',

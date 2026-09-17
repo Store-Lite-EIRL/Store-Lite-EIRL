@@ -95,7 +95,7 @@
 
 .infoCard {
   background: var(--color-surface);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-m);
   padding: 24px;
   box-shadow: var(--shadow-sm);
   transition:
@@ -175,7 +175,7 @@
 
 .intChip {
   background: var(--color-surface);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-m);
   padding: 18px;
   box-shadow: var(--shadow-sm);
   text-align: center;

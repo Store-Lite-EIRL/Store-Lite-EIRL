@@ -2,7 +2,7 @@
 
 /* ---------- Product dashboard mockup ---------- */
 .productFrame {
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-l);
   background: var(--color-surface);
   overflow: hidden;
   box-shadow: var(--shadow-lg);
@@ -85,7 +85,7 @@
 
 .card {
   background: var(--color-bg);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-m);
   padding: 16px;
 }
 
@@ -105,7 +105,7 @@
 .chart {
   margin-top: 14px;
   background: var(--color-bg);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-m);
   padding: 18px;
   display: flex;
   align-items: flex-end;
@@ -127,7 +127,7 @@
 .list {
   margin-top: 14px;
   background: var(--color-bg);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-m);
   padding: 6px;
 }
 

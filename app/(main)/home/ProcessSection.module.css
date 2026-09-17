@@ -76,7 +76,7 @@
 
 .step {
   background: var(--color-surface);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-m);
   padding: 22px;
   box-shadow: var(--shadow-sm);
 }

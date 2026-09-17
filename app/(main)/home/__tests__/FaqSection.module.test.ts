@@ -35,7 +35,7 @@ describe('FAQSection.module.css — token usage and structure', () => {
     it('styles each details as a surface tile with soft shadow and 12px spacing', () => {
       const detailsBlock = cssContent.match(/\.faq details\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(detailsBlock).toContain('background: var(--color-surface)');
-      expect(detailsBlock).toContain('border-radius: var(--radius-md)');
+      expect(detailsBlock).toContain('border-radius: var(--radius-m)');
       expect(detailsBlock).toContain('padding: 20px 22px');
       expect(detailsBlock).toContain('box-shadow: var(--shadow-sm)');
       expect(detailsBlock).toContain('margin-bottom: 12px');
@@ -87,7 +87,7 @@ describe('FAQSection.module.css — token usage and structure', () => {
       '--gradient-primary',
       '--shadow-sm',
       '--shadow-glow',
-      '--radius-md',
+      '--radius-m',
       '--font-brand',
       '--font-plain',
     ];

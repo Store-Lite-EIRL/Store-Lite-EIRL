@@ -94,8 +94,8 @@ describe('FloatingNav.module.css — token usage and structure', () => {
       '--glow-purple',
       '--color-bg',
       '--shadow-glow',
-      '--radius-md',
-      '--radius-lg',
+      '--radius-m',
+      '--radius-l',
       '--max-width',
     ];
     requiredTokens.forEach((token) => {

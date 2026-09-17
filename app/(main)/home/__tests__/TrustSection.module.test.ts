@@ -57,7 +57,7 @@ describe('TrustSection.module.css — token usage and structure', () => {
     it('styles the item as a surface tile with soft shadow', () => {
       const itemBlock = cssContent.match(/\.trustItem\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(itemBlock).toContain('background: var(--color-surface)');
-      expect(itemBlock).toContain('border-radius: var(--radius-md)');
+      expect(itemBlock).toContain('border-radius: var(--radius-m)');
       expect(itemBlock).toContain('padding: 22px');
       expect(itemBlock).toContain('box-shadow: var(--shadow-sm)');
     });
@@ -93,7 +93,7 @@ describe('TrustSection.module.css — token usage and structure', () => {
       '--color-text-muted',
       '--accent-blue',
       '--shadow-sm',
-      '--radius-md',
+      '--radius-m',
       '--font-brand',
       '--font-plain',
       '--max-width',
