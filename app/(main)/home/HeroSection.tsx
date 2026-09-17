@@ -30,9 +30,7 @@ export default function HeroSection() {
       <div className={styles.wrap}>
         <div className={styles.heroGrid}>
           <div className={styles.copy}>
-            <h1 className={styles.typeDisplay}>
-              Tu vitrina digital, lista para vender desde el día uno
-            </h1>
+            <h1 className={styles.typeDisplay}>Completa tu negocio con Store Lite</h1>
             <p className={`${styles.typeBodyLg} ${styles.textSecondary} ${styles.subtitle}`}>
               Catálogo, pagos y pedidos en una sola herramienta — sin depender de un programador.
             </p>

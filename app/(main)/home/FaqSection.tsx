@@ -57,13 +57,7 @@ export default function FAQSection() {
 
         <div className={styles.faq}>
           {FAQS.map((faq, index) => (
-            <details
-              key={faq.question}
-              // @ts-expect-error defaultOpen is a valid HTMLDetailsElement property but missing from React types
-              // eslint-disable-next-line react/no-unknown-property
-              defaultOpen={index === 0}
-              ref={index === 0 ? firstDetailsRef : undefined}
-            >
+            <details key={faq.question} ref={index === 0 ? firstDetailsRef : undefined}>
               <summary>
                 {faq.question}
                 <span className="material-symbols-rounded">add</span>

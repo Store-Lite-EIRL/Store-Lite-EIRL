@@ -104,6 +104,14 @@ describe('FloatingNav', () => {
     const brandLink = screen.getByRole('link', { name: 'Ir al inicio de Store Lite' });
     expect(brandLink).toHaveAttribute('href', '/');
     expect(brandLink).toHaveTextContent('Store Lite');
+    // Brand logo should be an image
+    const logoImg = brandLink.querySelector('img');
+    expect(logoImg).toBeInTheDocument();
+    expect(logoImg).toHaveAttribute('alt', 'Store Lite');
+    // Next.js Image transforms src to /_next/image?url=%2Fimg%2Flogo1.jpeg&w=64&q=75
+    // Check the encoded path is present
+    const src = logoImg?.getAttribute('src') ?? '';
+    expect(src).toContain('%2Fimg%2Flogo1.jpeg');
   });
 
   it('renders the 5 section links as anchors with real hrefs', () => {
