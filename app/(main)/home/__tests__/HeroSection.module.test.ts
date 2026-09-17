@@ -73,7 +73,7 @@ describe('HeroSection.module.css — token usage and structure', () => {
       const displayBlock = cssContent.match(/\.typeDisplay\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(displayBlock).toContain('font-family: var(--font-brand)');
       expect(displayBlock).toContain('clamp(40px, 5.5vw, 72px)');
-      expect(displayBlock).toContain('font-weight: 800');
+      expect(displayBlock).toContain('font-weight: 700');
     });
 
     it('renders the body copy in plain font, muted color, 34ch max width and 12px top margin', () => {
