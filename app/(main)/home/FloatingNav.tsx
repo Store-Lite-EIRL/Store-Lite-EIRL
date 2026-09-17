@@ -8,7 +8,7 @@ import styles from './FloatingNav.module.css';
 const NAV_ITEMS = [
   { id: 'inicio', label: 'Inicio' },
   { id: 'soluciones', label: 'Soluciones' },
-  { id: 'proceso', label: 'Proceso' },
+  { id: 'procesos', label: 'Proceso' },
   { id: 'pricing', label: 'Planes' },
   { id: 'footer', label: 'Contacto' },
 ] as const;

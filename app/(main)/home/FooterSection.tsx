@@ -36,7 +36,7 @@ export default function FooterSection() {
               <h4>Producto</h4>
               <Link href="/pricing">Planes y precios</Link>
               <Link href="/auth">Comenzar</Link>
-              <Link href="#proceso">Cómo funciona</Link>
+              <Link href="#procesos">Cómo funciona</Link>
             </div>
             <div className={styles.footerColumn}>
               <h4>Empresa</h4>
