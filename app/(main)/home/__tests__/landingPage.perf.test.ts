@@ -51,11 +51,15 @@ const SERVER_COMPONENTS = [
   'ProcessSection',
   'TrustSection',
   'ContactSection',
-  'FaqSection',
   'FooterSection',
 ] as const;
 
-const CLIENT_COMPONENTS = ['FloatingNav', 'PricingSection', 'LandingSessionRedirect'] as const;
+const CLIENT_COMPONENTS = [
+  'FloatingNav',
+  'PricingSection',
+  'LandingSessionRedirect',
+  'FaqSection',
+] as const;
 
 const readModule = (name: string) => readFileSync(join(homeDir, `${name}.module.css`), 'utf-8');
 const readComponent = (name: string) => readFileSync(join(homeDir, `${name}.tsx`), 'utf-8');
