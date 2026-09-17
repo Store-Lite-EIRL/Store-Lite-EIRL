@@ -34,7 +34,7 @@ describe('HeroSection — hero copy, CTAs and feature cards', () => {
     expect(outline).toHaveAttribute('href', '#pricing');
   });
 
-  it('renders the three feature cards with titles and descriptions from the mockup', () => {
+  it('renders the two feature cards with titles and descriptions from the mockup', () => {
     render(<HeroSection />);
 
     expect(screen.getByText('Setup simple')).toBeInTheDocument();
@@ -46,16 +46,11 @@ describe('HeroSection — hero copy, CTAs and feature cards', () => {
     expect(
       screen.getByText('Inventario, pedidos y comunicación en un solo flujo.'),
     ).toBeInTheDocument();
-
-    expect(screen.getByText('Escala real')).toBeInTheDocument();
-    expect(
-      screen.getByText('Una base sólida para crecer sin rehacer todo después.'),
-    ).toBeInTheDocument();
   });
 
-  it('marks all three feature cards as active with the green live badge', () => {
+  it('marks both feature cards as active with the green live badge', () => {
     render(<HeroSection />);
-    expect(screen.getAllByText('Activo')).toHaveLength(3);
+    expect(screen.getAllByText('Activo')).toHaveLength(2);
   });
 
   it('mounts the ProductFrame dashboard mockup inside the hero grid', () => {
