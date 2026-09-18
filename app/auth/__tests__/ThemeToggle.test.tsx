@@ -2,9 +2,9 @@
 // ThemeToggle — global theme delegation (design D4)
 // =====================================================
 
-import ThemeToggle from '@/app/auth/components/ThemeToggle';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import ThemeToggle from '../components/ThemeToggle';
 
 const { mockSetTheme, mockEffectiveTheme } = vi.hoisted(() => ({
   mockSetTheme: vi.fn(),

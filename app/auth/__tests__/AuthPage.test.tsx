@@ -4,9 +4,9 @@
 // OAuth gating, loading state, D2 in-button phone pill.
 // =====================================================
 
-import AuthPage from '@/app/auth/page';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import AuthPage from '../page';
 
 // ── Mocks ────────────────────────────────────────────
 

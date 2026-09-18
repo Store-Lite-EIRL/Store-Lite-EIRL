@@ -1,5 +1,10 @@
 // =====================================================
 // AuthPage — OAuth-only auth tests (email/password removed)
+// Updated for Slice 1a of auth-md3-mockup:
+//   - R5: page no longer forces the `dark` token class (global ThemeContext)
+//   - D2: "Próximamente" pill renders INSIDE the phone button
+// The insight-panel v2 assertions (four tiles + benefits list) moved to
+// app/auth/__tests__/marketing.test.tsx with the MarketingPanel in Slice 1b.
 // =====================================================
 
 import AuthPage from '@/app/auth/page';
@@ -8,20 +13,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────
 
-const mockRouter = {
-  push: vi.fn(),
-  replace: vi.fn(),
-  prefetch: vi.fn(),
-  back: vi.fn(),
-  forward: vi.fn(),
-  refresh: vi.fn(),
-};
-vi.mock('next/navigation', () => ({
-  useRouter: () => mockRouter,
+const { mockSignInWithGoogle, mockSignInWithFacebook, mockEffectiveTheme } = vi.hoisted(() => ({
+  mockSignInWithGoogle: vi.fn(),
+  mockSignInWithFacebook: vi.fn(),
+  mockEffectiveTheme: { value: 'dark' as 'dark' | 'light' },
 }));
 
-const mockSignInWithGoogle = vi.fn();
-const mockSignInWithFacebook = vi.fn();
 vi.mock('@/features/auth', () => ({
   useAuth: () => ({
     user: null,
@@ -33,23 +30,36 @@ vi.mock('@/features/auth', () => ({
   }),
 }));
 
+vi.mock('@/hooks/useBusinessSession', () => ({
+  clearBusinessSessionData: vi.fn(),
+}));
+
+vi.mock('@/shared/context/ThemeContext', () => ({
+  useTheme: () => ({
+    theme: 'system',
+    colorScheme: 'default',
+    effectiveTheme: mockEffectiveTheme.value,
+    setTheme: vi.fn(),
+    setColorScheme: vi.fn(),
+  }),
+}));
+
 // ── Setup ────────────────────────────────────────────
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockEffectiveTheme.value = 'dark';
 });
 
 // ── Tests ────────────────────────────────────────────
 
-describe('AuthPage — always-dark MD3 tokens (theme fix regression guard)', () => {
-  it('applies the global `dark` token class to the root container so MD3 fields/buttons inherit dark tokens', () => {
+describe('AuthPage — theme delegation (R5: no forced .dark)', () => {
+  it('does not force the global `dark` token class on the root container', () => {
     const { container } = render(<AuthPage />);
 
-    // The MD3 components (md-outlined-text-field, md-filled-button) read their
-    // tokens from the .dark class in src/styles/material-design/dark.css. The
-    // layout boot script only sets light/dark on <body> from the saved/system
-    // theme, so /auth (dark by design) must force the token class itself.
-    expect(container.firstElementChild?.classList.contains('dark')).toBe(true);
+    // Theming is delegated to the global ThemeContext (design D4); the page
+    // must never force a token class itself (spec R5).
+    expect(container.firstElementChild?.classList.contains('dark')).toBe(false);
   });
 });
 
@@ -76,7 +86,7 @@ describe('AuthPage — left panel hero copy (Peruvian tuteo refresh)', () => {
 });
 
 describe('AuthPage — Facebook sign-in (enabled, gated by consent) + phone (UI-only upcoming)', () => {
-  it('renders Facebook button disabled until consent, phone button disabled with Próximamente badge', () => {
+  it('renders Facebook button disabled until consent, phone button disabled with in-button Próximamente pill (D2)', () => {
     render(<AuthPage />);
 
     const facebookButton = screen.getByRole('button', { name: /Continuar con Facebook/ });
@@ -86,14 +96,14 @@ describe('AuthPage — Facebook sign-in (enabled, gated by consent) + phone (UI-
     expect(facebookButton).toBeDisabled();
     expect(facebookButton).toHaveAttribute('type', 'button');
     expect(facebookButton).not.toHaveAttribute('title', 'Disponible próximamente');
-    expect(facebookButton.parentElement?.textContent).not.toContain('Próximamente');
+    expect(facebookButton).not.toHaveTextContent('Próximamente');
     expect(facebookButton.querySelector('svg')).not.toBeNull();
 
-    // Phone: still DISABLED with badge (UI-only upcoming)
+    // Phone: DISABLED with the pill INSIDE the button (design D2)
     expect(phoneButton).toBeDisabled();
     expect(phoneButton).toHaveAttribute('type', 'button');
     expect(phoneButton).toHaveAttribute('title', 'Disponible próximamente');
-    expect(phoneButton.parentElement?.textContent).toContain('Próximamente');
+    expect(phoneButton).toHaveTextContent('Próximamente');
     const phoneIcon = phoneButton.querySelector('.material-symbols-rounded');
     expect(phoneIcon).not.toBeNull();
     expect(phoneIcon).toHaveTextContent('sms');
@@ -119,48 +129,5 @@ describe('AuthPage — Facebook sign-in (enabled, gated by consent) + phone (UI-
 
     // Now enabled
     expect(facebookButton).not.toBeDisabled();
-  });
-});
-
-describe('AuthPage — insight panel v2: four tiles + benefits list (UI-only)', () => {
-  it('renders the new inventory and orders tiles alongside the original two', () => {
-    render(<AuthPage />);
-
-    expect(screen.getByText('Inventario')).toBeInTheDocument();
-    expect(screen.getByText('Siempre al día')).toBeInTheDocument();
-    expect(screen.getByText('Pedidos')).toBeInTheDocument();
-    expect(screen.getByText('Bajo control')).toBeInTheDocument();
-
-    // Original tiles survive the v2 iteration
-    expect(screen.getByText('Tu tienda')).toBeInTheDocument();
-    expect(screen.getByText('Pagos simples')).toBeInTheDocument();
-
-    // Exactly four floating tiles live inside the decorative visual
-    const visual = screen.getByText('Tu tienda').closest('[aria-hidden="true"]');
-    expect(visual).not.toBeNull();
-    expect(visual?.querySelectorAll('strong')).toHaveLength(4);
-  });
-
-  it('renders the three benefit rows with their material icons', () => {
-    render(<AuthPage />);
-
-    const expected = [
-      { text: 'Empieza gratis y crece a tu ritmo', icon: 'check_circle' },
-      { text: 'Tus datos, desde cualquier dispositivo', icon: 'cloud_done' },
-      { text: 'Una experiencia simple para empezar.', icon: 'verified' },
-    ];
-
-    for (const { text, icon } of expected) {
-      const row = screen.getByText(text);
-      expect(row.querySelector('.material-symbols-rounded')).toHaveTextContent(icon);
-    }
-  });
-
-  it('keeps the benefits list exposed to assistive technology (not aria-hidden)', () => {
-    render(<AuthPage />);
-
-    const list = screen.getByText('Empieza gratis y crece a tu ritmo').closest('ul');
-    expect(list).toBeInTheDocument();
-    expect(list).not.toHaveAttribute('aria-hidden');
   });
 });
