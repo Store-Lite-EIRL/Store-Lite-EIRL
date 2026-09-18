@@ -15,6 +15,7 @@ import Checklist from '../components/Checklist';
 import ConsentBar from '../components/ConsentBar';
 import DecoTiles from '../components/DecoTiles';
 import FeatureGrid from '../components/FeatureGrid';
+import MarketingPanel from '../components/MarketingPanel';
 
 describe('DecoTiles — R4/R7 decorative tiles', () => {
   it('renders the four pinned icons inside an aria-hidden decorative layer', () => {
@@ -84,5 +85,31 @@ describe('ConsentBar — R4 privacy deep-link', () => {
 
     const link = screen.getByRole('link', { name: 'Cambiar preferencias' });
     expect(link).toHaveAttribute('href', '/privacidad');
+  });
+});
+
+describe('MarketingPanel — R4 composition', () => {
+  it('renders an aside labelled "Store Lite" with the pinned eyebrow, h2 and subtitle', () => {
+    render(<MarketingPanel />);
+
+    expect(screen.getByRole('complementary', { name: 'Store Lite' })).toBeInTheDocument();
+    expect(screen.getByText('Tu negocio, en movimiento')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
+      'Todo lo que vendes, en un solo lugar.',
+    );
+    expect(
+      screen.getByText(
+        /Organiza tu catálogo, recibe pagos y haz crecer tu tienda desde cualquier lugar\./,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('composes the feature grid, checklist and consent bar', () => {
+    render(<MarketingPanel />);
+
+    expect(screen.getByRole('heading', { name: 'Pagos simples' })).toBeInTheDocument();
+    expect(screen.getByText('Directos a tu cuenta')).toBeInTheDocument();
+    expect(screen.getByText('Una experiencia simple para empezar.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Cambiar preferencias' })).toBeInTheDocument();
   });
 });

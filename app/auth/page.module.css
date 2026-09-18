@@ -1,8 +1,8 @@
-/* ─── /auth — MD3 mockup rebuild, Slice 1a (dark base) ───────────────────────
+/* ─── /auth — MD3 mockup rebuild, Slices 1a+1b (dark base) ──────────────
    Viewport two-column shell with per-panel glass surfaces (no enclosing card).
    Dark is the source of truth (design D6; light overrides land in Slice 2).
-   The right marketing column is reserved (empty) until Slice 1b ships
-   MarketingPanel. Dead email/password and shard styles are dropped. */
+   Right column = MarketingPanel family (marketing styles live in
+   MarketingPanel.module.css). Dead email/password and shard styles dropped. */
 
 /* 1. Scoped tokens — dark values (design table; light overrides in Slice 2) */
 .authShell {
@@ -81,8 +81,8 @@
   --auth-toggle-fg: #dfe3e7;
 }
 
-/* 2. Shell — viewport two-column grid, no enclosing card (R1). The right
-   track stays empty until Slice 1b; both columns get min-width:0 (D3). */
+/* 2. Shell — viewport two-column grid, no enclosing card (R1). Left track =
+   form panel, right track = MarketingPanel; both get min-width:0 (D3). */
 .authShell {
   position: relative;
   display: grid;
@@ -445,8 +445,7 @@
 }
 
 /* 12. Responsive — 960px collapse to a single column (D3). The marketing
-   track is reserved (empty) until Slice 1b; its display:none rule lands with
-   MarketingPanel. */
+   panel hides itself at ≤960px via its own media query (MarketingPanel.module.css). */
 @media (max-width: 960px) {
   .authShell {
     grid-template-columns: minmax(0, 1fr);

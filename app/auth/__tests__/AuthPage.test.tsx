@@ -175,3 +175,18 @@ describe('AuthPage — R2: provider buttons and D2 in-button pill', () => {
     expect(hiddenDecor.length).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe('AuthPage — R1/R4: marketing panel wiring (Slice 1b)', () => {
+  it('renders the marketing panel into the right shell column', () => {
+    render(<AuthPage />);
+
+    expect(screen.getByRole('complementary', { name: 'Store Lite' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
+      'Todo lo que vendes, en un solo lugar.',
+    );
+    expect(screen.getByRole('link', { name: 'Cambiar preferencias' })).toHaveAttribute(
+      'href',
+      '/privacidad',
+    );
+  });
+});
