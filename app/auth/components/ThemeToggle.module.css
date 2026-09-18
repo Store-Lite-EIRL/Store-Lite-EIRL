@@ -1,0 +1,39 @@
+/* Fixed top-right 42px circular toggle (mockup). Colors ride the --auth-toggle-*
+   tokens defined on .authShell (dark defaults; light overrides land in Slice 2).
+   The focus ring reuses the global MD3 primary token (design D6). */
+.toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 20;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--auth-toggle-bg, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--auth-toggle-border, rgba(255, 255, 255, 0.14));
+  color: var(--auth-toggle-fg, #dfe3e7);
+  box-shadow: 0 1px 3px rgba(24, 28, 32, 0.08);
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.toggle .material-symbols-rounded {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary, #92cef5);
+  outline-offset: 2px;
+}
