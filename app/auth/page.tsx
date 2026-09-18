@@ -93,10 +93,6 @@ export default function AuthPage() {
           </h1>
           <p className={styles.cardSubtitle}>Publica tus productos y recibe pagos en minutos.</p>
 
-          <div className={styles.consentRow}>
-            <ConsentCheckbox onConsentChange={setConsented} />
-          </div>
-
           <div className={styles.authButtons}>
             <button
               type="button"
@@ -168,6 +164,10 @@ export default function AuthPage() {
               <span className={styles.providerLabel}>Continuar con teléfono</span>
               <span className={styles.soonPill}>Próximamente</span>
             </button>
+          </div>
+
+          <div className={styles.consentRow}>
+            <ConsentCheckbox onConsentChange={setConsented} />
           </div>
         </div>
       </section>

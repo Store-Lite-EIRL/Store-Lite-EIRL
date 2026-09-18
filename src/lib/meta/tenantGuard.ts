@@ -20,7 +20,7 @@ export const PLATFORM_TRACKING_PREFIXES = [
   '/libro-reclamaciones',
 ] as const;
 
-const EXCLUDED_PATH_PREFIX = '/auth/customer';
+const EXCLUDED_PATH_PREFIXES = ['/auth/customer', '/auth'] as const;
 
 /**
  * True when `pathname` is a platform tracking path.
@@ -28,7 +28,7 @@ const EXCLUDED_PATH_PREFIX = '/auth/customer';
  * never `/pricingx`; `/` only matches the exact root.
  */
 export function isPlatformTrackingPath(pathname: string): boolean {
-  if (pathname === EXCLUDED_PATH_PREFIX || pathname.startsWith(`${EXCLUDED_PATH_PREFIX}/`)) {
+  if (EXCLUDED_PATH_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return false;
   }
   return PLATFORM_TRACKING_PREFIXES.some((prefix) => {

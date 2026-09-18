@@ -268,7 +268,8 @@ html[data-theme='light'] .authShell .orb3 {
   overflow: hidden;
   border-radius: 1.5rem;
   background: var(--auth-glass-surface);
-  border: 1px solid var(--auth-glass-border);
+  /* Border removed per visual feedback: mockup has no border on form panel,
+     only glass surface + top highlight. Keeps elevation via shadow/blur. */
   backdrop-filter: blur(var(--auth-glass-blur));
   -webkit-backdrop-filter: blur(var(--auth-glass-blur));
   box-shadow: var(--auth-glass-shadow);
@@ -329,7 +330,7 @@ html[data-theme='light'] .authShell .orb3 {
   margin: 0 0 0.625rem;
   color: var(--auth-eyebrow-form);
   font-size: 0.8rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.08em;
   line-height: 1.4;
   text-transform: uppercase;
@@ -339,7 +340,7 @@ html[data-theme='light'] .authShell .orb3 {
   margin: 0;
   color: var(--auth-text);
   font-size: clamp(1.9rem, 1.6rem + 1.25vw, 2.6rem);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.12;
   text-wrap: balance;
@@ -378,11 +379,11 @@ html[data-theme='light'] .authShell .orb3 {
   height: 48px;
   padding: 0 18px;
   overflow: hidden;
-  border: none;
+  border: 1px solid var(--auth-glass-border);
   border-radius: 0.75rem;
   font-family: inherit;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.025em;
   color: var(--auth-google-fg);
   background: var(--auth-google-bg);
@@ -391,11 +392,13 @@ html[data-theme='light'] .authShell .orb3 {
   transition:
     background-color 300ms ease,
     transform 150ms ease,
-    opacity 300ms ease;
+    opacity 300ms ease,
+    border-color 150ms ease;
 }
 
 .authButton:hover:not(:disabled) {
   background-color: var(--auth-google-hover);
+  border-color: rgba(255, 255, 255, 0.16);
   transform: scale(1.02);
 }
 
@@ -427,7 +430,7 @@ html[data-theme='light'] .authShell .orb3 {
 .phoneButton:disabled {
   background-color: var(--auth-phone-bg) !important;
   color: var(--auth-phone-fg) !important;
-  border: 1px solid var(--auth-phone-border) !important;
+  border-color: var(--auth-phone-border) !important;
   box-shadow: none !important;
   cursor: not-allowed !important;
 }

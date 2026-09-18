@@ -184,9 +184,7 @@ describe('AuthPage — R1/R4: marketing panel wiring (Slice 1b)', () => {
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
       'Todo lo que vendes, en un solo lugar.',
     );
-    expect(screen.getByRole('link', { name: 'Cambiar preferencias' })).toHaveAttribute(
-      'href',
-      '/privacidad',
-    );
+    // ConsentBar removed (duplicate of global ConsentBanner) — no "Cambiar preferencias" link in MarketingPanel
+    expect(screen.queryByRole('link', { name: 'Cambiar preferencias' })).not.toBeInTheDocument();
   });
 });

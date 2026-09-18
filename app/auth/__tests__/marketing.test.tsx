@@ -3,16 +3,14 @@
 // Covers (cumulative across 1b.1→1b.3): R4 deco tiles
 // (4 icons, aria-hidden), feature grid (4 pinned subtitles
 // incl. "Directos a tu cuenta"), checklist (3 rows + R6
-// period pin), consent bar deep-link, and the MarketingPanel
-// composition (aside label, copy). The legacy insight-panel
-// assertions relocated here from tests/unit/AuthPage.test.tsx
-// (see note there).
+// period pin), and the MarketingPanel composition
+// (aside label, copy). ConsentBar removed per user feedback
+// (duplicate of global ConsentBanner).
 // =====================================================
 
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import Checklist from '../components/Checklist';
-import ConsentBar from '../components/ConsentBar';
 import DecoTiles from '../components/DecoTiles';
 import FeatureGrid from '../components/FeatureGrid';
 import MarketingPanel from '../components/MarketingPanel';
@@ -77,17 +75,6 @@ describe('Checklist — R4 benefit rows (R6 period pin)', () => {
   });
 });
 
-describe('ConsentBar — R4 privacy deep-link', () => {
-  it('renders the tracking caption and a "Cambiar preferencias" link to /privacidad', () => {
-    render(<ConsentBar />);
-
-    expect(screen.getByText('Preferencias de seguimiento')).toBeInTheDocument();
-
-    const link = screen.getByRole('link', { name: 'Cambiar preferencias' });
-    expect(link).toHaveAttribute('href', '/privacidad');
-  });
-});
-
 describe('MarketingPanel — R4 composition', () => {
   it('renders an aside labelled "Store Lite" with the pinned eyebrow, h2 and subtitle', () => {
     render(<MarketingPanel />);
@@ -104,12 +91,13 @@ describe('MarketingPanel — R4 composition', () => {
     ).toBeInTheDocument();
   });
 
-  it('composes the feature grid, checklist and consent bar', () => {
+  it('composes the feature grid and checklist (ConsentBar removed)', () => {
     render(<MarketingPanel />);
 
     expect(screen.getByRole('heading', { name: 'Pagos simples' })).toBeInTheDocument();
     expect(screen.getByText('Directos a tu cuenta')).toBeInTheDocument();
     expect(screen.getByText('Una experiencia simple para empezar.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Cambiar preferencias' })).toBeInTheDocument();
+    // ConsentBar was removed — no "Cambiar preferencias" link should exist in MarketingPanel
+    expect(screen.queryByRole('link', { name: 'Cambiar preferencias' })).not.toBeInTheDocument();
   });
 });
