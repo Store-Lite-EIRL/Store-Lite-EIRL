@@ -403,3 +403,90 @@
   outline: 2px solid var(--md-sys-color-primary, #92cef5);
   outline-offset: 2px;
 }
+
+/* 11. Particle drift — subtle float; disabled under reduced motion (R7) */
+@keyframes particleDrift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-0.5rem);
+  }
+}
+
+.particle {
+  animation: particleDrift 9s ease-in-out infinite;
+}
+
+.p1 {
+  animation-duration: 9s;
+}
+
+.p2 {
+  animation-duration: 11s;
+  animation-delay: 0.8s;
+}
+
+.p3 {
+  animation-duration: 8s;
+  animation-delay: 1.6s;
+}
+
+.p4 {
+  animation-duration: 10s;
+  animation-delay: 0.3s;
+}
+
+.p5 {
+  animation-duration: 12s;
+  animation-delay: 2.1s;
+}
+
+/* 12. Responsive — 960px collapse to a single column (D3). The marketing
+   track is reserved (empty) until Slice 1b; its display:none rule lands with
+   MarketingPanel. */
+@media (max-width: 960px) {
+  .authShell {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-y: auto;
+  }
+
+  .formPanel {
+    margin: 1rem;
+    padding: 2.25rem 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .formPanel {
+    margin: 0.75rem;
+    padding: 2rem 1.25rem;
+    border-radius: 1.25rem;
+  }
+}
+
+/* 420px tightening — kept from the legacy page */
+@media (max-width: 420px) {
+  .formPanel {
+    margin: 0.5rem;
+    padding: 1.75rem 1rem;
+    border-radius: 1.125rem;
+  }
+
+  .authButton {
+    padding: 0 14px;
+  }
+
+  .providerLabel {
+    font-size: 0.9rem;
+  }
+}
+
+/* 13. Reduced motion — disable all floats (R7) */
+@media (prefers-reduced-motion: reduce) {
+  .particle {
+    animation: none !important;
+  }
+}
