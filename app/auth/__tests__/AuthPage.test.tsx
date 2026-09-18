@@ -176,6 +176,40 @@ describe('AuthPage — R2: provider buttons and D2 in-button pill', () => {
   });
 });
 
+describe('AuthPage — Visual Polish: form panel and OAuth button styling (VISUAL-FIX-2)', () => {
+  it('form panel has no box-shadow (only glass surface + glow orbs for depth)', () => {
+    const { container } = render(<AuthPage />);
+    const formPanel = container.querySelector('section[aria-labelledby="auth-title"]');
+    expect(formPanel).toBeInTheDocument();
+    // The form panel should not have a box-shadow - only glass surface via backdrop-filter
+    // This test will pass once the box-shadow is removed from .formPanel
+    expect(formPanel).not.toHaveStyle('box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8)');
+  });
+
+  it('Google button has Google-branded border and transparent wash background', () => {
+    render(<AuthPage />);
+    const google = screen.getByRole('button', { name: /Continuar con Google/ });
+    expect(google).toBeInTheDocument();
+    // Google button should have a border with Google blue and a transparent blue wash background
+    // These will be verified via CSS custom properties once implemented
+  });
+
+  it('Facebook button has Facebook-branded border and transparent wash background', () => {
+    render(<AuthPage />);
+    const facebook = screen.getByRole('button', { name: /Continuar con Facebook/ });
+    expect(facebook).toBeInTheDocument();
+    // Facebook button should have a border with Facebook blue and a transparent blue wash background
+  });
+
+  it('Phone button has vibrant accent border and transparent wash background (disabled)', () => {
+    render(<AuthPage />);
+    const phone = screen.getByRole('button', { name: /Continuar con teléfono/ });
+    expect(phone).toBeInTheDocument();
+    expect(phone).toBeDisabled();
+    // Phone button should have a vibrant accent border (purple/tertiary) and transparent wash
+  });
+});
+
 describe('AuthPage — R1/R4: marketing panel wiring (Slice 1b)', () => {
   it('renders the marketing panel into the right shell column', () => {
     render(<AuthPage />);

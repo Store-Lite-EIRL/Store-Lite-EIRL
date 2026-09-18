@@ -96,7 +96,7 @@ export default function AuthPage() {
           <div className={styles.authButtons}>
             <button
               type="button"
-              className={styles.authButton}
+              className={`${styles.authButton} ${styles.googleButton}`}
               onClick={handleGoogleSignIn}
               disabled={!consented || googleLoading}
             >
@@ -129,7 +129,7 @@ export default function AuthPage() {
 
             <button
               type="button"
-              className={styles.authButton}
+              className={`${styles.authButton} ${styles.facebookButton}`}
               onClick={handleFacebookSignIn}
               disabled={!consented || facebookLoading}
             >

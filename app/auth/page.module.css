@@ -63,6 +63,25 @@
   --auth-phone-fg: rgba(255, 255, 255, 0.4);
   --auth-phone-border: rgba(255, 255, 255, 0.1);
 
+  /* VISUAL-FIX-2: OAuth button brand colors — colorful/vibrant per user feedback */
+  /* Google: blend of #4285F4, #34A853, #FBBC05, #EA4335 → use primary blue #4285F4 for border */
+  --auth-google-brand: #4285f4;
+  --auth-google-wash: rgba(66, 133, 244, 0.12);
+  --auth-google-border: #4285f4;
+  --auth-google-text: #4285f4;
+
+  /* Facebook: #1877F2 */
+  --auth-facebook-brand: #1877f2;
+  --auth-facebook-wash: rgba(24, 119, 242, 0.12);
+  --auth-facebook-border: #1877f2;
+  --auth-facebook-text: #1877f2;
+
+  /* Phone: vibrant purple/tertiary accent */
+  --auth-phone-brand: #a855f7;
+  --auth-phone-wash: rgba(168, 85, 247, 0.12);
+  --auth-phone-border-brand: #a855f7;
+  --auth-phone-text-brand: #a855f7;
+
   /* Particles */
   --auth-p1: rgba(255, 255, 255, 0.2);
   --auth-p2: rgba(19, 91, 236, 0.3);
@@ -122,6 +141,22 @@ html[data-theme='light'] .authShell {
   --auth-phone-bg: rgba(15, 23, 42, 0.05);
   --auth-phone-fg: rgba(15, 23, 42, 0.42);
   --auth-phone-border: rgba(15, 23, 42, 0.12);
+
+  /* VISUAL-FIX-2: OAuth button brand colors — light variants */
+  --auth-google-brand: #4285f4;
+  --auth-google-wash: rgba(66, 133, 244, 0.1);
+  --auth-google-border: #4285f4;
+  --auth-google-text: #4285f4;
+
+  --auth-facebook-brand: #1877f2;
+  --auth-facebook-wash: rgba(24, 119, 242, 0.1);
+  --auth-facebook-border: #1877f2;
+  --auth-facebook-text: #1877f2;
+
+  --auth-phone-brand: #a855f7;
+  --auth-phone-wash: rgba(168, 85, 247, 0.1);
+  --auth-phone-border-brand: #a855f7;
+  --auth-phone-text-brand: #a855f7;
 
   /* Particles */
   --auth-p1: rgba(51, 65, 85, 0.3);
@@ -268,11 +303,11 @@ html[data-theme='light'] .authShell .orb3 {
   overflow: hidden;
   border-radius: 1.5rem;
   background: var(--auth-glass-surface);
-  /* Border removed per visual feedback: mockup has no border on form panel,
-     only glass surface + top highlight. Keeps elevation via shadow/blur. */
+  /* Border AND shadow removed per VISUAL-FIX-2 feedback: "se ve mal".
+     Keep only glass surface + top highlight + glow orbs/dot grid for depth.
+     No enclosing card-like border or box-shadow on the panel itself. */
   backdrop-filter: blur(var(--auth-glass-blur));
   -webkit-backdrop-filter: blur(var(--auth-glass-blur));
-  box-shadow: var(--auth-glass-shadow);
 }
 
 /* Top edge highlight (ex-card highlight, now a pseudo-element) */
@@ -370,6 +405,7 @@ html[data-theme='light'] .authShell .orb3 {
   margin-top: 1.375rem;
 }
 
+/* Base button style — shared structure */
 .authButton {
   position: relative;
   display: flex;
@@ -379,15 +415,11 @@ html[data-theme='light'] .authShell .orb3 {
   height: 48px;
   padding: 0 18px;
   overflow: hidden;
-  border: 1px solid var(--auth-glass-border);
   border-radius: 0.75rem;
   font-family: inherit;
   font-size: 1rem;
   font-weight: 600;
   letter-spacing: 0.025em;
-  color: var(--auth-google-fg);
-  background: var(--auth-google-bg);
-  box-shadow: var(--auth-google-shadow);
   cursor: pointer;
   transition:
     background-color 300ms ease,
@@ -397,8 +429,6 @@ html[data-theme='light'] .authShell .orb3 {
 }
 
 .authButton:hover:not(:disabled) {
-  background-color: var(--auth-google-hover);
-  border-color: rgba(255, 255, 255, 0.16);
   transform: scale(1.02);
 }
 
@@ -425,23 +455,66 @@ html[data-theme='light'] .authShell .orb3 {
   letter-spacing: 0.025em;
 }
 
-/* Phone — permanently disabled, muted dark glass (R2) */
+/* Google — white surface with Google-blue border + transparent blue wash on icon area */
+.googleButton {
+  border: 2px solid var(--auth-google-border);
+  color: var(--auth-google-text);
+  background: var(--auth-google-wash);
+  box-shadow: none;
+}
+
+.googleButton:hover:not(:disabled) {
+  background-color: var(--auth-google-wash);
+  border-color: var(--auth-google-border);
+}
+
+/* Facebook — transparent Facebook-blue wash with Facebook-blue border */
+.facebookButton {
+  border: 2px solid var(--auth-facebook-border);
+  color: var(--auth-facebook-text);
+  background: var(--auth-facebook-wash);
+  box-shadow: none;
+}
+
+.facebookButton:hover:not(:disabled) {
+  background-color: var(--auth-facebook-wash);
+  border-color: var(--auth-facebook-border);
+}
+
+/* Phone — permanently disabled, vibrant purple/tertiary accent (VISUAL-FIX-2) */
 .phoneButton,
 .phoneButton:disabled {
-  background-color: var(--auth-phone-bg) !important;
-  color: var(--auth-phone-fg) !important;
-  border-color: var(--auth-phone-border) !important;
+  border: 2px solid var(--auth-phone-border-brand) !important;
+  color: var(--auth-phone-text-brand) !important;
+  background: var(--auth-phone-wash) !important;
   box-shadow: none !important;
   cursor: not-allowed !important;
 }
 
 .phoneButton:hover {
-  background-color: var(--auth-phone-bg) !important;
+  background-color: var(--auth-phone-wash) !important;
+  border-color: var(--auth-phone-border-brand) !important;
   transform: none !important;
 }
 
 .phoneButton .providerIcon {
-  color: var(--auth-phone-fg) !important;
+  color: var(--auth-phone-text-brand) !important;
+}
+
+/* In-button "Próximamente" pill (D2) */
+.soonPill {
+  margin-left: auto;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--auth-pill-border);
+  border-radius: 9999px;
+  background-color: var(--auth-pill-bg);
+  color: var(--auth-pill-fg);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* In-button "Próximamente" pill (D2) */
