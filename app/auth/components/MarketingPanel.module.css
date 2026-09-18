@@ -229,3 +229,22 @@
     display: none;
   }
 }
+
+/* 8. Light variant — marketing tokens scoped on .panel (design table; dark =
+   source of truth, D6). Re-declaring the custom properties on the panel
+   shadows the dark defaults inherited from .authShell for the whole
+   marketing subtree. Shell-shared tokens (text, pills, accent) are covered
+   by the .authShell block in page.module.css (Slice 2.1). */
+html[data-theme='light'] .panel {
+  --auth-tile-bg: rgba(255, 255, 255, 0.65);
+  --auth-tile-border: rgba(15, 23, 42, 0.1);
+  --auth-tile-shadow: 0 1rem 2.5rem rgba(15, 23, 42, 0.1);
+  --auth-tile-icon-a: #2563eb;
+  --auth-tile-icon-b: #7c3aed;
+  --auth-insight-bg: rgba(255, 255, 255, 0.35);
+  --auth-insight-ring: rgba(15, 23, 42, 0.1);
+  --auth-divider: rgba(15, 23, 42, 0.12);
+  --auth-benefit: #1e293b;
+  --auth-benefit-icon: #16a34a;
+  --auth-eyebrow-insight: #7c3aed;
+}

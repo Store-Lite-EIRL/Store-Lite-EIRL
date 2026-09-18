@@ -81,6 +81,65 @@
   --auth-toggle-fg: #dfe3e7;
 }
 
+/* 1b. Light variant — scoped --auth-* overrides (design table; dark = source
+   of truth, D6). Selector follows the app's theme-scoping convention
+   (html[data-theme='light'] — home modules) and covers all light contrast
+   variants because ThemeContext/ThemeBoot set data-theme to the resolved
+   base theme. Marketing-only tokens (tile/insight/benefit/eyebrow-insight)
+   are overridden in MarketingPanel.module.css and toggle tokens in
+   ThemeToggle.module.css (Slice 2.2). Pills live here because BOTH consumers
+   (in-button "Próximamente" + consent chip) inherit from .authShell. */
+html[data-theme='light'] .authShell {
+  /* Shell */
+  --auth-bg: #f6fafd;
+  --auth-text: #181c20;
+
+  /* Glow orbs — pastel field: dimmed opacity + widened 100px blur. The
+     central pink orb (orb3) is dimmed further (.10) per the design table. */
+  --auth-orb-opacity: 0.14;
+  --auth-orb-blur: 100px;
+
+  /* Glass surface (form panel) */
+  --auth-glass-surface: rgba(255, 255, 255, 0.55);
+  --auth-glass-border: rgba(24, 28, 32, 0.08);
+  --auth-glass-shadow: 0 8px 32px rgba(15, 23, 42, 0.1);
+  --auth-highlight: linear-gradient(to right, transparent, rgba(33, 100, 135, 0.35), transparent);
+
+  /* Dot grid — dark dots on light */
+  --auth-grid-dot: #181c20;
+  --auth-grid-opacity: 0.05;
+
+  /* Typography accents */
+  --auth-eyebrow-form: #2563eb;
+  --auth-text-secondary: #475569;
+
+  /* Brand / logo — softer logo glow on light */
+  --auth-accent-bg: rgba(19, 91, 236, 0.1);
+  --auth-accent-border: rgba(19, 91, 236, 0.18);
+  --auth-accent-glow: 0 0 20px rgba(19, 91, 236, 0.18);
+
+  /* OAuth buttons — Google unchanged (white button already dual-theme) */
+  --auth-phone-bg: rgba(15, 23, 42, 0.05);
+  --auth-phone-fg: rgba(15, 23, 42, 0.42);
+  --auth-phone-border: rgba(15, 23, 42, 0.12);
+
+  /* Particles */
+  --auth-p1: rgba(51, 65, 85, 0.3);
+  --auth-p2: rgba(19, 91, 236, 0.25);
+  --auth-p3: rgba(147, 51, 234, 0.2);
+  --auth-p4: rgba(51, 65, 85, 0.15);
+  --auth-p5: rgba(236, 72, 153, 0.25);
+
+  /* Pills (in-button "Próximamente" + consent chip) */
+  --auth-pill-bg: #ffffff;
+  --auth-pill-border: rgba(15, 23, 42, 0.12);
+  --auth-pill-fg: #64748b;
+}
+
+html[data-theme='light'] .authShell .orb3 {
+  opacity: 0.1;
+}
+
 /* 2. Shell — viewport two-column grid, no enclosing card (R1). Left track =
    form panel, right track = MarketingPanel; both get min-width:0 (D3). */
 .authShell {

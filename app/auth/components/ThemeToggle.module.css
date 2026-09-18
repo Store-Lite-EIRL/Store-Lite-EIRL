@@ -37,3 +37,18 @@
   outline: 2px solid var(--md-sys-color-primary, #92cef5);
   outline-offset: 2px;
 }
+
+/* Light variant — the toggle consumes its tokens on itself, so re-declaring
+   them on .toggle shadows the dark defaults inherited from .authShell
+   (design table; dark = source of truth, D6). The base hover is dark-glass
+   white, so light needs its own hover surface. */
+html[data-theme='light'] .toggle {
+  --auth-toggle-bg: #ffffff;
+  --auth-toggle-border: rgba(15, 23, 42, 0.12);
+  --auth-toggle-fg: #475569;
+}
+
+html[data-theme='light'] .toggle:hover {
+  background: #f1f5f9;
+  border-color: rgba(15, 23, 42, 0.18);
+}
