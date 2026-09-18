@@ -11,6 +11,8 @@
 
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import Checklist from '../components/Checklist';
+import ConsentBar from '../components/ConsentBar';
 import DecoTiles from '../components/DecoTiles';
 import FeatureGrid from '../components/FeatureGrid';
 
@@ -54,5 +56,33 @@ describe('FeatureGrid — R4 feature grid', () => {
     render(<FeatureGrid />);
 
     expect(screen.getAllByRole('heading', { level: 4 })).toHaveLength(4);
+  });
+});
+
+describe('Checklist — R4 benefit rows (R6 period pin)', () => {
+  it('renders three Spanish benefit rows with the pinned copy and icons', () => {
+    render(<Checklist />);
+
+    const rows = screen.getAllByRole('listitem');
+    expect(rows).toHaveLength(3);
+    expect(rows[0]).toHaveTextContent('Empieza gratis y crece a tu ritmo');
+    expect(rows[1]).toHaveTextContent('Tus datos, desde cualquier dispositivo');
+    // R6 pin — row 3 keeps its trailing period.
+    expect(rows[2]).toHaveTextContent('Una experiencia simple para empezar.');
+
+    expect(screen.getByText('check_circle')).toBeInTheDocument();
+    expect(screen.getByText('cloud_done')).toBeInTheDocument();
+    expect(screen.getByText('verified')).toBeInTheDocument();
+  });
+});
+
+describe('ConsentBar — R4 privacy deep-link', () => {
+  it('renders the tracking caption and a "Cambiar preferencias" link to /privacidad', () => {
+    render(<ConsentBar />);
+
+    expect(screen.getByText('Preferencias de seguimiento')).toBeInTheDocument();
+
+    const link = screen.getByRole('link', { name: 'Cambiar preferencias' });
+    expect(link).toHaveAttribute('href', '/privacidad');
   });
 });
