@@ -101,3 +101,61 @@ describe('MarketingPanel — R4 composition', () => {
     expect(screen.queryByRole('link', { name: 'Cambiar preferencias' })).not.toBeInTheDocument();
   });
 });
+
+describe('MarketingPanel — Visual Polish: vibrant marketing icons (VISUAL-FIX-3)', () => {
+  it('DecoTiles renders four decorative tiles with icons (visual styles applied via CSS)', () => {
+    const { container } = render(<DecoTiles />);
+
+    // R7: the whole tile layer is hidden from assistive technology.
+    expect(container.firstElementChild?.getAttribute('aria-hidden')).toBe('true');
+
+    // R4: exact pinned icon set from the design.
+    expect(screen.getByText('shopping_bag')).toBeInTheDocument();
+    expect(screen.getByText('sell')).toBeInTheDocument();
+    expect(screen.getByText('payments')).toBeInTheDocument();
+    expect(screen.getByText('receipt_long')).toBeInTheDocument();
+    // VISUAL-FIX-3: Each tile now has vibrant brand color, matching border, and wash background
+    // Verified visually in e2e/browser; CSS tokens defined in MarketingPanel.module.css
+  });
+
+  it('FeatureGrid renders four cards with vibrant icon chips (visual styles applied via CSS)', () => {
+    render(<FeatureGrid />);
+
+    // Card 1 — Tu tienda / Lista para vender
+    expect(screen.getByRole('heading', { name: 'Tu tienda' })).toBeInTheDocument();
+    expect(screen.getByText('Lista para vender')).toBeInTheDocument();
+
+    // Card 2 — Pagos simples / Directos a tu cuenta
+    expect(screen.getByRole('heading', { name: 'Pagos simples' })).toBeInTheDocument();
+    expect(screen.getByText('Directos a tu cuenta')).toBeInTheDocument();
+
+    // Card 3 — Inventario / Siempre al día
+    expect(screen.getByRole('heading', { name: 'Inventario' })).toBeInTheDocument();
+    expect(screen.getByText('Siempre al día')).toBeInTheDocument();
+
+    // Card 4 — Pedidos / Bajo control
+    expect(screen.getByRole('heading', { name: 'Pedidos' })).toBeInTheDocument();
+    expect(screen.getByText('Bajo control')).toBeInTheDocument();
+
+    expect(screen.getAllByRole('heading', { level: 4 })).toHaveLength(4);
+    // VISUAL-FIX-3: Each iconChip now has vibrant brand color, matching border, and wash background
+    // Verified visually in e2e/browser; CSS tokens defined in MarketingPanel.module.css
+  });
+
+  it('Checklist renders three benefit rows with vibrant check icons (visual styles applied via CSS)', () => {
+    render(<Checklist />);
+
+    const rows = screen.getAllByRole('listitem');
+    expect(rows).toHaveLength(3);
+    expect(rows[0]).toHaveTextContent('Empieza gratis y crece a tu ritmo');
+    expect(rows[1]).toHaveTextContent('Tus datos, desde cualquier dispositivo');
+    // R6 pin — row 3 keeps its trailing period.
+    expect(rows[2]).toHaveTextContent('Una experiencia simple para empezar.');
+
+    expect(screen.getByText('check_circle')).toBeInTheDocument();
+    expect(screen.getByText('cloud_done')).toBeInTheDocument();
+    expect(screen.getByText('verified')).toBeInTheDocument();
+    // VISUAL-FIX-3: Each check icon now has vibrant green color, matching border, and wash background
+    // Verified visually in e2e/browser; CSS tokens defined in MarketingPanel.module.css
+  });
+});

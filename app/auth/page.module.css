@@ -54,33 +54,22 @@
   --auth-accent-border: rgba(19, 91, 236, 0.3);
   --auth-accent-glow: 0 0 20px rgba(19, 91, 236, 0.3);
 
-  /* OAuth buttons (white button is already dual-theme) */
+  /* OAuth buttons — simple outlined/glass style per original mockup (reverted from VISUAL-FIX-2) */
   --auth-google-bg: #ffffff;
   --auth-google-fg: #0f172a;
   --auth-google-hover: #f1f5f9;
   --auth-google-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --auth-google-border: rgba(0, 0, 0, 0.1);
+
+  --auth-facebook-bg: #ffffff;
+  --auth-facebook-fg: #0f172a;
+  --auth-facebook-hover: #f1f5f9;
+  --auth-facebook-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --auth-facebook-border: rgba(0, 0, 0, 0.1);
+
   --auth-phone-bg: rgba(255, 255, 255, 0.06);
-  --auth-phone-fg: rgba(255, 255, 255, 0.4);
-  --auth-phone-border: rgba(255, 255, 255, 0.1);
-
-  /* VISUAL-FIX-2: OAuth button brand colors — colorful/vibrant per user feedback */
-  /* Google: blend of #4285F4, #34A853, #FBBC05, #EA4335 → use primary blue #4285F4 for border */
-  --auth-google-brand: #4285f4;
-  --auth-google-wash: rgba(66, 133, 244, 0.12);
-  --auth-google-border: #4285f4;
-  --auth-google-text: #4285f4;
-
-  /* Facebook: #1877F2 */
-  --auth-facebook-brand: #1877f2;
-  --auth-facebook-wash: rgba(24, 119, 242, 0.12);
-  --auth-facebook-border: #1877f2;
-  --auth-facebook-text: #1877f2;
-
-  /* Phone: vibrant purple/tertiary accent */
-  --auth-phone-brand: #a855f7;
-  --auth-phone-wash: rgba(168, 85, 247, 0.12);
-  --auth-phone-border-brand: #a855f7;
-  --auth-phone-text-brand: #a855f7;
+  --auth-phone-fg: rgba(255, 255, 255, 0.7);
+  --auth-phone-border: rgba(255, 255, 255, 0.15);
 
   /* Particles */
   --auth-p1: rgba(255, 255, 255, 0.2);
@@ -139,24 +128,20 @@ html[data-theme='light'] .authShell {
 
   /* OAuth buttons — Google unchanged (white button already dual-theme) */
   --auth-phone-bg: rgba(15, 23, 42, 0.05);
-  --auth-phone-fg: rgba(15, 23, 42, 0.42);
-  --auth-phone-border: rgba(15, 23, 42, 0.12);
+  --auth-phone-fg: rgba(15, 23, 42, 0.7);
+  --auth-phone-border: rgba(15, 23, 42, 0.15);
 
-  /* VISUAL-FIX-2: OAuth button brand colors — light variants */
-  --auth-google-brand: #4285f4;
-  --auth-google-wash: rgba(66, 133, 244, 0.1);
-  --auth-google-border: #4285f4;
-  --auth-google-text: #4285f4;
+  --auth-google-bg: #ffffff;
+  --auth-google-fg: #0f172a;
+  --auth-google-hover: #f1f5f9;
+  --auth-google-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --auth-google-border: rgba(0, 0, 0, 0.1);
 
-  --auth-facebook-brand: #1877f2;
-  --auth-facebook-wash: rgba(24, 119, 242, 0.1);
-  --auth-facebook-border: #1877f2;
-  --auth-facebook-text: #1877f2;
-
-  --auth-phone-brand: #a855f7;
-  --auth-phone-wash: rgba(168, 85, 247, 0.1);
-  --auth-phone-border-brand: #a855f7;
-  --auth-phone-text-brand: #a855f7;
+  --auth-facebook-bg: #ffffff;
+  --auth-facebook-fg: #0f172a;
+  --auth-facebook-hover: #f1f5f9;
+  --auth-facebook-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --auth-facebook-border: rgba(0, 0, 0, 0.1);
 
   /* Particles */
   --auth-p1: rgba(51, 65, 85, 0.3);
@@ -289,16 +274,13 @@ html[data-theme='light'] .authShell .orb3 {
 }
 
 /* 5. Form panel — per-panel glass surface replacing the single card. Renders
-   above the viewport decor (positioned, later in DOM). */
+   above the viewport decor (positioned, later in DOM). Height: auto so it
+   hugs its content naturally (VISUAL-FIX-3), not stretched to viewport. */
 .formPanel {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  justify-self: center;
   width: min(100%, 34rem);
   min-width: 0;
-  margin: 1.5rem;
+  margin: 1.5rem auto;
   padding: 2.5rem 2rem;
   overflow: hidden;
   border-radius: 1.5rem;
@@ -455,50 +437,52 @@ html[data-theme='light'] .authShell .orb3 {
   letter-spacing: 0.025em;
 }
 
-/* Google — white surface with Google-blue border + transparent blue wash on icon area */
+/* Google — white surface with subtle shadow (original mockup style) */
 .googleButton {
-  border: 2px solid var(--auth-google-border);
-  color: var(--auth-google-text);
-  background: var(--auth-google-wash);
-  box-shadow: none;
+  border: 1px solid var(--auth-google-border);
+  color: var(--auth-google-fg);
+  background: var(--auth-google-bg);
+  box-shadow: var(--auth-google-shadow);
 }
 
 .googleButton:hover:not(:disabled) {
-  background-color: var(--auth-google-wash);
+  background-color: var(--auth-google-hover);
   border-color: var(--auth-google-border);
+  box-shadow: var(--auth-google-shadow);
 }
 
-/* Facebook — transparent Facebook-blue wash with Facebook-blue border */
+/* Facebook — white surface with subtle shadow (original mockup style) */
 .facebookButton {
-  border: 2px solid var(--auth-facebook-border);
-  color: var(--auth-facebook-text);
-  background: var(--auth-facebook-wash);
-  box-shadow: none;
+  border: 1px solid var(--auth-facebook-border);
+  color: var(--auth-facebook-fg);
+  background: var(--auth-facebook-bg);
+  box-shadow: var(--auth-facebook-shadow);
 }
 
 .facebookButton:hover:not(:disabled) {
-  background-color: var(--auth-facebook-wash);
+  background-color: var(--auth-facebook-hover);
   border-color: var(--auth-facebook-border);
+  box-shadow: var(--auth-facebook-shadow);
 }
 
-/* Phone — permanently disabled, vibrant purple/tertiary accent (VISUAL-FIX-2) */
+/* Phone — glass style (original mockup style) */
 .phoneButton,
 .phoneButton:disabled {
-  border: 2px solid var(--auth-phone-border-brand) !important;
-  color: var(--auth-phone-text-brand) !important;
-  background: var(--auth-phone-wash) !important;
+  border: 1px solid var(--auth-phone-border) !important;
+  color: var(--auth-phone-fg) !important;
+  background: var(--auth-phone-bg) !important;
   box-shadow: none !important;
   cursor: not-allowed !important;
 }
 
 .phoneButton:hover {
-  background-color: var(--auth-phone-wash) !important;
-  border-color: var(--auth-phone-border-brand) !important;
+  background-color: var(--auth-phone-bg) !important;
+  border-color: var(--auth-phone-border) !important;
   transform: none !important;
 }
 
 .phoneButton .providerIcon {
-  color: var(--auth-phone-text-brand) !important;
+  color: var(--auth-phone-fg) !important;
 }
 
 /* In-button "Próximamente" pill (D2) */

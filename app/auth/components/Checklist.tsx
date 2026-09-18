@@ -22,8 +22,8 @@ export default function Checklist() {
     <ul className={styles.checklist}>
       {BENEFITS.map((benefit) => (
         <li key={benefit.icon} className={styles.checklistRow}>
-          <span className="material-symbols-rounded" aria-hidden="true">
-            {benefit.icon}
+          <span className={styles.checkIcon} aria-hidden="true">
+            <span className="material-symbols-rounded">{benefit.icon}</span>
           </span>
           {benefit.text}
         </li>
