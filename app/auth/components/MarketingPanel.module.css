@@ -38,9 +38,10 @@
   --auth-feat4-color: #f97316; /* receipt_long - orange */
   --auth-feat4-wash: rgba(249, 115, 22, 0.12);
 
-  /* Checklist — 3 benefit icons (all check_circle, vibrant green) */
-  --auth-check-color: #16a34a; /* check_circle - green */
-  --auth-check-wash: rgba(22, 163, 74, 0.12);
+  /* Checklist — 3 benefit icons with per-item colors (VISUAL-FIX-4) */
+  --auth-check1-color: #16a34a; /* 1st: check_circle - green */
+  --auth-check2-color: #4285f4; /* 2nd: cloud_done - blue (cloud/nube) */
+  --auth-check3-color: #16a34a; /* 3rd: verified - green */
 }
 
 /* 1. Deco tiles — rotated glass, purely decorative (R4/R7) */
@@ -239,22 +240,33 @@
   line-height: 1.5;
 }
 
-/* VISUAL-FIX-3: Vibrant check icon with matching border/wash */
+/* VISUAL-FIX-4: Checklist icons are icon-only (no background, no border, no border-radius)
+   with per-item colors: 1st = GREEN (check_circle), 2nd = BLUE (cloud_done), 3rd = GREEN (verified) */
 .checkIcon {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 28px;
   height: 28px;
-  border-radius: 0.5rem;
-  color: var(--auth-check-color);
-  border: 1px solid var(--auth-check-color);
-  background: var(--auth-check-wash);
   flex-shrink: 0;
+  color: var(--auth-check1-color); /* default fallback */
 }
 
 .checkIcon .material-symbols-rounded {
   font-size: 1.25rem;
+}
+
+/* Per-item icon colors — icon only, no wash/bg/border */
+.checklistRow:nth-child(1) .checkIcon {
+  color: var(--auth-check1-color); /* GREEN for check_circle */
+}
+
+.checklistRow:nth-child(2) .checkIcon {
+  color: var(--auth-check2-color); /* BLUE for cloud_done (cloud/nube) */
+}
+
+.checklistRow:nth-child(3) .checkIcon {
+  color: var(--auth-check3-color); /* GREEN for verified */
 }
 
 /* 5. Focus visibility — native :focus-visible, MD3 primary ring (D5) */
@@ -303,6 +315,8 @@ html[data-theme='light'] .panel {
   --auth-feat4-color: #f97316;
   --auth-feat4-wash: rgba(249, 115, 22, 0.1);
 
-  --auth-check-color: #16a34a;
-  --auth-check-wash: rgba(22, 163, 74, 0.1);
+  /* VISUAL-FIX-4: Checklist per-item colors (light variant) — icon only, no wash */
+  --auth-check1-color: #16a34a; /* 1st: check_circle - green */
+  --auth-check2-color: #4285f4; /* 2nd: cloud_done - blue (cloud/nube) */
+  --auth-check3-color: #16a34a; /* 3rd: verified - green */
 }
