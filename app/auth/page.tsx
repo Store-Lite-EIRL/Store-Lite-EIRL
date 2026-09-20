@@ -4,6 +4,7 @@ import { useAuth } from '@/features/auth';
 import ConsentCheckbox from '@/features/auth/ConsentCheckbox';
 import { clearBusinessSessionData } from '@/hooks/useBusinessSession';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import MarketingPanel from './components/MarketingPanel';
 import ThemeToggle from './components/ThemeToggle';
@@ -71,7 +72,9 @@ export default function AuthPage() {
       {/* Form panel — left shell column */}
       <section className={styles.formPanel} aria-labelledby="auth-title">
         <div className={styles.formInner}>
-          <div className={styles.logo}>
+          {/* Brand logo links back to the landing page. Relative "/" resolves
+              to NEXT_PUBLIC_APP_URL in prod and http://localhost:3000 in dev. */}
+          <Link href="/" className={styles.logo} aria-label="Store Lite — volver al inicio">
             <div className={styles.logoBox}>
               <Image
                 className={styles.logoImage}
@@ -85,7 +88,7 @@ export default function AuthPage() {
             <span className={styles.brandText}>
               Store <span className={styles.brandAccent}>Lite</span>
             </span>
-          </div>
+          </Link>
 
           <p className={styles.formEyebrow}>Bienvenido a Store Lite</p>
           <h1 id="auth-title" className={styles.cardTitle}>
