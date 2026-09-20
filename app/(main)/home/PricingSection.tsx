@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import styles from './PricingSection.module.css';
 
@@ -9,8 +10,8 @@ interface Plan {
   name: string;
   featured: boolean;
   tag?: string;
-  price: string;
-  period: string;
+  monthly: number;
+  annual: number;
   description: string;
   features: readonly string[];
   cta: string;
@@ -22,8 +23,8 @@ const PLANS: Plan[] = [
     name: 'Lite Pago',
     featured: true,
     tag: 'Más elegido',
-    price: 'S/ 39',
-    period: '/mes',
+    monthly: 39,
+    annual: 31,
     description: 'Para negocios que ya venden y quieren llevar su marca al siguiente nivel.',
     features: [
       'Pagos con tarjetas y billeteras digitales',
@@ -38,8 +39,8 @@ const PLANS: Plan[] = [
   {
     name: 'Lite Plus',
     featured: false,
-    price: 'S/ 79',
-    period: '/mes',
+    monthly: 79,
+    annual: 63,
     description: 'Para marcas que necesitan el máximo rendimiento y todas las herramientas.',
     features: [
       'Dashboard avanzado con métricas en tiempo real',
@@ -52,6 +53,10 @@ const PLANS: Plan[] = [
     ctaVariant: 'outline',
   },
 ];
+
+function periodLabel(period: BillingPeriod): string {
+  return period === 'annual' ? '/mes facturado anual' : '/mes';
+}
 
 export default function PricingSection() {
   const [period, setPeriod] = useState<BillingPeriod>('monthly');
@@ -96,8 +101,8 @@ export default function PricingSection() {
               {plan.tag && <span className={styles.planTag}>{plan.tag}</span>}
               <h3>{plan.name}</h3>
               <p className={styles.price}>
-                {plan.price}
-                <span>{plan.period}</span>
+                {`S/ ${period === 'monthly' ? plan.monthly : plan.annual}`}
+                <span>{periodLabel(period)}</span>
               </p>
               <p className={styles.desc}>{plan.description}</p>
               <ul className={styles.planFeatures}>
@@ -108,14 +113,14 @@ export default function PricingSection() {
                   </li>
                 ))}
               </ul>
-              <a
+              <Link
                 className={`${styles.btn} ${
                   plan.ctaVariant === 'primary' ? styles.btnPrimary : styles.btnOutline
                 }`}
-                href="#"
+                href="/auth"
               >
                 {plan.cta}
-              </a>
+              </Link>
             </div>
           ))}
         </div>

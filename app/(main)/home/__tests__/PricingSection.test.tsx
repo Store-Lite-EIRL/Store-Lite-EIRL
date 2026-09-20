@@ -103,14 +103,47 @@ describe('PricingSection — pricing plans with toggle', () => {
     expect(checkIcons.length).toBe(10);
   });
 
-  it('renders the CTAs for each plan', () => {
+  it('renders the CTAs for each plan pointing to the auth flow', () => {
     render(<PricingSection />);
 
-    expect(screen.getByRole('link', { name: /Escalar mi negocio/i })).toHaveAttribute('href', '#');
+    expect(screen.getByRole('link', { name: /Escalar mi negocio/i })).toHaveAttribute(
+      'href',
+      '/auth',
+    );
     expect(screen.getByRole('link', { name: /Obtener máxima potencia/i })).toHaveAttribute(
       'href',
-      '#',
+      '/auth',
     );
+  });
+
+  it('shows the discounted annual price and annual period label when Anual is active', async () => {
+    const user = userEvent.setup();
+    render(<PricingSection />);
+
+    const anual = screen.getByRole('button', { name: /anual/i });
+    await user.click(anual);
+
+    // Lite Pago: monthly S/ 39 -> annual S/ 31 (~20% off, billed yearly)
+    expect(screen.getByText('S/ 31')).toBeInTheDocument();
+    expect(screen.getAllByText('/mes facturado anual')).toHaveLength(2);
+    expect(screen.queryByText('S/ 39')).not.toBeInTheDocument();
+
+    // Lite Plus: monthly S/ 79 -> annual S/ 63
+    expect(screen.getByText('S/ 63')).toBeInTheDocument();
+    expect(screen.queryByText('S/ 79')).not.toBeInTheDocument();
+  });
+
+  it('restores monthly prices and the /mes period label when switching back to Mensual', async () => {
+    const user = userEvent.setup();
+    render(<PricingSection />);
+
+    await user.click(screen.getByRole('button', { name: /anual/i }));
+    await user.click(screen.getByRole('button', { name: /mensual/i }));
+
+    expect(screen.getByText('S/ 39')).toBeInTheDocument();
+    expect(screen.getByText('S/ 79')).toBeInTheDocument();
+    expect(screen.getAllByText('/mes')).toHaveLength(2);
+    expect(screen.queryByText('/mes facturado anual')).not.toBeInTheDocument();
   });
 
   it('renders the plans note with benefits', () => {
