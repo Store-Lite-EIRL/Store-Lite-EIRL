@@ -1,17 +1,99 @@
-/* Base Container & Typography */
-.container {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  background-color: #080c14; /* bg-background-dark */
-  color: #ffffff;
-  overflow: hidden;
-  /* font-family inherited from global (Google Sans) */
+/* ─── /auth — MD3 mockup rebuild, Slice 1a (dark base) ───────────────────────
+   Viewport two-column shell with per-panel glass surfaces (no enclosing card).
+   Dark is the source of truth (design D6; light overrides land in Slice 2).
+   The right marketing column is reserved (empty) until Slice 1b ships
+   MarketingPanel. Dead email/password and shard styles are dropped. */
+
+/* 1. Scoped tokens — dark values (design table; light overrides in Slice 2) */
+.authShell {
+  /* Shell */
+  --auth-bg: #080c14;
+  --auth-text: #ffffff;
+
+  /* Glow orbs */
+  --auth-orb-1: #135bec;
+  --auth-orb-2: #9333ea;
+  --auth-orb-3: rgba(219, 39, 119, 0.2);
+  --auth-orb-opacity: 0.4;
+  --auth-orb-blur: 80px;
+
+  /* Glass surface (form panel) */
+  --auth-glass-surface: rgba(255, 255, 255, 0.03);
+  --auth-glass-border: rgba(255, 255, 255, 0.08);
+  --auth-glass-blur: 24px;
+  --auth-glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+  --auth-highlight: linear-gradient(to right, transparent, rgba(19, 91, 236, 0.5), transparent);
+
+  /* Dot grid */
+  --auth-grid-dot: #ffffff;
+  --auth-grid-opacity: 0.03;
+  --auth-grid-size: 40px;
+
+  /* Marketing panel tokens — consumed by Slice 1b components */
+  --auth-tile-bg: rgba(8, 12, 20, 0.46);
+  --auth-tile-border: rgba(255, 255, 255, 0.16);
+  --auth-tile-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.2);
+  --auth-tile-blur: 16px;
+  --auth-tile-icon-a: #93c5fd;
+  --auth-tile-icon-b: #d8b4fe;
+  --auth-insight-bg: rgba(255, 255, 255, 0.025);
+  --auth-insight-ring: rgba(255, 255, 255, 0.12);
+  --auth-divider: rgba(255, 255, 255, 0.14);
+  --auth-benefit: #dbeafe;
+  --auth-benefit-icon: #4ade80;
+
+  /* Typography accents */
+  --auth-eyebrow-form: #60a5fa;
+  --auth-eyebrow-insight: #c4b5fd;
+  --auth-text-secondary: #94a3b8;
+  --auth-text-muted: #64748b;
+
+  /* Brand / logo */
+  --auth-accent: #135bec;
+  --auth-accent-bg: rgba(19, 91, 236, 0.2);
+  --auth-accent-border: rgba(19, 91, 236, 0.3);
+  --auth-accent-glow: 0 0 20px rgba(19, 91, 236, 0.3);
+
+  /* OAuth buttons (white button is already dual-theme) */
+  --auth-google-bg: #ffffff;
+  --auth-google-fg: #0f172a;
+  --auth-google-hover: #f1f5f9;
+  --auth-google-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --auth-phone-bg: rgba(255, 255, 255, 0.06);
+  --auth-phone-fg: rgba(255, 255, 255, 0.4);
+  --auth-phone-border: rgba(255, 255, 255, 0.1);
+
+  /* Particles */
+  --auth-p1: rgba(255, 255, 255, 0.2);
+  --auth-p2: rgba(19, 91, 236, 0.3);
+  --auth-p3: rgba(192, 132, 252, 0.2);
+  --auth-p4: rgba(255, 255, 255, 0.1);
+  --auth-p5: rgba(236, 72, 153, 0.3);
+
+  /* Pills (in-button "Próximamente", consent chip) */
+  --auth-pill-bg: #080c14;
+  --auth-pill-border: rgba(255, 255, 255, 0.16);
+  --auth-pill-fg: #94a3b8;
+
+  /* Theme toggle (shared with ThemeToggle.module.css) */
+  --auth-toggle-bg: rgba(255, 255, 255, 0.06);
+  --auth-toggle-border: rgba(255, 255, 255, 0.14);
+  --auth-toggle-fg: #dfe3e7;
 }
 
-/* Background Elements Wrapper */
+/* 2. Shell — viewport two-column grid, no enclosing card (R1). The right
+   track stays empty until Slice 1b; both columns get min-width:0 (D3). */
+.authShell {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 100vh;
+  overflow: hidden;
+  background-color: var(--auth-bg);
+  color: var(--auth-text);
+}
+
+/* 3. Background decor — glow orbs + dot grid (aria-hidden, R7) */
 .backgroundWrapper {
   position: absolute;
   inset: 0;
@@ -19,12 +101,11 @@
   pointer-events: none;
 }
 
-/* Glow Orbs */
 .glowOrb {
   position: absolute;
-  border-radius: 9999px; /* rounded-full */
-  filter: blur(80px);
-  opacity: 0.4;
+  border-radius: 9999px;
+  filter: blur(var(--auth-orb-blur));
+  opacity: var(--auth-orb-opacity);
 }
 
 .orb1 {
@@ -32,7 +113,7 @@
   left: -5%;
   width: 500px;
   height: 500px;
-  background-color: #135bec; /* primary */
+  background-color: var(--auth-orb-1);
 }
 
 .orb2 {
@@ -40,7 +121,7 @@
   right: -5%;
   width: 600px;
   height: 600px;
-  background-color: #9333ea; /* purple-600 */
+  background-color: var(--auth-orb-2);
 }
 
 .orb3 {
@@ -49,660 +130,23 @@
   transform: translate(-50%, -50%);
   width: 800px;
   height: 800px;
-  background-color: rgba(219, 39, 119, 0.2); /* pink-600/20 */
+  background-color: var(--auth-orb-3);
 }
 
-/* Glass Shards */
-.glassShard {
-  position: absolute;
-  display: none; /* hidden by default */
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Media queries for shards visibility */
-@media (min-width: 768px) {
-  .shard1,
-  .shard2 {
-    display: flex;
-  }
-}
-@media (min-width: 1024px) {
-  .shard3 {
-    display: flex;
-  }
-}
-@media (min-width: 1280px) {
-  .shard4 {
-    display: flex;
-  }
-}
-
-.shard1 {
-  top: 18%;
-  left: 8%;
-  width: 10rem; /* 40 */
-  height: 13rem; /* 52 */
-  border-radius: 1rem; /* rounded-2xl */
-  transform: rotate(12deg);
-}
-
-.shard2 {
-  bottom: 15%;
-  right: 10%;
-  width: 14rem; /* 56 */
-  height: 10rem; /* 40 */
-  border-radius: 1.5rem; /* rounded-3xl */
-  transform: rotate(-18deg);
-}
-
-.shard3 {
-  top: 35%;
-  right: 6%;
-  width: 7rem; /* 28 */
-  height: 7rem;
-  border-radius: 9999px;
-  transform: rotate(10deg);
-}
-
-.shard4 {
-  bottom: 40%;
-  left: 4%;
-  width: 8rem; /* 32 */
-  height: 8rem;
-  border-radius: 1.5rem;
-  transform: rotate(-10deg);
-}
-
-.shardIcon {
-  color: rgba(255, 255, 255, 0.2);
-  user-select: none;
-}
-
-/* UPDATED ICON SIZES - FORCED LARGE */
-.iconXl {
-  font-size: 8rem !important;
-}
-.icon2Xl {
-  font-size: 10rem !important;
-}
-.iconLg {
-  font-size: 5rem !important;
-}
-.iconMd {
-  font-size: 6rem !important;
-}
-
-/* Grid Pattern */
 .gridPattern {
   position: absolute;
   inset: 0;
-  opacity: 0.03;
-  background-image: radial-gradient(#fff 1px, transparent 1px);
-  background-size: 40px 40px;
+  background-image: radial-gradient(var(--auth-grid-dot) 1px, transparent 1px);
+  background-size: var(--auth-grid-size) var(--auth-grid-size);
+  opacity: var(--auth-grid-opacity);
 }
 
-/* Main Content */
-.main {
-  position: relative;
-  z-index: 10;
-  width: 100%;
-  max-width: 1160px;
-  padding: 0 1.5rem; /* px-6 */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* Branding inside the auth card */
-.cardBranding {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  width: 100%;
-  margin-bottom: 2.5rem;
-}
-
-.cardBranding .logoBox {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 0.875rem;
-}
-
-.cardBranding .logoImage {
-  width: 1.875rem;
-  height: 1.875rem;
-}
-
-.logoBox {
-  width: 4rem; /* size-16 */
-  height: 4rem;
-  background-color: rgba(19, 91, 236, 0.2); /* bg-primary/20 */
-  border-radius: 1rem; /* rounded-2xl */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(19, 91, 236, 0.3);
-  box-shadow: 0 0 20px rgba(19, 91, 236, 0.3);
-}
-
-.logoImage {
-  width: 2.5rem; /* size-10 */
-  height: 2.5rem;
-  object-fit: contain;
-}
-
-.brandText {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: 0;
-}
-
-.brandAccent {
-  color: #135bec;
-}
-
-/* Glass Card */
-.card {
-  width: 100%;
-  max-width: 68rem;
-  border-radius: 1.5rem;
-  padding: 0;
-  position: relative;
-  overflow: hidden;
-
-  /* .glass-card styles */
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-}
-
-@media (min-width: 768px) {
-  .card {
-    padding: 0;
-  }
-}
-
-.cardContent {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  min-height: 38rem;
-  overflow: hidden;
-  background: transparent;
-}
-
-.formPanel {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-width: 0;
-  padding: 3.5rem clamp(2rem, 5vw, 5rem);
-  background: transparent;
-}
-
-.insightPanel {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-width: 0;
-  overflow: hidden;
-  padding: clamp(3rem, 6vw, 6rem);
-  background: rgba(255, 255, 255, 0.025);
-}
-
-.columnDivider {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 45%;
-  z-index: 2;
-  width: 1px;
-  height: auto;
-  margin: 0;
-  border: 0;
-  background: rgba(255, 255, 255, 0.14);
-}
-
-.insightPanel::before,
-.insightPanel::after {
-  content: '';
-  position: absolute;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.insightPanel::before {
-  width: 22rem;
-  height: 22rem;
-  right: -8rem;
-  bottom: -11rem;
-}
-
-.insightPanel::after {
-  width: 14rem;
-  height: 14rem;
-  right: 3rem;
-  bottom: -7rem;
-}
-
-/* Shared eyebrow base: both panels use the same uppercase treatment */
-.formEyebrow,
-.insightEyebrow {
-  margin: 0;
-  font-weight: 700;
-  line-height: 1.4;
-  text-transform: uppercase;
-}
-
-/* Left-panel eyebrow: primary-tinted accent (same hue family as the card's
-   primary #135bec), slightly larger and calmer tracking than the aside */
-.formEyebrow {
-  color: #60a5fa;
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-}
-
-.insightCopy {
-  position: relative;
-  z-index: 1;
-  max-width: 26rem;
-}
-
-.insightEyebrow {
-  color: #c4b5fd;
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-}
-
-.insightTitle {
-  max-width: 24rem;
-  margin: 0.875rem 0 1rem;
-  color: #fff;
-  font-size: clamp(1.35rem, 1.3rem + 0.4vw, 1.6rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-}
-
-.insightDescription {
-  max-width: 36ch;
-  margin: 0;
-  color: #94a3b8;
-  font-size: 0.95rem;
-  line-height: 1.65;
-}
-
-/* Balanced 2x2 collage of floating feature tiles. One shared keyframes drives
-   all four tiles; each modifier only varies rotation, duration and delay. */
-.insightVisual {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  margin: 2rem 0;
-}
-
-.visualTile {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.35rem;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 1rem;
-  padding: 0.9rem 1rem;
-  background: rgba(8, 12, 20, 0.46);
-  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(16px);
-}
-
-.visualTile span {
-  width: fit-content;
-  color: #93c5fd;
-  font-size: 1.75rem;
-}
-
-.visualTile strong {
-  color: #fff;
-  font-size: 0.95rem;
-}
-
-.visualTile small {
-  color: #94a3b8;
-  font-size: 0.78rem;
-}
-
-@keyframes visualFloat {
-  0%,
-  100% {
-    transform: translateY(0) rotate(var(--tile-rotate, 0deg));
-  }
-
-  50% {
-    transform: translateY(-0.4rem) rotate(var(--tile-rotate, 0deg));
-  }
-}
-
-.visualTile1 {
-  --tile-rotate: -4deg;
-  animation: visualFloat 6s ease-in-out infinite;
-}
-
-.visualTile2 {
-  --tile-rotate: 3.5deg;
-  animation: visualFloat 7s ease-in-out 0.6s infinite;
-}
-
-.visualTile2 span,
-.visualTile3 span {
-  color: #d8b4fe;
-}
-
-.visualTile3 {
-  --tile-rotate: 2.5deg;
-  animation: visualFloat 6.5s ease-in-out 1.2s infinite;
-}
-
-.visualTile4 {
-  --tile-rotate: -3deg;
-  animation: visualFloat 7.5s ease-in-out 0.3s infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .visualTile1,
-  .visualTile2,
-  .visualTile3,
-  .visualTile4 {
-    animation: none;
-  }
-}
-
-/* Benefits list: carries meaning, so it stays exposed to assistive tech */
-.benefitList {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.benefitRow {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  text-align: left;
-  color: #dbeafe;
-  font-size: 0.85rem;
-  line-height: 1.5;
-}
-
-.benefitRow .material-symbols-rounded {
-  flex-shrink: 0;
-  color: #4ade80; /* green-400 — no success token exists in material-design yet */
-  font-size: 1.25rem;
-}
-
-.cardHighlight {
-  position: absolute;
-  top: 0;
-  left: 25%;
-  right: 25%;
-  height: 1px;
-  background: linear-gradient(to right, transparent, rgba(19, 91, 236, 0.5), transparent);
-}
-
-.cardHeader {
-  text-align: center;
-  margin-bottom: 2rem;
-  /* space-y-4 equivalent */
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.cardTitle {
-  /* Balance multi-line wraps so the H1 never breaks with a lone-word orphan
-     at narrow viewports (e.g. 360px) */
-  text-wrap: balance;
-  font-size: clamp(1.9rem, 1.6rem + 1.25vw, 2.6rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: white;
-  margin: 0;
-  line-height: 1.12;
-}
-
-.cardSubtitle {
-  max-width: 34ch;
-  margin-inline: auto;
-  color: #94a3b8; /* text-slate-400 */
-  font-size: 0.95rem;
-  line-height: 1.55;
-}
-
-/* Form Area */
-.formArea {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem; /* space-y-6 */
-
-  /* MD token overrides so ConsentCheckbox (token-driven) matches this
-     always-dark page regardless of OS theme or global token class. */
-  --md-sys-color-outline: #8b9198;
-  --md-sys-color-on-surface-variant: #c1c7ce;
-  --md-sys-color-primary: #92cef5;
-  --md-sys-color-on-surface: #dfe3e7;
-}
-
-/* CUSTOM GOOGLE BUTTON STYLES */
-.googleButton {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem; /* gap-3 */
-  background-color: white;
-  color: #0f172a; /* text-slate-900 */
-  font-family: inherit;
-  font-weight: 700;
-  padding: 1rem 1.5rem; /* py-4 px-6 */
-  border-radius: 0.75rem; /* rounded-xl */
-  transition: all 300ms;
-  box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04); /* shadow-xl */
-  border: none;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-
-.googleButton:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.googleButton:hover:not(:disabled) {
-  background-color: #f1f5f9; /* hover:bg-slate-100 */
-  transform: scale(1.02);
-}
-
-.googleIcon {
-  width: 24px;
-  height: 24px;
-}
-
-.googleButtonText {
-  font-size: 1rem; /* text-base */
-  letter-spacing: 0.025em; /* tracking-wide */
-}
-
-/* UPCOMING PROVIDER BUTTONS (Facebook / phone): same googleButton shell, but
-   wrapped so the "coming soon" pill can float on the top-right edge without
-   colliding with the centered label at any viewport width. */
-.upcomingProvider {
-  position: relative;
-}
-
-.providerIcon {
-  font-size: 24px;
-  line-height: 1;
-}
-
-.soonBadge {
-  position: absolute;
-  top: -0.55rem;
-  right: 1rem;
-  z-index: 1;
-  padding: 0.2rem 0.6rem;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 9999px;
-  background-color: #080c14; /* matches .container background so the pill reads as a chip */
-  color: #94a3b8; /* text-slate-400 */
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  line-height: 1.2;
-  white-space: nowrap;
-}
-
-/* Phone button - visually distinct (disabled/muted) */
-.phoneButton {
-  background-color: rgba(255, 255, 255, 0.06) !important;
-  color: rgba(255, 255, 255, 0.4) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: none !important;
-  cursor: not-allowed !important;
-}
-
-.phoneButton:hover {
-  background-color: rgba(255, 255, 255, 0.06) !important;
-  transform: none !important;
-}
-
-.phoneButton .providerIcon {
-  color: rgba(255, 255, 255, 0.4) !important;
-}
-
-.phoneButton .googleButtonText {
-  color: rgba(255, 255, 255, 0.4) !important;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 1rem; /* gap-4 */
-  padding: 0.5rem 0; /* py-2 */
-}
-
-.dividerLine {
-  height: 1px;
-  flex: 1;
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.dividerText {
-  font-size: 0.75rem; /* text-xs */
-  text-transform: uppercase;
-  letter-spacing: 0.1em; /* tracking-widest */
-  color: #64748b; /* text-slate-500 */
-  font-weight: 600;
-}
-
-/* Discreet toggle that reveals the email/password form (hidden by default so
-   the card reads Google-first). Button reset + muted slate link styling,
-   consistent with .link/.footerLink on this page. */
-.toggleLink {
-  background: none;
-  border: none;
-  padding: 0;
-  font-family: inherit;
-  font-size: 0.875rem; /* text-sm */
-  color: #94a3b8; /* text-slate-400 */
-  text-decoration: underline;
-  text-decoration-color: #334155; /* decoration-slate-700 */
-  text-underline-offset: 4px;
-  line-height: 1.5;
-  cursor: pointer;
-  transition: color 150ms;
-  align-self: center;
-}
-
-.toggleLink:hover {
-  color: #135bec; /* hover:text-primary */
-}
-
-/* Email/password form (below divider) */
-.passwordForm {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem; /* space-y-4 */
-}
-
-/* Submit button on the always-dark card: full width like the Google button.
-   MD3's default disabled tokens render on-surface at 12%/38% opacity, which is
-   practically invisible on this dark glass card. The installed @material/web
-   reads the -disabled-* token variants for the disabled state, so the opacity
-   overrides are required to keep the rgba colors actually visible. */
-.passwordForm md-filled-button {
-  width: 100%;
-}
-
-.passwordForm md-filled-button[disabled] {
-  --md-filled-button-disabled-container-color: rgba(255, 255, 255, 0.08);
-  --md-filled-button-disabled-container-opacity: 1;
-  --md-filled-button-disabled-label-text-color: rgba(255, 255, 255, 0.45);
-  --md-filled-button-disabled-label-text-opacity: 1;
-}
-
-.errorText {
-  color: #f87171; /* red-400, readable on the dark card */
-  font-size: 0.875rem; /* text-sm */
-  text-align: center;
-  margin: 0;
-}
-
-.termsText {
-  color: #64748b; /* text-slate-500 */
-  font-size: 0.75rem; /* text-xs */
-  text-align: center;
-  line-height: 1.625; /* leading-relaxed */
-  margin: 0;
-}
-
-.link {
-  color: #94a3b8; /* text-slate-400 */
-  text-decoration-line: underline;
-  text-decoration-color: #334155; /* decoration-slate-700 */
-  transition: color 150ms;
-  cursor: pointer;
-}
-
-.link:hover {
-  color: #135bec; /* hover:text-primary */
-}
-
-/* Floating Clean Layout Particles (bottom of body in template) */
+/* 4. Floating particles (aria-hidden, R7) */
 .particleWrapper {
   position: absolute;
   inset: 0;
-  pointer-events: none;
   overflow: hidden;
+  pointer-events: none;
 }
 
 .particle {
@@ -715,111 +159,334 @@
   left: 30%;
   width: 0.25rem;
   height: 0.25rem;
-  background-color: white;
-  opacity: 0.2;
+  background-color: var(--auth-p1);
 }
+
 .p2 {
   top: 60%;
   left: 15%;
   width: 0.5rem;
   height: 0.5rem;
-  background-color: #135bec;
-  opacity: 0.3;
+  background-color: var(--auth-p2);
 }
+
 .p3 {
   top: 40%;
   right: 25%;
   width: 0.375rem;
   height: 0.375rem;
-  background-color: #c084fc;
-  opacity: 0.2;
+  background-color: var(--auth-p3);
 }
+
 .p4 {
   bottom: 15%;
   left: 45%;
   width: 0.25rem;
   height: 0.25rem;
-  background-color: white;
-  opacity: 0.1;
+  background-color: var(--auth-p4);
 }
+
 .p5 {
   top: 80%;
   right: 10%;
   width: 0.5rem;
   height: 0.5rem;
-  background-color: #ec4899;
-  opacity: 0.3;
+  background-color: var(--auth-p5);
 }
 
-@media (max-width: 899px) {
-  .container {
+/* 5. Form panel — per-panel glass surface replacing the single card. Renders
+   above the viewport decor (positioned, later in DOM). */
+.formPanel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  width: min(100%, 34rem);
+  min-width: 0;
+  margin: 1.5rem;
+  padding: 2.5rem 2rem;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  background: var(--auth-glass-surface);
+  border: 1px solid var(--auth-glass-border);
+  backdrop-filter: blur(var(--auth-glass-blur));
+  -webkit-backdrop-filter: blur(var(--auth-glass-blur));
+  box-shadow: var(--auth-glass-shadow);
+}
+
+/* Top edge highlight (ex-card highlight, now a pseudo-element) */
+.formPanel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 25%;
+  right: 25%;
+  height: 1px;
+  background: var(--auth-highlight);
+}
+
+.formInner {
+  width: 100%;
+  max-width: 400px;
+  margin-inline: auto;
+}
+
+/* 6. Brand / logo block */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2.75rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--auth-text);
+}
+
+.logoBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.875rem;
+  background: var(--auth-accent-bg);
+  border: 1px solid var(--auth-accent-border);
+  box-shadow: var(--auth-accent-glow);
+}
+
+.logoImage {
+  width: 1.875rem;
+  height: 1.875rem;
+  object-fit: contain;
+}
+
+.brandAccent {
+  color: var(--auth-accent);
+}
+
+/* 7. Eyebrow / headline / subtitle */
+.formEyebrow {
+  margin: 0 0 0.625rem;
+  color: var(--auth-eyebrow-form);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.cardTitle {
+  margin: 0;
+  color: var(--auth-text);
+  font-size: clamp(1.9rem, 1.6rem + 1.25vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+.cardSubtitle {
+  max-width: 34ch;
+  margin: 0.75rem 0 0;
+  color: var(--auth-text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+/* 8. Consent row (ConsentCheckbox keeps its own token-driven styles) */
+.consentRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  margin-top: 2rem;
+}
+
+/* 9. OAuth buttons — exactly three (R2); Google/Facebook gated by consent (R3) */
+.authButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.375rem;
+}
+
+.authButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  height: 48px;
+  padding: 0 18px;
+  overflow: hidden;
+  border: none;
+  border-radius: 0.75rem;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  color: var(--auth-google-fg);
+  background: var(--auth-google-bg);
+  box-shadow: var(--auth-google-shadow);
+  cursor: pointer;
+  transition:
+    background-color 300ms ease,
+    transform 150ms ease,
+    opacity 300ms ease;
+}
+
+.authButton:hover:not(:disabled) {
+  background-color: var(--auth-google-hover);
+  transform: scale(1.02);
+}
+
+.authButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.authButton .providerIcon {
+  flex: none;
+  width: 24px;
+  height: 24px;
+}
+
+.authButton span.providerIcon {
+  width: auto;
+  height: auto;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.providerLabel {
+  font-size: 1rem;
+  letter-spacing: 0.025em;
+}
+
+/* Phone — permanently disabled, muted dark glass (R2) */
+.phoneButton,
+.phoneButton:disabled {
+  background-color: var(--auth-phone-bg) !important;
+  color: var(--auth-phone-fg) !important;
+  border: 1px solid var(--auth-phone-border) !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+}
+
+.phoneButton:hover {
+  background-color: var(--auth-phone-bg) !important;
+  transform: none !important;
+}
+
+.phoneButton .providerIcon {
+  color: var(--auth-phone-fg) !important;
+}
+
+/* In-button "Próximamente" pill (D2) */
+.soonPill {
+  margin-left: auto;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--auth-pill-border);
+  border-radius: 9999px;
+  background-color: var(--auth-pill-bg);
+  color: var(--auth-pill-fg);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* 10. Focus visibility — native :focus-visible, MD3 primary ring (D5) */
+.authButton:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary, #92cef5);
+  outline-offset: 2px;
+}
+
+/* 11. Particle drift — subtle float; disabled under reduced motion (R7) */
+@keyframes particleDrift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-0.5rem);
+  }
+}
+
+.particle {
+  animation: particleDrift 9s ease-in-out infinite;
+}
+
+.p1 {
+  animation-duration: 9s;
+}
+
+.p2 {
+  animation-duration: 11s;
+  animation-delay: 0.8s;
+}
+
+.p3 {
+  animation-duration: 8s;
+  animation-delay: 1.6s;
+}
+
+.p4 {
+  animation-duration: 10s;
+  animation-delay: 0.3s;
+}
+
+.p5 {
+  animation-duration: 12s;
+  animation-delay: 2.1s;
+}
+
+/* 12. Responsive — 960px collapse to a single column (D3). The marketing
+   track is reserved (empty) until Slice 1b; its display:none rule lands with
+   MarketingPanel. */
+@media (max-width: 960px) {
+  .authShell {
+    grid-template-columns: minmax(0, 1fr);
     overflow-y: auto;
   }
 
-  .main {
-    padding: 1rem;
-  }
-
-  .card {
-    padding: 0;
-    border-radius: 1.25rem;
-  }
-
-  .cardBranding {
-    margin: 0 0 1.5rem;
-  }
-
-  .cardContent {
-    display: flex;
-    flex-direction: column;
-    min-height: 38rem;
-  }
-
-  .formPanel,
-  .insightPanel {
-    padding: 2.5rem 1.5rem;
-  }
-
-  .columnDivider {
-    top: auto;
-    right: 2rem;
-    bottom: auto;
-    left: 2rem;
-    width: auto;
-    height: 1px;
-    margin: 0;
-  }
-
-  /* Hide right panel on mobile — keeps form focused, saves vertical space */
-  .insightPanel {
-    display: none;
-  }
-
-  .insightVisual {
-    margin: 1.5rem 0;
+  .formPanel {
+    margin: 1rem;
+    padding: 2.25rem 1.5rem;
   }
 }
 
+@media (max-width: 768px) {
+  .formPanel {
+    margin: 0.75rem;
+    padding: 2rem 1.25rem;
+    border-radius: 1.25rem;
+  }
+}
+
+/* 420px tightening — kept from the legacy page */
 @media (max-width: 420px) {
-  .main {
-    padding: 0.75rem;
+  .formPanel {
+    margin: 0.5rem;
+    padding: 1.75rem 1rem;
+    border-radius: 1.125rem;
   }
 
-  .card {
-    padding: 0;
+  .authButton {
+    padding: 0 14px;
   }
 
-  .formPanel,
-  .insightPanel {
-    padding: 2rem 1rem;
-  }
-
-  .googleButton {
-    padding-right: 1rem;
-    padding-left: 1rem;
-  }
-
-  .googleButtonText {
+  .providerLabel {
     font-size: 0.9rem;
+  }
+}
+
+/* 13. Reduced motion — disable all floats (R7) */
+@media (prefers-reduced-motion: reduce) {
+  .particle {
+    animation: none !important;
   }
 }
