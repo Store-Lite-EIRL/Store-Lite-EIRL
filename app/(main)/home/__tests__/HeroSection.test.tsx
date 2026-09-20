@@ -10,14 +10,19 @@ describe('HeroSection — hero copy, CTAs and feature cards', () => {
     expect(section).not.toBeNull();
   });
 
-  it('renders the display headline', () => {
+  it('renders the display headline and the subtitle paragraph', () => {
     render(<HeroSection />);
 
     expect(
       screen.getByRole('heading', {
         level: 1,
-        name: 'Enfócate en vender con Store Lite',
+        name: 'Tu vitrina digital, lista para vender desde el día uno',
       }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Store Lite te da todo lo que necesitas para que tu marca se vea profesional/,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -29,6 +34,30 @@ describe('HeroSection — hero copy, CTAs and feature cards', () => {
 
     const outline = screen.getByRole('link', { name: 'Ver planes' });
     expect(outline).toHaveAttribute('href', '#pricing');
+  });
+
+  it('renders the three feature cards with titles and descriptions from the mockup', () => {
+    render(<HeroSection />);
+
+    expect(screen.getByText('Setup simple')).toBeInTheDocument();
+    expect(
+      screen.getByText('Publica tu tienda y empieza a cobrar sin curva de aprendizaje.'),
+    ).toBeInTheDocument();
+
+    expect(screen.getByText('Operación clara')).toBeInTheDocument();
+    expect(
+      screen.getByText('Inventario, pedidos y comunicación en un solo flujo.'),
+    ).toBeInTheDocument();
+
+    expect(screen.getByText('Escala real')).toBeInTheDocument();
+    expect(
+      screen.getByText('Una base sólida para crecer sin rehacer todo después.'),
+    ).toBeInTheDocument();
+  });
+
+  it('marks all three feature cards as active with the green live badge', () => {
+    render(<HeroSection />);
+    expect(screen.getAllByText('Activo')).toHaveLength(3);
   });
 
   it('mounts the ProductFrame dashboard mockup inside the hero grid', () => {

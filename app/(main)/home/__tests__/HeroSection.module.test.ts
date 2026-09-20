@@ -11,11 +11,11 @@ describe('HeroSection.module.css — token usage and structure', () => {
     expect(cssContent).toContain("@import './tokens.css';");
   });
 
-  it('defines the hero section with top padding, relative positioning and overflow-x clipped', () => {
+  it('defines the hero section with top padding, relative positioning and overflow hidden', () => {
     const heroBlock = cssContent.match(/\.hero\s*\{([^}]*)\}/)?.[1] ?? '';
     expect(heroBlock).toContain('padding-top: 80px');
     expect(heroBlock).toContain('position: relative');
-    expect(heroBlock).toContain('overflow-x: clip');
+    expect(heroBlock).toContain('overflow: hidden');
   });
 
   describe('decorative blobs', () => {
@@ -48,15 +48,15 @@ describe('HeroSection.module.css — token usage and structure', () => {
       expect(blob2).toContain('width: 320px');
       expect(blob2).toContain('height: 320px');
       expect(blob2).toContain('background: var(--accent-violet)');
-      expect(blob2).toContain('bottom: -60px');
+      expect(blob2).toContain('bottom: -120px');
       expect(blob2).toContain('left: -100px');
     });
   });
 
   describe('hero grid', () => {
-    it('lays out copy + product frame in a 0.9fr/1.1fr two-column grid favoring the frame', () => {
+    it('lays out copy + product frame in a 1.05fr/0.95fr two-column grid with 64px gap', () => {
       const gridBlock = cssContent.match(/\.heroGrid\s*\{([^}]*)\}/)?.[1] ?? '';
-      expect(gridBlock).toContain('grid-template-columns: 0.9fr 1.1fr');
+      expect(gridBlock).toContain('grid-template-columns: 1.05fr 0.95fr');
       expect(gridBlock).toContain('gap: 64px');
       expect(gridBlock).toContain('align-items: center');
     });
@@ -69,21 +69,21 @@ describe('HeroSection.module.css — token usage and structure', () => {
   });
 
   describe('typography', () => {
-    it('renders the display heading in brand font with a 40–72px fluid clamp', () => {
+    it('renders the display heading in brand font with a 34–58px fluid clamp', () => {
       const displayBlock = cssContent.match(/\.typeDisplay\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(displayBlock).toContain('font-family: var(--font-brand)');
-      expect(displayBlock).toContain('clamp(40px, 5.5vw, 72px)');
+      expect(displayBlock).toContain('clamp(34px, 4.8vw, 58px)');
       expect(displayBlock).toContain('font-weight: 700');
     });
 
-    it('renders the body copy in plain font, muted color, 34ch max width and 12px top margin', () => {
+    it('renders the body copy in plain font, muted color, 46ch max width and 18px top margin', () => {
       const subtitleBlock = cssContent.match(/\.subtitle\s*\{([^}]*)\}/)?.[1] ?? '';
       const bodyBlock = cssContent.match(/\.typeBodyLg\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(bodyBlock).toContain('font-family: var(--font-plain)');
       expect(bodyBlock).toContain('font-size: 17px');
       expect(bodyBlock).toContain('line-height: 1.6');
-      expect(subtitleBlock).toContain('max-width: 34ch');
-      expect(subtitleBlock).toContain('margin-top: 12px');
+      expect(subtitleBlock).toContain('max-width: 46ch');
+      expect(subtitleBlock).toContain('margin-top: 18px');
       expect(cssContent).toContain('.textSecondary');
       expect(cssContent).toContain('var(--color-text-muted)');
     });
@@ -131,7 +131,7 @@ describe('HeroSection.module.css — token usage and structure', () => {
       expect(cardBlock).toContain('min-width: 190px');
       expect(cardBlock).toContain('background: var(--color-surface)');
       expect(cardBlock).toContain('border-radius: var(--radius-m)');
-      expect(cardBlock).toContain('padding: 14px');
+      expect(cardBlock).toContain('padding: 18px');
       expect(cardBlock).toContain('box-shadow: var(--shadow-sm)');
     });
 
@@ -154,7 +154,7 @@ describe('HeroSection.module.css — token usage and structure', () => {
       const titleBlock = cssContent.match(/\.featureCard\s+h4\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(titleBlock).toContain('font-size: 15px');
       const descBlock = cssContent.match(/\.featureCard\s+p\s*\{([^}]*)\}/)?.[1] ?? '';
-      expect(descBlock).toContain('font-size: 12px');
+      expect(descBlock).toContain('font-size: 12.5px');
       expect(descBlock).toContain('var(--color-text-muted)');
       expect(descBlock).toContain('line-height: 1.45');
     });

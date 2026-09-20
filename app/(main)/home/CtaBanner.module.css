@@ -90,11 +90,6 @@
   color: var(--color-primary);
 }
 
-html[data-theme='dark'] .btnOnPrimary {
-  background: var(--color-bg);
-  color: var(--color-primary);
-}
-
 .btnOnPrimary:hover {
   transform: translateY(-2px);
 }

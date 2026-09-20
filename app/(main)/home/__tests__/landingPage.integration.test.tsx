@@ -128,7 +128,7 @@ describe('T-040 — landing page integration', () => {
     expect(
       screen.getByRole('heading', {
         level: 1,
-        name: 'Enfócate en vender con Store Lite',
+        name: 'Tu vitrina digital, lista para vender desde el día uno',
       }),
     ).toBeInTheDocument();
   });

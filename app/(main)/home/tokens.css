@@ -32,7 +32,7 @@ html[data-theme='light'] {
 
   /* === Typography (3) === */
   --font-brand: var(--font-sora), system-ui, sans-serif;
-  --font-plain: var(--font-storefront-inter), system-ui, sans-serif;
+  --font-plain: var(--font-inter), system-ui, sans-serif;
   --font-mono: var(--font-roboto-mono), ui-monospace, SFMono-Regular, monospace;
 
   /* === Accent Colors (6) === */
@@ -96,7 +96,7 @@ html[data-theme='dark'] {
 
   /* === Typography (3) === */
   --font-brand: var(--font-sora), system-ui, sans-serif;
-  --font-plain: var(--font-storefront-inter), system-ui, sans-serif;
+  --font-plain: var(--font-inter), system-ui, sans-serif;
   --font-mono: var(--font-roboto-mono), ui-monospace, SFMono-Regular, monospace;
 
   /* === Accent Colors (6) === */

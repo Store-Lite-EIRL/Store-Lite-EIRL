@@ -11,7 +11,7 @@ const QUESTIONS = [
   '¿Puedo cambiar de plan después?',
   '¿Qué pasa con mis productos si cancelo?',
   '¿Hay soporte en español?',
-] as const;
+];
 
 describe('FAQSection — native details accordion', () => {
   it('renders the eyebrow icon, headline and intro paragraph', () => {

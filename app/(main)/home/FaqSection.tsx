@@ -1,6 +1,3 @@
-'use client';
-
-import { useLayoutEffect, useRef } from 'react';
 import styles from './FaqSection.module.css';
 
 const FAQS = [
@@ -35,15 +32,6 @@ const FAQS = [
 ] as const;
 
 export default function FAQSection() {
-  const firstDetailsRef = useRef<HTMLDetailsElement>(null);
-
-  // Set open attribute on mount for jsdom compatibility (defaultOpen doesn't set attribute in jsdom)
-  useLayoutEffect(() => {
-    if (firstDetailsRef.current) {
-      firstDetailsRef.current.open = true;
-    }
-  }, []);
-
   return (
     <section className={styles.section}>
       <div className={styles.wrap}>
@@ -57,7 +45,7 @@ export default function FAQSection() {
 
         <div className={styles.faq}>
           {FAQS.map((faq, index) => (
-            <details key={faq.question} ref={index === 0 ? firstDetailsRef : undefined}>
+            <details key={faq.question} open={index === 0}>
               <summary>
                 {faq.question}
                 <span className="material-symbols-rounded">add</span>
