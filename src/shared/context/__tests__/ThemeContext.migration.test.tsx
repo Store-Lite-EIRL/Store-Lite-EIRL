@@ -116,7 +116,7 @@ describe('ThemeContext - Migration to html[data-theme]', () => {
       expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     });
 
-    it('should NOT apply theme classes to body', () => {
+    it('should apply the theme class to body alongside data-theme on html', () => {
       render(
         <ThemeProvider>
           <TestComponent />
@@ -127,13 +127,18 @@ describe('ThemeContext - Migration to html[data-theme]', () => {
         fireEvent.click(screen.getByText('Dark'));
       });
 
-      // Body should not have theme classes
+      // New contract: html[data-theme] for landing tokens + body class for MD3 tokens.
+      expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+      expect(document.body.classList.contains('dark')).toBe(true);
       expect(document.body.classList.contains('light')).toBe(false);
+
+      act(() => {
+        fireEvent.click(screen.getByText('Light'));
+      });
+
+      expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+      expect(document.body.classList.contains('light')).toBe(true);
       expect(document.body.classList.contains('dark')).toBe(false);
-      expect(document.body.classList.contains('light-medium-contrast')).toBe(false);
-      expect(document.body.classList.contains('dark-medium-contrast')).toBe(false);
-      expect(document.body.classList.contains('light-high-contrast')).toBe(false);
-      expect(document.body.classList.contains('dark-high-contrast')).toBe(false);
     });
 
     it('should set document.documentElement.style.colorScheme', () => {
@@ -154,6 +159,24 @@ describe('ThemeContext - Migration to html[data-theme]', () => {
       });
 
       expect(document.documentElement.style.colorScheme).toBe('light');
+    });
+
+    it('should add the suffixed contrast class to body but keep data-theme unsuffixed', () => {
+      localStorageMock.setItem('app-color-scheme', 'high');
+
+      render(
+        <ThemeProvider>
+          <TestComponent />
+        </ThemeProvider>,
+      );
+
+      act(() => {
+        fireEvent.click(screen.getByText('Dark'));
+      });
+
+      expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+      expect(document.body.classList.contains('dark-high-contrast')).toBe(true);
+      expect(document.body.classList.contains('dark')).toBe(false);
     });
   });
 

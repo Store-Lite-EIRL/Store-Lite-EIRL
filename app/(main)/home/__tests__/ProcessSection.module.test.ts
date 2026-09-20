@@ -33,7 +33,7 @@ describe('ProcessSection.module.css — token usage and structure', () => {
     it('styles the step as a surface tile with soft shadow', () => {
       const stepBlock = cssContent.match(/\.step\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(stepBlock).toContain('background: var(--color-surface)');
-      expect(stepBlock).toContain('border-radius: var(--radius-md)');
+      expect(stepBlock).toContain('border-radius: var(--radius-m)');
       expect(stepBlock).toContain('padding: 22px');
       expect(stepBlock).toContain('box-shadow: var(--shadow-sm)');
     });
@@ -74,7 +74,7 @@ describe('ProcessSection.module.css — token usage and structure', () => {
       '--color-text-muted',
       '--gradient-primary',
       '--shadow-sm',
-      '--radius-md',
+      '--radius-m',
       '--font-brand',
     ];
     requiredTokens.forEach((token) => {

@@ -65,7 +65,7 @@ describe('SolutionsSection.module.css — token usage and structure', () => {
     it('styles the card as a surface tile with soft shadow that lifts on hover', () => {
       const cardBlock = cssContent.match(/\.infoCard\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(cardBlock).toContain('background: var(--color-surface)');
-      expect(cardBlock).toContain('border-radius: var(--radius-md)');
+      expect(cardBlock).toContain('border-radius: var(--radius-m)');
       expect(cardBlock).toContain('padding: 24px');
       expect(cardBlock).toContain('box-shadow: var(--shadow-sm)');
       expect(cssContent).toMatch(
@@ -124,7 +124,7 @@ describe('SolutionsSection.module.css — token usage and structure', () => {
     it('styles each chip as a centered surface tile with a 40px round icon chip', () => {
       const chipBlock = cssContent.match(/\.intChip\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(chipBlock).toContain('background: var(--color-surface)');
-      expect(chipBlock).toContain('border-radius: var(--radius-md)');
+      expect(chipBlock).toContain('border-radius: var(--radius-m)');
       expect(chipBlock).toContain('padding: 18px');
       expect(chipBlock).toContain('box-shadow: var(--shadow-sm)');
       expect(chipBlock).toContain('text-align: center');
@@ -163,7 +163,7 @@ describe('SolutionsSection.module.css — token usage and structure', () => {
       '--shadow-sm',
       '--shadow-md',
       '--shadow-glow',
-      '--radius-md',
+      '--radius-m',
       '--font-brand',
       '--font-plain',
       '--accent-blue',

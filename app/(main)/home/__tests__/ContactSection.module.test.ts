@@ -24,7 +24,7 @@ describe('ContactSection.module.css — token usage and structure', () => {
       const cardBlock = cssContent.match(/\.contactCard\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(cardBlock).toContain('margin-top: 40px');
       expect(cardBlock).toContain('background: var(--color-surface)');
-      expect(cardBlock).toContain('border-radius: var(--radius-lg)');
+      expect(cardBlock).toContain('border-radius: var(--radius-l)');
       expect(cardBlock).toContain('padding: 38px');
       expect(cardBlock).toContain('display: flex');
       expect(cardBlock).toContain('justify-content: space-between');
@@ -67,8 +67,8 @@ describe('ContactSection.module.css — token usage and structure', () => {
       '--gradient-primary',
       '--shadow-md',
       '--shadow-glow',
-      '--radius-md',
-      '--radius-lg',
+      '--radius-m',
+      '--radius-l',
       '--font-brand',
       '--font-plain',
       '--max-width',

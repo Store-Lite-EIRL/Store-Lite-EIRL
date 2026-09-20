@@ -227,6 +227,39 @@ describe('T-040 — landing page integration', () => {
     expect(planesLink.getAttribute('href')).toBe('#pricing');
   });
 
+  it('every FloatingNav link target resolves to an existing landing anchor (T-044)', () => {
+    const { container } = renderHome();
+    const nav = screen.getByRole('navigation');
+    const targets = within(nav)
+      .getAllByRole('link')
+      .map((link) => link.getAttribute('href'))
+      .filter((href): href is string => href !== null && href.startsWith('#'));
+    // Non-empty guard so the loop below really executes (no ghost loop).
+    expect(targets).toHaveLength(5);
+    for (const target of targets) {
+      // '#proceso' (stale singular) would fail here: ProcessSection renders id="procesos".
+      expect(container.querySelector(target)).not.toBeNull();
+    }
+  });
+
+  it('the scroll-spy observes the corrected procesos id and activates the Proceso link (T-044)', () => {
+    renderHome();
+    expect(screen.getByRole('link', { name: 'Proceso' })).not.toHaveAttribute('aria-current');
+
+    act(() => {
+      observerInstance!.simulateIntersection([
+        {
+          target: { id: 'procesos' },
+          isIntersecting: true,
+          intersectionRatio: 1,
+        } as IntersectionObserverEntry,
+      ]);
+    });
+
+    expect(screen.getByRole('link', { name: 'Proceso' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Inicio' })).not.toHaveAttribute('aria-current');
+  });
+
   describe('responsive breakpoints exist per section module', () => {
     const responsiveModules: readonly [string, RegExp][] = [
       ['FloatingNav', /@media\s*\(max-width: 900px\)/],

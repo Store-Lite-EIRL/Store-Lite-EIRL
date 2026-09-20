@@ -30,7 +30,7 @@ describe('StatsSection.module.css — token usage and structure', () => {
     it('styles the card as a surface tile with brand-font number and muted label', () => {
       const cardBlock = cssContent.match(/\.statCard\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(cardBlock).toContain('background: var(--color-surface)');
-      expect(cardBlock).toContain('border-radius: var(--radius-md)');
+      expect(cardBlock).toContain('border-radius: var(--radius-m)');
       expect(cardBlock).toContain('padding: 26px');
       expect(cardBlock).toContain('box-shadow: var(--shadow-sm)');
       const numBlock = cssContent.match(/\.statNumber\s*\{([^}]*)\}/)?.[1] ?? '';
@@ -65,7 +65,7 @@ describe('StatsSection.module.css — token usage and structure', () => {
       '--color-text-muted',
       '--font-brand',
       '--shadow-sm',
-      '--radius-md',
+      '--radius-m',
     ];
     requiredTokens.forEach((token) => {
       expect(cssContent).toContain(token);

@@ -130,7 +130,7 @@ describe('HeroSection.module.css — token usage and structure', () => {
       expect(cardBlock).toContain('flex: 1');
       expect(cardBlock).toContain('min-width: 190px');
       expect(cardBlock).toContain('background: var(--color-surface)');
-      expect(cardBlock).toContain('border-radius: var(--radius-md)');
+      expect(cardBlock).toContain('border-radius: var(--radius-m)');
       expect(cardBlock).toContain('padding: 18px');
       expect(cardBlock).toContain('box-shadow: var(--shadow-sm)');
     });
@@ -184,7 +184,7 @@ describe('HeroSection.module.css — token usage and structure', () => {
       '--gradient-primary',
       '--shadow-sm',
       '--shadow-glow',
-      '--radius-md',
+      '--radius-m',
       '--max-width',
       '--font-brand',
       '--font-plain',

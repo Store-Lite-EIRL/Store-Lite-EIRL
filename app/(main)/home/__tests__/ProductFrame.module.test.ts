@@ -13,7 +13,7 @@ describe('ProductFrame.module.css — token usage and structure', () => {
 
   it('styles the frame as a rounded, shadowed surface card', () => {
     const frameBlock = cssContent.match(/\.productFrame\s*\{([^}]*)\}/)?.[1] ?? '';
-    expect(frameBlock).toContain('border-radius: var(--radius-lg)');
+    expect(frameBlock).toContain('border-radius: var(--radius-l)');
     expect(frameBlock).toContain('background: var(--color-surface)');
     expect(frameBlock).toContain('overflow: hidden');
     expect(frameBlock).toContain('box-shadow: var(--shadow-lg)');
@@ -100,7 +100,7 @@ describe('ProductFrame.module.css — token usage and structure', () => {
     it('styles each card on a low-surface background with brand-font numbers', () => {
       const cardBlock = cssContent.match(/\.card\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(cardBlock).toContain('background: var(--color-bg)');
-      expect(cardBlock).toContain('border-radius: var(--radius-md)');
+      expect(cardBlock).toContain('border-radius: var(--radius-m)');
       expect(cardBlock).toContain('padding: 16px');
 
       const numberBlock = cssContent.match(/\.cardNumber\s*\{([^}]*)\}/)?.[1] ?? '';
@@ -119,7 +119,7 @@ describe('ProductFrame.module.css — token usage and structure', () => {
       const chartBlock = cssContent.match(/\.chart\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(chartBlock).toContain('margin-top: 14px');
       expect(chartBlock).toContain('background: var(--color-bg)');
-      expect(chartBlock).toContain('border-radius: var(--radius-md)');
+      expect(chartBlock).toContain('border-radius: var(--radius-m)');
       expect(chartBlock).toContain('display: flex');
       expect(chartBlock).toContain('align-items: flex-end');
       expect(chartBlock).toContain('gap: 8px');
@@ -165,8 +165,8 @@ describe('ProductFrame.module.css — token usage and structure', () => {
       '--gradient-primary',
       '--shadow-lg',
       '--shadow-glow',
-      '--radius-md',
-      '--radius-lg',
+      '--radius-m',
+      '--radius-l',
       '--radius-full',
       '--font-brand',
       '--accent-blue',
