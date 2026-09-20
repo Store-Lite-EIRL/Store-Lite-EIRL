@@ -24,9 +24,9 @@ describe('FAQSection.module.css — token usage and structure', () => {
   });
 
   describe('faq list', () => {
-    it('constrains the faq list to 740px with 32px top margin', () => {
+    it('lets the faq list use the full wrap width with 32px top margin', () => {
       const faqBlock = cssContent.match(/\.faq\s*\{([^}]*)\}/)?.[1] ?? '';
-      expect(faqBlock).toContain('max-width: 740px');
+      expect(faqBlock).toContain('max-width: 100%');
       expect(faqBlock).toContain('margin-top: 32px');
     });
   });
