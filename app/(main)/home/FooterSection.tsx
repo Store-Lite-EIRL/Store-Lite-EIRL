@@ -1,49 +1,50 @@
 import { StoreLogo } from '@/shared/components/ui/data-display/StoreLogo';
 import Link from 'next/link';
+import styles from './FooterSection.module.css';
 
 export default function FooterSection() {
   return (
-    <footer className="landing-footer" id="footer">
-      <div className="footer-container">
-        <div className="footer-main">
-          <div className="footer-brand">
-            <div className="footer-logo">
+    <footer className={styles.landingFooter} id="footer">
+      <div className={styles.footerContainer}>
+        <div className={styles.footerMain}>
+          <div className={styles.footerBrand}>
+            <div className={styles.footerLogo}>
               <StoreLogo size={36} variant="white" />
             </div>
-            <p className="footer-tagline">
+            <p className={styles.footerTagline}>
               La plataforma que hace crecer tu negocio. Crea tu tienda online en minutos y empieza a
               vender.
             </p>
-            <div className="footer-contact">
-              <a href="mailto:devkittopsac@gmail.com" className="contact-item">
+            <div className={styles.footerContact}>
+              <a href="mailto:devkittopsac@gmail.com" className={styles.contactItem}>
                 <span className="material-symbols-outlined">mail</span>
                 devkittopsac@gmail.com
               </a>
-              <a href="tel:+51958119418" className="contact-item">
+              <a href="tel:+51958119418" className={styles.contactItem}>
                 <span className="material-symbols-outlined">call</span>
                 958 119 418
               </a>
-              <span className="contact-item">
+              <span className={styles.contactItem}>
                 <span className="material-symbols-outlined">place</span>
                 Arequipa, Arequipa, Ciudad de Dios
               </span>
             </div>
           </div>
 
-          <div className="footer-links-wrapper">
-            <div className="footer-column">
+          <div className={styles.footerLinksWrapper}>
+            <div className={styles.footerColumn}>
               <h4>Producto</h4>
               <Link href="/pricing">Planes y precios</Link>
               <Link href="/auth">Comenzar</Link>
               <Link href="#proceso">Cómo funciona</Link>
             </div>
-            <div className="footer-column">
+            <div className={styles.footerColumn}>
               <h4>Empresa</h4>
               <Link href="#soluciones">Soluciones</Link>
               <Link href="#pricing">Precios</Link>
               <Link href="#footer">Contacto</Link>
             </div>
-            <div className="footer-column">
+            <div className={styles.footerColumn}>
               <h4>Legal</h4>
               <Link href="/terminos">Términos de servicio</Link>
               <Link href="/privacidad">Política de privacidad</Link>
@@ -53,15 +54,15 @@ export default function FooterSection() {
           </div>
         </div>
 
-        <div className="footer-bottom">
-          <div className="footer-bottom-left">
+        <div className={styles.footerBottom}>
+          <div className={styles.footerBottomLeft}>
             <p>&copy; 2026 Devkittop. Todos los derechos reservados.</p>
-            <p className="footer-company">
+            <p className={styles.footerCompany}>
               Desarrollado por <strong>Devkittop</strong> · Perú
             </p>
           </div>
-          <div className="footer-bottom-right">
-            <Link href="/auth" className="footer-cta">
+          <div className={styles.footerBottomRight}>
+            <Link href="/auth" className={styles.footerCta}>
               Crear mi tienda
               <span className="material-symbols-outlined">arrow_forward</span>
             </Link>

@@ -9,8 +9,33 @@ import { ThemeProvider } from '@/shared/context/ThemeContext';
 import { CSPostHogProvider } from '@/shared/providers/PostHogProvider';
 import { buildSiteJsonLd, SITE_DESCRIPTION, SITE_NAME } from '@/shared/utils/siteJsonLd';
 import type { Metadata } from 'next';
+import { Inter, Roboto_Mono, Sora } from 'next/font/google';
 import localFont from 'next/font/local';
 import './globals.css';
+
+const sora = Sora({
+  subsets: ['latin'],
+
+  display: 'swap',
+  variable: '--font-sora',
+  fallback: ['system-ui', 'sans-serif'],
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+
+  display: 'swap',
+  variable: '--font-inter',
+  fallback: ['system-ui', 'sans-serif'],
+});
+
+const roboto_mono = Roboto_Mono({
+  subsets: ['latin'],
+
+  display: 'swap',
+  variable: '--font-roboto-mono',
+  fallback: ['ui-monospace', 'SFMono-Regular', 'monospace'],
+});
 
 const google_sans_flex = localFont({
   src: './fonts/google-sans-flex.woff2',
@@ -19,30 +44,6 @@ const google_sans_flex = localFont({
   adjustFontFallback: false,
   fallback: ['system-ui', 'sans-serif'],
   weight: '1 1000',
-});
-
-const roboto_mono = localFont({
-  src: './fonts/roboto-mono.woff2',
-  display: 'swap',
-  variable: '--font-roboto-mono',
-  weight: '100 700',
-});
-
-const inter = localFont({
-  src: './fonts/inter.woff2',
-  display: 'swap',
-  variable: '--font-storefront-inter',
-  weight: '100 900',
-});
-
-const roboto = localFont({
-  src: [
-    { path: './fonts/roboto-400.woff2', weight: '400', style: 'normal' },
-    { path: './fonts/roboto-500.woff2', weight: '500', style: 'normal' },
-    { path: './fonts/roboto-700.woff2', weight: '700', style: 'normal' },
-  ],
-  display: 'swap',
-  variable: '--font-storefront-roboto',
 });
 
 const poppins = localFont({
@@ -88,13 +89,31 @@ export default function RootLayout({
     <html
       lang="es"
       suppressHydrationWarning
-      className={`${google_sans_flex.variable} ${roboto_mono.variable} ${inter.variable} ${roboto.variable} ${poppins.variable}`}
+      className={`${sora.variable} ${inter.variable} ${roboto_mono.variable} ${google_sans_flex.variable} ${poppins.variable}`}
     >
       <head>
+        {/* FOUC prevention - runs before any styles */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var storedTheme = localStorage.getItem('app-theme') || 'system';
+                  var storedScheme = localStorage.getItem('app-color-scheme') || 'default';
+                  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  var resolvedTheme = storedTheme === 'system' ? (prefersDark ? 'dark' : 'light') : storedTheme;
+                  var suffix = storedScheme === 'medium' ? '-medium-contrast' : storedScheme === 'high' ? '-high-contrast' : '';
+                  document.documentElement.setAttribute('data-theme', resolvedTheme + suffix);
+                  document.documentElement.style.colorScheme = resolvedTheme;
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..600,0..1,-25..0&display=block"
         />
         <ThemeBoot />
       </head>

@@ -99,6 +99,7 @@ describe('themeSyncConvergence', () => {
   afterEach(() => {
     localStorageMock.clear();
     document.body.className = '';
+    document.documentElement.removeAttribute('data-theme');
     document.documentElement.style.colorScheme = '';
   });
 
@@ -128,11 +129,9 @@ describe('themeSyncConvergence', () => {
       expect(themeState()).toEqual({ viewer: 'dark', effective: 'dark' });
     }
 
-    // Exactly one body theme class at all times (no dark+light churn).
-    const bodyClasses = Array.from(document.body.classList).filter((c) =>
-      ['light', 'dark'].includes(c),
-    );
-    expect(bodyClasses).toEqual(['dark']);
+    // Exactly one data-theme attribute at all times (no dark+light churn).
+    const dataTheme = document.documentElement.getAttribute('data-theme');
+    expect(dataTheme).toBe('dark');
   });
 
   it('propagates an explicit viewer toggle exactly once and never reverts it', async () => {

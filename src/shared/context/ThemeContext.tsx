@@ -3,6 +3,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
 export type Theme = 'light' | 'dark' | 'system';
+
+// ColorScheme kept for rest of app, but not used by landing
 export type ColorScheme = 'default' | 'medium' | 'high';
 
 interface ThemeContextProps {
@@ -14,15 +16,6 @@ interface ThemeContextProps {
 }
 
 const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
-
-const THEME_CLASSES = [
-  'light',
-  'light-medium-contrast',
-  'light-high-contrast',
-  'dark',
-  'dark-medium-contrast',
-  'dark-high-contrast',
-] as const;
 
 function getThemeClass(currentTheme: 'light' | 'dark', colorScheme: ColorScheme) {
   if (colorScheme === 'medium') {
@@ -82,10 +75,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
     const applyTheme = (currentTheme: 'light' | 'dark') => {
       setEffectiveTheme(currentTheme);
-      document.body.classList.remove(...THEME_CLASSES);
-
-      const className = getThemeClass(currentTheme, colorScheme);
-      document.body.classList.add(className);
+      document.documentElement.setAttribute('data-theme', currentTheme);
       document.documentElement.style.colorScheme = currentTheme;
     };
 

@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import FooterSection from '../FooterSection';
+
+afterEach(() => {
+  document.documentElement.removeAttribute('data-theme');
+});
 
 describe('FooterSection', () => {
   it('links "Política de reembolsos" to /devoluciones', () => {
@@ -32,5 +36,23 @@ describe('FooterSection', () => {
     render(<FooterSection />);
     const emailLink = screen.getByRole('link', { name: /devkittopsac@gmail.com/ });
     expect(emailLink).toHaveAttribute('href', 'mailto:devkittopsac@gmail.com');
+  });
+
+  it('keeps id="footer" as the scroll-spy navigation target', () => {
+    render(<FooterSection />);
+    expect(screen.getByRole('contentinfo')).toHaveAttribute('id', 'footer');
+  });
+
+  it('renders identical structure in light and dark themes', () => {
+    document.documentElement.setAttribute('data-theme', 'light');
+    const light = render(<FooterSection />);
+    const lightStructure = light.container.querySelector('footer')?.innerHTML;
+    light.unmount();
+
+    document.documentElement.setAttribute('data-theme', 'dark');
+    const dark = render(<FooterSection />);
+    const darkStructure = dark.container.querySelector('footer')?.innerHTML;
+
+    expect(darkStructure).toBe(lightStructure);
   });
 });
