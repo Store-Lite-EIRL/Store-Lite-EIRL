@@ -108,7 +108,7 @@ describe('ProductFrame.module.css — token usage and structure', () => {
 
       const numberBlock = cssContent.match(/\.cardNumber\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(numberBlock).toContain('font-family: var(--font-brand)');
-      expect(numberBlock).toContain('font-size: 25px');
+      expect(numberBlock).toContain('font-size: 20px');
       expect(numberBlock).toContain('font-weight: 700');
 
       const labelBlock = cssContent.match(/\.cardLabel\s*\{([^}]*)\}/)?.[1] ?? '';
@@ -178,5 +178,16 @@ describe('ProductFrame.module.css — token usage and structure', () => {
     requiredTokens.forEach((token) => {
       expect(cssContent).toContain(token);
     });
+  });
+});
+
+describe('ProductFrame.module.css — mobile fitment', () => {
+  it('adds a <600px media query that narrows the side rail and tightens metrics', () => {
+    const match = cssContent.match(/@media \(max-width: 600px\)\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
+    expect(match).toContain('grid-template-columns: 52px 1fr');
+    expect(match).toContain('.main');
+    expect(match).toContain('padding: 14px');
+    expect(match).toContain('.cardNumber');
+    expect(match).toContain('font-size: 16px');
   });
 });

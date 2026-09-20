@@ -148,7 +148,7 @@ export default function FloatingNav() {
           {/* Logo */}
           <Link href="/" className={styles.logo} aria-label="Ir al inicio de Store Lite">
             <Image
-              src="/img/logo1.jpeg"
+              src="/img/icon.png"
               alt="Store Lite"
               width={32}
               height={32}

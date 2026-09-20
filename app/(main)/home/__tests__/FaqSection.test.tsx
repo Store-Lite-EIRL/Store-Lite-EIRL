@@ -5,12 +5,14 @@ import { describe, expect, it } from 'vitest';
 import FAQSection from '../FaqSection';
 
 const QUESTIONS = [
-  '¿Es realmente gratis empezar?',
-  '¿Necesito conocimientos técnicos?',
-  '¿Cómo recibo mis ventas?',
-  '¿Puedo cambiar de plan después?',
-  '¿Qué pasa con mis productos si cancelo?',
-  '¿Hay soporte en español?',
+  '¿Cuánto cuesta y hay comisiones ocultas?',
+  '¿Necesito saber de programación o diseño?',
+  '¿Cómo se verá mi tienda y qué link tendrá?',
+  '¿Cómo recibo los pagos de mis clientes?',
+  '¿Ofrezco envío a domicilio o recojo en tienda?',
+  '¿Cuánto demora tener mi tienda lista?',
+  '¿Puedo cambiar de plan o cancelar cuando quiera?',
+  '¿Hay soporte mientras empiezo?',
 ] as const;
 
 describe('FAQSection — native details accordion', () => {
@@ -24,15 +26,15 @@ describe('FAQSection — native details accordion', () => {
     expect(screen.getByText(/Resolvemos las dudas más comunes/)).toBeInTheDocument();
   });
 
-  it('renders six FAQ items with an add icon each', () => {
+  it('renders eight FAQ items with an add icon each', () => {
     const { container } = render(<FAQSection />);
 
     const details = container.querySelectorAll('details');
-    expect(details.length).toBe(6);
-    expect(screen.getAllByText('add')).toHaveLength(6);
+    expect(details.length).toBe(8);
+    expect(screen.getAllByText('add')).toHaveLength(8);
   });
 
-  it('renders all six questions as summaries', () => {
+  it('renders all eight questions as summaries', () => {
     render(<FAQSection />);
 
     QUESTIONS.forEach((question) => expect(screen.getByText(question)).toBeInTheDocument());
@@ -43,7 +45,20 @@ describe('FAQSection — native details accordion', () => {
 
     const details = container.querySelectorAll('details');
     expect(details[0]).toHaveAttribute('open');
-    expect(screen.getByText(/Sí\. Puedes crear tu tienda/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Puedes crear tu tienda gratis y sin límite de tiempo/),
+    ).toBeInTheDocument();
+  });
+
+  it('renders the subdomain preview as highlighted code inside the link answer', () => {
+    const { container } = render(<FAQSection />);
+
+    expect(screen.getByText('mitienda.storelite.app')).toBeInTheDocument();
+    const code = container.querySelector('code');
+    expect(code).not.toBeNull();
+    expect(code?.textContent).toBe('mitienda.storelite.app');
+    // CSS-module class names are scoped in tests (e.g. _subdomain_<hash>), so match the project pattern.
+    expect(code?.className).toContain('subdomain');
   });
 
   it('keeps the remaining items closed by default', () => {

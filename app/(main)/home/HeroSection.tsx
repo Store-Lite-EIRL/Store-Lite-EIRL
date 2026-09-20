@@ -7,7 +7,7 @@ const FEATURES = [
   {
     emoji: '⚡',
     title: 'Setup simple',
-    description: 'Publica tu tienda y empieza a cobrar sin curva de aprendizaje.',
+    description: 'Registra tu tienda y empieza a subir tus productos en minutos.',
   },
   {
     emoji: '🗂️',
@@ -23,11 +23,16 @@ export default function HeroSection() {
       <div className={`${styles.blob} ${styles.blob2}`} aria-hidden="true" />
 
       <div className={styles.wrap}>
-        <div className={styles.heroGrid}>
+        <div className={styles.heroVertical}>
           <div className={styles.copy}>
             <h1 className={styles.typeDisplay}>
-              Enfócate en vender con <span className={styles.brandName}>Store Lite</span>
+              Enfócate en vender con&nbsp;
+              <span className={styles.brandName}>Store Lite</span>
             </h1>
+
+            <p className={`${styles.typeBodyLg} ${styles.textSecondary} ${styles.subtitle}`}>
+              Catálogo, pagos y pedidos en una sola herramienta — vende ya en cuestion de minutos.
+            </p>
 
             <div className={styles.actions}>
               <Link href="/auth" className={`${styles.btn} ${styles.btnPrimary}`}>
@@ -55,7 +60,9 @@ export default function HeroSection() {
             </div>
           </div>
 
-          <ProductFrame />
+          <div className={styles.frameWrapper}>
+            <ProductFrame />
+          </div>
         </div>
       </div>
     </section>

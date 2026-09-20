@@ -10,16 +10,9 @@ describe('SolutionsSection — problem/solution cards and integrations', () => {
     expect(section).not.toBeNull();
   });
 
-  it('renders the eyebrow icon, the headline and the intro paragraph', () => {
+  it('renders the intro paragraph without eyebrow icon or h2', () => {
     render(<SolutionsSection />);
 
-    expect(screen.getByText('bolt')).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', {
-        level: 2,
-        name: 'Deja de complicarte. Enfócate en vender.',
-      }),
-    ).toBeInTheDocument();
     expect(
       screen.getByText(/Crear y mantener un ecommerce no debería ser un proyecto de ingeniería/),
     ).toBeInTheDocument();
@@ -34,52 +27,48 @@ describe('SolutionsSection — problem/solution cards and integrations', () => {
       'Gestionar envíos es un dolor de cabeza.',
       'Pierdes productos y stock en hojas de cálculo.',
       'No sabes qué está funcionando o qué no.',
-      'Vender a la vez por redes y por web se vuelve un caos.',
+      'Integra tu WhatsApp directamente',
     ];
     const fixes = [
-      'Es gratis empezar. Sin mensualidad ni sorpresas.',
+      'Empieza gratis, sin mensualidad ni sorpresas.',
       'Pagos directos y seguros, integrados con Culqi.',
-      'Todo desde la app. Control total sin salir de casa.',
+      'Supervisa pedidos desde que los envías hasta que llegan a tus usuarios. Más seguridad y tranquilidad para tus clientes.',
       'Tu catálogo siempre al día, sin esfuerzo.',
-      'Datos reales. Decisiones basadas en info, no en intuición.',
-      'Conecta Instagram y WhatsApp a la misma tienda.',
+      'En tiempo real puedes estar en contacto con tus usuarios porque tenemos chats en tiempo real.',
+      'Conecta WhatsApp a la misma tienda y podrás responder a tus clientes en tiempo real, sin perder ventas.',
     ];
+    const icons = ['rocket_launch', 'payments', 'local_shipping', 'inventory_2', 'insights', 'hub'];
 
     issues.forEach((issue) => expect(screen.getByText(issue)).toBeInTheDocument());
     fixes.forEach((fix) => expect(screen.getByText(fix)).toBeInTheDocument());
 
-    const cardIcons = [
-      'rocket_launch',
-      'payments',
-      'local_shipping',
-      'inventory_2',
-      'insights',
-      'hub',
-    ];
-    cardIcons.forEach((icon) => expect(screen.getByText(icon)).toBeInTheDocument());
+    icons.forEach((icon) => {
+      const elements = screen.getAllByText(icon);
+      const expectedLength = icon === 'hub' ? 2 : 1;
+      expect(elements).toHaveLength(expectedLength);
+    });
     expect(screen.getAllByText('check_circle')).toHaveLength(6);
   });
 
-  it('renders the integrations title and the five integration chips with name and category', () => {
+  it('renders the five integration chips with name and category', () => {
     render(<SolutionsSection />);
 
-    expect(screen.getByText('Todo lo que necesitas, conectado')).toBeInTheDocument();
     expect(screen.getByText('Culqi')).toBeInTheDocument();
     expect(screen.getByText('Pagos')).toBeInTheDocument();
-    expect(screen.getByText('Instagram')).toBeInTheDocument();
-    expect(screen.getByText('Ventas')).toBeInTheDocument();
+    expect(screen.getByText('0 comisiones')).toBeInTheDocument();
+    expect(screen.getByText('Por venta')).toBeInTheDocument();
     expect(screen.getByText('WhatsApp')).toBeInTheDocument();
     expect(screen.getByText('Atención')).toBeInTheDocument();
     expect(screen.getByText('Google')).toBeInTheDocument();
-    expect(screen.getByText('Dominio')).toBeInTheDocument();
-    expect(screen.getByText('Analytics')).toBeInTheDocument();
-    expect(screen.getByText('Datos')).toBeInTheDocument();
+    expect(screen.getByText('Subdominio')).toBeInTheDocument();
+    expect(screen.getByText('Edita tu negocio')).toBeInTheDocument();
+    expect(screen.getByText('A tu comodidad')).toBeInTheDocument();
   });
 
   it('renders the five integration icons and the "more integrations" note', () => {
     render(<SolutionsSection />);
 
-    const intIcons = ['credit_card', 'photo_camera', 'chat', 'travel_explore', 'query_stats'];
+    const intIcons = ['credit_card', 'percent', 'chat', 'travel_explore', 'edit'];
     intIcons.forEach((icon) => expect(screen.getByText(icon)).toBeInTheDocument());
     expect(screen.getByText('+ Más integraciones próximamente')).toBeInTheDocument();
   });

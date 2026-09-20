@@ -48,23 +48,19 @@ describe('HeroSection.module.css — token usage and structure', () => {
       expect(blob2).toContain('width: 320px');
       expect(blob2).toContain('height: 320px');
       expect(blob2).toContain('background: var(--accent-violet)');
-      expect(blob2).toContain('bottom: -60px');
+      expect(blob2).toContain('bottom: -500px');
       expect(blob2).toContain('left: -100px');
     });
   });
 
-  describe('hero grid', () => {
-    it('lays out copy + product frame in a 0.9fr/1.1fr two-column grid favoring the frame', () => {
-      const gridBlock = cssContent.match(/\.heroGrid\s*\{([^}]*)\}/)?.[1] ?? '';
-      expect(gridBlock).toContain('grid-template-columns: 0.9fr 1.1fr');
-      expect(gridBlock).toContain('gap: 64px');
-      expect(gridBlock).toContain('align-items: center');
-    });
-
-    it('collapses to a single column with 44px gap below 960px', () => {
-      const mediaBlock = cssContent.match(/@media \(max-width: 960px\)\s*\{([^}]*)\}/)?.[1] ?? '';
-      expect(mediaBlock).toContain('grid-template-columns: 1fr');
-      expect(mediaBlock).toContain('gap: 44px');
+  describe('hero vertical layout', () => {
+    it('uses a vertical flex layout with centered content', () => {
+      const verticalBlock = cssContent.match(/\.heroVertical\s*\{([^}]*)\}/)?.[1] ?? '';
+      expect(verticalBlock).toContain('flex-direction: column');
+      expect(verticalBlock).toContain('align-items: center');
+      expect(verticalBlock).toContain('text-align: center');
+      expect(verticalBlock).toContain('width: 100%');
+      expect(verticalBlock).toContain('flex: 1');
     });
   });
 
@@ -76,26 +72,27 @@ describe('HeroSection.module.css — token usage and structure', () => {
       expect(displayBlock).toContain('font-weight: 700');
     });
 
-    it('renders the body copy in plain font, muted color, 34ch max width and 12px top margin', () => {
+    it('renders the body copy in plain font, muted color, 48ch max width and centered with 30px bottom margin', () => {
       const subtitleBlock = cssContent.match(/\.subtitle\s*\{([^}]*)\}/)?.[1] ?? '';
       const bodyBlock = cssContent.match(/\.typeBodyLg\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(bodyBlock).toContain('font-family: var(--font-plain)');
       expect(bodyBlock).toContain('font-size: 17px');
       expect(bodyBlock).toContain('line-height: 1.6');
-      expect(subtitleBlock).toContain('max-width: 34ch');
-      expect(subtitleBlock).toContain('margin-top: 12px');
+      expect(subtitleBlock).toContain('max-width: 48ch');
+      expect(subtitleBlock).toContain('margin: 0 auto 30px');
       expect(cssContent).toContain('.textSecondary');
       expect(cssContent).toContain('var(--color-text-muted)');
     });
   });
 
   describe('actions and buttons', () => {
-    it('wraps the two CTAs in a flexible row with 14px gap and 30px top margin', () => {
+    it('wraps the two CTAs in a flexible row with 14px gap and 24px top margin', () => {
       const actionsBlock = cssContent.match(/\.actions\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(actionsBlock).toContain('display: flex');
       expect(actionsBlock).toContain('gap: 14px');
-      expect(actionsBlock).toContain('margin-top: 30px');
+      expect(actionsBlock).toContain('margin-top: 24px');
       expect(actionsBlock).toContain('flex-wrap: wrap');
+      expect(actionsBlock).toContain('justify-content: center');
     });
 
     it('styles the primary button with gradient background and glow shadow', () => {
@@ -117,12 +114,13 @@ describe('HeroSection.module.css — token usage and structure', () => {
   });
 
   describe('feature row', () => {
-    it('wraps the feature cards with 12px gap and 44px top margin', () => {
+    it('wraps the feature cards with 12px gap and 24px top margin', () => {
       const rowBlock = cssContent.match(/\.featureRow\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(rowBlock).toContain('display: flex');
       expect(rowBlock).toContain('gap: 12px');
-      expect(rowBlock).toContain('margin-top: 44px');
+      expect(rowBlock).toContain('margin-top: 24px');
       expect(rowBlock).toContain('flex-wrap: wrap');
+      expect(rowBlock).toContain('justify-content: center');
     });
 
     it('styles each card as a flexible surface tile with soft shadow', () => {
@@ -131,8 +129,9 @@ describe('HeroSection.module.css — token usage and structure', () => {
       expect(cardBlock).toContain('min-width: 190px');
       expect(cardBlock).toContain('background: var(--color-surface)');
       expect(cardBlock).toContain('border-radius: var(--radius-m)');
-      expect(cardBlock).toContain('padding: 14px');
-      expect(cardBlock).toContain('box-shadow: var(--shadow-sm)');
+      expect(cardBlock).toContain('padding: 18px');
+      expect(cardBlock).toContain('box-shadow: var(--shadow-md)');
+      expect(cardBlock).toContain('border: 1px solid var(--color-border)');
     });
 
     it('pushes emoji and live badge to opposite ends of the card top row', () => {
@@ -182,6 +181,7 @@ describe('HeroSection.module.css — token usage and structure', () => {
       '--color-surface',
       '--color-text-muted',
       '--gradient-primary',
+      '--gradient-brand',
       '--shadow-sm',
       '--shadow-glow',
       '--radius-m',
@@ -194,5 +194,16 @@ describe('HeroSection.module.css — token usage and structure', () => {
     requiredTokens.forEach((token) => {
       expect(cssContent).toContain(token);
     });
+  });
+});
+
+describe('HeroSection.module.css — mobile scaling', () => {
+  it('scales the display clamp and stacks CTAs below 600px', () => {
+    expect(cssContent).toContain('@media (max-width: 600px)');
+    expect(cssContent).toContain('clamp(30px, 8.5vw, 40px)');
+    expect(cssContent).toContain('clamp(36px, 10vw, 48px)');
+    const actionsMatch =
+      cssContent.match(/@media \(max-width: 600px\)\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
+    expect(actionsMatch).toContain('flex-direction: column');
   });
 });

@@ -52,9 +52,9 @@ describe('PricingSection.module.css — token usage and structure', () => {
       expect(toggleBlock).toContain('margin-top: 8px');
     });
 
-    it('applies surface background and shadow to the active option', () => {
+    it('applies gradient background and glow shadow to the active option', () => {
       expect(cssContent).toMatch(
-        /\.toggleActive\s*\{[^}]*background: var\(--color-surface\)[^}]*color: var\(--color-text\)[^}]*box-shadow: var\(--shadow-sm\)/,
+        /\.toggleActive\s*\{[^}]*background: var\(--gradient-primary\)[^}]*color: #fff[^}]*box-shadow: var\(--shadow-glow\)/,
       );
     });
 
@@ -92,7 +92,14 @@ describe('PricingSection.module.css — token usage and structure', () => {
       expect(planBlock).toContain('border-radius: var(--radius-l)');
       expect(planBlock).toContain('padding: 34px');
       expect(planBlock).toContain('position: relative');
-      expect(planBlock).toContain('box-shadow: var(--shadow-sm)');
+      expect(planBlock).toContain('box-shadow: var(--shadow-md)');
+      expect(planBlock).toContain('border: 1px solid var(--color-border)');
+    });
+
+    it('stretches the plan card as a flex column so CTAs align at equal height', () => {
+      const planBlock = cssContent.match(/\.plan\s*\{([^}]*)\}/)?.[1] ?? '';
+      expect(planBlock).toContain('display: flex');
+      expect(planBlock).toContain('flex-direction: column');
     });
 
     it('elevates the featured plan with shadow-lg', () => {
@@ -148,18 +155,23 @@ describe('PricingSection.module.css — token usage and structure', () => {
       expect(featuresBlock).toContain('gap: 12px');
     });
 
+    it('grows the features list so the CTA is pushed to the card bottom', () => {
+      const featuresBlock = cssContent.match(/\.planFeatures\s*\{([^}]*)\}/)?.[1] ?? '';
+      expect(featuresBlock).toContain('flex: 1 0 auto');
+    });
+
     it('renders each feature as a flex row with 10px gap and 14px text', () => {
       expect(cssContent).toMatch(/\.planFeatures li\s*\{[^}]*display: flex/);
       expect(cssContent).toMatch(/\.planFeatures li\s*\{[^}]*gap: 10px/);
       expect(cssContent).toMatch(/\.planFeatures li\s*\{[^}]*font-size: 14px/);
     });
 
-    it('styles the check icon at 18px in primary color', () => {
+    it('styles the check icon at 18px in green color', () => {
       expect(cssContent).toMatch(
         /\.planFeatures li :global\(\.material-symbols-rounded\)\s*\{[^}]*font-size: 18px/,
       );
       expect(cssContent).toMatch(
-        /\.planFeatures li :global\(\.material-symbols-rounded\)\s*\{[^}]*color: var\(--color-primary\)/,
+        /\.planFeatures li :global\(\.material-symbols-rounded\)\s*\{[^}]*color: #2fbe7a/,
       );
     });
   });
@@ -201,7 +213,7 @@ describe('PricingSection.module.css — token usage and structure', () => {
       '--color-primary',
       '--color-border',
       '--gradient-primary',
-      '--shadow-sm',
+      '--shadow-md',
       '--shadow-lg',
       '--shadow-glow',
       '--radius-m',

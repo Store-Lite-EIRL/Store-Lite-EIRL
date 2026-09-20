@@ -28,7 +28,12 @@ export default function TrustSection() {
     <section className={styles.section}>
       <div className={styles.wrap}>
         <div className={styles.sectionHead}>
-          <h2>Confía tranquilo</h2>
+          <h2>
+            <span className="material-symbols-rounded" aria-hidden="true">
+              verified_user
+            </span>
+            Confía tranquilo
+          </h2>
           <p>
             Tu negocio y tus clientes están protegidos. Usamos estándares de seguridad bancaria y
             cumplimos con la ley.

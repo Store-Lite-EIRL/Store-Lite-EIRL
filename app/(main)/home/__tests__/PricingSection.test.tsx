@@ -14,12 +14,9 @@ describe('PricingSection — pricing plans with toggle', () => {
   it('renders the headline and intro paragraph', () => {
     render(<PricingSection />);
 
-    expect(
-      screen.getByRole('heading', {
-        level: 2,
-        name: 'Encuentra el plan que hace crecer tu negocio',
-      }),
-    ).toBeInTheDocument();
+    // The heading contains an icon span (rendered as text), match by partial text
+    const heading = screen.getByRole('heading', { level: 2 });
+    expect(heading.textContent).toContain('Encuentra el plan que');
     expect(
       screen.getByText(/Precios claros\. Sin letras chiquitas\. Empieza gratis/),
     ).toBeInTheDocument();
@@ -77,30 +74,46 @@ describe('PricingSection — pricing plans with toggle', () => {
     expect(screen.getByText('Más elegido')).toBeInTheDocument();
   });
 
-  it('renders five features for each plan with check icons', () => {
+  it('renders plan features without duplicating across plans', () => {
     render(<PricingSection />);
 
+    // Length guards prove the forEach loops below actually run against real data
     const litePagoFeatures = [
-      'Pagos con tarjetas y billeteras digitales',
+      'Pagos con tarjetas, Yape y Plin vía Culqi',
+      'Tu propia tienda en Store Lite (subdominio)',
       'Hasta 300 productos publicados',
+      'Importa tu catálogo desde Excel o SQL',
+      'Personaliza colores, fuentes y diseño',
+      'Chat en tiempo real con tus clientes',
       'Dashboard con métricas de ventas',
-      'Equipo de 2 usuarios adicionales',
+      'SEO avanzado: meta tags, JSON-LD y sitemap',
+      'Asistente de IA para generar contenido y responder',
+      'WhatsApp integrado para atención al cliente',
+      'Equipo de trabajo con 2 usuarios adicionales',
     ];
-    const litePlusFeatures = [
-      'Dashboard avanzado con métricas en tiempo real',
-      'Hasta 4 usuarios en el equipo',
+    const litePlusExtras = [
       'Hasta 600 productos publicados',
-      'Personalización completa del diseño',
+      'Hasta 3 imágenes por producto',
+      'Equipo de hasta 4 usuarios adicionales',
+      'Dashboard avanzado con métricas en tiempo real',
+      'Soporte y feedback con prioridad alta',
     ];
+    expect(litePagoFeatures).toHaveLength(11);
+    expect(litePlusExtras).toHaveLength(5);
 
     litePagoFeatures.forEach((f) => expect(screen.getByText(f)).toBeInTheDocument());
-    litePlusFeatures.forEach((f) => expect(screen.getByText(f)).toBeInTheDocument());
+    litePlusExtras.forEach((f) => expect(screen.getByText(f)).toBeInTheDocument());
 
-    // 'SEO avanzado incluido' is shared by both plans — must appear exactly twice
-    expect(screen.getAllByText('SEO avanzado incluido')).toHaveLength(2);
+    // Lite Plus renders a single base-include line, not repeated Lite Pago features
+    expect(screen.getByText('Todo lo que incluye Lite Pago')).toBeInTheDocument();
 
-    const checkIcons = screen.getAllByText('check');
-    expect(checkIcons.length).toBe(10);
+    // No feature is duplicated across plans
+    expect(screen.getAllByText('Hasta 300 productos publicados')).toHaveLength(1);
+    expect(screen.getAllByText('SEO avanzado: meta tags, JSON-LD y sitemap')).toHaveLength(1);
+
+    // 11 check icons (Lite Pago) + 5 check icons (Lite Plus extras) + 1 all_inclusive (base line)
+    expect(screen.getAllByText('check')).toHaveLength(16);
+    expect(screen.getAllByText('all_inclusive')).toHaveLength(1);
   });
 
   it('renders the CTAs for each plan pointing to the auth flow', () => {
@@ -123,13 +136,13 @@ describe('PricingSection — pricing plans with toggle', () => {
     const anual = screen.getByRole('button', { name: /anual/i });
     await user.click(anual);
 
-    // Lite Pago: monthly S/ 39 -> annual S/ 31 (~20% off, billed yearly)
-    expect(screen.getByText('S/ 31')).toBeInTheDocument();
+    // Lite Pago: monthly S/ 39 -> annual S/ 32.5 (~20% off, billed yearly)
+    expect(screen.getByText('S/ 32.5')).toBeInTheDocument();
     expect(screen.getAllByText('/mes facturado anual')).toHaveLength(2);
     expect(screen.queryByText('S/ 39')).not.toBeInTheDocument();
 
-    // Lite Plus: monthly S/ 79 -> annual S/ 63
-    expect(screen.getByText('S/ 63')).toBeInTheDocument();
+    // Lite Plus: monthly S/ 79 -> annual S/ 65.83
+    expect(screen.getByText('S/ 65.83')).toBeInTheDocument();
     expect(screen.queryByText('S/ 79')).not.toBeInTheDocument();
   });
 

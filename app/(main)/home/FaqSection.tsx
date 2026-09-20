@@ -5,32 +5,43 @@ import styles from './FaqSection.module.css';
 
 const FAQS = [
   {
-    question: '¿Es realmente gratis empezar?',
+    question: '¿Cuánto cuesta y hay comisiones ocultas?',
     answer:
-      'Sí. Puedes crear tu tienda y ver las funciones básicas sin pagar nada. Solo pagas cuando eliges un plan superior.',
+      'Puedes crear tu tienda gratis y sin límite de tiempo. Los planes de pago tienen un precio fijo mensual o anual, con IGV incluido, y sin comisiones por venta ni costos de hosting.',
   },
   {
-    question: '¿Necesito conocimientos técnicos?',
+    question: '¿Necesito saber de programación o diseño?',
     answer:
-      'No. Store Lite está pensado para que la arme cualquier dueño de negocio, sin programar nada.',
+      'No. Store Lite está pensado para cualquier dueño de negocio: eliges una plantilla, subes tus productos con foto y precio, y tu tienda queda lista. Sin código y sin diseñador.',
   },
   {
-    question: '¿Cómo recibo mis ventas?',
+    question: '¿Cómo se verá mi tienda y qué link tendrá?',
+    answer: 'Tu tienda recibe su propio subdominio desde el inicio, por ejemplo ',
+  },
+  {
+    question: '¿Cómo recibo los pagos de mis clientes?',
     answer:
-      'Los pagos llegan directo a tu cuenta a través de Culqi, con la misma seguridad que usan los bancos.',
+      'Conectamos tu tienda con Culqi: tus clientes pagan con tarjeta de crédito o débito y el dinero va directo a tu cuenta. También puedes ofrecer recojo o entrega a domicilio.',
   },
   {
-    question: '¿Puedo cambiar de plan después?',
+    question: '¿Ofrezco envío a domicilio o recojo en tienda?',
     answer:
-      'Sí, puedes subir o bajar de plan cuando quieras desde tu panel, sin perder tu información.',
+      'Tú decides: configurar entrega a domicilio por departamento, provincia y distrito, o recojo en tu local. Tus clientes eligen al momento de comprar.',
   },
   {
-    question: '¿Qué pasa con mis productos si cancelo?',
-    answer: 'Tu catálogo queda guardado. Si vuelves más adelante, todo sigue tal como lo dejaste.',
+    question: '¿Cuánto demora tener mi tienda lista?',
+    answer:
+      'Puedes armar tu tienda el mismo día. No necesitas hosting, dominio ni mantenimiento aparte: todo está incluido en la plataforma.',
   },
   {
-    question: '¿Hay soporte en español?',
-    answer: 'Sí, todo el soporte de Store Lite es en español y pensado para negocios peruanos.',
+    question: '¿Puedo cambiar de plan o cancelar cuando quiera?',
+    answer:
+      'Sí. Puedes subir o bajar de plan desde tu panel sin perder tu información, y cancelar cuando quieras, sin contratos de permanencia.',
+  },
+  {
+    question: '¿Hay soporte mientras empiezo?',
+    answer:
+      'Sí. Un asistente real de Store Lite te responde por WhatsApp en español, te ayuda a elegir plan y a resolver cualquier duda de tu tienda.',
   },
 ] as const;
 
@@ -62,7 +73,15 @@ export default function FAQSection() {
                 {faq.question}
                 <span className="material-symbols-rounded">add</span>
               </summary>
-              <p>{faq.answer}</p>
+              {index === 2 ? (
+                <p>
+                  Tu tienda recibe su propio subdominio desde el inicio, por ejemplo{' '}
+                  <code className={styles.subdomain}>mitienda.storelite.app</code>. Cuando quieras,
+                  puedes conectar tu propio dominio (por ejemplo tustienda.com.pe).
+                </p>
+              ) : (
+                <p>{faq.answer}</p>
+              )}
             </details>
           ))}
         </div>

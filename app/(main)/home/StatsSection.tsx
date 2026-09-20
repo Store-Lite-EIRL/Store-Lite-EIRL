@@ -12,7 +12,12 @@ export default function StatsSection() {
     <section className={styles.section}>
       <div className={styles.wrap}>
         <div className={styles.sectionHead}>
-          <h2>Lo que va generando</h2>
+          <h2>
+            <span className="material-symbols-rounded" aria-hidden="true">
+              trending_up
+            </span>
+            Lo que va generando
+          </h2>
           <p>Acabamos de arrancar y ya tenemos tracción. Estos son los números actuales.</p>
         </div>
 

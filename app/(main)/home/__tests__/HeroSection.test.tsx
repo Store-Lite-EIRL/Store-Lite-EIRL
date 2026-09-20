@@ -13,12 +13,8 @@ describe('HeroSection — hero copy, CTAs and feature cards', () => {
   it('renders the display headline', () => {
     render(<HeroSection />);
 
-    expect(
-      screen.getByRole('heading', {
-        level: 1,
-        name: 'Enfócate en vender con Store Lite',
-      }),
-    ).toBeInTheDocument();
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading).toHaveTextContent('Enfócate en vender con Store Lite');
   });
 
   it('renders both CTAs with their target hrefs', () => {

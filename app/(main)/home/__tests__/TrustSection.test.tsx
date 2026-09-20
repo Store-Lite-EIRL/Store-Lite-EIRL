@@ -11,6 +11,12 @@ describe('TrustSection — security and trust badges', () => {
     expect(screen.getByText(/Tu negocio y tus clientes están protegidos/)).toBeInTheDocument();
   });
 
+  it('renders the shield icon in the section heading', () => {
+    render(<TrustSection />);
+
+    expect(screen.getByText('verified_user')).toBeInTheDocument();
+  });
+
   it('renders the four trust items with icon, title and description', () => {
     render(<TrustSection />);
 

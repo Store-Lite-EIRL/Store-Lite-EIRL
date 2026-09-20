@@ -73,10 +73,10 @@ describe('FloatingNav.module.css — token usage and structure', () => {
     expect(cssContent).toContain('max-width: 380px');
   });
 
-  it('hides "Iniciar sesión" (btnOutline) below 767px', () => {
-    const mq = cssContent.match(/@media \(max-width: 767px\)\s*\{([^}]*)\}/)?.[1] ?? '';
-    expect(mq).toContain('.btnOutline');
-    expect(mq).toContain('display: none');
+  it('hides the login outline button below tablet width', () => {
+    const match = cssContent.match(/@media \(max-width: 767px\)\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(match).toContain('.btnOutline');
+    expect(match).toContain('display: none');
   });
 
   it('includes focus-visible styles with primary token', () => {

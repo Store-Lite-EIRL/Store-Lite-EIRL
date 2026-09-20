@@ -13,8 +13,8 @@ const STEPS = [
   },
   {
     number: 3,
-    title: 'Comparte y empieza a vender',
-    description: 'Tu link listo. Instagram y redes conectadas para compartir sin esfuerzo.',
+    title: 'Agrega o importa tus productos',
+    description: 'Carga tu catálogo o importa desde Excel/SQL para miles de productos.',
   },
   {
     number: 4,
@@ -28,7 +28,12 @@ export default function ProcessSection() {
     <section className={styles.section} id="procesos">
       <div className={styles.wrap}>
         <div className={styles.sectionHead}>
-          <h2>Tu tienda online en 4 pasos</h2>
+          <h2>
+            <span className="material-symbols-rounded" aria-hidden="true">
+              shopping_cart
+            </span>
+            Tu tienda online en 4 pasos
+          </h2>
           <p>Empieza en minutos. Vende tú, nosotros nos encargamos del resto.</p>
         </div>
 

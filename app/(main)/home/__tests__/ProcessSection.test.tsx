@@ -37,8 +37,8 @@ describe('ProcessSection — four onboarding steps', () => {
       },
       {
         number: '3',
-        title: 'Comparte y empieza a vender',
-        description: 'Tu link listo. Instagram y redes conectadas para compartir sin esfuerzo.',
+        title: 'Agrega o importa tus productos',
+        description: 'Carga tu catálogo o importa desde Excel/SQL para miles de productos.',
       },
       {
         number: '4',

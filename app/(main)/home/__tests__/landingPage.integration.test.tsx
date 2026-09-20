@@ -125,12 +125,9 @@ describe('T-040 — landing page integration', () => {
     expect(footer).not.toBeNull();
 
     // Headline of the hero proves the new HeroSection replaced HeroLanding.
-    expect(
-      screen.getByRole('heading', {
-        level: 1,
-        name: 'Enfócate en vender con Store Lite',
-      }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Enfócate en vender con Store Lite',
+    );
   });
 
   it('places the "Tu tienda lista para vender" CTA banner between Solutions and Stats', () => {
@@ -139,7 +136,9 @@ describe('T-040 — landing page integration', () => {
     const bannerText = 'Tu tienda lista para vender, sin esperar';
 
     const bannerIndex = sectionIndexByText(sections, bannerText);
-    expect(bannerIndex).toBeGreaterThan(sectionIndexByText(sections, 'Deja de complicarte'));
+    expect(bannerIndex).toBeGreaterThan(
+      sectionIndexByText(sections, 'Todo lo que necesitas, conectado'),
+    );
     expect(bannerIndex).toBeLessThan(sectionIndexByText(sections, 'Lo que va generando'));
 
     const bannerSection = sections[bannerIndex];
@@ -148,18 +147,24 @@ describe('T-040 — landing page integration', () => {
     expect(bannerLink?.textContent).toContain('Crear mi tienda gratis');
   });
 
+  it('renders the PricingSection heading with icon', () => {
+    const { container } = renderHome();
+    const pricingSection = container.querySelector('section[id="pricing"]');
+    expect(pricingSection).not.toBeNull();
+    const h2 = pricingSection?.querySelector('h2');
+    expect(h2).not.toBeNull();
+    expect(h2?.textContent).toContain('Encuentra el plan que');
+  });
+
   it('renders the conversion sections: pricing, trust, contact card and FAQ', () => {
     renderHome();
 
-    expect(
-      screen.getByRole('heading', {
-        level: 2,
-        name: 'Encuentra el plan que hace crecer tu negocio',
-      }),
-    ).toBeInTheDocument();
+    // The pricing heading contains an icon rendered as text, so match by partial text
+    const pricingHeading = screen.getByRole('heading', { level: 2, name: /Encuentra el plan que/ });
+    expect(pricingHeading).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Confía tranquilo' })).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { level: 3, name: '¿Tienes dudas antes de empezar?' }),
+      screen.getByRole('heading', { level: 3, name: '¿Hablamos por WhatsApp?' }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { level: 2, name: 'Preguntas frecuentes' }),

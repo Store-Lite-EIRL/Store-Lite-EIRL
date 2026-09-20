@@ -9,8 +9,9 @@ html[data-theme='light'] {
   --color-primary: #135bec;
   --color-primary-hover: #0f4cc9;
 
-  /* === Gradients (3) === */
+  /* === Gradients (4) === */
   --gradient-primary: linear-gradient(135deg, #135bec 0%, #9333ea 100%);
+  --gradient-brand: linear-gradient(135deg, #216487 0%, #2f8ab8 45%, #8b7bb8 100%);
   --gradient-hero: radial-gradient(ellipse at 50% -20%, #ffffff 20%, rgba(255, 255, 255, 0.45) 85%);
   --gradient-card: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025));
 
@@ -73,8 +74,9 @@ html[data-theme='dark'] {
   --color-primary: #135bec;
   --color-primary-hover: #0f4cc9;
 
-  /* === Gradients (3) === */
+  /* === Gradients (4) === */
   --gradient-primary: linear-gradient(135deg, #135bec 0%, #9333ea 100%);
+  --gradient-brand: linear-gradient(135deg, #2f8ab8 0%, #92cef5 45%, #cbb6ff 100%);
   --gradient-hero: radial-gradient(circle at 50% -20%, #ffffff 20%, rgba(255, 255, 255, 0.45) 85%);
   --gradient-card: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025));
 

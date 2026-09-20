@@ -29,21 +29,21 @@ describe('ContactSection.module.css — token usage and structure', () => {
       expect(cardBlock).toContain('display: flex');
       expect(cardBlock).toContain('justify-content: space-between');
       expect(cardBlock).toContain('align-items: center');
-      expect(cardBlock).toContain('gap: 24px');
+      expect(cardBlock).toContain('gap: 32px');
       expect(cardBlock).toContain('flex-wrap: wrap');
       expect(cardBlock).toContain('box-shadow: var(--shadow-md)');
     });
 
     it('renders the headline in brand font with a responsive clamp', () => {
-      const h3Block = cssContent.match(/\.contactCard h3\s*\{([^}]*)\}/)?.[1] ?? '';
+      const h3Block = cssContent.match(/\.contactInfo h3\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(h3Block).toContain('font-family: var(--font-brand)');
       expect(h3Block).toContain('clamp(24px, 2.6vw, 34px)');
       expect(h3Block).toContain('font-weight: 700');
     });
 
     it('renders the description 8px below the headline in muted body copy', () => {
-      expect(cssContent).toMatch(/\.contactCard p\s*\{[^}]*margin-top: 8px/);
-      expect(cssContent).toMatch(/\.contactCard p\s*\{[^}]*color: var\(--color-text-muted\)/);
+      expect(cssContent).toMatch(/\.contactInfo p\s*\{[^}]*margin-top: 8px/);
+      expect(cssContent).toMatch(/\.contactInfo p\s*\{[^}]*color: var\(--color-text-muted\)/);
     });
 
     it('styles the WhatsApp button with gradient background and glow shadow', () => {
@@ -53,10 +53,9 @@ describe('ContactSection.module.css — token usage and structure', () => {
       expect(btnBlock).toContain('box-shadow: var(--shadow-glow)');
     });
 
-    it('sizes the chat icon at 20px inside the WhatsApp button', () => {
-      expect(cssContent).toMatch(
-        /\.btnPrimary :global\(\.material-symbols-rounded\)\s*\{[^}]*font-size: 20px/,
-      );
+    it('sizes the WhatsApp SVG icon at 20px inside the WhatsApp button', () => {
+      expect(cssContent).toMatch(/\.btnPrimary svg\s*\{[^}]*width: 20px/);
+      expect(cssContent).toMatch(/\.btnPrimary svg\s*\{[^}]*height: 20px/);
     });
   });
 

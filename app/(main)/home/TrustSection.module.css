@@ -42,6 +42,17 @@
   line-height: 1.2;
   font-weight: 700;
   letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sectionHead h2 .material-symbols-rounded {
+  font-size: clamp(24px, 2.6vw, 34px);
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .sectionHead p {
@@ -78,18 +89,47 @@
   background: var(--color-surface);
   border-radius: var(--radius-m);
   padding: 22px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.trustItem:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
 }
 
 .trustIcon {
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  background: var(--accent-blue);
-  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Per-card accent colors via nth-child */
+.trustItem:nth-child(1) .trustIcon {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid var(--accent-blue);
+  color: var(--accent-blue);
+}
+.trustItem:nth-child(2) .trustIcon {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid var(--accent-emerald);
+  color: var(--accent-emerald);
+}
+.trustItem:nth-child(3) .trustIcon {
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid var(--accent-violet);
+  color: var(--accent-violet);
+}
+.trustItem:nth-child(4) .trustIcon {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid var(--accent-amber);
+  color: var(--accent-amber);
 }
 
 .trustIcon :global(.material-symbols-rounded) {

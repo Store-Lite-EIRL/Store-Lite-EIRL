@@ -30,6 +30,7 @@ describe('tokens.css - Design System Tokens', () => {
     '--color-primary-hover',
     // Gradients
     '--gradient-primary',
+    '--gradient-brand',
     '--gradient-hero',
     '--gradient-card',
     // Shadows
@@ -108,7 +109,7 @@ describe('tokens.css - Design System Tokens', () => {
       // Match only token definitions (--name: value), not var(--name) references
       const tokenDefMatches = tokensContent.match(/--[\w-]+(?=\s*:)/g) || [];
       const uniqueTokens = [...new Set(tokenDefMatches)];
-      expect(uniqueTokens.length).toBe(38);
+      expect(uniqueTokens.length).toBe(39);
     });
   });
 

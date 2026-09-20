@@ -42,6 +42,17 @@
   line-height: 1.2;
   font-weight: 700;
   letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sectionHead h2 .material-symbols-rounded {
+  font-size: clamp(24px, 2.6vw, 34px);
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .sectionHead p {
@@ -97,26 +108,58 @@
   background: var(--color-surface);
   border-radius: var(--radius-m);
   padding: 24px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
   transition:
     box-shadow 0.2s ease,
     transform 0.2s ease;
 }
 
 .infoCard:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+/* Per-card accent colors via nth-child */
+.infoCard:nth-child(1) .iconChip {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid var(--accent-blue);
+  color: var(--accent-blue);
+}
+.infoCard:nth-child(2) .iconChip {
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid var(--accent-violet);
+  color: var(--accent-violet);
+}
+.infoCard:nth-child(3) .iconChip {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid var(--accent-emerald);
+  color: var(--accent-emerald);
+}
+.infoCard:nth-child(4) .iconChip {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid var(--accent-amber);
+  color: var(--accent-amber);
+}
+.infoCard:nth-child(5) .iconChip {
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid var(--accent-rose);
+  color: var(--accent-rose);
+}
+.infoCard:nth-child(6) .iconChip {
+  background: rgba(34, 211, 238, 0.12);
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
 }
 
 .iconChip {
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  background: var(--accent-blue);
-  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 20px;
 }
 
 .issue {
@@ -177,20 +220,55 @@
   background: var(--color-surface);
   border-radius: var(--radius-m);
   padding: 18px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
   text-align: center;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.intChip:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+}
+
+.intChip:nth-child(1) .intChipIcon {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid var(--accent-blue);
+  color: var(--accent-blue);
+}
+.intChip:nth-child(2) .intChipIcon {
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid var(--accent-violet);
+  color: var(--accent-violet);
+}
+.intChip:nth-child(3) .intChipIcon {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid var(--accent-emerald);
+  color: var(--accent-emerald);
+}
+.intChip:nth-child(4) .intChipIcon {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid var(--accent-amber);
+  color: var(--accent-amber);
+}
+.intChip:nth-child(5) .intChipIcon {
+  background: rgba(34, 211, 238, 0.12);
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
 }
 
 .intChipIcon {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--accent-blue);
-  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 10px;
+  font-size: 18px;
+  border: 1px solid var(--color-border);
 }
 
 .intName {

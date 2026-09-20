@@ -42,6 +42,17 @@
   line-height: 1.2;
   font-weight: 700;
   letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sectionHead h2 .material-symbols-rounded {
+  font-size: clamp(24px, 2.6vw, 34px);
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .sectionHead p {
@@ -57,7 +68,8 @@
 /* ---------- Billing toggle ---------- */
 .pricingToggle {
   display: inline-flex;
-  background: var(--color-bg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-full);
   padding: 4px;
   margin-top: 8px;
@@ -82,9 +94,9 @@
 }
 
 .toggleActive {
-  background: var(--color-surface);
-  color: var(--color-text);
-  box-shadow: var(--shadow-sm);
+  background: var(--gradient-primary);
+  color: #fff;
+  box-shadow: var(--shadow-glow);
 }
 
 .toggleInactive {
@@ -110,11 +122,23 @@
   border-radius: var(--radius-l);
   padding: 34px;
   position: relative;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.plan:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
 }
 
 .planFeatured {
   box-shadow: var(--shadow-lg);
+  border: 2px solid var(--color-primary);
 }
 
 .plan h3 {
@@ -171,6 +195,7 @@
   gap: 12px;
   padding: 0;
   list-style: none;
+  flex: 1 0 auto;
 }
 
 .planFeatures li {
@@ -183,8 +208,17 @@
 
 .planFeatures li :global(.material-symbols-rounded) {
   font-size: 18px;
-  color: var(--color-primary);
+  color: #2fbe7a;
   margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.planFeatures li.featureBase {
+  font-weight: 600;
+  color: var(--color-primary);
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px dashed var(--color-border);
 }
 
 /* ---------- CTAs ---------- */

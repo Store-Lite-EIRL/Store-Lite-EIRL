@@ -32,7 +32,8 @@ describe('StatsSection.module.css — token usage and structure', () => {
       expect(cardBlock).toContain('background: var(--color-surface)');
       expect(cardBlock).toContain('border-radius: var(--radius-m)');
       expect(cardBlock).toContain('padding: 26px');
-      expect(cardBlock).toContain('box-shadow: var(--shadow-sm)');
+      expect(cardBlock).toContain('box-shadow: var(--shadow-md)');
+      expect(cardBlock).toContain('border: 1px solid var(--color-border)');
       const numBlock = cssContent.match(/\.statNumber\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(numBlock).toContain('font-family: var(--font-brand)');
       expect(numBlock).toContain('font-size: 34px');
@@ -64,7 +65,7 @@ describe('StatsSection.module.css — token usage and structure', () => {
       '--color-surface',
       '--color-text-muted',
       '--font-brand',
-      '--shadow-sm',
+      '--shadow-md',
       '--radius-m',
     ];
     requiredTokens.forEach((token) => {

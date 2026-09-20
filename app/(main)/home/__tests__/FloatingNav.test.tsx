@@ -108,10 +108,10 @@ describe('FloatingNav', () => {
     const logoImg = brandLink.querySelector('img');
     expect(logoImg).toBeInTheDocument();
     expect(logoImg).toHaveAttribute('alt', 'Store Lite');
-    // Next.js Image transforms src to /_next/image?url=%2Fimg%2Flogo1.jpeg&w=64&q=75
+    // Next.js Image transforms src to /_next/image?url=%2Fimg%2Ficon.png&w=64&q=75
     // Check the encoded path is present
     const src = logoImg?.getAttribute('src') ?? '';
-    expect(src).toContain('%2Fimg%2Flogo1.jpeg');
+    expect(src).toContain('%2Fimg%2Ficon.png');
   });
 
   it('renders the 5 section links as anchors with real hrefs', () => {
