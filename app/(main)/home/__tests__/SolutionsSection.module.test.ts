@@ -67,21 +67,22 @@ describe('SolutionsSection.module.css — token usage and structure', () => {
       expect(cardBlock).toContain('background: var(--color-surface)');
       expect(cardBlock).toContain('border-radius: var(--radius-m)');
       expect(cardBlock).toContain('padding: 24px');
-      expect(cardBlock).toContain('box-shadow: var(--shadow-sm)');
+      expect(cardBlock).toContain('box-shadow: var(--shadow-md)');
       expect(cssContent).toMatch(
-        /\.infoCard:hover\s*\{[^}]*box-shadow: var\(--shadow-md\)[^}]*transform: translateY\(-3px\)/,
+        /\.infoCard:hover\s*\{[^}]*box-shadow: var\(--shadow-lg\)[^}]*transform: translateY\(-4px\)/,
       );
     });
 
     it('sizes the icon chip at 42px with a container-colored background', () => {
-      const chipBlock = cssContent.match(/\.iconChip\s*\{([^}]*)\}/)?.[1] ?? '';
+      // Match the base .iconChip rule (after nth-child overrides)
+      const chipBlock = cssContent.match(/\.iconChip\s*\{[^}]*width:\s*42px[^}]*\}/)?.[0] ?? '';
       expect(chipBlock).toContain('width: 42px');
       expect(chipBlock).toContain('height: 42px');
       expect(chipBlock).toContain('border-radius: 12px');
-      expect(chipBlock).toContain('background: var(--accent-blue)');
-      expect(chipBlock).toContain('color: #fff');
       expect(chipBlock).toContain('display: flex');
+      expect(chipBlock).toContain('align-items: center');
       expect(chipBlock).toContain('justify-content: center');
+      expect(chipBlock).toContain('font-size: 20px');
     });
 
     it('styles the issue paragraph bold with 16px top margin and the fix row as a flex gap', () => {
@@ -126,14 +127,15 @@ describe('SolutionsSection.module.css — token usage and structure', () => {
       expect(chipBlock).toContain('background: var(--color-surface)');
       expect(chipBlock).toContain('border-radius: var(--radius-m)');
       expect(chipBlock).toContain('padding: 18px');
-      expect(chipBlock).toContain('box-shadow: var(--shadow-sm)');
+      expect(chipBlock).toContain('box-shadow: var(--shadow-md)');
       expect(chipBlock).toContain('text-align: center');
-      const iconBlock = cssContent.match(/\.intChipIcon\s*\{([^}]*)\}/)?.[1] ?? '';
+      // Match the base .intChipIcon rule (after nth-child overrides)
+      const iconBlock = cssContent.match(/\.intChipIcon\s*\{[^}]*width:\s*40px[^}]*\}/)?.[0] ?? '';
       expect(iconBlock).toContain('width: 40px');
       expect(iconBlock).toContain('height: 40px');
       expect(iconBlock).toContain('border-radius: 50%');
-      expect(iconBlock).toContain('background: var(--accent-blue)');
-      expect(iconBlock).toContain('color: #fff');
+      expect(iconBlock).toContain('border: 1px solid var(--color-border)');
+      expect(iconBlock).toContain('margin: 0 auto 10px');
     });
 
     it('styles the chip name at 14px/600 and the category caption in muted 11.5px', () => {
@@ -160,13 +162,17 @@ describe('SolutionsSection.module.css — token usage and structure', () => {
       '--color-text-muted',
       '--color-primary',
       '--gradient-primary',
-      '--shadow-sm',
       '--shadow-md',
       '--shadow-glow',
       '--radius-m',
       '--font-brand',
       '--font-plain',
       '--accent-blue',
+      '--accent-violet',
+      '--accent-emerald',
+      '--accent-amber',
+      '--accent-rose',
+      '--accent-cyan',
     ];
     requiredTokens.forEach((token) => {
       expect(cssContent).toContain(token);

@@ -121,7 +121,9 @@ describe('Landing page — crawlable server-rendered content', () => {
     await emitInitialSession(null);
 
     // Hero copy must be present in the rendered tree (crawlable HTML)
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Tu vitrina digital');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Enfócate en vender con Store Lite',
+    );
     const createLinks = screen.getAllByRole('link', { name: /crear mi tienda/i });
     expect(createLinks.length).toBeGreaterThan(0);
     expect(createLinks[0]).toHaveAttribute('href', '/auth');
@@ -139,6 +141,8 @@ describe('Landing page — crawlable server-rendered content', () => {
     // but the landing markup is never gated behind auth state — crawlers
     // always see real content regardless of session.
     await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledWith('/onboarding'));
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Tu vitrina digital');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Enfócate en vender con Store Lite',
+    );
   });
 });

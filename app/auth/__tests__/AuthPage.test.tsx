@@ -145,6 +145,14 @@ describe('AuthPage — R3: OAuth gating and loading', () => {
 });
 
 describe('AuthPage — R2: provider buttons and D2 in-button pill', () => {
+  it('renders the brand logo as a link back to the landing page', () => {
+    render(<AuthPage />);
+
+    const logoLink = screen.getByRole('link', { name: 'Store Lite — volver al inicio' });
+    expect(logoLink).toBeInTheDocument();
+    expect(logoLink).toHaveAttribute('href', '/');
+  });
+
   it('renders exactly three OAuth provider buttons', () => {
     render(<AuthPage />);
 

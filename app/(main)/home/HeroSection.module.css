@@ -4,7 +4,31 @@
 .hero {
   padding-top: 80px;
   position: relative;
-  overflow: hidden;
+  /* Clip horizontal bleed so blobs never create a body scrollbar, but allow
+     vertical bleed: blob1 extends behind the sticky nav, blob2 behind the
+     next section instead of being hard-cut. */
+  overflow-x: clip;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Screen-like bottom fade so the hero feels like a contained screen
+   and the next section doesn't visibly cut in. */
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 160px;
+  background: linear-gradient(180deg, transparent 0%, var(--color-bg) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+html[data-theme='dark'] .hero::after {
+  background: linear-gradient(180deg, transparent 0%, var(--color-bg) 100%);
 }
 
 /* Decorative background blobs */
@@ -33,7 +57,7 @@ html[data-theme='dark'] .blob {
   width: 320px;
   height: 320px;
   background: var(--accent-violet);
-  bottom: -120px;
+  bottom: -500px;
   left: -100px;
 }
 
@@ -57,31 +81,39 @@ html[data-theme='dark'] .blob {
   }
 }
 
-/* Two-column hero layout */
-.heroGrid {
-  display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
-  gap: 64px;
+/* Vertical hero layout - fully stacked */
+.heroVertical {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  position: relative;
-  z-index: 1;
-}
-
-@media (max-width: 960px) {
-  .heroGrid {
-    grid-template-columns: 1fr;
-    gap: 44px;
-  }
+  text-align: center;
+  width: 100%;
+  flex: 1;
+  padding-top: 40px;
+  padding-bottom: 60px;
 }
 
 /* Copy */
 .typeDisplay {
   margin: 0;
   font-family: var(--font-brand);
-  font-size: clamp(34px, 4.8vw, 58px);
-  line-height: 1.08;
+  font-size: clamp(40px, 5.5vw, 72px);
+  line-height: 1.1;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  max-width: 60ch;
+}
+
+.brandName {
+  display: block;
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+  font-size: clamp(48px, 6vw, 80px);
+  margin-top: 4px;
 }
 
 .typeBodyLg {
@@ -96,17 +128,18 @@ html[data-theme='dark'] .blob {
 }
 
 .subtitle {
-  margin: 0;
-  margin-top: 18px;
-  max-width: 46ch;
+  margin: 0 auto 30px;
+  max-width: 48ch;
 }
 
 /* CTA actions */
 .actions {
   display: flex;
   gap: 14px;
-  margin-top: 30px;
+  margin-top: 24px;
+  margin-bottom: 48px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .btn {
@@ -157,17 +190,29 @@ html[data-theme='dark'] .blob {
 .featureRow {
   display: flex;
   gap: 12px;
-  margin-top: 44px;
+  margin-top: 24px;
+  margin-bottom: 56px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .featureCard {
   flex: 1;
   min-width: 190px;
+  max-width: 280px;
   background: var(--color-surface);
   border-radius: var(--radius-m);
   padding: 18px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.featureCard:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
 }
 
 .featureTop {
@@ -207,13 +252,64 @@ html[data-theme='dark'] .blob {
 .featureCard p {
   margin: 5px 0 0;
   font-family: var(--font-plain);
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--color-text-muted);
   line-height: 1.45;
+}
+
+/* ProductFrame wrapper - full width, centered */
+.frameWrapper {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+@media (max-width: 960px) {
+  .frameWrapper {
+    padding: 0 24px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .btn {
     transition: none;
+  }
+}
+
+/* ---------- Mobile: scale down copy and stack cards ---------- */
+@media (max-width: 600px) {
+  .typeDisplay {
+    font-size: clamp(30px, 8.5vw, 40px);
+  }
+
+  .brandName {
+    font-size: clamp(36px, 10vw, 48px);
+  }
+
+  .subtitle {
+    font-size: 15.5px;
+    max-width: 40ch;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .featureCard {
+    min-width: 100%;
+    max-width: 320px;
+  }
+
+  .frameWrapper {
+    padding: 0 14px;
   }
 }

@@ -66,9 +66,17 @@ describe('FloatingNav.module.css — token usage and structure', () => {
     expect(cssContent).toContain('.btnPrimary');
   });
 
-  it('includes responsive breakpoints for <900px and <560px', () => {
+  it('includes responsive breakpoints for <900px, <767px, <480px and <380px', () => {
     expect(cssContent).toContain('max-width: 900px');
-    expect(cssContent).toContain('max-width: 560px');
+    expect(cssContent).toContain('max-width: 767px');
+    expect(cssContent).toContain('max-width: 480px');
+    expect(cssContent).toContain('max-width: 380px');
+  });
+
+  it('hides the login outline button below tablet width', () => {
+    const match = cssContent.match(/@media \(max-width: 767px\)\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(match).toContain('.btnOutline');
+    expect(match).toContain('display: none');
   });
 
   it('includes focus-visible styles with primary token', () => {

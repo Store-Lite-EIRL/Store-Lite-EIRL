@@ -33,6 +33,7 @@ describe('StatsSection — traction stat cards', () => {
     render(<StatsSection />);
 
     expect(screen.getByText('Nuevas tiendas cada semana · seguimos creciendo')).toBeInTheDocument();
-    expect(screen.getByText('trending_up')).toBeInTheDocument();
+    // Two trending_up icons: one in the heading, one in the note
+    expect(screen.getAllByText('trending_up')).toHaveLength(2);
   });
 });

@@ -62,4 +62,21 @@ describe('app/layout.tsx - Fonts via next/font', () => {
       );
     });
   });
+
+  describe('tokens.css font token references', () => {
+    const tokensPath = join(__dirname, '(main)/home/tokens.css');
+    let tokensContent: string;
+
+    beforeAll(() => {
+      tokensContent = readFileSync(tokensPath, 'utf-8');
+    });
+
+    it('should NOT reference the deprecated --font-inter variable', () => {
+      expect(tokensContent).not.toContain('var(--font-inter)');
+    });
+
+    it('should reference --font-storefront-inter for --font-plain', () => {
+      expect(tokensContent).toContain('var(--font-storefront-inter)');
+    });
+  });
 });

@@ -33,6 +33,16 @@ describe('TrustSection.module.css — token usage and structure', () => {
       expect(pBlock).toContain('font-family: var(--font-plain)');
       expect(pBlock).toContain('color: var(--color-text-muted)');
     });
+
+    it('renders the heading icon as a gradient chip beside the title', () => {
+      const h2Block = cssContent.match(/\.sectionHead h2\s*\{([^}]*)\}/)?.[1] ?? '';
+      expect(h2Block).toContain('display: flex');
+      expect(h2Block).toContain('align-items: center');
+      expect(h2Block).toContain('gap: 10px');
+      expect(cssContent).toMatch(
+        /\.sectionHead h2 \.material-symbols-rounded\s*\{[^}]*background: var\(--gradient-brand\)[^}]*background-clip: text/,
+      );
+    });
   });
 
   describe('trust row', () => {
@@ -54,23 +64,40 @@ describe('TrustSection.module.css — token usage and structure', () => {
   });
 
   describe('trust item', () => {
-    it('styles the item as a surface tile with soft shadow', () => {
+    it('styles the item as a surface tile with medium shadow that lifts on hover', () => {
       const itemBlock = cssContent.match(/\.trustItem\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(itemBlock).toContain('background: var(--color-surface)');
       expect(itemBlock).toContain('border-radius: var(--radius-m)');
       expect(itemBlock).toContain('padding: 22px');
-      expect(itemBlock).toContain('box-shadow: var(--shadow-sm)');
+      expect(itemBlock).toContain('box-shadow: var(--shadow-md)');
+      expect(itemBlock).toContain('border: 1px solid var(--color-border)');
+      expect(cssContent).toMatch(
+        /\.trustItem:hover\s*\{[^}]*box-shadow: var\(--shadow-lg\)[^}]*transform: translateY\(-4px\)/,
+      );
     });
 
-    it('sizes the icon tile at 42px with accent-blue background and white icon', () => {
+    it('sizes the icon tile at 42px with a per-card accent chip', () => {
       const iconBlock = cssContent.match(/\.trustIcon\s*\{([^}]*)\}/)?.[1] ?? '';
       expect(iconBlock).toContain('width: 42px');
       expect(iconBlock).toContain('height: 42px');
       expect(iconBlock).toContain('border-radius: 12px');
-      expect(iconBlock).toContain('background: var(--accent-blue)');
-      expect(iconBlock).toContain('color: #fff');
       expect(iconBlock).toContain('display: flex');
+      expect(iconBlock).toContain('align-items: center');
       expect(iconBlock).toContain('justify-content: center');
+
+      // lock -> blue, shield -> emerald, verified -> violet, autorenew -> amber
+      expect(cssContent).toMatch(
+        /\.trustItem:nth-child\(1\)\s+\.trustIcon\s*\{[^}]*background: rgba\(59, 130, 246, 0\.12\)[^}]*border: 1px solid var\(--accent-blue\)[^}]*color: var\(--accent-blue\)/,
+      );
+      expect(cssContent).toMatch(
+        /\.trustItem:nth-child\(2\)\s+\.trustIcon\s*\{[^}]*background: rgba\(16, 185, 129, 0\.12\)[^}]*border: 1px solid var\(--accent-emerald\)[^}]*color: var\(--accent-emerald\)/,
+      );
+      expect(cssContent).toMatch(
+        /\.trustItem:nth-child\(3\)\s+\.trustIcon\s*\{[^}]*background: rgba\(139, 92, 246, 0\.12\)[^}]*border: 1px solid var\(--accent-violet\)[^}]*color: var\(--accent-violet\)/,
+      );
+      expect(cssContent).toMatch(
+        /\.trustItem:nth-child\(4\)\s+\.trustIcon\s*\{[^}]*background: rgba\(245, 158, 11, 0\.12\)[^}]*border: 1px solid var\(--accent-amber\)[^}]*color: var\(--accent-amber\)/,
+      );
     });
 
     it('styles the title 14px below the icon at 15.5px', () => {
@@ -91,8 +118,14 @@ describe('TrustSection.module.css — token usage and structure', () => {
     const requiredTokens = [
       '--color-surface',
       '--color-text-muted',
+      '--color-border',
+      '--gradient-brand',
       '--accent-blue',
-      '--shadow-sm',
+      '--accent-emerald',
+      '--accent-violet',
+      '--accent-amber',
+      '--shadow-md',
+      '--shadow-lg',
       '--radius-m',
       '--font-brand',
       '--font-plain',

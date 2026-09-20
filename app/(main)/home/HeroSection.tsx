@@ -7,17 +7,12 @@ const FEATURES = [
   {
     emoji: '⚡',
     title: 'Setup simple',
-    description: 'Publica tu tienda y empieza a cobrar sin curva de aprendizaje.',
+    description: 'Registra tu tienda y empieza a subir tus productos en minutos.',
   },
   {
     emoji: '🗂️',
     title: 'Operación clara',
     description: 'Inventario, pedidos y comunicación en un solo flujo.',
-  },
-  {
-    emoji: '🚀',
-    title: 'Escala real',
-    description: 'Una base sólida para crecer sin rehacer todo después.',
   },
 ] as const;
 
@@ -28,14 +23,15 @@ export default function HeroSection() {
       <div className={`${styles.blob} ${styles.blob2}`} aria-hidden="true" />
 
       <div className={styles.wrap}>
-        <div className={styles.heroGrid}>
+        <div className={styles.heroVertical}>
           <div className={styles.copy}>
             <h1 className={styles.typeDisplay}>
-              Tu vitrina digital, lista para vender desde el día uno
+              Enfócate en vender con&nbsp;
+              <span className={styles.brandName}>Store Lite</span>
             </h1>
+
             <p className={`${styles.typeBodyLg} ${styles.textSecondary} ${styles.subtitle}`}>
-              Store Lite te da todo lo que necesitas para que tu marca se vea profesional desde el
-              primer clic: catálogo, pagos y pedidos, sin depender de un programador.
+              Catálogo, pagos y pedidos en una sola herramienta — vende ya en cuestion de minutos.
             </p>
 
             <div className={styles.actions}>
@@ -64,7 +60,9 @@ export default function HeroSection() {
             </div>
           </div>
 
-          <ProductFrame />
+          <div className={styles.frameWrapper}>
+            <ProductFrame />
+          </div>
         </div>
       </div>
     </section>

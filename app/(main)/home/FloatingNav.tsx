@@ -1,6 +1,7 @@
 'use client';
 
 import { useTheme } from '@/shared/context/ThemeContext';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import styles from './FloatingNav.module.css';
@@ -146,9 +147,14 @@ export default function FloatingNav() {
         <div className={styles.navInner}>
           {/* Logo */}
           <Link href="/" className={styles.logo} aria-label="Ir al inicio de Store Lite">
-            <div className={styles.logoMark}>
-              <md-icon>store</md-icon>
-            </div>
+            <Image
+              src="/img/icon.png"
+              alt="Store Lite"
+              width={32}
+              height={32}
+              className={styles.logoMark}
+              priority
+            />
             <span className={styles.logoText}>Store Lite</span>
           </Link>
 

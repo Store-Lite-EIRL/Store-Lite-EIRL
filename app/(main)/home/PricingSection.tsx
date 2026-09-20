@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import styles from './PricingSection.module.css';
 
@@ -9,10 +10,11 @@ interface Plan {
   name: string;
   featured: boolean;
   tag?: string;
-  price: string;
-  period: string;
+  monthly: number;
+  annual: number;
   description: string;
   features: readonly string[];
+  includesBase?: boolean;
   cta: string;
   ctaVariant: 'primary' | 'outline';
 }
@@ -22,15 +24,21 @@ const PLANS: Plan[] = [
     name: 'Lite Pago',
     featured: true,
     tag: 'Más elegido',
-    price: 'S/ 39',
-    period: '/mes',
+    monthly: 39,
+    annual: 32.5,
     description: 'Para negocios que ya venden y quieren llevar su marca al siguiente nivel.',
     features: [
-      'Pagos con tarjetas y billeteras digitales',
+      'Pagos con tarjetas, Yape y Plin vía Culqi',
+      'Tu propia tienda en Store Lite (subdominio)',
       'Hasta 300 productos publicados',
+      'Importa tu catálogo desde Excel o SQL',
+      'Personaliza colores, fuentes y diseño',
+      'Chat en tiempo real con tus clientes',
       'Dashboard con métricas de ventas',
-      'Equipo de 2 usuarios adicionales',
-      'SEO avanzado incluido',
+      'SEO avanzado: meta tags, JSON-LD y sitemap',
+      'Asistente de IA para generar contenido y responder',
+      'WhatsApp integrado para atención al cliente',
+      'Equipo de trabajo con 2 usuarios adicionales',
     ],
     cta: 'Escalar mi negocio',
     ctaVariant: 'primary',
@@ -38,20 +46,25 @@ const PLANS: Plan[] = [
   {
     name: 'Lite Plus',
     featured: false,
-    price: 'S/ 79',
-    period: '/mes',
+    monthly: 79,
+    annual: 65.83,
     description: 'Para marcas que necesitan el máximo rendimiento y todas las herramientas.',
+    includesBase: true,
     features: [
-      'Dashboard avanzado con métricas en tiempo real',
-      'Hasta 4 usuarios en el equipo',
       'Hasta 600 productos publicados',
-      'Personalización completa del diseño',
-      'SEO avanzado incluido',
+      'Hasta 3 imágenes por producto',
+      'Equipo de hasta 4 usuarios adicionales',
+      'Dashboard avanzado con métricas en tiempo real',
+      'Soporte y feedback con prioridad alta',
     ],
     cta: 'Obtener máxima potencia',
     ctaVariant: 'outline',
   },
 ];
+
+function periodLabel(period: BillingPeriod): string {
+  return period === 'annual' ? '/mes facturado anual' : '/mes';
+}
 
 export default function PricingSection() {
   const [period, setPeriod] = useState<BillingPeriod>('monthly');
@@ -60,7 +73,12 @@ export default function PricingSection() {
     <section className={styles.section} id="pricing">
       <div className={styles.wrap}>
         <div className={styles.sectionHead}>
-          <h2>Encuentra el plan que hace crecer tu negocio</h2>
+          <h2>
+            <span className="material-symbols-rounded" aria-hidden="true">
+              flag
+            </span>
+            Encuentra el plan que necesitas
+          </h2>
           <p>Precios claros. Sin letras chiquitas. Empieza gratis y escala cuando quieras.</p>
         </div>
 
@@ -96,11 +114,17 @@ export default function PricingSection() {
               {plan.tag && <span className={styles.planTag}>{plan.tag}</span>}
               <h3>{plan.name}</h3>
               <p className={styles.price}>
-                {plan.price}
-                <span>{plan.period}</span>
+                {`S/ ${period === 'monthly' ? plan.monthly : plan.annual}`}
+                <span>{periodLabel(period)}</span>
               </p>
               <p className={styles.desc}>{plan.description}</p>
               <ul className={styles.planFeatures}>
+                {plan.includesBase && (
+                  <li className={styles.featureBase}>
+                    <span className="material-symbols-rounded">all_inclusive</span>
+                    Todo lo que incluye Lite Pago
+                  </li>
+                )}
                 {plan.features.map((feature) => (
                   <li key={feature}>
                     <span className="material-symbols-rounded">check</span>
@@ -108,14 +132,14 @@ export default function PricingSection() {
                   </li>
                 ))}
               </ul>
-              <a
+              <Link
                 className={`${styles.btn} ${
                   plan.ctaVariant === 'primary' ? styles.btnPrimary : styles.btnOutline
                 }`}
-                href="#"
+                href="/auth"
               >
                 {plan.cta}
-              </a>
+              </Link>
             </div>
           ))}
         </div>

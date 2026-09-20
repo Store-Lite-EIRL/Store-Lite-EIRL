@@ -43,8 +43,8 @@
 /* Body */
 .body {
   display: grid;
-  grid-template-columns: 64px 1fr;
-  min-height: 360px;
+  grid-template-columns: 76px 1fr;
+  min-height: 460px;
 }
 
 .side {
@@ -57,13 +57,17 @@
 }
 
 .iconWrap {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--color-text-muted);
+}
+
+.side :global(.material-symbols-rounded) {
+  font-size: 26px;
 }
 
 .iconActive {
@@ -73,7 +77,7 @@
 }
 
 .main {
-  padding: 22px;
+  padding: 28px;
 }
 
 /* Metric cards */
@@ -91,7 +95,7 @@
 
 .cardNumber {
   font-family: var(--font-brand);
-  font-size: 21px;
+  font-size: 20px;
   font-weight: 700;
 }
 
@@ -110,7 +114,7 @@
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  height: 112px;
+  height: 150px;
 }
 
 .bar {
@@ -135,8 +139,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 11px 12px 13px;
-  font-size: 13px;
+  padding: 14px 14px 16px;
+  font-size: 14px;
 }
 
 .status {
@@ -146,4 +150,68 @@
   border-radius: var(--radius-full);
   background: var(--accent-blue);
   color: #fff;
+}
+
+/* ---------- Mobile: fit the mockup on small screens ---------- */
+@media (max-width: 600px) {
+  .topbar {
+    padding: 10px 12px;
+  }
+
+  .body {
+    grid-template-columns: 52px 1fr;
+    min-height: 380px;
+  }
+
+  .side {
+    gap: 12px;
+    padding: 14px 0;
+  }
+
+  .iconWrap {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+  }
+
+  .side :global(.material-symbols-rounded) {
+    font-size: 22px;
+  }
+
+  .main {
+    padding: 14px;
+  }
+
+  .cards {
+    gap: 8px;
+  }
+
+  .card {
+    padding: 10px;
+  }
+
+  .cardNumber {
+    font-size: 16px;
+  }
+
+  .cardLabel {
+    font-size: 10.5px;
+  }
+
+  .chart {
+    margin-top: 10px;
+    padding: 12px;
+    height: 110px;
+    gap: 6px;
+  }
+
+  .row {
+    padding: 10px 10px 12px;
+    font-size: 12.5px;
+  }
+
+  .status {
+    font-size: 10px;
+    padding: 2px 7px;
+  }
 }

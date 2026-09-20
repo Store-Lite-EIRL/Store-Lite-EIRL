@@ -35,7 +35,8 @@ describe('ProcessSection.module.css — token usage and structure', () => {
       expect(stepBlock).toContain('background: var(--color-surface)');
       expect(stepBlock).toContain('border-radius: var(--radius-m)');
       expect(stepBlock).toContain('padding: 22px');
-      expect(stepBlock).toContain('box-shadow: var(--shadow-sm)');
+      expect(stepBlock).toContain('box-shadow: var(--shadow-md)');
+      expect(stepBlock).toContain('border: 1px solid var(--color-border)');
     });
 
     it('styles the number badge as a 38px gradient tile in brand font', () => {
@@ -73,7 +74,7 @@ describe('ProcessSection.module.css — token usage and structure', () => {
       '--color-surface',
       '--color-text-muted',
       '--gradient-primary',
-      '--shadow-sm',
+      '--shadow-md',
       '--radius-m',
       '--font-brand',
     ];

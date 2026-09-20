@@ -4,7 +4,7 @@ const CARDS = [
   {
     icon: 'rocket_launch',
     issue: 'Crear una tienda online cuesta caro y toma semanas.',
-    fix: 'Es gratis empezar. Sin mensualidad ni sorpresas.',
+    fix: 'Empieza gratis, sin mensualidad ni sorpresas.',
   },
   {
     icon: 'payments',
@@ -14,7 +14,7 @@ const CARDS = [
   {
     icon: 'local_shipping',
     issue: 'Gestionar envíos es un dolor de cabeza.',
-    fix: 'Todo desde la app. Control total sin salir de casa.',
+    fix: 'Supervisa pedidos desde que los envías hasta que llegan a tus usuarios. Más seguridad y tranquilidad para tus clientes.',
   },
   {
     icon: 'inventory_2',
@@ -24,21 +24,21 @@ const CARDS = [
   {
     icon: 'insights',
     issue: 'No sabes qué está funcionando o qué no.',
-    fix: 'Datos reales. Decisiones basadas en info, no en intuición.',
+    fix: 'En tiempo real puedes estar en contacto con tus usuarios porque tenemos chats en tiempo real.',
   },
   {
     icon: 'hub',
-    issue: 'Vender a la vez por redes y por web se vuelve un caos.',
-    fix: 'Conecta Instagram y WhatsApp a la misma tienda.',
+    issue: 'Integra tu WhatsApp directamente',
+    fix: 'Conecta WhatsApp a la misma tienda y podrás responder a tus clientes en tiempo real, sin perder ventas.',
   },
 ] as const;
 
 const INTEGRATIONS = [
   { icon: 'credit_card', name: 'Culqi', cat: 'Pagos' },
-  { icon: 'photo_camera', name: 'Instagram', cat: 'Ventas' },
+  { icon: 'percent', name: '0 comisiones', cat: 'Por venta' },
   { icon: 'chat', name: 'WhatsApp', cat: 'Atención' },
-  { icon: 'travel_explore', name: 'Google', cat: 'Dominio' },
-  { icon: 'query_stats', name: 'Analytics', cat: 'Datos' },
+  { icon: 'travel_explore', name: 'Google', cat: 'Subdominio' },
+  { icon: 'edit', name: 'Edita tu negocio', cat: 'A tu comodidad' },
 ] as const;
 
 export default function SolutionsSection() {
@@ -46,10 +46,12 @@ export default function SolutionsSection() {
     <section className={styles.section} id="soluciones">
       <div className={styles.wrap}>
         <div className={styles.sectionHead}>
-          <div className={styles.eyebrowIcon}>
-            <span className="material-symbols-rounded">bolt</span>
-          </div>
-          <h2>Deja de complicarte. Enfócate en vender.</h2>
+          <h2>
+            <span className="material-symbols-rounded" aria-hidden="true">
+              hub
+            </span>
+            Todo lo que necesitas, conectado
+          </h2>
           <p>
             Crear y mantener un ecommerce no debería ser un proyecto de ingeniería. Store Lite te da
             lo que necesitas, sin lo que no.
@@ -70,8 +72,6 @@ export default function SolutionsSection() {
             </article>
           ))}
         </div>
-
-        <h3 className={styles.intTitle}>Todo lo que necesitas, conectado</h3>
 
         <div className={styles.intRow}>
           {INTEGRATIONS.map((int) => (

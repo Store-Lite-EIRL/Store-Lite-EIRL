@@ -24,10 +24,20 @@ describe('FAQSection.module.css — token usage and structure', () => {
   });
 
   describe('faq list', () => {
-    it('constrains the faq list to 740px with 32px top margin', () => {
+    it('spans the full section width with 32px top margin', () => {
       const faqBlock = cssContent.match(/\.faq\s*\{([^}]*)\}/)?.[1] ?? '';
-      expect(faqBlock).toContain('max-width: 740px');
+      expect(faqBlock).toContain('max-width: 100%');
       expect(faqBlock).toContain('margin-top: 32px');
+    });
+
+    it('styles the subdomain preview as a primary mono chip', () => {
+      const subdomainBlock = cssContent.match(/\.subdomain\s*\{([^}]*)\}/)?.[1] ?? '';
+      expect(cssContent).toContain('.subdomain');
+      expect(subdomainBlock).toContain(
+        "font-family: var(--font-mono, ui-monospace, 'SF Mono', Menlo, Consolas, monospace)",
+      );
+      expect(subdomainBlock).toContain('color: var(--color-primary)');
+      expect(subdomainBlock).toContain('border-radius: 6px');
     });
   });
 
@@ -90,6 +100,7 @@ describe('FAQSection.module.css — token usage and structure', () => {
       '--radius-m',
       '--font-brand',
       '--font-plain',
+      '--font-mono',
     ];
     requiredTokens.forEach((token) => {
       expect(cssContent).toContain(token);
