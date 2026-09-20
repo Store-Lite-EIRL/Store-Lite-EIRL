@@ -5,6 +5,10 @@
   top: 14px;
   z-index: 50;
   height: 64px;
+  /* Clip the 1px paint overflow from backdrop-filter + border-radius so the
+     navbar never expands the page's horizontal scroll. `clip` (not `hidden`)
+     keeps position: sticky and the mobile dropdown working. */
+  overflow-x: clip;
 }
 
 .navContainer {
