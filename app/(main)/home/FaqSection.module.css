@@ -1,0 +1,136 @@
+@import './tokens.css';
+
+/* ---------- Section shell ---------- */
+.section {
+  padding: 96px 0;
+}
+
+@media (max-width: 760px) {
+  .section {
+    padding: 60px 0;
+  }
+}
+
+.wrap {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+}
+
+@media (min-width: 1024px) {
+  .wrap {
+    padding: 0 80px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .wrap {
+    padding: 0 64px;
+  }
+}
+
+/* ---------- Section head ---------- */
+.sectionHead {
+  max-width: 56ch;
+  margin-top: 64px;
+}
+
+.sectionHead h2 {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: clamp(24px, 2.6vw, 34px);
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.sectionHead p {
+  margin: 0;
+  margin-top: 12px;
+  font-family: var(--font-plain);
+  font-size: 17px;
+  line-height: 1.6;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+/* Eyebrow icon tile */
+.eyebrowIcon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--gradient-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-glow);
+}
+
+.eyebrowIcon :global(.material-symbols-rounded) {
+  font-size: 24px;
+  line-height: 1;
+}
+
+/* ---------- FAQ list ---------- */
+.faq {
+  max-width: 740px;
+  margin-top: 32px;
+}
+
+.faq details {
+  background: var(--color-surface);
+  border-radius: var(--radius-m);
+  padding: 20px 22px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 12px;
+}
+
+.faq summary {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 15.5px;
+  cursor: pointer;
+}
+
+.faq summary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq summary :global(.material-symbols-rounded) {
+  color: var(--color-primary);
+  transition: transform 0.15s ease;
+}
+
+.faq details[open] summary :global(.material-symbols-rounded) {
+  transform: rotate(45deg);
+}
+
+.faq details p {
+  margin: 0;
+  margin-top: 12px;
+  max-width: 60ch;
+  font-family: var(--font-plain);
+  font-size: 14.5px;
+  line-height: 1.55;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .faq summary :global(.material-symbols-rounded) {
+    transition: none;
+  }
+}

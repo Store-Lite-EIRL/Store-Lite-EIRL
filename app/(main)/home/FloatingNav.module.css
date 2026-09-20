@@ -51,7 +51,7 @@ html[data-theme='dark'] .navContainer {
   height: 32px;
   display: grid;
   place-items: center;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-m);
   background: var(--gradient-primary);
   color: white;
   flex-shrink: 0;
@@ -226,7 +226,7 @@ html[data-theme='dark'] .navContainer {
   flex-direction: column;
   gap: 0.5rem;
   padding: 1rem;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-l);
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-lg);
@@ -241,7 +241,7 @@ html[data-theme='dark'] .navContainer {
   display: flex;
   align-items: center;
   padding: 0.875rem 1rem;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-m);
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--color-text);

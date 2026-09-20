@@ -1,154 +1,91 @@
-import Link from 'next/link';
+import styles from './SolutionsSection.module.css';
+
+const CARDS = [
+  {
+    icon: 'rocket_launch',
+    issue: 'Crear una tienda online cuesta caro y toma semanas.',
+    fix: 'Es gratis empezar. Sin mensualidad ni sorpresas.',
+  },
+  {
+    icon: 'payments',
+    issue: 'Te complicas con pagos y cobros.',
+    fix: 'Pagos directos y seguros, integrados con Culqi.',
+  },
+  {
+    icon: 'local_shipping',
+    issue: 'Gestionar envíos es un dolor de cabeza.',
+    fix: 'Todo desde la app. Control total sin salir de casa.',
+  },
+  {
+    icon: 'inventory_2',
+    issue: 'Pierdes productos y stock en hojas de cálculo.',
+    fix: 'Tu catálogo siempre al día, sin esfuerzo.',
+  },
+  {
+    icon: 'insights',
+    issue: 'No sabes qué está funcionando o qué no.',
+    fix: 'Datos reales. Decisiones basadas en info, no en intuición.',
+  },
+  {
+    icon: 'hub',
+    issue: 'Vender a la vez por redes y por web se vuelve un caos.',
+    fix: 'Conecta Instagram y WhatsApp a la misma tienda.',
+  },
+] as const;
+
+const INTEGRATIONS = [
+  { icon: 'credit_card', name: 'Culqi', cat: 'Pagos' },
+  { icon: 'photo_camera', name: 'Instagram', cat: 'Ventas' },
+  { icon: 'chat', name: 'WhatsApp', cat: 'Atención' },
+  { icon: 'travel_explore', name: 'Google', cat: 'Dominio' },
+  { icon: 'query_stats', name: 'Analytics', cat: 'Datos' },
+] as const;
 
 export default function SolutionsSection() {
-  const problems = [
-    {
-      icon: 'attach_money',
-      problem: 'Crear una tienda online cuesta miles',
-      solution: 'Es gratis. Sin mensualidad, sin sorpresa.',
-      badge: 'GRATIS',
-    },
-    {
-      icon: 'speed',
-      problem: 'Te toma semanas poner algo en marcha',
-      solution: 'Listo en minutos. Tu tienda online desde el día uno.',
-      badge: 'MINUTOS',
-    },
-    {
-      icon: 'payment',
-      problem: 'Te complicas con pagos y cobros',
-      solution: 'Pagos directos y seguros integrados.',
-      badge: 'SEGURO',
-    },
-    {
-      icon: 'local_shipping',
-      problem: 'Gestionar envíos es un dolor de cabeza',
-      solution: 'Todo desde la app. Control total sin salir de casa.',
-      badge: 'APP',
-    },
-    {
-      icon: 'inventory_2',
-      problem: 'Pierdes productos y stock en hojas de cálculo',
-      solution: 'Tu catálogo siempre al día y sin esfuerzo.',
-      badge: 'STOCK',
-    },
-    {
-      icon: 'trending_up',
-      problem: 'No sabes qué está funcionando y qué no',
-      solution: 'Datos reales. Decisiones basadas en info, no en intuición.',
-      badge: 'DATOS',
-    },
-  ];
-
-  const integrations = [
-    {
-      name: 'Culqi',
-      category: 'Pagos',
-      description: 'Pagos con tarjetas y billeteras digitales',
-      icon: 'credit_card',
-    },
-    {
-      name: 'Instagram',
-      category: 'Ventas',
-      description: 'Vende directamente por Instagram',
-      icon: 'photo_camera',
-    },
-    {
-      name: 'WhatsApp',
-      category: 'Atención',
-      description: 'Gestión de pedidos por chat',
-      icon: 'chat',
-    },
-    {
-      name: 'Google',
-      category: 'Dominio',
-      description: 'Tu dominio personalizado gratis',
-      icon: 'language',
-    },
-    {
-      name: 'Analytics',
-      category: 'Datos',
-      description: 'Métricas y reportes en tiempo real',
-      icon: 'insights',
-    },
-  ];
-
   return (
-    <section className="landing-section" id="soluciones">
-      <div className="section-container">
-        <div className="section-heading">
-          <span className="section-eyebrow">¿Te suena conocido?</span>
-          <h2 className="section-title-landing">
-            Deja de complicarte.
-            <br /> Enfócate en vender.
-          </h2>
-          <p className="section-description">
-            Crear y mantener un e-commerce no debería ser un proyecto de ingeniería. Store Lite te
-            da lo que necesitas, sin lo que no necesitas.
+    <section className={styles.section} id="soluciones">
+      <div className={styles.wrap}>
+        <div className={styles.sectionHead}>
+          <div className={styles.eyebrowIcon}>
+            <span className="material-symbols-rounded">bolt</span>
+          </div>
+          <h2>Deja de complicarte. Enfócate en vender.</h2>
+          <p>
+            Crear y mantener un ecommerce no debería ser un proyecto de ingeniería. Store Lite te da
+            lo que necesitas, sin lo que no.
           </p>
         </div>
 
-        <div className="problems-grid">
-          {problems.map((item) => (
-            <article className="problem-card" key={item.problem}>
-              <div className="problem-icon-wrapper">
-                <div className="problem-icon-glow" />
-                <div className="problem-icon">
-                  <span className="material-symbols-outlined">{item.icon}</span>
-                </div>
+        <div className={styles.cardGrid}>
+          {CARDS.map((card) => (
+            <article className={styles.infoCard} key={card.issue}>
+              <div className={styles.iconChip}>
+                <span className="material-symbols-rounded">{card.icon}</span>
               </div>
-              <div className="problem-content">
-                <span className="problem-label">El problema</span>
-                <h3 className="problem-title">{item.problem}</h3>
-                <div className="solution-divider" />
-                <span className="solution-label">La solución</span>
-                <p className="solution-text">{item.solution}</p>
+              <p className={styles.issue}>{card.issue}</p>
+              <div className={styles.fixRow}>
+                <span className="material-symbols-rounded">check_circle</span>
+                <p>{card.fix}</p>
               </div>
-              <span className="highlight-badge">{item.badge}</span>
             </article>
           ))}
         </div>
 
-        <div className="integrations-section">
-          <div className="integrations-header">
-            <span className="section-eyebrow">Integraciones</span>
-            <h3>Todo lo que necesitas, conectado</h3>
-            <p>Herramientas que ya usas, ahora integradas en tu tienda.</p>
-          </div>
+        <h3 className={styles.intTitle}>Todo lo que necesitas, conectado</h3>
 
-          <div className="integrations-grid">
-            {integrations.map((item) => (
-              <div className="integration-card" key={item.name}>
-                <div className="integration-icon-wrapper">
-                  <span className="material-symbols-outlined integration-icon">{item.icon}</span>
-                </div>
-                <div className="integration-info">
-                  <span className="integration-name">{item.name}</span>
-                  <span className="integration-category">{item.category}</span>
-                  <p className="integration-description">{item.description}</p>
-                </div>
+        <div className={styles.intRow}>
+          {INTEGRATIONS.map((int) => (
+            <div className={styles.intChip} key={int.name}>
+              <div className={styles.intChipIcon}>
+                <span className="material-symbols-rounded">{int.icon}</span>
               </div>
-            ))}
-          </div>
-
-          <p className="integrations-note">
-            <span className="material-symbols-outlined">add_circle</span>+ Más integraciones
-            próximamente
-          </p>
+              <div className={styles.intName}>{int.name}</div>
+              <div className={styles.intCat}>{int.cat}</div>
+            </div>
+          ))}
         </div>
 
-        <div className="spotlight-card solutions-spotlight">
-          <div className="spotlight-content">
-            <span className="spotlight-label">Tu próximo paso</span>
-            <h3>Tu tienda lista para vender, sin esperar</h3>
-            <p>Todo lo que acabas de ver, disponible ahora mismo. Crea tu cuenta y arranca hoy.</p>
-          </div>
-          <div className="spotlight-actions">
-            <Link href="/auth" className="btn-primary-glow">
-              Crear mi tienda gratis <span className="arrow">→</span>
-            </Link>
-          </div>
-        </div>
+        <p className={styles.intMore}>+ Más integraciones próximamente</p>
       </div>
     </section>
   );

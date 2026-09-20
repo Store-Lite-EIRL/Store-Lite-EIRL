@@ -38,9 +38,9 @@ describe('tokens.css - Design System Tokens', () => {
     '--shadow-lg',
     '--shadow-glow',
     // Radius
-    '--radius-sm',
-    '--radius-md',
-    '--radius-lg',
+    '--radius-s',
+    '--radius-m',
+    '--radius-l',
     '--radius-full',
     // Layout
     '--max-width',
@@ -109,6 +109,47 @@ describe('tokens.css - Design System Tokens', () => {
       const tokenDefMatches = tokensContent.match(/--[\w-]+(?=\s*:)/g) || [];
       const uniqueTokens = [...new Set(tokenDefMatches)];
       expect(uniqueTokens.length).toBe(38);
+    });
+  });
+
+  describe('Page-level background (FINDING #2)', () => {
+    it('paints the html/body background from --color-bg in the light theme block', () => {
+      const lightBlock = tokensContent.match(
+        /(:root|html\[data-theme=["']light["']\])\s*\{[^}]*\}/m,
+      )?.[0];
+      expect(lightBlock).toBeDefined();
+      expect(lightBlock).toContain('--color-bg:');
+      expect(lightBlock).toMatch(/html,\s*body\s*\{\s*background-color:\s*var\(--color-bg\);\s*\}/);
+    });
+
+    it('paints the html/body background from --color-bg in the dark theme block', () => {
+      const darkBlock = tokensContent.match(/html\[data-theme=["']dark["']\]\s*\{[^}]*\}/m)?.[0];
+      expect(darkBlock).toBeDefined();
+      expect(darkBlock).toContain('--color-bg:');
+      expect(darkBlock).toMatch(/html,\s*body\s*\{\s*background-color:\s*var\(--color-bg\);\s*\}/);
+    });
+  });
+
+  describe('Radius token spec (FINDING #3)', () => {
+    it('defines --radius-s: 10px in both theme blocks', () => {
+      const definitions = tokensContent.match(/--radius-s:\s*10px/g) || [];
+      expect(definitions.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('defines --radius-m: 16px in both theme blocks', () => {
+      const definitions = tokensContent.match(/--radius-m:\s*16px/g) || [];
+      expect(definitions.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('defines --radius-l: 22px in both theme blocks', () => {
+      const definitions = tokensContent.match(/--radius-l:\s*22px/g) || [];
+      expect(definitions.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('no longer defines the legacy radius token names', () => {
+      expect(tokensContent).not.toContain('--radius-sm');
+      expect(tokensContent).not.toContain('--radius-md');
+      expect(tokensContent).not.toContain('--radius-lg');
     });
   });
 });

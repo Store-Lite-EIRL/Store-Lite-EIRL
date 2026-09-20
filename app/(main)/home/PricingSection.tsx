@@ -1,143 +1,127 @@
 'use client';
 
-import { formatSoles, PLAN_LABELS, PLAN_PRICES } from '@/shared/billing/planPrices';
-import Link from 'next/link';
 import { useState } from 'react';
+import styles from './PricingSection.module.css';
 
-type BillingPeriod = 'mes' | 'anual';
+type BillingPeriod = 'monthly' | 'annual';
 
-interface LandingPlan {
+interface Plan {
   name: string;
-  monthlyPrice: string;
-  annualPrice: string;
+  featured: boolean;
+  tag?: string;
+  price: string;
+  period: string;
   description: string;
-  features: string[];
+  features: readonly string[];
   cta: string;
-  popular: boolean;
-  badge?: string;
+  ctaVariant: 'primary' | 'outline';
 }
 
-export default function PricingSection() {
-  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('mes');
-  const isAnnual = billingPeriod === 'anual';
-  const periodLabel = isAnnual ? 'año' : 'mes';
+const PLANS: Plan[] = [
+  {
+    name: 'Lite Pago',
+    featured: true,
+    tag: 'Más elegido',
+    price: 'S/ 39',
+    period: '/mes',
+    description: 'Para negocios que ya venden y quieren llevar su marca al siguiente nivel.',
+    features: [
+      'Pagos con tarjetas y billeteras digitales',
+      'Hasta 300 productos publicados',
+      'Dashboard con métricas de ventas',
+      'Equipo de 2 usuarios adicionales',
+      'SEO avanzado incluido',
+    ],
+    cta: 'Escalar mi negocio',
+    ctaVariant: 'primary',
+  },
+  {
+    name: 'Lite Plus',
+    featured: false,
+    price: 'S/ 79',
+    period: '/mes',
+    description: 'Para marcas que necesitan el máximo rendimiento y todas las herramientas.',
+    features: [
+      'Dashboard avanzado con métricas en tiempo real',
+      'Hasta 4 usuarios en el equipo',
+      'Hasta 600 productos publicados',
+      'Personalización completa del diseño',
+      'SEO avanzado incluido',
+    ],
+    cta: 'Obtener máxima potencia',
+    ctaVariant: 'outline',
+  },
+];
 
-  const plans: LandingPlan[] = [
-    {
-      name: PLAN_LABELS.lite_pago,
-      monthlyPrice: formatSoles(PLAN_PRICES.lite_pago.monthly),
-      annualPrice: formatSoles(PLAN_PRICES.lite_pago.annual),
-      badge: 'Más elegido',
-      description:
-        'Para negocios que ya venden y quieren escalar. Herramientas profesionales para crecer sin límites y con equipo de trabajo.',
-      features: [
-        '💳 Pagos con tarjetas y billeteras digitales',
-        '📦 Hasta 300 productos premium',
-        '🎨 Personalización completa del diseño',
-        '👥 Equipo de 2 usuarios adicionales',
-        '📊 Dashboard con métricas de ventas',
-        '🎯 SEO avanzado incluido',
-      ],
-      cta: 'Escalar mi negocio',
-      popular: true,
-    },
-    {
-      name: PLAN_LABELS.lite_plus,
-      monthlyPrice: formatSoles(PLAN_PRICES.lite_plus.monthly),
-      annualPrice: formatSoles(PLAN_PRICES.lite_plus.annual),
-      description:
-        'Para marcas que necesitan el máximo rendimiento y todas las herramientas para escalar.',
-      features: [
-        '📊 Dashboard avanzado con métricas en tiempo real',
-        '👥 Hasta 4 usuarios en tu equipo',
-        '📦 Hasta 600 productos',
-        '🎨 Personalización completa del diseño',
-        '💳 Pagos con tarjetas y billeteras digitales',
-        '🎯 SEO avanzado incluido',
-      ],
-      cta: 'Obtener máxima potencia',
-      popular: false,
-    },
-  ];
+export default function PricingSection() {
+  const [period, setPeriod] = useState<BillingPeriod>('monthly');
 
   return (
-    <section className="landing-section" id="pricing">
-      <div className="section-container">
-        <div className="section-heading">
-          <span className="section-eyebrow">Planes</span>
-          <h2 className="section-title-landing">Encuentra el plan que hace crecer tu negocio</h2>
-          <p className="section-description">
-            Precios claros. Sin letras chiquitas. Empieza gratis y escala cuando quieras.
-          </p>
+    <section className={styles.section} id="pricing">
+      <div className={styles.wrap}>
+        <div className={styles.sectionHead}>
+          <h2>Encuentra el plan que hace crecer tu negocio</h2>
+          <p>Precios claros. Sin letras chiquitas. Empieza gratis y escala cuando quieras.</p>
         </div>
 
-        <div
-          className="pricing-billing-toggle pricing-billing-toggle--landing"
-          role="group"
-          aria-label="Período de facturación"
-        >
+        <div className={styles.pricingToggle} role="group" aria-label="Período de facturación">
           <button
             type="button"
-            className={`pricing-billing-option ${!isAnnual ? 'pricing-billing-option--active' : ''}`}
-            onClick={() => setBillingPeriod('mes')}
-            aria-pressed={!isAnnual}
+            className={`${styles.toggleButton} ${
+              period === 'monthly' ? styles.toggleActive : styles.toggleInactive
+            }`}
+            onClick={() => setPeriod('monthly')}
+            aria-pressed={period === 'monthly'}
           >
             Mensual
           </button>
           <button
             type="button"
-            className={`pricing-billing-option ${isAnnual ? 'pricing-billing-option--active' : ''}`}
-            onClick={() => setBillingPeriod('anual')}
-            aria-pressed={isAnnual}
+            className={`${styles.toggleButton} ${
+              period === 'annual' ? styles.toggleActive : styles.toggleInactive
+            }`}
+            onClick={() => setPeriod('annual')}
+            aria-pressed={period === 'annual'}
           >
             Anual
           </button>
         </div>
 
-        <div className="pricing-cards-flow">
-          {plans.map((plan) => {
-            const price = isAnnual ? plan.annualPrice : plan.monthlyPrice;
-            return (
-              <article className={`pricing-card ${plan.popular ? 'popular' : ''}`} key={plan.name}>
-                {plan.popular && <span className="pricing-badge">{plan.badge}</span>}
-                <div className="pricing-card-header">
-                  <span className="pricing-plan-name">{plan.name}</span>
-                  <div className="pricing-price-wrapper">
-                    <span className="pricing-currency">S/</span>
-                    <span className="pricing-price">{price}</span>
-                    <span className="pricing-period">/{periodLabel}</span>
-                  </div>
-                  {isAnnual && (
-                    <div className="pricing-annual-save">Ahorra 2 meses con pago anual</div>
-                  )}
-                </div>
-                <p className="pricing-description">{plan.description}</p>
-                <ul className="pricing-features">
-                  {plan.features.map((feature) => (
-                    <li key={feature}>
-                      <span className="material-symbols-outlined check-icon">check_circle</span>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  className={`pricing-cta-btn ${
-                    plan.popular ? 'pricing-btn-primary' : 'pricing-btn-secondary'
-                  }`}
-                  href="/auth"
-                >
-                  {plan.cta}
-                  <span className="material-symbols-outlined btn-icon">arrow_forward</span>
-                </Link>
-              </article>
-            );
-          })}
+        <div className={styles.plans}>
+          {PLANS.map((plan) => (
+            <div
+              className={`${styles.plan} ${plan.featured ? styles.planFeatured : ''}`}
+              key={plan.name}
+            >
+              {plan.tag && <span className={styles.planTag}>{plan.tag}</span>}
+              <h3>{plan.name}</h3>
+              <p className={styles.price}>
+                {plan.price}
+                <span>{plan.period}</span>
+              </p>
+              <p className={styles.desc}>{plan.description}</p>
+              <ul className={styles.planFeatures}>
+                {plan.features.map((feature) => (
+                  <li key={feature}>
+                    <span className="material-symbols-rounded">check</span>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <a
+                className={`${styles.btn} ${
+                  plan.ctaVariant === 'primary' ? styles.btnPrimary : styles.btnOutline
+                }`}
+                href="#"
+              >
+                {plan.cta}
+              </a>
+            </div>
+          ))}
         </div>
 
-        <p className="pricing-footer-note">
-          <span className="material-symbols-outlined">verified</span>
-          Todos los planes incluyen dominio gratis · Soporte básico · Sin permanencia · Empieza
-          gratis en Lite
+        <p className={styles.plansNote}>
+          Todos los planes incluyen dominio gratis · soporte básico · sin permanencia
         </p>
       </div>
     </section>
