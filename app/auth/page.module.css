@@ -275,12 +275,13 @@ html[data-theme='light'] .authShell .orb3 {
 
 /* 5. Form panel — per-panel glass surface replacing the single card. Renders
    above the viewport decor (positioned, later in DOM). Height: auto so it
-   hugs its content naturally (VISUAL-FIX-3), not stretched to viewport. */
+   hugs its content naturally (VISUAL-FIX-3), not stretched to viewport.
+   Vertically centered in the left shell column (VISUAL-FIX-4). */
 .formPanel {
   position: relative;
   width: min(100%, 34rem);
   min-width: 0;
-  margin: 1.5rem auto;
+  margin: 0 auto; /* horizontal centering only; vertical via align-self */
   padding: 2.5rem 2rem;
   overflow: hidden;
   border-radius: 1.5rem;
@@ -290,6 +291,8 @@ html[data-theme='light'] .authShell .orb3 {
      No enclosing card-like border or box-shadow on the panel itself. */
   backdrop-filter: blur(var(--auth-glass-blur));
   -webkit-backdrop-filter: blur(var(--auth-glass-blur));
+  align-self: center; /* VISUAL-FIX-4: vertical centering in left grid column */
+  height: auto; /* VISUAL-FIX-4: explicit auto height to hug content */
 }
 
 /* Top edge highlight (ex-card highlight, now a pseudo-element) */
