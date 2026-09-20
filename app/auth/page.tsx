@@ -5,15 +5,16 @@ import ConsentCheckbox from '@/features/auth/ConsentCheckbox';
 import { clearBusinessSessionData } from '@/hooks/useBusinessSession';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import MarketingPanel from './components/MarketingPanel';
 import ThemeToggle from './components/ThemeToggle';
 import styles from './page.module.css';
 
 /**
  * Auth page — OAuth-only sign-in rebuilt to the approved MD3 mockup:
  * a viewport two-column shell with no enclosing card. Slice 1a ships the
- * left form panel; the right marketing column is reserved for the
- * MarketingPanel family (Slice 1b). Theming is delegated to the global
- * ThemeContext — this page never forces a token class (R5).
+ * left form panel; Slice 1b adds the right marketing column (MarketingPanel
+ * family, hidden ≤960px). Theming is delegated to the global ThemeContext —
+ * this page never forces a token class (R5).
  */
 export default function AuthPage() {
   const { signInWithGoogle, signInWithFacebook } = useAuth();
@@ -67,7 +68,7 @@ export default function AuthPage() {
 
       <ThemeToggle />
 
-      {/* Form panel — left shell column (marketing column lands in 1b) */}
+      {/* Form panel — left shell column */}
       <section className={styles.formPanel} aria-labelledby="auth-title">
         <div className={styles.formInner}>
           <div className={styles.logo}>
@@ -92,14 +93,10 @@ export default function AuthPage() {
           </h1>
           <p className={styles.cardSubtitle}>Publica tus productos y recibe pagos en minutos.</p>
 
-          <div className={styles.consentRow}>
-            <ConsentCheckbox onConsentChange={setConsented} />
-          </div>
-
           <div className={styles.authButtons}>
             <button
               type="button"
-              className={styles.authButton}
+              className={`${styles.authButton} ${styles.googleButton}`}
               onClick={handleGoogleSignIn}
               disabled={!consented || googleLoading}
             >
@@ -132,7 +129,7 @@ export default function AuthPage() {
 
             <button
               type="button"
-              className={styles.authButton}
+              className={`${styles.authButton} ${styles.facebookButton}`}
               onClick={handleFacebookSignIn}
               disabled={!consented || facebookLoading}
             >
@@ -168,8 +165,15 @@ export default function AuthPage() {
               <span className={styles.soonPill}>Próximamente</span>
             </button>
           </div>
+
+          <div className={styles.consentRow}>
+            <ConsentCheckbox onConsentChange={setConsented} />
+          </div>
         </div>
       </section>
+
+      {/* Marketing panel — right shell column (Slice 1b, hidden ≤960px, R1) */}
+      <MarketingPanel />
     </div>
   );
 }

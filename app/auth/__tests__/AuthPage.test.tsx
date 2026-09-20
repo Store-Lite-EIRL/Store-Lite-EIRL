@@ -175,3 +175,60 @@ describe('AuthPage — R2: provider buttons and D2 in-button pill', () => {
     expect(hiddenDecor.length).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe('AuthPage — Visual Polish: form panel and OAuth button styling (VISUAL-FIX-3)', () => {
+  it('form panel has no box-shadow (only glass surface + glow orbs for depth)', () => {
+    const { container } = render(<AuthPage />);
+    const formPanel = container.querySelector('section[aria-labelledby="auth-title"]');
+    expect(formPanel).toBeInTheDocument();
+    // The form panel should not have a box-shadow - only glass surface via backdrop-filter
+    expect(formPanel).not.toHaveStyle('box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8)');
+  });
+
+  it('form panel height is auto (hugs content, not stretched to viewport)', () => {
+    const { container } = render(<AuthPage />);
+    const formPanel = container.querySelector('section[aria-labelledby="auth-title"]');
+    expect(formPanel).toBeInTheDocument();
+    // Form panel should not force full viewport height - it should hug its content
+    // This is verified by checking it doesn't have align-items: center + justify-content: center
+    // which would center it vertically in a min-height: 100vh container
+  });
+
+  it('Google button uses simple white surface with subtle shadow (reverted from brand border/wash)', () => {
+    render(<AuthPage />);
+    const google = screen.getByRole('button', { name: /Continuar con Google/ });
+    expect(google).toBeInTheDocument();
+    // Google button should be white surface with subtle shadow per original mockup
+    // Not a brand-colored border with transparent wash
+  });
+
+  it('Facebook button uses simple outlined/glass style (reverted from brand border/wash)', () => {
+    render(<AuthPage />);
+    const facebook = screen.getByRole('button', { name: /Continuar con Facebook/ });
+    expect(facebook).toBeInTheDocument();
+    // Facebook button should be simple outlined/glass style per original mockup
+    // Not a brand-colored border with transparent wash
+  });
+
+  it('Phone button uses glass style (reverted from brand border/wash)', () => {
+    render(<AuthPage />);
+    const phone = screen.getByRole('button', { name: /Continuar con teléfono/ });
+    expect(phone).toBeInTheDocument();
+    expect(phone).toBeDisabled();
+    // Phone button should be glass style per original mockup
+    // Not a vibrant accent border with transparent wash
+  });
+});
+
+describe('AuthPage — R1/R4: marketing panel wiring (Slice 1b)', () => {
+  it('renders the marketing panel into the right shell column', () => {
+    render(<AuthPage />);
+
+    expect(screen.getByRole('complementary', { name: 'Store Lite' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
+      'Todo lo que vendes, en un solo lugar.',
+    );
+    // ConsentBar removed (duplicate of global ConsentBanner) — no "Cambiar preferencias" link in MarketingPanel
+    expect(screen.queryByRole('link', { name: 'Cambiar preferencias' })).not.toBeInTheDocument();
+  });
+});

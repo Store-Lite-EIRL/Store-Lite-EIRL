@@ -22,15 +22,16 @@ describe('isPlatformTrackingPath', () => {
     ]);
   });
 
-  it('allows the exact root and every whitelisted prefix', () => {
+  it('allows the exact root and every whitelisted prefix except /auth (excluded)', () => {
     for (const prefix of PLATFORM_TRACKING_PREFIXES) {
+      if (prefix === '/auth') continue; // /auth is excluded from tracking
       expect(isPlatformTrackingPath(prefix)).toBe(true);
     }
   });
 
   it('allows sub-paths under whitelisted prefixes', () => {
     expect(isPlatformTrackingPath('/pricing/checkout')).toBe(true);
-    expect(isPlatformTrackingPath('/auth/register')).toBe(true);
+    // /auth/* paths are excluded from tracking (no ConsentBanner on auth pages)
     expect(isPlatformTrackingPath('/terminos')).toBe(true);
     expect(isPlatformTrackingPath('/libro-reclamaciones/nuevo')).toBe(true);
   });
@@ -48,8 +49,10 @@ describe('isPlatformTrackingPath', () => {
     expect(isPlatformTrackingPath('/terminosv2')).toBe(false);
   });
 
-  it('rejects /auth/customer even though /auth is whitelisted', () => {
+  it('excludes /auth and /auth/customer from tracking', () => {
+    expect(isPlatformTrackingPath('/auth')).toBe(false);
     expect(isPlatformTrackingPath('/auth/customer')).toBe(false);
+    expect(isPlatformTrackingPath('/auth/callback')).toBe(false);
     expect(isPlatformTrackingPath('/auth/customer/orders/123')).toBe(false);
   });
 });

@@ -1,8 +1,8 @@
-/* ─── /auth — MD3 mockup rebuild, Slice 1a (dark base) ───────────────────────
+/* ─── /auth — MD3 mockup rebuild, Slices 1a+1b (dark base) ──────────────
    Viewport two-column shell with per-panel glass surfaces (no enclosing card).
    Dark is the source of truth (design D6; light overrides land in Slice 2).
-   The right marketing column is reserved (empty) until Slice 1b ships
-   MarketingPanel. Dead email/password and shard styles are dropped. */
+   Right column = MarketingPanel family (marketing styles live in
+   MarketingPanel.module.css). Dead email/password and shard styles dropped. */
 
 /* 1. Scoped tokens — dark values (design table; light overrides in Slice 2) */
 .authShell {
@@ -54,14 +54,22 @@
   --auth-accent-border: rgba(19, 91, 236, 0.3);
   --auth-accent-glow: 0 0 20px rgba(19, 91, 236, 0.3);
 
-  /* OAuth buttons (white button is already dual-theme) */
+  /* OAuth buttons — simple outlined/glass style per original mockup (reverted from VISUAL-FIX-2) */
   --auth-google-bg: #ffffff;
   --auth-google-fg: #0f172a;
   --auth-google-hover: #f1f5f9;
   --auth-google-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --auth-google-border: rgba(0, 0, 0, 0.1);
+
+  --auth-facebook-bg: #ffffff;
+  --auth-facebook-fg: #0f172a;
+  --auth-facebook-hover: #f1f5f9;
+  --auth-facebook-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --auth-facebook-border: rgba(0, 0, 0, 0.1);
+
   --auth-phone-bg: rgba(255, 255, 255, 0.06);
-  --auth-phone-fg: rgba(255, 255, 255, 0.4);
-  --auth-phone-border: rgba(255, 255, 255, 0.1);
+  --auth-phone-fg: rgba(255, 255, 255, 0.7);
+  --auth-phone-border: rgba(255, 255, 255, 0.15);
 
   /* Particles */
   --auth-p1: rgba(255, 255, 255, 0.2);
@@ -81,8 +89,79 @@
   --auth-toggle-fg: #dfe3e7;
 }
 
-/* 2. Shell — viewport two-column grid, no enclosing card (R1). The right
-   track stays empty until Slice 1b; both columns get min-width:0 (D3). */
+/* 1b. Light variant — scoped --auth-* overrides (design table; dark = source
+   of truth, D6). Selector follows the app's theme-scoping convention
+   (html[data-theme='light'] — home modules) and covers all light contrast
+   variants because ThemeContext/ThemeBoot set data-theme to the resolved
+   base theme. Marketing-only tokens (tile/insight/benefit/eyebrow-insight)
+   are overridden in MarketingPanel.module.css and toggle tokens in
+   ThemeToggle.module.css (Slice 2.2). Pills live here because BOTH consumers
+   (in-button "Próximamente" + consent chip) inherit from .authShell. */
+html[data-theme='light'] .authShell {
+  /* Shell */
+  --auth-bg: #f6fafd;
+  --auth-text: #181c20;
+
+  /* Glow orbs — pastel field: dimmed opacity + widened 100px blur. The
+     central pink orb (orb3) is dimmed further (.10) per the design table. */
+  --auth-orb-opacity: 0.14;
+  --auth-orb-blur: 100px;
+
+  /* Glass surface (form panel) */
+  --auth-glass-surface: rgba(255, 255, 255, 0.55);
+  --auth-glass-border: rgba(24, 28, 32, 0.08);
+  --auth-glass-shadow: 0 8px 32px rgba(15, 23, 42, 0.1);
+  --auth-highlight: linear-gradient(to right, transparent, rgba(33, 100, 135, 0.35), transparent);
+
+  /* Dot grid — dark dots on light */
+  --auth-grid-dot: #181c20;
+  --auth-grid-opacity: 0.05;
+
+  /* Typography accents */
+  --auth-eyebrow-form: #2563eb;
+  --auth-text-secondary: #475569;
+
+  /* Brand / logo — softer logo glow on light */
+  --auth-accent-bg: rgba(19, 91, 236, 0.1);
+  --auth-accent-border: rgba(19, 91, 236, 0.18);
+  --auth-accent-glow: 0 0 20px rgba(19, 91, 236, 0.18);
+
+  /* OAuth buttons — Google unchanged (white button already dual-theme) */
+  --auth-phone-bg: rgba(15, 23, 42, 0.05);
+  --auth-phone-fg: rgba(15, 23, 42, 0.7);
+  --auth-phone-border: rgba(15, 23, 42, 0.15);
+
+  --auth-google-bg: #ffffff;
+  --auth-google-fg: #0f172a;
+  --auth-google-hover: #f1f5f9;
+  --auth-google-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --auth-google-border: rgba(0, 0, 0, 0.1);
+
+  --auth-facebook-bg: #ffffff;
+  --auth-facebook-fg: #0f172a;
+  --auth-facebook-hover: #f1f5f9;
+  --auth-facebook-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --auth-facebook-border: rgba(0, 0, 0, 0.1);
+
+  /* Particles */
+  --auth-p1: rgba(51, 65, 85, 0.3);
+  --auth-p2: rgba(19, 91, 236, 0.25);
+  --auth-p3: rgba(147, 51, 234, 0.2);
+  --auth-p4: rgba(51, 65, 85, 0.15);
+  --auth-p5: rgba(236, 72, 153, 0.25);
+
+  /* Pills (in-button "Próximamente" + consent chip) */
+  --auth-pill-bg: #ffffff;
+  --auth-pill-border: rgba(15, 23, 42, 0.12);
+  --auth-pill-fg: #64748b;
+}
+
+html[data-theme='light'] .authShell .orb3 {
+  opacity: 0.1;
+}
+
+/* 2. Shell — viewport two-column grid, no enclosing card (R1). Left track =
+   form panel, right track = MarketingPanel; both get min-width:0 (D3). */
 .authShell {
   position: relative;
   display: grid;
@@ -195,24 +274,25 @@
 }
 
 /* 5. Form panel — per-panel glass surface replacing the single card. Renders
-   above the viewport decor (positioned, later in DOM). */
+   above the viewport decor (positioned, later in DOM). Height: auto so it
+   hugs its content naturally (VISUAL-FIX-3), not stretched to viewport.
+   Vertically centered in the left shell column (VISUAL-FIX-4). */
 .formPanel {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  justify-self: center;
   width: min(100%, 34rem);
   min-width: 0;
-  margin: 1.5rem;
+  margin: 0 auto; /* horizontal centering only; vertical via align-self */
   padding: 2.5rem 2rem;
   overflow: hidden;
   border-radius: 1.5rem;
   background: var(--auth-glass-surface);
-  border: 1px solid var(--auth-glass-border);
+  /* Border AND shadow removed per VISUAL-FIX-2 feedback: "se ve mal".
+     Keep only glass surface + top highlight + glow orbs/dot grid for depth.
+     No enclosing card-like border or box-shadow on the panel itself. */
   backdrop-filter: blur(var(--auth-glass-blur));
   -webkit-backdrop-filter: blur(var(--auth-glass-blur));
-  box-shadow: var(--auth-glass-shadow);
+  align-self: center; /* VISUAL-FIX-4: vertical centering in left grid column */
+  height: auto; /* VISUAL-FIX-4: explicit auto height to hug content */
 }
 
 /* Top edge highlight (ex-card highlight, now a pseudo-element) */
@@ -270,7 +350,7 @@
   margin: 0 0 0.625rem;
   color: var(--auth-eyebrow-form);
   font-size: 0.8rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.08em;
   line-height: 1.4;
   text-transform: uppercase;
@@ -280,7 +360,7 @@
   margin: 0;
   color: var(--auth-text);
   font-size: clamp(1.9rem, 1.6rem + 1.25vw, 2.6rem);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.12;
   text-wrap: balance;
@@ -310,6 +390,7 @@
   margin-top: 1.375rem;
 }
 
+/* Base button style — shared structure */
 .authButton {
   position: relative;
   display: flex;
@@ -319,24 +400,20 @@
   height: 48px;
   padding: 0 18px;
   overflow: hidden;
-  border: none;
   border-radius: 0.75rem;
   font-family: inherit;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.025em;
-  color: var(--auth-google-fg);
-  background: var(--auth-google-bg);
-  box-shadow: var(--auth-google-shadow);
   cursor: pointer;
   transition:
     background-color 300ms ease,
     transform 150ms ease,
-    opacity 300ms ease;
+    opacity 300ms ease,
+    border-color 150ms ease;
 }
 
 .authButton:hover:not(:disabled) {
-  background-color: var(--auth-google-hover);
   transform: scale(1.02);
 }
 
@@ -363,23 +440,68 @@
   letter-spacing: 0.025em;
 }
 
-/* Phone — permanently disabled, muted dark glass (R2) */
+/* Google — white surface with subtle shadow (original mockup style) */
+.googleButton {
+  border: 1px solid var(--auth-google-border);
+  color: var(--auth-google-fg);
+  background: var(--auth-google-bg);
+  box-shadow: var(--auth-google-shadow);
+}
+
+.googleButton:hover:not(:disabled) {
+  background-color: var(--auth-google-hover);
+  border-color: var(--auth-google-border);
+  box-shadow: var(--auth-google-shadow);
+}
+
+/* Facebook — white surface with subtle shadow (original mockup style) */
+.facebookButton {
+  border: 1px solid var(--auth-facebook-border);
+  color: var(--auth-facebook-fg);
+  background: var(--auth-facebook-bg);
+  box-shadow: var(--auth-facebook-shadow);
+}
+
+.facebookButton:hover:not(:disabled) {
+  background-color: var(--auth-facebook-hover);
+  border-color: var(--auth-facebook-border);
+  box-shadow: var(--auth-facebook-shadow);
+}
+
+/* Phone — glass style (original mockup style) */
 .phoneButton,
 .phoneButton:disabled {
-  background-color: var(--auth-phone-bg) !important;
-  color: var(--auth-phone-fg) !important;
   border: 1px solid var(--auth-phone-border) !important;
+  color: var(--auth-phone-fg) !important;
+  background: var(--auth-phone-bg) !important;
   box-shadow: none !important;
   cursor: not-allowed !important;
 }
 
 .phoneButton:hover {
   background-color: var(--auth-phone-bg) !important;
+  border-color: var(--auth-phone-border) !important;
   transform: none !important;
 }
 
 .phoneButton .providerIcon {
   color: var(--auth-phone-fg) !important;
+}
+
+/* In-button "Próximamente" pill (D2) */
+.soonPill {
+  margin-left: auto;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--auth-pill-border);
+  border-radius: 9999px;
+  background-color: var(--auth-pill-bg);
+  color: var(--auth-pill-fg);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* In-button "Próximamente" pill (D2) */
@@ -445,8 +567,7 @@
 }
 
 /* 12. Responsive — 960px collapse to a single column (D3). The marketing
-   track is reserved (empty) until Slice 1b; its display:none rule lands with
-   MarketingPanel. */
+   panel hides itself at ≤960px via its own media query (MarketingPanel.module.css). */
 @media (max-width: 960px) {
   .authShell {
     grid-template-columns: minmax(0, 1fr);
