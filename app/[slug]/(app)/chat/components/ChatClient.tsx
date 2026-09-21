@@ -1181,22 +1181,11 @@ export function ChatClient({
           onReorder={handleReorder}
           canManage={canManage}
           storeLogo={storeLogo}
+          whatsappChannelConnected={whatsappChannelConnected}
+          onConnectWhatsApp={() => setShowWhatsAppConnectModal(true)}
         />
       </div>
       <div className={styles.windowWrapper}>
-        {filterTab === 'whatsapp' && !whatsappChannelConnected && !selectedSession && (
-          <div className={styles.emptyState}>
-            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-              <p style={{ marginBottom: '20px', color: '#666' }}>
-                No tienes WhatsApp conectado a tu tienda.
-              </p>
-              <WhatsAppConnectButton
-                businessId={businessId}
-                onSuccess={handleWhatsAppConnectSuccess}
-              />
-            </div>
-          </div>
-        )}
         <ChatWindow
           session={selectedSession}
           messages={activeMessages}

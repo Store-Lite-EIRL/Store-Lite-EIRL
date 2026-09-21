@@ -1,4 +1,4 @@
-import { CircularProgress, Icon, IconButton } from '@/shared/components/ui';
+import { CircularProgress, Icon, IconButton, Button } from '@/shared/components/ui';
 import Image from 'next/image';
 import { useCallback, useState } from 'react';
 import styles from './ChatSidebar.module.css';
@@ -24,6 +24,9 @@ interface ChatSidebarProps {
   onReorder: (draggedId: string, targetId: string) => void;
   canManage: boolean;
   storeLogo: string;
+  // WhatsApp specific
+  whatsappChannelConnected?: boolean;
+  onConnectWhatsApp?: () => void;
 }
 
 const FILTER_TABS: { key: FilterTab; label: string }[] = [
@@ -49,6 +52,8 @@ export function ChatSidebar({
   onReorder,
   canManage,
   storeLogo,
+  whatsappChannelConnected = true,
+  onConnectWhatsApp,
 }: ChatSidebarProps) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -287,7 +292,24 @@ export function ChatSidebar({
                   ? 'No hay mensajes sin leer'
                   : filterTab === 'orders'
                     ? 'No hay ventas con chat'
-                    : 'No hay conversaciones'}
+                    : filterTab === 'whatsapp' && !whatsappChannelConnected ? (
+                      <div className={styles.whatsappEmptyState}>
+                        <div className={styles.whatsappEmptyIcon}>💬</div>
+                        <p className={styles.whatsappEmptyTitle}>Conectá tu WhatsApp</p>
+                        <p className={styles.whatsappEmptyText}>
+                          Respondé a tus clientes desde acá. Tardás menos de 2 minutos.
+                        </p>
+                        <Button
+                          variant="filled"
+                          className={styles.whatsappConnectBtn}
+                          onClick={onConnectWhatsApp}
+                        >
+                          Conectar WhatsApp
+                        </Button>
+                      </div>
+                    ) : (
+                      'No hay conversaciones'
+                    )}
               </div>
             )}
           </>
