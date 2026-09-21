@@ -99,12 +99,12 @@ export async function fetchWhatsAppConversations(businessId: string) {
   try {
     const hasAccess = await verifyBusinessAccess(businessId);
     if (!hasAccess) {
-      return { success: false, error: 'No autorizado', conversations: [] };
+      return { success: false, error: 'No autorizado', conversations: [], channelId: null };
     }
 
     const channel = await getActiveChannel(businessId);
     if (!channel) {
-      return { success: true, conversations: [], channelConnected: false };
+      return { success: true, conversations: [], channelConnected: false, channelId: null };
     }
 
     const conversations = await db
@@ -154,13 +154,21 @@ export async function fetchWhatsAppConversations(businessId: string) {
       }
     }
 
-    return { success: true, conversations: Array.from(seen.values()), channelConnected: true };
+    // Expose the active channel id even with ZERO conversations so the client
+    // can reach channel-scoped features (template manager) on fresh connects.
+    return {
+      success: true,
+      conversations: Array.from(seen.values()),
+      channelConnected: true,
+      channelId: channel.id,
+    };
   } catch (error) {
     console.error('Error fetching WhatsApp conversations:', error);
     return {
       success: false,
       error: 'No se pudo cargar las conversaciones de WhatsApp',
       conversations: [],
+      channelId: null,
     };
   }
 }

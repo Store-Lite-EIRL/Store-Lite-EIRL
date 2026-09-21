@@ -11,6 +11,7 @@ import {
   assertOutboundRateLimit,
   assertTemplateApproved,
 } from '@/core/whatsapp/guards/whatsappSendGuards';
+import { normalizeMetaStatus } from '@/core/whatsapp/templates/metaStatus';
 import { BASE_TEMPLATES, applyBusinessName } from '@/features/chat/constants/baseTemplates';
 import { createClient } from '@/lib/supabase/server';
 import { and, desc, eq } from 'drizzle-orm';
@@ -291,7 +292,8 @@ export async function syncTemplateStatus(templateId: string): Promise<SyncTempla
       return { success: false, error: 'Error al sincronizar con YCloud' };
     }
 
-    const metaStatus = ycloudResponse.status as 'pending' | 'approved' | 'rejected';
+    // YCloud returns UPPERCASE statuses ('APPROVED') — persist lowercase.
+    const metaStatus = normalizeMetaStatus(ycloudResponse.status);
 
     // Update local status
     const [updated] = await db
@@ -390,7 +392,8 @@ export async function syncAllTemplateStatuses(channelId: string): Promise<{
         }
 
         const ycloudData = await response.json();
-        const metaStatus = ycloudData.status as 'pending' | 'approved' | 'rejected';
+        // YCloud returns UPPERCASE statuses ('APPROVED') — persist lowercase.
+        const metaStatus = normalizeMetaStatus(ycloudData.status);
 
         await db
           .update(whatsappTemplates)

@@ -10,6 +10,7 @@ import {
 import { eq, and } from 'drizzle-orm';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { env } from '@/config/env';
+import { normalizeMetaStatus } from '@/core/whatsapp/templates/metaStatus';
 
 const REPLAY_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 const DEDUP_TTL_MS = 10 * 60 * 1000; // 10 minutes
@@ -102,7 +103,7 @@ interface YCloudMessage {
   text?: { body: string };
   template?: {
     name: string;
-    components?: Array<{ parameters?: Array<{ text?: string }> }>;
+    components?: { parameters?: { text?: string }[] }[];
   };
   image?: { caption?: string };
   video?: { caption?: string };
@@ -115,7 +116,7 @@ interface YCloudMessage {
   context?: { from?: string };
   status?: string;
   pricing?: { price?: string; currency?: string };
-  errors?: Array<{ code?: string; title?: string }>;
+  errors?: { code?: string; title?: string }[];
 }
 
 interface YCloudPhoneNumber {
@@ -140,6 +141,8 @@ interface YCloudPayload {
   template?: { id: string; status: string };
 }
 
+type InboundMessageType = 'text' | 'template' | 'media' | 'interactive';
+
 async function handleInboundMessageReceived(payload: YCloudPayload): Promise<void> {
   const messageData = payload.message;
   const phoneNumberData = payload.phone_number;
@@ -153,7 +156,7 @@ async function handleInboundMessageReceived(payload: YCloudPayload): Promise<voi
   const ycloudPhoneNumberId = phoneNumberData.id;
   const ycloudMessageId = messageData.id;
   const direction = 'inbound' as const;
-  const type = (messageData.type as 'text' | 'template' | 'media' | 'interactive') ?? 'text';
+  const type = (messageData.type as InboundMessageType) ?? 'text';
   const timestamp = messageData.timestamp ? Number(messageData.timestamp) : Date.now() / 1000;
 
   const channel = await findChannelByPhoneNumberId(ycloudPhoneNumberId);
@@ -342,7 +345,8 @@ async function handleTemplateReviewed(payload: YCloudPayload): Promise<void> {
   }
 
   const metaTemplateId = templateData.id;
-  const metaStatus = templateData.status as 'pending' | 'approved' | 'rejected';
+  // YCloud webhooks send UPPERCASE statuses ('APPROVED') — persist lowercase.
+  const metaStatus = normalizeMetaStatus(templateData.status);
 
   await db
     .update(whatsappTemplates)

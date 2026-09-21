@@ -27,6 +27,7 @@ interface ChatSidebarProps {
   // WhatsApp specific
   whatsappChannelConnected?: boolean;
   onConnectWhatsApp?: () => void;
+  onOpenTemplates?: () => void;
 }
 
 const FILTER_TABS: { key: FilterTab; label: string }[] = [
@@ -54,6 +55,7 @@ export function ChatSidebar({
   storeLogo,
   whatsappChannelConnected = true,
   onConnectWhatsApp,
+  onOpenTemplates,
 }: ChatSidebarProps) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -220,6 +222,15 @@ export function ChatSidebar({
       <header className={styles.header}>
         <h2 className={styles.title}>{isPinning ? 'Personalizar' : 'Mensajes'}</h2>
         <div className={styles.headerActions}>
+          {filterTab === 'whatsapp' && whatsappChannelConnected && onOpenTemplates && (
+            <IconButton
+              aria-label="Plantillas de WhatsApp"
+              className={styles.editButton}
+              onClick={onOpenTemplates}
+            >
+              <Icon>description</Icon>
+            </IconButton>
+          )}
           {canManage && (
             <IconButton
               aria-label={isPinning ? 'Terminar' : 'Personalizar lista'}

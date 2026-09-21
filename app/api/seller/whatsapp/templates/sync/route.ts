@@ -1,5 +1,6 @@
 import { db } from '@/core/database/client';
 import { businesses, whatsappChannels, whatsappTemplates } from '@/core/database/schema';
+import { normalizeMetaStatus } from '@/core/whatsapp/templates/metaStatus';
 import { createClient } from '@/lib/supabase/server';
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
@@ -126,7 +127,8 @@ export async function POST(request: Request) {
         }
 
         const ycloudData = await response.json();
-        const metaStatus = ycloudData.status as 'pending' | 'approved' | 'rejected';
+        // YCloud returns UPPERCASE statuses ('APPROVED') — persist lowercase.
+        const metaStatus = normalizeMetaStatus(ycloudData.status);
 
         // Update local status if changed
         if (metaStatus !== template.metaStatus) {

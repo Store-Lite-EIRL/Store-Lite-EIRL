@@ -1,6 +1,6 @@
 'use client';
 
-import { WhatsAppConnectButton } from '@/features/whatsapp/components/WhatsAppConnectButton';
+import { WhatsAppTemplateManager } from '@/features/whatsapp/components/WhatsAppTemplateManager';
 import { createClient } from '@/lib/supabase/client';
 import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
 import type { RealtimePostgresInsertPayload } from '@supabase/supabase-js';
@@ -20,6 +20,7 @@ import styles from '../messages.module.css';
 import { ChatSidebar } from './ChatSidebar';
 import { ChatWindow } from './ChatWindow';
 import { DeleteChatDialog } from './DeleteChatDialog';
+import { resolveChannelId } from './chatChannel';
 
 const DEBUG_ABORTS = process.env.NEXT_PUBLIC_DEBUG_ABORTS === '1';
 
@@ -174,7 +175,9 @@ export function ChatClient({
 
   // WhatsApp state
   const [whatsappChannelConnected, setWhatsAppChannelConnected] = useState(true);
+  const [whatsappChannelId, setWhatsAppChannelId] = useState<string | null>(null);
   const [showWhatsAppConnectModal, setShowWhatsAppConnectModal] = useState(false);
+  const [isTemplateManagerOpen, setIsTemplateManagerOpen] = useState(false);
 
   // ─── Pin / Reorder state (localStorage-backed) ─────────────────────
   const [isPinning, setIsPinning] = useState(false);
@@ -230,6 +233,8 @@ export function ChatClient({
           const result = await fetchWhatsAppConversations(businessId);
           if (result.success) {
             setWhatsAppChannelConnected(result.channelConnected ?? true);
+            const resolvedChannelId = resolveChannelId(result);
+            if (resolvedChannelId) setWhatsAppChannelId(resolvedChannelId);
             if (!result.channelConnected) {
               setSessions([]);
             } else if (result.conversations) {
@@ -394,8 +399,9 @@ export function ChatClient({
     let whatsappChannelId: string | null = null;
     const fetchWhatsAppChannel = async () => {
       const result = await fetchWhatsAppConversations(businessId);
-      if (result.channelConnected && result.conversations && result.conversations.length > 0) {
-        whatsappChannelId = result.conversations[0].channelId;
+      if (result.channelConnected) {
+        whatsappChannelId = resolveChannelId(result);
+        setWhatsAppChannelId(whatsappChannelId);
       }
     };
     fetchWhatsAppChannel();
@@ -712,7 +718,10 @@ export function ChatClient({
         if (!result.success) return;
 
         setWhatsAppChannelConnected(result.channelConnected ?? true);
-        if (!result.channelConnected || !result.conversations) return;
+        if (!result.channelConnected) return;
+        const resolvedChannelId = resolveChannelId(result);
+        if (resolvedChannelId) setWhatsAppChannelId(resolvedChannelId);
+        if (!result.conversations) return;
 
         setSessions((prev) => {
           const freshMap = new Map(
@@ -1183,6 +1192,9 @@ export function ChatClient({
           storeLogo={storeLogo}
           whatsappChannelConnected={whatsappChannelConnected}
           onConnectWhatsApp={() => setShowWhatsAppConnectModal(true)}
+          onOpenTemplates={
+            whatsappChannelId ? () => setIsTemplateManagerOpen(true) : undefined
+          }
         />
       </div>
       <div className={styles.windowWrapper}>
@@ -1211,6 +1223,13 @@ export function ChatClient({
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleConfirmDelete}
       />
+      {whatsappChannelId && (
+        <WhatsAppTemplateManager
+          channelId={whatsappChannelId}
+          open={isTemplateManagerOpen}
+          onClose={() => setIsTemplateManagerOpen(false)}
+        />
+      )}
       <AlertSnackbar
         open={snackbar.open}
         description={snackbar.message}
