@@ -334,17 +334,10 @@ export function ChatClient({
 
     const loadMessages = async () => {
       try {
-        let result;
         if (isWhatsApp) {
-          result = await fetchWhatsAppMessages(selectedSession.conversationId!);
-        } else {
-          result = await fetchMessages(chatId);
-        }
-
-        if (result.success && result.messages) {
-          let mappedMessages: Message[];
-          if (isWhatsApp) {
-            mappedMessages = result.messages.map((m) => ({
+          const result = await fetchWhatsAppMessages(selectedSession.conversationId!);
+          if (result.success && result.messages) {
+            const mappedMessages: Message[] = result.messages.map((m) => ({
               id: String(m.id),
               text: m.body ?? '',
               sender: m.direction === 'outbound' ? 'me' : 'them',
@@ -354,8 +347,17 @@ export function ChatClient({
               chatId: chatId,
               createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : '',
             }));
+            loadedChatsRef.current.add(chatId);
+            setMessagesByChatId((prev) => ({ ...prev, [chatId]: mappedMessages }));
           } else {
-            mappedMessages = result.messages.map((m) => ({
+            console.error('Error loading WhatsApp messages:', result.error);
+            loadedChatsRef.current.add(chatId);
+            setMessagesByChatId((prev) => ({ ...prev, [chatId]: [] }));
+          }
+        } else {
+          const result = await fetchMessages(chatId);
+          if (result.success && result.messages) {
+            const mappedMessages: Message[] = result.messages.map((m) => ({
               id: String(m.id),
               text: m.content || '',
               sender: m.isFromStore ? 'me' : 'them',
@@ -365,13 +367,13 @@ export function ChatClient({
               chatId: String(m.sessionId),
               createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : '',
             }));
+            loadedChatsRef.current.add(chatId);
+            setMessagesByChatId((prev) => ({ ...prev, [chatId]: mappedMessages }));
+          } else {
+            console.error('Error loading messages:', result.error);
+            loadedChatsRef.current.add(chatId);
+            setMessagesByChatId((prev) => ({ ...prev, [chatId]: [] }));
           }
-          loadedChatsRef.current.add(chatId);
-          setMessagesByChatId((prev) => ({ ...prev, [chatId]: mappedMessages }));
-        } else {
-          console.error('Error loading messages:', result.error);
-          loadedChatsRef.current.add(chatId);
-          setMessagesByChatId((prev) => ({ ...prev, [chatId]: [] }));
         }
       } catch (err) {
         console.error('Error loading messages:', err);
@@ -600,18 +602,12 @@ export function ChatClient({
     chatDebug('poll:start', { sessionId, isWhatsApp });
 
     const pollMessages = async () => {
-      let result;
       if (isWhatsApp) {
-        result = await fetchWhatsAppMessages(selectedSession.conversationId!);
-      } else {
-        result = await fetchMessages(sessionId);
-      }
-      if (!result.success || !result.messages) return;
+        const result = await fetchWhatsAppMessages(selectedSession.conversationId!);
+        if (!result.success || !result.messages) return;
 
-      setMessagesByChatId((prev) => {
-        let mapped: Message[];
-        if (isWhatsApp) {
-          mapped = result.messages!.map((m) => ({
+        setMessagesByChatId((prev) => {
+          const mapped: Message[] = result.messages!.map((m) => ({
             id: String(m.id),
             text: m.body ?? '',
             sender: m.direction === 'outbound' ? 'me' : 'them',
@@ -621,8 +617,41 @@ export function ChatClient({
             chatId: sessionId,
             createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : '',
           }));
-        } else {
-          mapped = result.messages!.map((m) => ({
+          const dbIds = new Set(mapped.map((m) => m.id));
+
+          const existing = prev[sessionId] ?? [];
+          const pendingTemps = existing.filter((m) => {
+            if (!m.id.startsWith('temp-')) return false;
+            return !mapped.some(
+              (db) =>
+                db.text === m.text &&
+                Math.abs(new Date(db.createdAt).getTime() - new Date(m.createdAt).getTime()) < 5000,
+            );
+          });
+
+          const merged = [...mapped, ...pendingTemps];
+          const seen = new Set<string>();
+          const deduped = merged.filter((m) => {
+            if (seen.has(m.id)) return false;
+            seen.add(m.id);
+            return true;
+          });
+          deduped.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+          if (
+            deduped.length === existing.length &&
+            deduped.every((m, i) => m.id === existing[i].id && m.text === existing[i].text)
+          ) {
+            return prev;
+          }
+          return { ...prev, [sessionId]: deduped };
+        });
+      } else {
+        const result = await fetchMessages(sessionId);
+        if (!result.success || !result.messages) return;
+
+        setMessagesByChatId((prev) => {
+          const mapped: Message[] = result.messages!.map((m) => ({
             id: String(m.id),
             text: m.content || '',
             sender: m.isFromStore ? 'me' : 'them',
@@ -632,36 +661,36 @@ export function ChatClient({
             chatId: String(m.sessionId),
             createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : '',
           }));
-        }
-        const dbIds = new Set(mapped.map((m) => m.id));
+          const dbIds = new Set(mapped.map((m) => m.id));
 
-        const existing = prev[sessionId] ?? [];
-        const pendingTemps = existing.filter((m) => {
-          if (!m.id.startsWith('temp-')) return false;
-          return !mapped.some(
-            (db) =>
-              db.text === m.text &&
-              Math.abs(new Date(db.createdAt).getTime() - new Date(m.createdAt).getTime()) < 5000,
-          );
+          const existing = prev[sessionId] ?? [];
+          const pendingTemps = existing.filter((m) => {
+            if (!m.id.startsWith('temp-')) return false;
+            return !mapped.some(
+              (db) =>
+                db.text === m.text &&
+                Math.abs(new Date(db.createdAt).getTime() - new Date(m.createdAt).getTime()) < 5000,
+            );
+          });
+
+          const merged = [...mapped, ...pendingTemps];
+          const seen = new Set<string>();
+          const deduped = merged.filter((m) => {
+            if (seen.has(m.id)) return false;
+            seen.add(m.id);
+            return true;
+          });
+          deduped.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+          if (
+            deduped.length === existing.length &&
+            deduped.every((m, i) => m.id === existing[i].id && m.text === existing[i].text)
+          ) {
+            return prev;
+          }
+          return { ...prev, [sessionId]: deduped };
         });
-
-        const merged = [...mapped, ...pendingTemps];
-        const seen = new Set<string>();
-        const deduped = merged.filter((m) => {
-          if (seen.has(m.id)) return false;
-          seen.add(m.id);
-          return true;
-        });
-        deduped.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-
-        if (
-          deduped.length === existing.length &&
-          deduped.every((m, i) => m.id === existing[i].id && m.text === existing[i].text)
-        ) {
-          return prev;
-        }
-        return { ...prev, [sessionId]: deduped };
-      });
+      }
     };
 
     const intervalId = setInterval(pollMessages, 5000);
@@ -933,60 +962,99 @@ export function ChatClient({
       };
     });
 
-    let result;
     if (isWhatsApp) {
-      result = await sendWhatsAppMessage({
+      const result = await sendWhatsAppMessage({
         conversationId: selectedSession.conversationId!,
         channelId: selectedSession.channelId!,
         type: 'text',
         body: text,
       });
+
+      if (result.success && result.message) {
+        const realId = String(result.message.id);
+        confirmedIdsRef.current.add(realId);
+        setTimeout(() => confirmedIdsRef.current.delete(realId), 2000);
+
+        setMessagesByChatId((prev) => {
+          const chatMessages = prev[sessionId] ?? [];
+          return {
+            ...prev,
+            [sessionId]: chatMessages.map((m) =>
+              m.id === tempId
+                ? {
+                    id: realId,
+                    text: result.message!.body,
+                    sender: 'me',
+                    time: `${padTwo(now.getHours())}:${padTwo(now.getMinutes())}`,
+                    chatId: sessionId,
+                    createdAt: result.message!.createdAt
+                      ? new Date(result.message!.createdAt).toISOString()
+                      : now.toISOString(),
+                  }
+                : m,
+            ),
+          };
+        });
+      } else {
+        setMessagesByChatId((prev) => {
+          const chatMessages = prev[sessionId] ?? [];
+          return {
+            ...prev,
+            [sessionId]: chatMessages.filter((m) => m.id !== tempId),
+          };
+        });
+        setSnackbar({
+          open: true,
+          message: 'Error al enviar mensaje por WhatsApp',
+          severity: 'error',
+        });
+      }
     } else {
-      result = await sendMessage({
+      const result = await sendMessage({
         sessionId: sessionId,
         isFromStore: true,
         content: text,
       });
-    }
 
-    if (result.success && result.message) {
-      const realId = String(result.message.id);
-      confirmedIdsRef.current.add(realId);
-      setTimeout(() => confirmedIdsRef.current.delete(realId), 2000);
+      if (result.success && result.message) {
+        const realId = String(result.message.id);
+        confirmedIdsRef.current.add(realId);
+        setTimeout(() => confirmedIdsRef.current.delete(realId), 2000);
 
-      setMessagesByChatId((prev) => {
-        const chatMessages = prev[sessionId] ?? [];
-        return {
-          ...prev,
-          [sessionId]: chatMessages.map((m) =>
-            m.id === tempId
-              ? {
-                  id: realId,
-                  text: isWhatsApp ? result.message!.body : result.message!.content,
-                  sender: 'me',
-                  time: `${padTwo(now.getHours())}:${padTwo(now.getMinutes())}`,
-                  chatId: sessionId,
-                  createdAt: result.message!.createdAt
-                    ? new Date(result.message!.createdAt).toISOString()
-                    : now.toISOString(),
-                }
-              : m,
-          ),
-        };
-      });
-    } else {
-      setMessagesByChatId((prev) => {
-        const chatMessages = prev[sessionId] ?? [];
-        return {
-          ...prev,
-          [sessionId]: chatMessages.filter((m) => m.id !== tempId),
-        };
-      });
-      setSnackbar({
-        open: true,
-        message: isWhatsApp ? 'Error al enviar mensaje por WhatsApp' : 'Error al enviar mensaje',
-        severity: 'error',
-      });
+        setMessagesByChatId((prev) => {
+          const chatMessages = prev[sessionId] ?? [];
+          return {
+            ...prev,
+            [sessionId]: chatMessages.map((m) =>
+              m.id === tempId
+                ? {
+                    id: realId,
+                    text: result.message!.content,
+                    sender: 'me',
+                    time: `${padTwo(now.getHours())}:${padTwo(now.getMinutes())}`,
+                    chatId: sessionId,
+                    createdAt: result.message!.createdAt
+                      ? new Date(result.message!.createdAt).toISOString()
+                      : now.toISOString(),
+                  }
+                : m,
+            ),
+          };
+        });
+      } else {
+        setMessagesByChatId((prev) => {
+          const chatMessages = prev[sessionId] ?? [];
+          return {
+            ...prev,
+            [sessionId]: chatMessages.filter((m) => m.id !== tempId),
+          };
+        });
+        setSnackbar({
+          open: true,
+          message: 'Error al enviar mensaje',
+          severity: 'error',
+        });
+      }
     }
   };
 

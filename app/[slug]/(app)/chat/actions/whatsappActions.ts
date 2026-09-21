@@ -108,7 +108,9 @@ export async function fetchWhatsAppConversations(businessId: string) {
     for (const conv of conversations) {
       const key = conv.metaBsuId ?? conv.customerPhone;
       const existing = seen.get(key);
-      if (!existing || new Date(conv.lastMessageAt) > new Date(existing.lastMessageAt)) {
+      const convTime = conv.lastMessageAt ? new Date(conv.lastMessageAt).getTime() : 0;
+      const existingTime = existing?.lastMessageAt ? new Date(existing.lastMessageAt).getTime() : 0;
+      if (!existing || convTime > existingTime) {
         seen.set(key, conv);
       }
     }
