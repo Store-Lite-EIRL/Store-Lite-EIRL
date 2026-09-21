@@ -9,6 +9,7 @@ import {
 } from '@/core/database/schema';
 import { eq, and } from 'drizzle-orm';
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import { env } from '@/config/env';
 
 const REPLAY_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 const DEDUP_TTL_MS = 10 * 60 * 1000; // 10 minutes
@@ -49,7 +50,7 @@ function parseYCloudSignature(signatureHeader: string | null): { timestamp: stri
 }
 
 function verifyYCloudSignature(rawBody: string, signatureHeader: string | null): { ok: boolean; reason?: string } {
-  const secret = process.env.YCLOUD_WEBHOOK_SECRET;
+  const secret = env.ycloudWebhookSecret;
   if (!secret) {
     if (process.env.NODE_ENV === 'production') {
       return { ok: false, reason: 'Missing YCLOUD_WEBHOOK_SECRET' };
