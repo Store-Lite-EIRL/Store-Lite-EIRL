@@ -9,6 +9,10 @@ import {
   whatsappConversations,
   whatsappMessages,
 } from '@/core/database/schema';
+import {
+  assertOutboundRateLimit,
+  assertWithinServiceWindow,
+} from '@/core/whatsapp/guards/whatsappSendGuards';
 import { createClient } from '@/lib/supabase/server';
 import { and, desc, eq } from 'drizzle-orm';
 
@@ -54,6 +58,41 @@ async function getActiveChannel(businessId: string) {
     .where(and(eq(whatsappChannels.businessId, businessId), eq(whatsappChannels.isActive, true)))
     .limit(1);
   return channel[0] ?? null;
+}
+
+/**
+ * Anti-spam guards (Meta quality rating), run before any outbound send.
+ * Free-form text is only allowed inside the 24h customer-service window;
+ * templates keep their own approval path. Every outbound send is rate limited.
+ * Returns the first guard failure as a send-result-shaped error, or null.
+ */
+async function runSendQualityGuards(data: {
+  conversationId: string;
+  channelId: string;
+  type: 'text' | 'template';
+}): Promise<{ success: false; error: string; retryAfterSeconds?: number } | null> {
+  if (data.type === 'text') {
+    const windowCheck = await assertWithinServiceWindow(data.conversationId);
+    if (!windowCheck.ok) {
+      return {
+        success: false,
+        error:
+          windowCheck.reason === 'NO_INBOUND'
+            ? 'El cliente debe escribir primero'
+            : 'Ventana de 24h expirada. Usá un template aprobado.',
+      };
+    }
+  }
+
+  const rateLimit = await assertOutboundRateLimit(data.channelId);
+  if (!rateLimit.ok) {
+    return {
+      success: false,
+      error: 'Límite de envíos alcanzado. Intentá más tarde.',
+      retryAfterSeconds: rateLimit.retryAfterSeconds,
+    };
+  }
+  return null;
 }
 
 export async function fetchWhatsAppConversations(businessId: string) {
@@ -220,6 +259,14 @@ export async function sendWhatsAppMessage(data: {
     if (!conv.length) {
       return { success: false, error: 'Conversación no encontrada' };
     }
+
+    // Anti-spam guards: fail fast before hitting the YCloud API.
+    const guardError = await runSendQualityGuards({
+      conversationId: data.conversationId,
+      channelId: data.channelId,
+      type: data.type,
+    });
+    if (guardError) return guardError;
 
     const apiKey = env.ycloudApiKey;
     if (!apiKey) {

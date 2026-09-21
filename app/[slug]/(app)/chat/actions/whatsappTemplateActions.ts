@@ -7,6 +7,10 @@ import {
   whatsappChannels,
   whatsappTemplates,
 } from '@/core/database/schema';
+import {
+  assertOutboundRateLimit,
+  assertTemplateApproved,
+} from '@/core/whatsapp/guards/whatsappSendGuards';
 import { BASE_TEMPLATES, applyBusinessName } from '@/features/chat/constants/baseTemplates';
 import { createClient } from '@/lib/supabase/server';
 import { and, desc, eq } from 'drizzle-orm';
@@ -419,7 +423,7 @@ export async function sendTemplateMessage(data: {
     type: 'body' | 'header' | 'button';
     parameters: { type: 'text'; text: string }[];
   }[];
-}): Promise<{ success: boolean; messageId?: string; error?: string }> {
+}): Promise<{ success: boolean; messageId?: string; error?: string; retryAfterSeconds?: number }> {
   try {
     const userId = await getAuthenticatedUserId();
     if (!userId) {
@@ -465,6 +469,22 @@ export async function sendTemplateMessage(data: {
 
     if (!conv.length) {
       return { success: false, error: 'Conversación no encontrada' };
+    }
+
+    // Anti-spam guards (Meta quality rating): only approved templates may be
+    // sent outside the 24h window, and every outbound send is rate limited.
+    const approved = await assertTemplateApproved(data.channelId, data.templateName);
+    if (!approved) {
+      return { success: false, error: 'Template no aprobado' };
+    }
+
+    const rateLimit = await assertOutboundRateLimit(data.channelId);
+    if (!rateLimit.ok) {
+      return {
+        success: false,
+        error: 'Límite de envíos alcanzado. Intentá más tarde.',
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      };
     }
 
     const apiKey = env.ycloudApiKey;

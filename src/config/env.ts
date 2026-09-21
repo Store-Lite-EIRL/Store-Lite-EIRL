@@ -60,6 +60,11 @@ export const env = {
   ycloudApiKey: process.env.YCLOUD_API_KEY || '',
   ycloudWabaId: process.env.YCLOUD_WABA_ID || '',
   ycloudWebhookSecret: process.env.YCLOUD_WEBHOOK_SECRET || '',
+  // WhatsApp anti-spam rate limiting (per channel/seller) — protects the Meta
+  // quality rating. Kept as STRINGS on purpose; parsing lives in the send
+  // guards (src/core/whatsapp/guards/whatsappSendGuards.ts). Defaults are safe.
+  whatsappRateLimitPerWindow: process.env.WHATSAPP_RATE_LIMIT_PER_WINDOW || '100',
+  whatsappRateLimitWindowMinutes: process.env.WHATSAPP_RATE_LIMIT_WINDOW_MINUTES || '5',
 } as const;
 
 // Optional: Add validation here to throw early if vars are missing
