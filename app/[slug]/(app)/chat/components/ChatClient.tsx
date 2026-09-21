@@ -1,5 +1,6 @@
 'use client';
 
+import { WhatsAppConnectButton } from '@/features/whatsapp/components/WhatsAppConnectButton';
 import { createClient } from '@/lib/supabase/client';
 import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
 import type { RealtimePostgresInsertPayload } from '@supabase/supabase-js';
@@ -10,6 +11,11 @@ import {
   fetchMessages,
   sendMessage,
 } from '../actions/chatActions';
+import {
+  fetchWhatsAppConversations,
+  fetchWhatsAppMessages,
+  sendWhatsAppMessage,
+} from '../actions/whatsappActions';
 import styles from '../messages.module.css';
 import { ChatSidebar } from './ChatSidebar';
 import { ChatWindow } from './ChatWindow';
@@ -99,6 +105,10 @@ export interface Chat {
   isGoogleAuth?: boolean;
   isOrderChat?: boolean;
   orderNumber?: string;
+  // WhatsApp fields
+  source?: 'store_lite' | 'whatsapp';
+  channelId?: string;
+  conversationId?: string;
 }
 
 export interface Message {
@@ -160,7 +170,11 @@ export function ChatClient({
   });
 
   const [isShareConfirmed, setIsShareConfirmed] = useState(false);
-  const [filterTab, setFilterTab] = useState<'all' | 'unread' | 'orders'>('all');
+  const [filterTab, setFilterTab] = useState<'all' | 'unread' | 'orders' | 'whatsapp'>('all');
+
+  // WhatsApp state
+  const [whatsappChannelConnected, setWhatsAppChannelConnected] = useState(true);
+  const [showWhatsAppConnectModal, setShowWhatsAppConnectModal] = useState(false);
 
   // ─── Pin / Reorder state (localStorage-backed) ─────────────────────
   const [isPinning, setIsPinning] = useState(false);
@@ -205,46 +219,93 @@ export function ChatClient({
     chatDebug('selectedSession:update', { selectedSessionId: selectedSession?.id ?? null });
   }, [selectedSession]);
 
-  // Load chat sessions
+  // Load chat sessions (store_lite or whatsapp based on filterTab)
   useEffect(() => {
     async function loadSessions() {
       setIsSessionsLoading(true);
       setError(null);
       try {
-        const result = await fetchChatSessions(businessId);
-        if (result.success && result.sessions) {
-          const mappedChats: Chat[] = result.sessions.map((s) => {
-            const lastMessage = s.messages?.[0] ?? null;
-            const preview = lastMessage
-              ? `${lastMessage.isFromStore ? 'Tú: ' : ''}${lastMessage.content}`
-              : 'Chat iniciado';
-            const time = lastMessage?.createdAt
-              ? formatMessageTime(new Date(lastMessage.createdAt))
-              : s.createdAt
-                ? formatMessageTime(new Date(s.createdAt))
-                : '';
-            return {
-              id: s.id,
-              name: s.guestName || 'Invitado',
-              preview,
-              time,
-              lastMessageAt: lastMessage?.createdAt
-                ? new Date(lastMessage.createdAt).toISOString()
-                : s.createdAt
-                  ? new Date(s.createdAt).toISOString()
-                  : new Date().toISOString(),
-              unread: 0,
-              avatarUrl: s.guestAvatarUrl || '',
-              status: s.status ?? 'active',
-              email: s.guestEmail || undefined,
-              isGoogleAuth: !!s.authUserId,
-              isOrderChat: !!s.paymentId,
-              orderNumber: s.payment?.orderNumber || undefined,
-            };
-          });
-          setSessions(mappedChats);
+        if (filterTab === 'whatsapp') {
+          // Load WhatsApp conversations
+          const result = await fetchWhatsAppConversations(businessId);
+          if (result.success) {
+            setWhatsAppChannelConnected(result.channelConnected ?? true);
+            if (!result.channelConnected) {
+              setSessions([]);
+            } else if (result.conversations) {
+              const mappedChats: Chat[] = result.conversations.map((c) => {
+                const lastMsg = c.lastMessage;
+                const preview = lastMsg
+                  ? `${lastMsg.direction === 'outbound' ? 'Tú: ' : ''}${lastMsg.body ?? ''}`
+                  : 'Conversación iniciada';
+                const time = lastMsg?.createdAt
+                  ? formatMessageTime(new Date(lastMsg.createdAt))
+                  : c.lastMessageAt
+                    ? formatMessageTime(new Date(c.lastMessageAt))
+                    : '';
+                return {
+                  id: c.id,
+                  name: c.customerName || c.customerPhone || 'Cliente WhatsApp',
+                  preview,
+                  time,
+                  lastMessageAt: lastMsg?.createdAt
+                    ? new Date(lastMsg.createdAt).toISOString()
+                    : c.lastMessageAt
+                      ? new Date(c.lastMessageAt).toISOString()
+                      : new Date().toISOString(),
+                  unread: 0,
+                  avatarUrl: '',
+                  status: c.status ?? 'active',
+                  source: 'whatsapp' as const,
+                  channelId: c.channelId,
+                  conversationId: c.id,
+                };
+              });
+              setSessions(mappedChats);
+            }
+          } else {
+            setError(result.error || 'Error al cargar conversaciones de WhatsApp');
+            setWhatsAppChannelConnected(false);
+          }
         } else {
-          setError(result.error || 'Error al cargar sesiones');
+          // Load store_lite chat sessions
+          const result = await fetchChatSessions(businessId);
+          if (result.success && result.sessions) {
+            const mappedChats: Chat[] = result.sessions.map((s) => {
+              const lastMessage = s.messages?.[0] ?? null;
+              const preview = lastMessage
+                ? `${lastMessage.isFromStore ? 'Tú: ' : ''}${lastMessage.content}`
+                : 'Chat iniciado';
+              const time = lastMessage?.createdAt
+                ? formatMessageTime(new Date(lastMessage.createdAt))
+                : s.createdAt
+                  ? formatMessageTime(new Date(s.createdAt))
+                  : '';
+              return {
+                id: s.id,
+                name: s.guestName || 'Invitado',
+                preview,
+                time,
+                lastMessageAt: lastMessage?.createdAt
+                  ? new Date(lastMessage.createdAt).toISOString()
+                  : s.createdAt
+                    ? new Date(s.createdAt).toISOString()
+                    : new Date().toISOString(),
+                unread: 0,
+                avatarUrl: s.guestAvatarUrl || '',
+                status: s.status ?? 'active',
+                email: s.guestEmail || undefined,
+                isGoogleAuth: !!s.authUserId,
+                isOrderChat: !!s.paymentId,
+                orderNumber: s.payment?.orderNumber || undefined,
+                source: 'store_lite' as const,
+              };
+            });
+            setSessions(mappedChats);
+            setWhatsAppChannelConnected(true);
+          } else {
+            setError(result.error || 'Error al cargar sesiones');
+          }
         }
       } catch (err) {
         setError('Error inesperado al cargar sesiones');
@@ -254,13 +315,14 @@ export function ChatClient({
     }
 
     loadSessions();
-  }, [businessId]);
+  }, [businessId, filterTab]);
 
   // Load messages when selection changes (with local cache)
   useEffect(() => {
     if (!selectedSession) return;
 
     const chatId = selectedSession.id;
+    const isWhatsApp = selectedSession.source === 'whatsapp';
 
     // Cache hit — skip fetch
     if (loadedChatsRef.current.has(chatId)) {
@@ -272,18 +334,38 @@ export function ChatClient({
 
     const loadMessages = async () => {
       try {
-        const result = await fetchMessages(chatId);
+        let result;
+        if (isWhatsApp) {
+          result = await fetchWhatsAppMessages(selectedSession.conversationId!);
+        } else {
+          result = await fetchMessages(chatId);
+        }
+
         if (result.success && result.messages) {
-          const mappedMessages: Message[] = result.messages.map((m) => ({
-            id: String(m.id),
-            text: m.content || '',
-            sender: m.isFromStore ? 'me' : 'them',
-            time: m.createdAt
-              ? `${padTwo(new Date(m.createdAt).getHours())}:${padTwo(new Date(m.createdAt).getMinutes())}`
-              : '',
-            chatId: String(m.sessionId),
-            createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : '',
-          }));
+          let mappedMessages: Message[];
+          if (isWhatsApp) {
+            mappedMessages = result.messages.map((m) => ({
+              id: String(m.id),
+              text: m.body ?? '',
+              sender: m.direction === 'outbound' ? 'me' : 'them',
+              time: m.createdAt
+                ? `${padTwo(new Date(m.createdAt).getHours())}:${padTwo(new Date(m.createdAt).getMinutes())}`
+                : '',
+              chatId: chatId,
+              createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : '',
+            }));
+          } else {
+            mappedMessages = result.messages.map((m) => ({
+              id: String(m.id),
+              text: m.content || '',
+              sender: m.isFromStore ? 'me' : 'them',
+              time: m.createdAt
+                ? `${padTwo(new Date(m.createdAt).getHours())}:${padTwo(new Date(m.createdAt).getMinutes())}`
+                : '',
+              chatId: String(m.sessionId),
+              createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : '',
+            }));
+          }
           loadedChatsRef.current.add(chatId);
           setMessagesByChatId((prev) => ({ ...prev, [chatId]: mappedMessages }));
         } else {
@@ -305,6 +387,17 @@ export function ChatClient({
   // Real-time subscription for sessions and messages
   useEffect(() => {
     chatDebug('subscriptions:start', { businessId });
+
+    // Get active WhatsApp channel for this business
+    let whatsappChannelId: string | null = null;
+    const fetchWhatsAppChannel = async () => {
+      const result = await fetchWhatsAppConversations(businessId);
+      if (result.channelConnected && result.conversations && result.conversations.length > 0) {
+        whatsappChannelId = result.conversations[0].channelId;
+      }
+    };
+    fetchWhatsAppChannel();
+
     // Subscribe to new chat sessions for this business
     const sessionChannel = supabase
       .channel('public:chat_sessions_owner')
@@ -346,7 +439,7 @@ export function ChatClient({
         });
       });
 
-    // Subscribe to messages
+    // Subscribe to store_lite messages
     const messageChannel = supabase
       .channel('public:messages_owner')
       .on(
@@ -418,10 +511,84 @@ export function ChatClient({
         });
       });
 
+    // Subscribe to WhatsApp messages (if channel exists)
+    let whatsappMessageChannel: ReturnType<typeof supabase.channel> | null = null;
+    if (whatsappChannelId) {
+      whatsappMessageChannel = supabase
+        .channel('public:whatsapp_messages_owner')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'whatsapp_messages',
+            filter: `channel_id=eq.${whatsappChannelId}`,
+          },
+          async (payload: RealtimePostgresInsertPayload<Record<string, unknown>>) => {
+            const newMessage = payload.new;
+            chatDebug('whatsappMessageChannel:insert', {
+              conversationId: String(newMessage.conversation_id),
+              messageId: String(newMessage.id),
+            });
+
+            const msgDate = new Date(String(newMessage.created_at));
+            const mappedMsg: Message = {
+              id: String(newMessage.id),
+              text: String(newMessage.body ?? ''),
+              sender: newMessage.direction === 'outbound' ? 'me' : 'them',
+              time: `${padTwo(msgDate.getHours())}:${padTwo(msgDate.getMinutes())}`,
+              chatId: String(newMessage.conversation_id),
+              createdAt: newMessage.created_at
+                ? new Date(String(newMessage.created_at)).toISOString()
+                : '',
+            };
+
+            // Update local cache
+            const conversationId = String(newMessage.conversation_id);
+            setMessagesByChatId((prev) => {
+              const chatMessages = prev[conversationId] ?? [];
+              if (chatMessages.some((m) => m.id === mappedMsg.id)) return prev;
+              return { ...prev, [conversationId]: [...chatMessages, mappedMsg] };
+            });
+
+            // Update preview in sidebar + INCREMENT UNREAD for non-selected chats
+            const previewText =
+              mappedMsg.sender === 'me' ? `Tú: ${mappedMsg.text}` : mappedMsg.text;
+            const previewTime = formatMessageTime(new Date(String(newMessage.created_at)));
+            setSessions((prev) =>
+              prev.map((chat) =>
+                chat.id === String(newMessage.conversation_id)
+                  ? {
+                      ...chat,
+                      preview: previewText,
+                      time: previewTime,
+                      lastMessageAt: String(newMessage.created_at),
+                      unread:
+                        chat.id === selectedSessionRef.current?.id
+                          ? chat.unread
+                          : (chat.unread ?? 0) + 1,
+                    }
+                  : chat,
+              ),
+            );
+          },
+        )
+        .subscribe((status: string, err?: Error) => {
+          chatDebug('whatsappMessageChannel:status', {
+            businessId,
+            status,
+            error: err?.message,
+          });
+        });
+    }
+
     return () => {
       chatDebug('subscriptions:cleanup', { businessId });
       supabase.removeChannel(sessionChannel);
       supabase.removeChannel(messageChannel);
+      if (whatsappMessageChannel) {
+        supabase.removeChannel(whatsappMessageChannel);
+      }
     };
   }, [businessId, supabase]);
 
@@ -429,23 +596,43 @@ export function ChatClient({
   useEffect(() => {
     if (!selectedSession) return;
     const sessionId = selectedSession.id;
-    chatDebug('poll:start', { sessionId });
+    const isWhatsApp = selectedSession.source === 'whatsapp';
+    chatDebug('poll:start', { sessionId, isWhatsApp });
 
     const pollMessages = async () => {
-      const result = await fetchMessages(sessionId);
+      let result;
+      if (isWhatsApp) {
+        result = await fetchWhatsAppMessages(selectedSession.conversationId!);
+      } else {
+        result = await fetchMessages(sessionId);
+      }
       if (!result.success || !result.messages) return;
 
       setMessagesByChatId((prev) => {
-        const mapped: Message[] = result.messages!.map((m) => ({
-          id: String(m.id),
-          text: m.content || '',
-          sender: m.isFromStore ? 'me' : 'them',
-          time: m.createdAt
-            ? `${padTwo(new Date(m.createdAt).getHours())}:${padTwo(new Date(m.createdAt).getMinutes())}`
-            : '',
-          chatId: String(m.sessionId),
-          createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : '',
-        }));
+        let mapped: Message[];
+        if (isWhatsApp) {
+          mapped = result.messages!.map((m) => ({
+            id: String(m.id),
+            text: m.body ?? '',
+            sender: m.direction === 'outbound' ? 'me' : 'them',
+            time: m.createdAt
+              ? `${padTwo(new Date(m.createdAt).getHours())}:${padTwo(new Date(m.createdAt).getMinutes())}`
+              : '',
+            chatId: sessionId,
+            createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : '',
+          }));
+        } else {
+          mapped = result.messages!.map((m) => ({
+            id: String(m.id),
+            text: m.content || '',
+            sender: m.isFromStore ? 'me' : 'them',
+            time: m.createdAt
+              ? `${padTwo(new Date(m.createdAt).getHours())}:${padTwo(new Date(m.createdAt).getMinutes())}`
+              : '',
+            chatId: String(m.sessionId),
+            createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : '',
+          }));
+        }
         const dbIds = new Set(mapped.map((m) => m.id));
 
         const existing = prev[sessionId] ?? [];
@@ -487,88 +674,168 @@ export function ChatClient({
   // This runs regardless of selectedSession, ensuring new messages and
   // session updates appear even if Realtime misses an event.
   useEffect(() => {
-    chatDebug('sessionsPoll:start', { businessId });
+    chatDebug('sessionsPoll:start', { businessId, filterTab });
 
     const pollSessions = async () => {
-      const result = await fetchChatSessions(businessId);
-      if (!result.success || !result.sessions) return;
+      if (filterTab === 'whatsapp') {
+        // Poll WhatsApp conversations
+        const result = await fetchWhatsAppConversations(businessId);
+        if (!result.success) return;
 
-      setSessions((prev) => {
-        const freshMap = new Map(
-          result.sessions!.map((s) => {
-            const lastMsg = s.messages?.[0] ?? null;
-            return [
-              s.id,
-              {
-                id: s.id,
-                name: s.guestName || 'Invitado',
-                preview: lastMsg
-                  ? `${lastMsg.isFromStore ? 'Tú: ' : ''}${lastMsg.content}`
-                  : 'Chat iniciado',
-                time: lastMsg?.createdAt
-                  ? formatMessageTime(new Date(lastMsg.createdAt))
-                  : s.createdAt
-                    ? formatMessageTime(new Date(s.createdAt))
-                    : '',
-                lastMessageAt: lastMsg?.createdAt
-                  ? new Date(lastMsg.createdAt).toISOString()
-                  : s.createdAt
-                    ? new Date(s.createdAt).toISOString()
-                    : new Date().toISOString(),
-                unread: 0,
-                avatarUrl: s.guestAvatarUrl || '',
-                status: s.status ?? 'active',
-                email: s.guestEmail || undefined,
-                isGoogleAuth: !!s.authUserId,
-                isOrderChat: !!s.paymentId,
-                orderNumber: s.payment?.orderNumber || undefined,
-              } as Chat,
-            ] as const;
-          }),
-        );
+        setWhatsAppChannelConnected(result.channelConnected ?? true);
+        if (!result.channelConnected || !result.conversations) return;
 
-        // Merge: preserve unread from existing sessions, add new ones,
-        // and detect new messages missed by Realtime via lastMessageAt diff.
-        const merged: Chat[] = [];
-        const initial = !sessionsPolledRef.current;
+        setSessions((prev) => {
+          const freshMap = new Map(
+            result.conversations!.map((c) => {
+              const lastMsg = c.lastMessage;
+              return [
+                c.id,
+                {
+                  id: c.id,
+                  name: c.customerName || c.customerPhone || 'Cliente WhatsApp',
+                  preview: lastMsg
+                    ? `${lastMsg.direction === 'outbound' ? 'Tú: ' : ''}${lastMsg.body ?? ''}`
+                    : 'Conversación iniciada',
+                  time: lastMsg?.createdAt
+                    ? formatMessageTime(new Date(lastMsg.createdAt))
+                    : c.lastMessageAt
+                      ? formatMessageTime(new Date(c.lastMessageAt))
+                      : '',
+                  lastMessageAt: lastMsg?.createdAt
+                    ? new Date(lastMsg.createdAt).toISOString()
+                    : c.lastMessageAt
+                      ? new Date(c.lastMessageAt).toISOString()
+                      : new Date().toISOString(),
+                  unread: 0,
+                  avatarUrl: '',
+                  status: c.status ?? 'active',
+                  source: 'whatsapp' as const,
+                  channelId: c.channelId,
+                  conversationId: c.id,
+                } as Chat,
+              ] as const;
+            }),
+          );
 
-        for (const fresh of freshMap.values()) {
-          const existing = prev.find((c) => c.id === fresh.id);
-          if (existing) {
-            // After the first poll, detect new messages by comparing timestamps.
-            // Only increment for non-selected chats to avoid false positives.
-            const hasNewMsg =
-              !initial &&
-              existing.lastMessageAt !== fresh.lastMessageAt &&
-              existing.id !== selectedSessionRef.current?.id;
+          // Merge: preserve unread from existing sessions, add new ones,
+          // and detect new messages missed by Realtime via lastMessageAt diff.
+          const merged: Chat[] = [];
+          const initial = !sessionsPolledRef.current;
 
-            merged.push({
-              ...fresh,
-              unread: hasNewMsg ? (existing.unread ?? 0) + 1 : existing.unread,
-            });
-          } else {
-            // Brand new session — start with 0 unread
-            merged.push(fresh);
+          for (const fresh of freshMap.values()) {
+            const existing = prev.find((c) => c.id === fresh.id);
+            if (existing) {
+              // After the first poll, detect new messages by comparing timestamps.
+              // Only increment for non-selected chats to avoid false positives.
+              const hasNewMsg =
+                !initial &&
+                existing.lastMessageAt !== fresh.lastMessageAt &&
+                existing.id !== selectedSessionRef.current?.id;
+
+              merged.push({
+                ...fresh,
+                unread: hasNewMsg ? (existing.unread ?? 0) + 1 : existing.unread,
+              });
+            } else {
+              // Brand new session — start with 0 unread
+              merged.push(fresh);
+            }
           }
-        }
 
-        sessionsPolledRef.current = true;
+          sessionsPolledRef.current = true;
 
-        // Add sessions in prev that are no longer returned by fetch
-        for (const existing of prev) {
-          if (!freshMap.has(existing.id)) {
-            merged.push(existing);
+          // Add sessions in prev that are no longer returned by fetch
+          for (const existing of prev) {
+            if (!freshMap.has(existing.id)) {
+              merged.push(existing);
+            }
           }
-        }
-        return merged;
-      });
+          return merged;
+        });
+      } else {
+        // Poll store_lite chat sessions
+        const result = await fetchChatSessions(businessId);
+        if (!result.success || !result.sessions) return;
+
+        setSessions((prev) => {
+          const freshMap = new Map(
+            result.sessions!.map((s) => {
+              const lastMsg = s.messages?.[0] ?? null;
+              return [
+                s.id,
+                {
+                  id: s.id,
+                  name: s.guestName || 'Invitado',
+                  preview: lastMsg
+                    ? `${lastMsg.isFromStore ? 'Tú: ' : ''}${lastMsg.content}`
+                    : 'Chat iniciado',
+                  time: lastMsg?.createdAt
+                    ? formatMessageTime(new Date(lastMsg.createdAt))
+                    : s.createdAt
+                      ? formatMessageTime(new Date(s.createdAt))
+                      : '',
+                  lastMessageAt: lastMsg?.createdAt
+                    ? new Date(lastMsg.createdAt).toISOString()
+                    : s.createdAt
+                      ? new Date(s.createdAt).toISOString()
+                      : new Date().toISOString(),
+                  unread: 0,
+                  avatarUrl: s.guestAvatarUrl || '',
+                  status: s.status ?? 'active',
+                  email: s.guestEmail || undefined,
+                  isGoogleAuth: !!s.authUserId,
+                  isOrderChat: !!s.paymentId,
+                  orderNumber: s.payment?.orderNumber || undefined,
+                  source: 'store_lite' as const,
+                } as Chat,
+              ] as const;
+            }),
+          );
+
+          // Merge: preserve unread from existing sessions, add new ones,
+          // and detect new messages missed by Realtime via lastMessageAt diff.
+          const merged: Chat[] = [];
+          const initial = !sessionsPolledRef.current;
+
+          for (const fresh of freshMap.values()) {
+            const existing = prev.find((c) => c.id === fresh.id);
+            if (existing) {
+              // After the first poll, detect new messages by comparing timestamps.
+              // Only increment for non-selected chats to avoid false positives.
+              const hasNewMsg =
+                !initial &&
+                existing.lastMessageAt !== fresh.lastMessageAt &&
+                existing.id !== selectedSessionRef.current?.id;
+
+              merged.push({
+                ...fresh,
+                unread: hasNewMsg ? (existing.unread ?? 0) + 1 : existing.unread,
+              });
+            } else {
+              // Brand new session — start with 0 unread
+              merged.push(fresh);
+            }
+          }
+
+          sessionsPolledRef.current = true;
+
+          // Add sessions in prev that are no longer returned by fetch
+          for (const existing of prev) {
+            if (!freshMap.has(existing.id)) {
+              merged.push(existing);
+            }
+          }
+          return merged;
+        });
+      }
     };
 
     const intervalId = setInterval(pollSessions, 10000);
     return () => {
       clearInterval(intervalId);
     };
-  }, [businessId]);
+  }, [businessId, filterTab]);
 
   // Toggle body class for mobile navbar visibility
   useEffect(() => {
@@ -585,7 +852,8 @@ export function ChatClient({
   const filteredByTab = sessions.filter((chat) => {
     if (filterTab === 'unread') return chat.status !== 'closed' && (chat.unread ?? 0) > 0;
     if (filterTab === 'orders') return chat.status !== 'closed' && chat.isOrderChat;
-    return chat.status !== 'closed';
+    if (filterTab === 'whatsapp') return chat.source === 'whatsapp';
+    return chat.status !== 'closed' && chat.source !== 'whatsapp';
   });
 
   const filteredSessions = filteredByTab.filter((chat) =>
@@ -642,6 +910,7 @@ export function ChatClient({
     if (!selectedSession || !canRespond) return;
 
     const sessionId = selectedSession.id;
+    const isWhatsApp = selectedSession.source === 'whatsapp';
     const tempId = `temp-${Date.now()}`;
     const now = new Date();
 
@@ -664,11 +933,21 @@ export function ChatClient({
       };
     });
 
-    const result = await sendMessage({
-      sessionId: sessionId,
-      isFromStore: true,
-      content: text,
-    });
+    let result;
+    if (isWhatsApp) {
+      result = await sendWhatsAppMessage({
+        conversationId: selectedSession.conversationId!,
+        channelId: selectedSession.channelId!,
+        type: 'text',
+        body: text,
+      });
+    } else {
+      result = await sendMessage({
+        sessionId: sessionId,
+        isFromStore: true,
+        content: text,
+      });
+    }
 
     if (result.success && result.message) {
       const realId = String(result.message.id);
@@ -683,7 +962,7 @@ export function ChatClient({
             m.id === tempId
               ? {
                   id: realId,
-                  text: result.message!.content,
+                  text: isWhatsApp ? result.message!.body : result.message!.content,
                   sender: 'me',
                   time: `${padTwo(now.getHours())}:${padTwo(now.getMinutes())}`,
                   chatId: sessionId,
@@ -705,7 +984,7 @@ export function ChatClient({
       });
       setSnackbar({
         open: true,
-        message: 'Error al enviar mensaje',
+        message: isWhatsApp ? 'Error al enviar mensaje por WhatsApp' : 'Error al enviar mensaje',
         severity: 'error',
       });
     }
@@ -804,6 +1083,16 @@ export function ChatClient({
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
+  const handleWhatsAppConnectSuccess = useCallback(() => {
+    setShowWhatsAppConnectModal(false);
+    // Trigger a refresh of the WhatsApp conversations
+    // The sessions effect will re-run because filterTab is 'whatsapp'
+  }, []);
+
+  const handleOpenWhatsAppConnect = useCallback(() => {
+    setShowWhatsAppConnectModal(true);
+  }, []);
+
   return (
     <div className={`${styles.chatContainer} ${selectedSession ? styles.hasSelectedChat : ''}`}>
       <div className={styles.sidebarWrapper}>
@@ -827,6 +1116,19 @@ export function ChatClient({
         />
       </div>
       <div className={styles.windowWrapper}>
+        {filterTab === 'whatsapp' && !whatsappChannelConnected && !selectedSession && (
+          <div className={styles.emptyState}>
+            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+              <p style={{ marginBottom: '20px', color: '#666' }}>
+                No tienes WhatsApp conectado a tu tienda.
+              </p>
+              <WhatsAppConnectButton
+                businessId={businessId}
+                onSuccess={handleWhatsAppConnectSuccess}
+              />
+            </div>
+          </div>
+        )}
         <ChatWindow
           session={selectedSession}
           messages={activeMessages}

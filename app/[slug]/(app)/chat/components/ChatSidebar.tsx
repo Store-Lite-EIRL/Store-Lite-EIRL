@@ -5,7 +5,7 @@ import styles from './ChatSidebar.module.css';
 
 import type { Chat } from './ChatClient';
 
-type FilterTab = 'all' | 'unread' | 'orders';
+type FilterTab = 'all' | 'unread' | 'orders' | 'whatsapp';
 
 interface ChatSidebarProps {
   chats: Chat[];
@@ -30,6 +30,7 @@ const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: 'all', label: 'Todo' },
   { key: 'orders', label: 'Ventas' },
   { key: 'unread', label: 'Sin leer' },
+  { key: 'whatsapp', label: 'WhatsApp' },
 ];
 
 export function ChatSidebar({
