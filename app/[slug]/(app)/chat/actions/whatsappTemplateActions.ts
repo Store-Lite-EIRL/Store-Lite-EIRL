@@ -2,7 +2,11 @@
 
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
-import { whatsappChannels, whatsappTemplates } from '@/core/database/schema';
+import {
+  businesses,
+  whatsappChannels,
+  whatsappTemplates,
+} from '@/core/database/schema';
 import { BASE_TEMPLATES, applyBusinessName } from '@/features/chat/constants/baseTemplates';
 import { createClient } from '@/lib/supabase/server';
 import { and, desc, eq } from 'drizzle-orm';
