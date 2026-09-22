@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MessageSquare } from 'lucide-react';
 
 interface WhatsAppConnectModalProps {
@@ -20,14 +20,17 @@ export function WhatsAppConnectModal({
 }: WhatsAppConnectModalProps) {
   const [status, setStatus] = useState<'pending' | 'connected' | 'expired' | 'error'>('pending');
   const [timeLeft, setTimeLeft] = useState<number>(0);
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Calculate initial time left
+  // Expiry time is derived purely from the expiresAt prop — safe to compute
+  // in render. Time-now (Date.now) is only read inside effects/handlers to
+  // satisfy the react-hooks/purity rule.
   const expiryTime = new Date(expiresAt).getTime();
-  const initialTimeLeft = Math.max(0, Math.floor((expiryTime - Date.now()) / 1000));
 
-  // Countdown timer
+  // Countdown timer. The initial time-left is computed here (not in render)
+  // so Date.now() never runs during render (react-hooks/purity).
   useEffect(() => {
+    const initialTimeLeft = Math.max(0, Math.floor((expiryTime - Date.now()) / 1000));
     setTimeLeft(initialTimeLeft);
 
     if (initialTimeLeft <= 0) {
@@ -45,9 +48,11 @@ export function WhatsAppConnectModal({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [expiryTime, initialTimeLeft]);
+  }, [expiryTime]);
 
-  // Polling for status
+  // Polling for status. Deps intentionally exclude `timeLeft` so the poll
+  // interval is NOT torn down and recreated on every 1s countdown tick
+  // (which would fire ~1 status request per second while pending).
   useEffect(() => {
     if (status !== 'pending') return;
 
@@ -63,12 +68,12 @@ export function WhatsAppConnectModal({
 
         if (response.ok && data.status === 'connected') {
           setStatus('connected');
-          if (pollingInterval) clearInterval(pollingInterval);
+          if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
           // Small delay to show success state
           setTimeout(() => onSuccess(), 1000);
-        } else if (data.status === 'expired' || initialTimeLeft <= 0) {
+        } else if (data.status === 'expired' || Date.now() >= expiryTime) {
           setStatus('expired');
-          if (pollingInterval) clearInterval(pollingInterval);
+          if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
         }
       } catch (err) {
         console.error('[WhatsAppConnectModal] Polling error:', err);
@@ -76,15 +81,16 @@ export function WhatsAppConnectModal({
     };
 
     const interval = setInterval(poll, 5000);
-    setPollingInterval(interval);
+    pollingIntervalRef.current = interval;
 
     // Initial check
     poll();
 
     return () => {
-      if (interval) clearInterval(interval);
+      clearInterval(interval);
+      pollingIntervalRef.current = null;
     };
-  }, [phoneNumberId, status, timeLeft, onSuccess]);
+  }, [phoneNumberId, status, expiryTime, onSuccess]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

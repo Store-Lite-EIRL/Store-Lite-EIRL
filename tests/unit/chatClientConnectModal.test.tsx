@@ -193,9 +193,24 @@ describe('ChatClient WhatsApp connect modal', () => {
     renderChatClient();
     fireEvent.click(await goToWhatsAppTab());
 
-    expect(await screen.findByText('ABC-123')).toBeInTheDocument();
-
     // The modal polls the status endpoint → connected → onSuccess → ChatClient closes it.
+    //
+    // NOTE: do NOT await the pairing code text ('ABC-123') here. The status
+    // endpoint returns 'connected' immediately, so the modal's first poll —
+    // which fires synchronously on mount — transitions to the success frame
+    // in the same tick, and the pending code frame may never be observable.
+    // This was a pre-existing flake (confirmed by repeated pre-fix runs);
+    // awaiting the 1s success frame instead is deterministic.
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/seller/whatsapp/connect/status',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ phoneNumberId: 'pn-1001' }),
+        }),
+      ),
+    );
+
     expect(await screen.findByText('¡WhatsApp Conectado!')).toBeInTheDocument();
     await waitFor(
       () => expect(screen.queryByText('¡WhatsApp Conectado!')).not.toBeInTheDocument(),
