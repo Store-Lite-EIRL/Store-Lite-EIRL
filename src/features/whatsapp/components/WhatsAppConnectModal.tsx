@@ -66,7 +66,7 @@ export function WhatsAppConnectModal({
           if (pollingInterval) clearInterval(pollingInterval);
           // Small delay to show success state
           setTimeout(() => onSuccess(), 1000);
-        } else if (data.status === 'expired' || timeLeft <= 0) {
+        } else if (data.status === 'expired' || initialTimeLeft <= 0) {
           setStatus('expired');
           if (pollingInterval) clearInterval(pollingInterval);
         }

@@ -1,5 +1,6 @@
 'use client';
 
+import { WhatsAppConnectModal } from '@/features/whatsapp/components/WhatsAppConnectModal';
 import { WhatsAppTemplateManager } from '@/features/whatsapp/components/WhatsAppTemplateManager';
 import { createClient } from '@/lib/supabase/client';
 import { AlertSnackbar } from '@/shared/components/ui/feedback/AlertSnackbar';
@@ -177,6 +178,11 @@ export function ChatClient({
   const [whatsappChannelConnected, setWhatsAppChannelConnected] = useState(true);
   const [whatsappChannelId, setWhatsAppChannelId] = useState<string | null>(null);
   const [showWhatsAppConnectModal, setShowWhatsAppConnectModal] = useState(false);
+  const [whatsAppConnectData, setWhatsAppConnectData] = useState<{
+    phoneNumberId: string;
+    code: string;
+    expiresAt: string;
+  } | null>(null);
   const [isTemplateManagerOpen, setIsTemplateManagerOpen] = useState(false);
 
   // ─── Pin / Reorder state (localStorage-backed) ─────────────────────
@@ -1162,12 +1168,39 @@ export function ChatClient({
 
   const handleWhatsAppConnectSuccess = useCallback(() => {
     setShowWhatsAppConnectModal(false);
+    setWhatsAppConnectData(null);
     // Trigger a refresh of the WhatsApp conversations
     // The sessions effect will re-run because filterTab is 'whatsapp'
   }, []);
 
-  const handleOpenWhatsAppConnect = useCallback(() => {
-    setShowWhatsAppConnectModal(true);
+  const handleOpenWhatsAppConnect = useCallback(async () => {
+    try {
+      const response = await fetch('/api/seller/whatsapp/connect/init', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al iniciar la conexión de WhatsApp');
+      }
+
+      setWhatsAppConnectData(data);
+      setShowWhatsAppConnectModal(true);
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: err instanceof Error ? err.message : 'Error al iniciar la conexión de WhatsApp',
+        severity: 'error',
+      });
+    }
+  }, [businessId]);
+
+  const handleWhatsAppConnectModalClose = useCallback(() => {
+    setShowWhatsAppConnectModal(false);
+    setWhatsAppConnectData(null);
   }, []);
 
   return (
@@ -1191,7 +1224,7 @@ export function ChatClient({
           canManage={canManage}
           storeLogo={storeLogo}
           whatsappChannelConnected={whatsappChannelConnected}
-          onConnectWhatsApp={() => setShowWhatsAppConnectModal(true)}
+          onConnectWhatsApp={handleOpenWhatsAppConnect}
           onOpenTemplates={
             whatsappChannelId ? () => setIsTemplateManagerOpen(true) : undefined
           }
@@ -1228,6 +1261,15 @@ export function ChatClient({
           channelId={whatsappChannelId}
           open={isTemplateManagerOpen}
           onClose={() => setIsTemplateManagerOpen(false)}
+        />
+      )}
+      {showWhatsAppConnectModal && whatsAppConnectData && (
+        <WhatsAppConnectModal
+          phoneNumberId={whatsAppConnectData.phoneNumberId}
+          code={whatsAppConnectData.code}
+          expiresAt={whatsAppConnectData.expiresAt}
+          onClose={handleWhatsAppConnectModalClose}
+          onSuccess={handleWhatsAppConnectSuccess}
         />
       )}
       <AlertSnackbar
