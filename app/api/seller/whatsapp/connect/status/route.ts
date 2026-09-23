@@ -8,6 +8,8 @@ import { z } from 'zod';
 
 const connectStatusSchema = z.object({
   phoneNumberId: z.string().min(1, 'phoneNumberId es requerido'),
+  // Optional: adoption polling sends it; must match the channel's business.
+  businessId: z.string().uuid('ID de negocio inválido').optional(),
 });
 
 const YCLOUD_API_BASE = 'https://api.ycloud.com/v2';
@@ -27,7 +29,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { phoneNumberId } = validationResult.data;
+    const { phoneNumberId, businessId } = validationResult.data;
 
     // Authenticate user
     const supabase = await createClient();
@@ -47,6 +49,7 @@ export async function POST(request: Request) {
         businessId: true,
         ycloudPhoneNumberId: true,
         isActive: true,
+        connectionStatus: true,
         connectedAt: true,
         displayPhoneNumber: true,
       },
@@ -54,6 +57,12 @@ export async function POST(request: Request) {
 
     if (!channel) {
       return NextResponse.json({ error: 'Canal no encontrado' }, { status: 404 });
+    }
+
+    // When the caller supplies a businessId, it MUST match the channel's
+    // business — cross-tenant status reads fail closed.
+    if (businessId && businessId !== channel.businessId) {
+      return NextResponse.json({ error: 'Sin permisos para este canal' }, { status: 403 });
     }
 
     // Verify ownership - fetch business separately
@@ -71,6 +80,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         status: 'connected',
         isActive: true,
+        connectionStatus: channel.connectionStatus,
         displayPhoneNumber: channel.displayPhoneNumber,
         connectedAt: channel.connectedAt,
       });
@@ -103,6 +113,7 @@ export async function POST(request: Request) {
         return NextResponse.json({
           status: 'pending',
           isActive: channel.isActive,
+          connectionStatus: channel.connectionStatus,
           displayPhoneNumber: channel.displayPhoneNumber,
           connectedAt: channel.connectedAt,
         });
@@ -113,6 +124,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         status: 'pending',
         isActive: channel.isActive,
+        connectionStatus: channel.connectionStatus,
         displayPhoneNumber: channel.displayPhoneNumber,
         connectedAt: channel.connectedAt,
       });
@@ -139,6 +151,7 @@ export async function POST(request: Request) {
         .update(whatsappChannels)
         .set({
           isActive: true,
+          connectionStatus: 'connected',
           connectedAt,
           displayPhoneNumber: displayPhoneNumber ?? null,
           updatedAt: new Date(),
@@ -148,6 +161,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         status: 'connected',
         isActive: true,
+        connectionStatus: 'connected',
         displayPhoneNumber,
         connectedAt,
       });
@@ -157,6 +171,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       status: ycloudStatus || 'pending',
       isActive: false,
+      connectionStatus: channel.connectionStatus,
       displayPhoneNumber: channel.displayPhoneNumber,
       connectedAt: channel.connectedAt,
     });
