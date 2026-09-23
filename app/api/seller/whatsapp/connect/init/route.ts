@@ -1,10 +1,10 @@
+import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businesses, whatsappChannels } from '@/core/database/schema';
 import { createClient } from '@/lib/supabase/server';
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { env } from '@/config/env';
 
 const connectInitSchema = z.object({
   businessId: z.string().uuid('ID de negocio inválido'),
@@ -74,17 +74,15 @@ export async function POST(request: Request) {
       );
     }
 
-    // Call YCloud API to register phone number (Embedded Signup)
-    const ycloudResponse = await fetch(`${YCLOUD_API_BASE}/whatsapp/phoneNumbers/register`, {
-      method: 'POST',
+    // The current YCloud API has no register endpoint that accepts a WABA id.
+    // The account already owns its phone numbers, so list them and adopt the
+    // CONNECTED one that belongs to the configured WABA.
+    const ycloudResponse = await fetch(`${YCLOUD_API_BASE}/whatsapp/phoneNumbers`, {
+      method: 'GET',
       headers: {
         'X-API-Key': apiKey,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        waba_id: wabaId,
-        // pin is optional - let YCloud generate the 6-digit code
-      }),
     });
 
     const ycloudData = await ycloudResponse.json();
@@ -97,32 +95,70 @@ export async function POST(request: Request) {
       );
     }
 
-    // Extract data from YCloud response
-    const { id: phoneNumberId, code, expires_at: expiresAt } = ycloudData;
+    // List endpoints return a paginated page ({ items: [...] }); tolerate a
+    // raw array defensively.
+    interface YCloudPhoneNumber {
+      id: string;
+      status?: string;
+      wabaId?: string;
+      displayPhoneNumber?: string | null;
+    }
+    const phoneNumbers: YCloudPhoneNumber[] = Array.isArray(ycloudData)
+      ? ycloudData
+      : (ycloudData?.items ?? []);
+    const connectedNumber = phoneNumbers.find(
+      (number) => number.status === 'CONNECTED' && number.wabaId === wabaId,
+    );
 
-    if (!phoneNumberId || !code || !expiresAt) {
-      console.error('[whatsapp/connect/init] Invalid YCloud response:', ycloudData);
+    if (!connectedNumber) {
       return NextResponse.json(
-        { error: 'Respuesta inválida de YCloud' },
-        { status: 500 },
+        {
+          error:
+            'No hay un número de WhatsApp conectado en la cuenta de YCloud. Conecta un número desde la consola de YCloud primero.',
+        },
+        { status: 409 },
       );
     }
 
-    // Save to database
-    await db.insert(whatsappChannels).values({
-      businessId,
-      ycloudPhoneNumberId: phoneNumberId,
-      wabaId,
-      isActive: false,
-      connectedAt: null,
-      displayPhoneNumber: null,
+    const { id: phoneNumberId, displayPhoneNumber } = connectedNumber;
+
+    // Guard the unique ycloudPhoneNumberId constraint: if a (stale, INACTIVE)
+    // channel already owns this number, reactivate it instead of inserting.
+    const channelForNumber = await db.query.whatsappChannels.findFirst({
+      where: eq(whatsappChannels.ycloudPhoneNumberId, phoneNumberId),
+      columns: { id: true },
     });
 
-    // Return code and expiry to frontend
+    const connectedAt = new Date();
+
+    if (channelForNumber) {
+      await db
+        .update(whatsappChannels)
+        .set({
+          isActive: true,
+          displayPhoneNumber: displayPhoneNumber ?? null,
+          connectedAt,
+          updatedAt: new Date(),
+        })
+        .where(eq(whatsappChannels.id, channelForNumber.id));
+    } else {
+      await db.insert(whatsappChannels).values({
+        businessId,
+        ycloudPhoneNumberId: phoneNumberId,
+        wabaId,
+        isActive: true,
+        displayPhoneNumber: displayPhoneNumber ?? null,
+        connectedAt,
+      });
+    }
+
+    // Return the adopted number: the account is already connected, so the
+    // client knows no pairing modal is needed.
     return NextResponse.json({
       phoneNumberId,
-      code,
-      expiresAt,
+      status: 'connected',
+      displayPhoneNumber: displayPhoneNumber ?? null,
+      connectedAt,
     });
   } catch (error) {
     console.error('[whatsapp/connect/init] Error:', error);

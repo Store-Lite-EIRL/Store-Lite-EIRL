@@ -6,9 +6,9 @@
 // render <WhatsAppConnectModal> with the returned pairing data on success,
 // surface init errors via the snackbar, and close the modal on success.
 
+import { ChatClient } from '@/app/[slug]/(app)/chat/components/ChatClient';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ChatClient } from '@/app/[slug]/(app)/chat/components/ChatClient';
 
 const BUSINESS_ID = '22222222-2222-4222-8222-222222222222';
 
@@ -216,5 +216,54 @@ describe('ChatClient WhatsApp connect modal', () => {
       () => expect(screen.queryByText('¡WhatsApp Conectado!')).not.toBeInTheDocument(),
       { timeout: 3000 },
     );
+  });
+
+  it('skips the modal and refreshes the channel when init reports an already connected number', async () => {
+    stubFetch({
+      'POST /api/seller/whatsapp/connect/init': {
+        body: {
+          phoneNumberId: 'pn-1001',
+          status: 'connected',
+          displayPhoneNumber: '+51 967 356 665',
+          connectedAt: '2026-09-21T12:00:00.000Z',
+        },
+      },
+    });
+
+    // 1) mount-subscription fetch → disconnected, 2) whatsapp-tab load →
+    // disconnected (connect button visible), 3) post-init refresh → connected.
+    mockFetchWhatsAppConversations
+      .mockResolvedValueOnce({
+        success: true,
+        conversations: [],
+        channelConnected: false,
+        channelId: null,
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        conversations: [],
+        channelConnected: false,
+        channelId: null,
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        conversations: [],
+        channelConnected: true,
+        channelId: 'ch-1001',
+      });
+
+    renderChatClient();
+    fireEvent.click(await goToWhatsAppTab());
+
+    // Success snackbar instead of the pairing modal.
+    expect(await screen.findByText('WhatsApp conectado correctamente')).toBeInTheDocument();
+    expect(screen.queryByText('Ingresa este código en WhatsApp Business')).not.toBeInTheDocument();
+
+    // The handler refreshed the WhatsApp channel state: the sidebar no longer
+    // offers "Conectar WhatsApp" and shows the connected empty state.
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Conectar WhatsApp' })).not.toBeInTheDocument(),
+    );
+    expect(screen.getByText('No hay conversaciones')).toBeInTheDocument();
   });
 });

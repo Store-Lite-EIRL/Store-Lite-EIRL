@@ -1,10 +1,10 @@
+import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businesses, whatsappChannels } from '@/core/database/schema';
 import { createClient } from '@/lib/supabase/server';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { env } from '@/config/env';
 
 const connectStatusSchema = z.object({
   phoneNumberId: z.string().min(1, 'phoneNumberId es requerido'),
@@ -81,25 +81,34 @@ export async function POST(request: Request) {
 
     if (!apiKey) {
       console.error('[whatsapp/connect/status] Missing YCloud API key');
-      return NextResponse.json(
-        { error: 'Configuración de WhatsApp incompleta' },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: 'Configuración de WhatsApp incompleta' }, { status: 500 });
     }
 
-    // Query YCloud for current status
-    const ycloudResponse = await fetch(`${YCLOUD_API_BASE}/whatsapp/phoneNumbers/${phoneNumberId}`, {
-      method: 'GET',
-      headers: {
-        'X-API-Key': apiKey,
-        'Content-Type': 'application/json',
-      },
-    });
+    // Query YCloud for current status. The per-number GET endpoint does not
+    // exist in the current API, so list the account numbers and match by id.
+    let ycloudData: unknown;
+    try {
+      const ycloudResponse = await fetch(`${YCLOUD_API_BASE}/whatsapp/phoneNumbers`, {
+        method: 'GET',
+        headers: {
+          'X-API-Key': apiKey,
+          'Content-Type': 'application/json',
+        },
+      });
+      ycloudData = await ycloudResponse.json();
 
-    const ycloudData = await ycloudResponse.json();
-
-    if (!ycloudResponse.ok) {
-      console.error('[whatsapp/connect/status] YCloud error:', ycloudData);
+      if (!ycloudResponse.ok) {
+        console.error('[whatsapp/connect/status] YCloud error:', ycloudData);
+        // Don't fail - return current DB state
+        return NextResponse.json({
+          status: 'pending',
+          isActive: channel.isActive,
+          displayPhoneNumber: channel.displayPhoneNumber,
+          connectedAt: channel.connectedAt,
+        });
+      }
+    } catch (error) {
+      console.error('[whatsapp/connect/status] YCloud request failed:', error);
       // Don't fail - return current DB state
       return NextResponse.json({
         status: 'pending',
@@ -109,15 +118,28 @@ export async function POST(request: Request) {
       });
     }
 
-    const { status: ycloudStatus, display_phone_number: displayPhoneNumber } = ycloudData;
+    // List endpoints return a paginated page ({ items: [...] }); tolerate a
+    // raw array defensively.
+    interface YCloudPhoneNumber {
+      id?: string;
+      status?: string;
+      displayPhoneNumber?: string | null;
+    }
+    const body = ycloudData as YCloudPhoneNumber[] | { items?: YCloudPhoneNumber[] } | null;
+    const phoneNumbers = Array.isArray(body) ? body : (body?.items ?? []);
+    const ycloudNumber = phoneNumbers.find((number) => number.id === channel.ycloudPhoneNumberId);
+
+    const ycloudStatus = ycloudNumber?.status;
+    const displayPhoneNumber = ycloudNumber?.displayPhoneNumber ?? channel.displayPhoneNumber;
 
     // If connected, update database
-    if (ycloudStatus === 'connected') {
+    if (ycloudStatus === 'CONNECTED') {
+      const connectedAt = new Date();
       await db
         .update(whatsappChannels)
         .set({
           isActive: true,
-          connectedAt: new Date(),
+          connectedAt,
           displayPhoneNumber: displayPhoneNumber ?? null,
           updatedAt: new Date(),
         })
@@ -127,7 +149,7 @@ export async function POST(request: Request) {
         status: 'connected',
         isActive: true,
         displayPhoneNumber,
-        connectedAt: new Date().toISOString(),
+        connectedAt,
       });
     }
 

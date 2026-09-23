@@ -1187,6 +1187,28 @@ export function ChatClient({
         throw new Error(data.error || 'Error al iniciar la conexión de WhatsApp');
       }
 
+      // The YCloud account already has a CONNECTED number: init adopted it,
+      // so no pairing modal is needed. Refresh the channel state so the UI
+      // shows the connected channel.
+      if (data.status === 'connected') {
+        setShowWhatsAppConnectModal(false);
+        setWhatsAppConnectData(null);
+
+        const result = await fetchWhatsAppConversations(businessId);
+        if (result.success) {
+          setWhatsAppChannelConnected(result.channelConnected ?? true);
+          const resolvedChannelId = resolveChannelId(result);
+          if (resolvedChannelId) setWhatsAppChannelId(resolvedChannelId);
+        }
+
+        setSnackbar({
+          open: true,
+          message: 'WhatsApp conectado correctamente',
+          severity: 'success',
+        });
+        return;
+      }
+
       setWhatsAppConnectData(data);
       setShowWhatsAppConnectModal(true);
     } catch (err) {
@@ -1225,9 +1247,7 @@ export function ChatClient({
           storeLogo={storeLogo}
           whatsappChannelConnected={whatsappChannelConnected}
           onConnectWhatsApp={handleOpenWhatsAppConnect}
-          onOpenTemplates={
-            whatsappChannelId ? () => setIsTemplateManagerOpen(true) : undefined
-          }
+          onOpenTemplates={whatsappChannelId ? () => setIsTemplateManagerOpen(true) : undefined}
         />
       </div>
       <div className={styles.windowWrapper}>
