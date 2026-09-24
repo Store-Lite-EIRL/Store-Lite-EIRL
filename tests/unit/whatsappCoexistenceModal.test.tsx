@@ -39,12 +39,13 @@ function renderModal(
   );
 }
 
-/** Dispatches a WA_EMBEDDED_SIGNUP postMessage from the allowlisted origin. */
-function dispatchEmbeddedSignup(subtype: string, inner?: unknown) {
+/** Dispatches a WA_EMBEDDED_SIGNUP postMessage from the allowlisted origin
+ *  using the REAL Meta wire shape: data is a JSON string, `event` UPPERCASE. */
+function dispatchEmbeddedSignup(event: string, inner?: unknown) {
   window.dispatchEvent(
     new MessageEvent('message', {
       origin: FB_ORIGIN,
-      data: { type: 'WA_EMBEDDED_SIGNUP', data: { type: subtype, data: inner ?? null } },
+      data: JSON.stringify({ type: 'WA_EMBEDDED_SIGNUP', event, data: inner ?? null }),
     }),
   );
 }
@@ -173,7 +174,7 @@ describe('WhatsAppCoexistenceModal', () => {
     expect(screen.getByText(/Vinculando tu número/)).toBeInTheDocument();
 
     await act(async () => {
-      dispatchEmbeddedSignup('cancel');
+      dispatchEmbeddedSignup('CANCEL');
     });
 
     expect(screen.getByRole('button', { name: 'Continuar con Meta' })).toBeInTheDocument();
