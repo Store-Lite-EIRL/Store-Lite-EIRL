@@ -19,7 +19,10 @@ const FAILED_STATUSES: ReadonlySet<string> = new Set(['DISCONNECTED', 'REJECTED'
 export interface PhoneChannelStatusResult {
   connectionStatus: PhoneChannelStatus;
   isActive?: boolean;
-  connectedAt?: Date;
+  /** null when the channel is deactivated (failed) — the previous
+   *  connection timestamp is cleared so no connected-but-failed
+   *  contradiction can ever be observed. */
+  connectedAt?: Date | null;
 }
 
 export function normalizePhoneChannelStatus(

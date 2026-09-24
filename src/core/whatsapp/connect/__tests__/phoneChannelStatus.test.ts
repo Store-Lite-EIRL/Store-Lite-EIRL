@@ -24,8 +24,12 @@ describe('normalizePhoneChannelStatus', () => {
 
   it('maps DISCONNECTED/REJECTED/DEREGISTERED to failed without activating', () => {
     for (const status of ['DISCONNECTED', 'REJECTED', 'DEREGISTERED']) {
+      // Coherent failed contract (W1-A): the channel is deactivated and the
+      // previous connection timestamp cleared — not just a status string.
       expect(normalizePhoneChannelStatus(status)).toEqual({
         connectionStatus: 'failed',
+        isActive: false,
+        connectedAt: null,
       });
     }
   });

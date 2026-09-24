@@ -26,6 +26,17 @@ export interface WhatsAppCoexistenceModalProps {
   onFinish: (payload: { businessId: string; wabaId: string; phoneNumberId: string }) => void;
   /** Parent-driven terminal status (slice 4): pending | connected | failed. */
   connectionStatus?: 'pending' | 'connected' | 'failed';
+  /**
+   * Parent-driven bind error (slice 4): the YCloud message returned by
+   * POST /connect/complete on failure. Shown in the error-retry frame;
+   * when absent, the modal falls back to its local popup error message.
+   */
+  errorMessage?: string | null;
+  /**
+   * Called when the seller retries after a parent-driven failure. The parent
+   * must clear its 'failed' state, otherwise the error frame can never exit.
+   */
+  onRetry?: () => void;
 }
 
 type Phase = 'idle' | 'connecting' | 'pending' | 'error';
@@ -35,9 +46,11 @@ export function WhatsAppCoexistenceModal({
   onClose,
   onFinish,
   connectionStatus,
+  errorMessage,
+  onRetry,
 }: WhatsAppCoexistenceModalProps) {
   const [phase, setPhase] = useState<Phase>('idle');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [localErrorMessage, setLocalErrorMessage] = useState<string | null>(null);
 
   const handleFinish = useCallback(
     (payload: EmbeddedSignupFinishPayload) => {
@@ -52,16 +65,19 @@ export function WhatsAppCoexistenceModal({
   const { launch } = useFbEmbeddedSignup({
     onFinish: handleFinish,
     onError: (message) => {
-      setErrorMessage(message);
+      setLocalErrorMessage(message);
       setPhase('error');
     },
     onCancel: () => setPhase('idle'),
   });
 
   const handleLaunch = useCallback(() => {
+    // The parent may hold the modal in a 'failed' lock (bind error or W1
+    // contract); let it clear that state before re-running the popup flow.
+    onRetry?.();
     setPhase('connecting');
     void launch();
-  }, [launch]);
+  }, [launch, onRetry]);
 
   // Parent-driven terminal states (slice 4 wires the poll).
   if (connectionStatus === 'connected') {
@@ -85,6 +101,7 @@ export function WhatsAppCoexistenceModal({
   }
 
   const showError = connectionStatus === 'failed' || phase === 'error';
+  const shownErrorMessage = errorMessage ?? localErrorMessage;
 
   const isProgressing = phase === 'connecting' || phase === 'pending';
   const progressTitle = phase === 'connecting' ? 'Conectando con Meta…' : 'Vinculando tu número';
@@ -115,7 +132,7 @@ export function WhatsAppCoexistenceModal({
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             No se pudo completar la vinculación
           </h2>
-          {errorMessage && <p className="text-gray-600 mb-6">{errorMessage}</p>}
+          {shownErrorMessage && <p className="text-gray-600 mb-6">{shownErrorMessage}</p>}
           <div className="mt-6 space-y-3">
             <button
               onClick={handleLaunch}
