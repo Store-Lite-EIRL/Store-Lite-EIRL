@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import {
   whatsappChannels,
@@ -7,10 +8,10 @@ import {
   whatsappMessages,
   whatsappTemplates,
 } from '@/core/database/schema';
-import { eq, and } from 'drizzle-orm';
-import { createHmac, timingSafeEqual } from 'node:crypto';
-import { env } from '@/config/env';
+import { normalizePhoneChannelStatus } from '@/core/whatsapp/connect/phoneChannelStatus';
 import { normalizeMetaStatus } from '@/core/whatsapp/templates/metaStatus';
+import { and, eq } from 'drizzle-orm';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 
 const REPLAY_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 const DEDUP_TTL_MS = 10 * 60 * 1000; // 10 minutes
@@ -33,7 +34,10 @@ function cleanupSeenEvents(now: number): void {
   }
 }
 
-function parseYCloudSignature(signatureHeader: string | null): { timestamp: string | null; signature: string | null } {
+function parseYCloudSignature(signatureHeader: string | null): {
+  timestamp: string | null;
+  signature: string | null;
+} {
   if (!signatureHeader) return { timestamp: null, signature: null };
 
   const parts = signatureHeader.split(',').map((part) => part.trim());
@@ -50,7 +54,10 @@ function parseYCloudSignature(signatureHeader: string | null): { timestamp: stri
   return { timestamp, signature };
 }
 
-function verifyYCloudSignature(rawBody: string, signatureHeader: string | null): { ok: boolean; reason?: string } {
+function verifyYCloudSignature(
+  rawBody: string,
+  signatureHeader: string | null,
+): { ok: boolean; reason?: string } {
   const secret = env.ycloudWebhookSecret;
   if (!secret) {
     if (process.env.NODE_ENV === 'production') {
@@ -169,7 +176,13 @@ async function handleInboundMessageReceived(payload: YCloudPayload): Promise<voi
   const customerName = contactData?.profile?.name;
   const metaBsuId = messageData.context?.from;
 
-  const conversationId = await upsertConversation(channelId, customerPhone, customerName, metaBsuId, timestamp);
+  const conversationId = await upsertConversation(
+    channelId,
+    customerPhone,
+    customerName,
+    metaBsuId,
+    timestamp,
+  );
 
   const { body, templateName } = extractMessageBody(type, messageData);
 
@@ -197,7 +210,9 @@ async function findChannelByPhoneNumberId(ycloudPhoneNumberId: string) {
     .limit(1);
 
   if (!channel.length) {
-    console.warn(`[ycloud-webhook] Channel not found for ycloudPhoneNumberId: ${ycloudPhoneNumberId}`);
+    console.warn(
+      `[ycloud-webhook] Channel not found for ycloudPhoneNumberId: ${ycloudPhoneNumberId}`,
+    );
     return null;
   }
   return channel[0];
@@ -222,11 +237,7 @@ async function upsertConversation(
         eq(whatsappConversations.status, 'active'),
       );
 
-  const existingConv = await db
-    .select()
-    .from(whatsappConversations)
-    .where(whereClause)
-    .limit(1);
+  const existingConv = await db.select().from(whatsappConversations).where(whereClause).limit(1);
 
   if (existingConv.length > 0) {
     const conversationId = existingConv[0].id;
@@ -276,7 +287,10 @@ function extractMessageBody(
         '';
       break;
     case 'interactive':
-      body = messageData.interactive?.button_reply?.title ?? messageData.interactive?.list_reply?.title ?? '';
+      body =
+        messageData.interactive?.button_reply?.title ??
+        messageData.interactive?.list_reply?.title ??
+        '';
       break;
     default:
       body = JSON.stringify(messageData);
@@ -316,7 +330,8 @@ async function handleMessageUpdated(payload: YCloudPayload): Promise<void> {
   }
 
   const ycloudMessageId = messageData.id;
-  const status = (messageData.status as 'accepted' | 'sent' | 'delivered' | 'read' | 'failed') ?? 'accepted';
+  const status =
+    (messageData.status as 'accepted' | 'sent' | 'delivered' | 'read' | 'failed') ?? 'accepted';
   const metaPrice = messageData.pricing?.price;
   const metaCurrency = messageData.pricing?.currency;
   const errorCode = messageData.errors?.[0]?.code;
@@ -371,16 +386,31 @@ async function handlePhoneNumberUpdated(payload: YCloudPayload): Promise<void> {
   const displayPhoneNumber = phoneNumberData.display_phone_number;
   const status = phoneNumberData.status;
 
+  // YCloud sends UPPERCASE statuses; activation happens ONLY on exact
+  // 'CONNECTED' (see phoneChannelStatus.ts). Persist the normalized
+  // connection_status on every status-bearing update.
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   if (displayPhoneNumber) updates.displayPhoneNumber = displayPhoneNumber;
-  if (status) updates.isActive = status === 'connected';
+  if (status) {
+    const normalized = normalizePhoneChannelStatus(status);
+    updates.connectionStatus = normalized.connectionStatus;
+    // CONNECTED activates (isActive + connectedAt); failed statuses DEACTIVATE
+    // (isActive false) and clear any stale connection timestamp so the UI can
+    // retry. 'pending' leaves activation untouched.
+    if (normalized.isActive !== undefined) {
+      updates.isActive = normalized.isActive;
+      updates.connectedAt = normalized.connectedAt ?? null;
+    }
+  }
 
   await db
     .update(whatsappChannels)
     .set(updates)
     .where(eq(whatsappChannels.ycloudPhoneNumberId, ycloudPhoneNumberId));
 
-  console.warn(`[ycloud-webhook] Channel ${ycloudPhoneNumberId} updated: ${JSON.stringify(updates)}`);
+  console.warn(
+    `[ycloud-webhook] Channel ${ycloudPhoneNumberId} updated: ${JSON.stringify(updates)}`,
+  );
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -434,6 +464,13 @@ export async function POST(request: Request): Promise<Response> {
       }
       case 'whatsapp.phone_number.updated': {
         await handlePhoneNumberUpdated(body);
+        break;
+      }
+      case 'smb.app.state.sync': {
+        // Ack Meta's state sync pulse. No contact/channel import by design:
+        // contacts are created lazily on inbound messages (see Out of Scope
+        // in the coexistence spec — no contact sync).
+        console.warn('[ycloud-webhook] smb.app.state.sync acknowledged (no contact sync)');
         break;
       }
       default:
