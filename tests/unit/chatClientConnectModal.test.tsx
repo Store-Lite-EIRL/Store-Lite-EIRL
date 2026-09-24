@@ -7,7 +7,7 @@
 // surface init errors via the snackbar, and close the modal on success.
 
 import { ChatClient } from '@/app/[slug]/(app)/chat/components/ChatClient';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const BUSINESS_ID = '22222222-2222-4222-8222-222222222222';
@@ -33,6 +33,17 @@ const {
 }));
 
 const fetchMock = vi.hoisted(() => vi.fn());
+
+// Mutable env snapshot — tests flip the FB Embedded Signup envs on/off so the
+// same file covers BOTH wiring branches: absent → pair-code fallback,
+// present → coexistence modal.
+const fbEnvMock = vi.hoisted(() => ({
+  ycloudFbAppId: '',
+  ycloudFbConfigId: '',
+  ycloudFbSolutionId: '',
+}));
+
+vi.mock('@/config/env', () => ({ env: fbEnvMock }));
 
 vi.mock('@/lib/supabase/client', () => {
   const channel = {
@@ -111,10 +122,31 @@ async function goToWhatsAppTab() {
   return screen.findByText('Conectar WhatsApp');
 }
 
+/** Simulates the FB Embedded Signup envs being configured on the server. */
+function enableFbEnvs() {
+  fbEnvMock.ycloudFbAppId = 'app-111';
+  fbEnvMock.ycloudFbConfigId = 'config-222';
+  fbEnvMock.ycloudFbSolutionId = 'solution-333';
+}
+
+/** Dispatches a WA_EMBEDDED_SIGNUP postMessage from the allowlisted origin. */
+function dispatchEmbeddedSignup(subtype: string, inner?: unknown) {
+  window.dispatchEvent(
+    new MessageEvent('message', {
+      origin: 'https://www.facebook.com',
+      data: { type: 'WA_EMBEDDED_SIGNUP', data: { type: subtype, data: inner ?? null } },
+    }),
+  );
+}
+
 // ── Tests ───────────────────────────────────────────────
 
 describe('ChatClient WhatsApp connect modal', () => {
   beforeEach(() => {
+    // Default: FB Embedded Signup envs absent → pair-code fallback path.
+    fbEnvMock.ycloudFbAppId = '';
+    fbEnvMock.ycloudFbConfigId = '';
+    fbEnvMock.ycloudFbSolutionId = '';
     mockFetchChatSessions.mockResolvedValue({ success: true, sessions: [] });
     mockFetchWhatsAppConversations.mockResolvedValue({
       success: true,
@@ -265,5 +297,134 @@ describe('ChatClient WhatsApp connect modal', () => {
       expect(screen.queryByRole('button', { name: 'Conectar WhatsApp' })).not.toBeInTheDocument(),
     );
     expect(screen.getByText('No hay conversaciones')).toBeInTheDocument();
+  });
+
+  // ─── Coexistence branch (FB Embedded Signup envs present) ─────────────
+
+  it('opens the coexistence modal instead of init+pair-code when FB envs are set', async () => {
+    enableFbEnvs();
+    stubFetch({}); // no routes → any init/status fetch would 404
+
+    renderChatClient();
+    fireEvent.click(await goToWhatsAppTab());
+
+    // The coexistence modal renders its own CTA; the pair-code flow must
+    // NOT start (no init call, no pairing code UI).
+    expect(await screen.findByRole('button', { name: 'Continuar con Meta' })).toBeInTheDocument();
+    expect(screen.queryByText('Ingresa este código en WhatsApp Business')).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      '/api/seller/whatsapp/connect/init',
+      expect.anything(),
+    );
+  });
+
+  it('posts the FINISH payload to connect/complete and polls status with the businessId', async () => {
+    enableFbEnvs();
+    stubFetch({
+      'POST /api/seller/whatsapp/connect/complete': {
+        body: {
+          phoneNumberId: 'pn-2002',
+          wabaId: 'waba-9',
+          status: 'pending',
+          connectionStatus: 'pending',
+          displayPhoneNumber: null,
+        },
+      },
+      'POST /api/seller/whatsapp/connect/status': {
+        body: { status: 'connected', connectionStatus: 'connected' },
+      },
+    });
+
+    renderChatClient();
+    fireEvent.click(await goToWhatsAppTab());
+    // Modal is mounted and idle before the popup event arrives.
+    await screen.findByRole('button', { name: 'Continuar con Meta' });
+
+    await act(async () => {
+      dispatchEmbeddedSignup('FINISH', {
+        business_id: 'meta-biz-1',
+        waba_id: 'waba-9',
+        phone_number_id: 'pn-2002',
+      });
+    });
+
+    // connect/complete carries the session businessId + the popup ids.
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/seller/whatsapp/connect/complete',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({
+            businessId: BUSINESS_ID,
+            wabaId: 'waba-9',
+            phoneNumberId: 'pn-2002',
+          }),
+        }),
+      ),
+    );
+
+    // The status poll is tenant-scoped: it includes the businessId.
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/seller/whatsapp/connect/status',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ businessId: BUSINESS_ID, phoneNumberId: 'pn-2002' }),
+        }),
+      ),
+    );
+
+    // Success frame shows, then ChatClient closes the modal and refreshes.
+    expect(await screen.findByText('¡WhatsApp Conectado!')).toBeInTheDocument();
+    await waitFor(
+      () => expect(screen.queryByText('¡WhatsApp Conectado!')).not.toBeInTheDocument(),
+      { timeout: 3000 },
+    );
+    expect(await screen.findByText('WhatsApp conectado correctamente')).toBeInTheDocument();
+  });
+
+  it('feeds connectionStatus failed back to the coexistence modal on complete error', async () => {
+    enableFbEnvs();
+    stubFetch({
+      'POST /api/seller/whatsapp/connect/complete': {
+        status: 409,
+        body: { error: 'Este número de WhatsApp ya está vinculado a otro negocio' },
+      },
+    });
+
+    renderChatClient();
+    fireEvent.click(await goToWhatsAppTab());
+    await screen.findByRole('button', { name: 'Continuar con Meta' });
+
+    await act(async () => {
+      dispatchEmbeddedSignup('FINISH', {
+        business_id: 'meta-biz-1',
+        waba_id: 'waba-9',
+        phone_number_id: 'pn-2002',
+      });
+    });
+
+    // The modal's error-retry state is driven by connectionStatus='failed'.
+    expect(await screen.findByText('No se pudo completar la vinculación')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
+  });
+
+  it('does not mount the coexistence modal when FB envs are absent', async () => {
+    stubFetch({
+      'POST /api/seller/whatsapp/connect/init': {
+        body: {
+          phoneNumberId: 'pn-1001',
+          code: 'ABC-123',
+          expiresAt: '2026-12-31T23:59:59.000Z',
+        },
+      },
+    });
+
+    renderChatClient();
+    fireEvent.click(await goToWhatsAppTab());
+
+    // Pair-code fallback keeps working; no coexistence CTA anywhere.
+    expect(await screen.findByText('ABC-123')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Continuar con Meta' })).not.toBeInTheDocument();
   });
 });
