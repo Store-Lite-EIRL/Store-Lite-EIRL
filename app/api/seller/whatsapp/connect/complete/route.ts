@@ -9,8 +9,11 @@ import { z } from 'zod';
 
 const connectCompleteSchema = z.object({
   businessId: z.string().uuid('ID de negocio inválido'),
-  wabaId: z.string().min(1, 'wabaId es requerido'),
-  phoneNumberId: z.string().min(1, 'phoneNumberId es requerido'),
+  // YCloud/Meta WABA and phone-number IDs are digit-only numeric strings;
+  // the values flow into URL paths and the bind body, so reject anything
+  // that can never be a real ID before touching auth or YCloud.
+  wabaId: z.string().regex(/^\d+$/, 'wabaId inválido'),
+  phoneNumberId: z.string().regex(/^\d+$/, 'phoneNumberId inválido'),
 });
 
 const YCLOUD_API_BASE = 'https://api.ycloud.com/v2';

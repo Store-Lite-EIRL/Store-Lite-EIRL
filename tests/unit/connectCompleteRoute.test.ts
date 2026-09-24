@@ -20,8 +20,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const BUSINESS_ID = '44444444-4444-4444-8444-444444444444';
 const FOREIGN_BUSINESS_ID = '99999999-9999-4999-8999-999999999999';
-const WABA_ID = 'waba-seller-1';
-const PHONE_NUMBER_ID = 'pn-1001';
+// YCloud/Meta WABA and phone-number IDs are digit-only numeric strings.
+const WABA_ID = '102290129340398';
+const PHONE_NUMBER_ID = '1045206517011070';
 
 const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
@@ -111,6 +112,45 @@ describe('POST /api/seller/whatsapp/connect/complete', () => {
     expect(await response.json()).toEqual({ error: 'ID de negocio inválido' });
     expect(mocks.fetchMock).not.toHaveBeenCalled();
     expect(mocks.insertValues).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for a non-numeric wabaId without calling YCloud', async () => {
+    mocks.businessFindFirst.mockResolvedValue({ id: BUSINESS_ID });
+    // Deterministic safety net: this body must be rejected by VALIDATION,
+    // before auth or any YCloud call — the fetch stub must never run.
+    vi.stubGlobal('fetch', mocks.fetchMock);
+    mocks.fetchMock.mockResolvedValue(new Response('{}', { status: 500 }));
+
+    const response = await POST(
+      completeRequest({
+        businessId: BUSINESS_ID,
+        wabaId: 'waba-seller-1',
+        phoneNumberId: PHONE_NUMBER_ID,
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'wabaId inválido' });
+    expect(mocks.fetchMock).not.toHaveBeenCalled();
+    expect(mocks.insertValues).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for a non-numeric phoneNumberId without calling YCloud', async () => {
+    mocks.businessFindFirst.mockResolvedValue({ id: BUSINESS_ID });
+    vi.stubGlobal('fetch', mocks.fetchMock);
+    mocks.fetchMock.mockResolvedValue(new Response('{}', { status: 500 }));
+
+    const response = await POST(
+      completeRequest({
+        businessId: BUSINESS_ID,
+        wabaId: WABA_ID,
+        phoneNumberId: 'pn-1001',
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'phoneNumberId inválido' });
+    expect(mocks.fetchMock).not.toHaveBeenCalled();
   });
 
   it('returns 401 when not authenticated', async () => {
