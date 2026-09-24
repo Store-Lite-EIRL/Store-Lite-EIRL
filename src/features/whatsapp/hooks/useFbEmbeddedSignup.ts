@@ -149,12 +149,14 @@ export function useFbEmbeddedSignup({ onFinish, onError, onCancel }: UseFbEmbedd
 
     // The popup outcome arrives via postMessage (WA_EMBEDDED_SIGNUP), so the
     // login callback only needs to exist; the response payload is unused.
+    // The Embedded Signup config requires the solution ID NESTED under
+    // `setup` (C2) — a top-level `solutionID` is silently ignored by Meta.
     window.FB.login(() => {}, {
       config_id: ycloudFbConfigId,
       response_type: 'code',
       override_default_response_type: true,
       extras: {
-        solutionID: ycloudFbSolutionId,
+        setup: { solutionID: ycloudFbSolutionId },
         sessionInfoVersion: 3,
         featureType: 'whatsapp_business_app_onboarding',
       },

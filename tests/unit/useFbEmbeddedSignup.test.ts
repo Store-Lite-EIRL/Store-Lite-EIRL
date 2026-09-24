@@ -3,10 +3,11 @@
 // =====================================================
 // Covers: lazy FB SDK injection exactly once (module-cached promise),
 // FB.login called with the embedded-signup config (config_id,
-// response_type code, extras solutionID/sessionInfoVersion/featureType),
+// response_type code, extras setup.solutionID/sessionInfoVersion/featureType),
 // message listener registered on mount and removed on unmount, and the
-// WA_EMBEDDED_SIGNUP events routed to onFinish/onError/onCancel only when
-// they come from an allowlisted origin.
+// WA_EMBEDDED_SIGNUP events (JSON-string wire, top-level UPPERCASE event)
+// routed to onFinish/onError/onCancel only when they come from an allowlisted
+// origin.
 
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -27,10 +28,11 @@ function fireFbAsyncInit() {
   (window as { fbAsyncInit?: () => void }).fbAsyncInit?.();
 }
 
-function embeddedSignupMessage(origin: string, subtype: string, inner?: unknown): MessageEvent {
+/** Real Meta wire shape: event.data is a JSON string; `event` is UPPERCASE. */
+function embeddedSignupMessage(origin: string, event: string, inner?: unknown): MessageEvent {
   return new MessageEvent('message', {
     origin,
-    data: { type: 'WA_EMBEDDED_SIGNUP', data: { type: subtype, data: inner ?? null } },
+    data: JSON.stringify({ type: 'WA_EMBEDDED_SIGNUP', event, data: inner ?? null }),
   });
 }
 
@@ -116,7 +118,7 @@ describe('useFbEmbeddedSignup', () => {
       response_type: 'code',
       override_default_response_type: true,
       extras: {
-        solutionID: FB_SOLUTION_ID,
+        setup: { solutionID: FB_SOLUTION_ID },
         sessionInfoVersion: 3,
         featureType: 'whatsapp_business_app_onboarding',
       },
@@ -228,7 +230,7 @@ describe('useFbEmbeddedSignup', () => {
     expect(onError).toHaveBeenCalledWith('WABA no encontrado');
 
     await act(async () => {
-      window.dispatchEvent(embeddedSignupMessage(FB_ORIGIN, 'cancel'));
+      window.dispatchEvent(embeddedSignupMessage(FB_ORIGIN, 'CANCEL'));
     });
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(onFinish).not.toHaveBeenCalled();
