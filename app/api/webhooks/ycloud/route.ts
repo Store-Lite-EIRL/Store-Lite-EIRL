@@ -394,9 +394,12 @@ async function handlePhoneNumberUpdated(payload: YCloudPayload): Promise<void> {
   if (status) {
     const normalized = normalizePhoneChannelStatus(status);
     updates.connectionStatus = normalized.connectionStatus;
-    if (normalized.isActive) {
-      updates.isActive = true;
-      updates.connectedAt = normalized.connectedAt;
+    // CONNECTED activates (isActive + connectedAt); failed statuses DEACTIVATE
+    // (isActive false) and clear any stale connection timestamp so the UI can
+    // retry. 'pending' leaves activation untouched.
+    if (normalized.isActive !== undefined) {
+      updates.isActive = normalized.isActive;
+      updates.connectedAt = normalized.connectedAt ?? null;
     }
   }
 

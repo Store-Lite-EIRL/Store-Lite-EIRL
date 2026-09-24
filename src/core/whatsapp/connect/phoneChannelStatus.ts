@@ -30,7 +30,10 @@ export function normalizePhoneChannelStatus(
   }
 
   if (value && FAILED_STATUSES.has(value)) {
-    return { connectionStatus: 'failed' };
+    // 'failed' exists to drive retry: the channel MUST be deactivated
+    // (isActive false) and any previous connection timestamp cleared, so
+    // polling/UI never observe a connected-but-failed contradiction.
+    return { connectionStatus: 'failed', isActive: false, connectedAt: null };
   }
 
   return { connectionStatus: 'pending' };

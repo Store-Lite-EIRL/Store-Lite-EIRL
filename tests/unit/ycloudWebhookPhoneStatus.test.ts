@@ -108,6 +108,29 @@ describe('POST /api/webhooks/ycloud — phone status', () => {
     expect(mocks.updateSet).not.toHaveBeenCalledWith(expect.objectContaining({ isActive: true }));
   });
 
+  it('DEACTIVATES the channel and clears connectedAt on DISCONNECTED', async () => {
+    const response = await POST(
+      webhookRequest({
+        id: 'evt-disconnected-5',
+        type: 'whatsapp.phone_number.updated',
+        phone_number: {
+          id: 'ycloud-phone-5',
+          display_phone_number: '+51999999999',
+          status: 'DISCONNECTED',
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connectionStatus: 'failed',
+        isActive: false,
+        connectedAt: null,
+      }),
+    );
+  });
+
   it('2xx-acks smb.app.state.sync without any channel write', async () => {
     const response = await POST(
       webhookRequest({
