@@ -17,6 +17,7 @@
 
 import {
   ALLOWED_EMBEDDED_SIGNUP_ORIGINS,
+  isAllowedEmbeddedSignupOrigin,
   parseEmbeddedSignupEvent,
 } from '@/features/whatsapp/lib/embeddedSignupEvents';
 import { describe, expect, it } from 'vitest';
@@ -144,5 +145,42 @@ describe('parseEmbeddedSignupEvent', () => {
 
   it('exposes the facebook.com allowlist as a configurable constant', () => {
     expect(ALLOWED_EMBEDDED_SIGNUP_ORIGINS).toContain('https://www.facebook.com');
+  });
+
+  it('accepts FINISH from the web.facebook.com market variant', () => {
+    const result = parseEmbeddedSignupEvent(
+      signupMessage('https://web.facebook.com', 'FINISH', FINISH_DATA),
+    );
+
+    expect(result).toEqual({
+      kind: 'finish',
+      payload: { businessId: 'biz-1001', wabaId: 'waba-2002', phoneNumberId: 'pn-3003' },
+    });
+  });
+
+  it('rejects lookalike domains that are not under facebook.com', () => {
+    const result = parseEmbeddedSignupEvent(
+      signupMessage('https://evilfacebook.com', 'FINISH', FINISH_DATA),
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('rejects origins whose final label is NOT facebook.com (TLD-boundary safety)', () => {
+    const result = parseEmbeddedSignupEvent(
+      signupMessage('https://facebook.com.evil.com', 'FINISH', FINISH_DATA),
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('isAllowedEmbeddedSignupOrigin admits Meta-owned facebook.com surfaces only', () => {
+    expect(isAllowedEmbeddedSignupOrigin('https://www.facebook.com')).toBe(true);
+    expect(isAllowedEmbeddedSignupOrigin('https://web.facebook.com')).toBe(true);
+    expect(isAllowedEmbeddedSignupOrigin('https://m.facebook.com')).toBe(true);
+    expect(isAllowedEmbeddedSignupOrigin('https://evil.example.com')).toBe(false);
+    expect(isAllowedEmbeddedSignupOrigin('https://evilfacebook.com')).toBe(false);
+    expect(isAllowedEmbeddedSignupOrigin('https://facebook.com.evil.com')).toBe(false);
+    expect(ALLOWED_EMBEDDED_SIGNUP_ORIGINS).toContain('https://web.facebook.com');
   });
 });
