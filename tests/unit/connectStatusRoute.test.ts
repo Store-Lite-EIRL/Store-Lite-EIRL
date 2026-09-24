@@ -169,6 +169,78 @@ describe('POST /api/seller/whatsapp/connect/status', () => {
     expect(mocks.fetchMock).not.toHaveBeenCalled();
   });
 
+  it('NEVER reports connected for an active-but-failed channel — YCloud wins', async () => {
+    mocks.channelFindFirst.mockResolvedValue(
+      channelRow({
+        isActive: true,
+        connectionStatus: 'failed',
+        connectedAt: new Date('2026-09-01T10:00:00.000Z'),
+        displayPhoneNumber: '+51 967 356 665',
+      }),
+    );
+    mocks.businessFindFirst.mockResolvedValue({ ownerId: 'user-1' });
+    stubYCloudList({
+      items: [
+        { id: PHONE_NUMBER_ID, status: 'DISCONNECTED', displayPhoneNumber: '+51 967 356 665' },
+      ],
+    });
+
+    const response = await POST(statusRequest());
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      status: 'failed',
+      isActive: false,
+      connectionStatus: 'failed',
+      displayPhoneNumber: '+51 967 356 665',
+      connectedAt: null,
+    });
+    // The contradiction is persisted away: the channel is deactivated.
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ isActive: false, connectionStatus: 'failed', connectedAt: null }),
+    );
+  });
+
+  it('deactivates and returns coherent failed state when YCloud reports DISCONNECTED', async () => {
+    mocks.channelFindFirst.mockResolvedValue(channelRow());
+    mocks.businessFindFirst.mockResolvedValue({ ownerId: 'user-1' });
+    stubYCloudList({ items: [{ id: PHONE_NUMBER_ID, status: 'DISCONNECTED' }] });
+
+    const response = await POST(statusRequest());
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      status: 'failed',
+      isActive: false,
+      connectionStatus: 'failed',
+      displayPhoneNumber: null,
+      connectedAt: null,
+    });
+    expect(mocks.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ isActive: false, connectionStatus: 'failed', connectedAt: null }),
+    );
+  });
+
+  it('reports failed (not pending) when YCloud errors and the channel already failed', async () => {
+    mocks.channelFindFirst.mockResolvedValue(
+      channelRow({ connectionStatus: 'failed', displayPhoneNumber: '+51 967 356 665' }),
+    );
+    mocks.businessFindFirst.mockResolvedValue({ ownerId: 'user-1' });
+    mocks.fetchMock.mockRejectedValue(new Error('network down'));
+    vi.stubGlobal('fetch', mocks.fetchMock);
+
+    const response = await POST(statusRequest());
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      status: 'failed',
+      isActive: false,
+      connectionStatus: 'failed',
+      displayPhoneNumber: '+51 967 356 665',
+      connectedAt: null,
+    });
+  });
+
   it('activates the channel and returns connected when YCloud reports CONNECTED', async () => {
     mocks.channelFindFirst.mockResolvedValue(channelRow());
     mocks.businessFindFirst.mockResolvedValue({ ownerId: 'user-1' });

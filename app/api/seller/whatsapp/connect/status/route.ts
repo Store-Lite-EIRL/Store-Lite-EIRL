@@ -1,6 +1,7 @@
 import { env } from '@/config/env';
 import { db } from '@/core/database/client';
 import { businesses, whatsappChannels } from '@/core/database/schema';
+import { normalizePhoneChannelStatus } from '@/core/whatsapp/connect/phoneChannelStatus';
 import { createClient } from '@/lib/supabase/server';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
@@ -75,8 +76,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Sin permisos para este canal' }, { status: 403 });
     }
 
-    // If already active, return current state
-    if (channel.isActive) {
+    // If already active, return current state. BUT an 'active + failed'
+    // contradiction must never report connected: let the YCloud check below
+    // resolve the truth (W1 — the webhook may have missed the failure).
+    if (channel.isActive && channel.connectionStatus !== 'failed') {
       return NextResponse.json({
         status: 'connected',
         isActive: true,
@@ -109,24 +112,27 @@ export async function POST(request: Request) {
 
       if (!ycloudResponse.ok) {
         console.error('[whatsapp/connect/status] YCloud error:', ycloudData);
-        // Don't fail - return current DB state
+        // Don't fail - return current DB state, coherently: a failed
+        // channel never degrades back to 'pending' (W1).
+        const dbFailed = channel.connectionStatus === 'failed';
         return NextResponse.json({
-          status: 'pending',
-          isActive: channel.isActive,
+          status: dbFailed ? 'failed' : 'pending',
+          isActive: dbFailed ? false : channel.isActive,
           connectionStatus: channel.connectionStatus,
           displayPhoneNumber: channel.displayPhoneNumber,
-          connectedAt: channel.connectedAt,
+          connectedAt: dbFailed ? null : channel.connectedAt,
         });
       }
     } catch (error) {
       console.error('[whatsapp/connect/status] YCloud request failed:', error);
-      // Don't fail - return current DB state
+      // Don't fail - return current DB state, coherently (W1).
+      const dbFailed = channel.connectionStatus === 'failed';
       return NextResponse.json({
-        status: 'pending',
-        isActive: channel.isActive,
+        status: dbFailed ? 'failed' : 'pending',
+        isActive: dbFailed ? false : channel.isActive,
         connectionStatus: channel.connectionStatus,
         displayPhoneNumber: channel.displayPhoneNumber,
-        connectedAt: channel.connectedAt,
+        connectedAt: dbFailed ? null : channel.connectedAt,
       });
     }
 
@@ -164,6 +170,31 @@ export async function POST(request: Request) {
         connectionStatus: 'connected',
         displayPhoneNumber,
         connectedAt,
+      });
+    }
+
+    // Coherent failed state (W1): YCloud reports the number is not
+    // operational. Deactivate and clear the connection timestamp — mirroring
+    // the webhook — so polling sees 'failed' and drives retry.
+    const normalized = normalizePhoneChannelStatus(ycloudStatus);
+    if (normalized.connectionStatus === 'failed') {
+      await db
+        .update(whatsappChannels)
+        .set({
+          isActive: false,
+          connectionStatus: 'failed',
+          connectedAt: null,
+          displayPhoneNumber: displayPhoneNumber ?? null,
+          updatedAt: new Date(),
+        })
+        .where(eq(whatsappChannels.id, channel.id));
+
+      return NextResponse.json({
+        status: 'failed',
+        isActive: false,
+        connectionStatus: 'failed',
+        displayPhoneNumber,
+        connectedAt: null,
       });
     }
 
