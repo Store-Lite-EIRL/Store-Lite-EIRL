@@ -129,12 +129,13 @@ function enableFbEnvs() {
   fbEnvMock.ycloudFbSolutionId = 'solution-333';
 }
 
-/** Dispatches a WA_EMBEDDED_SIGNUP postMessage from the allowlisted origin. */
-function dispatchEmbeddedSignup(subtype: string, inner?: unknown) {
+/** Dispatches a WA_EMBEDDED_SIGNUP postMessage from the allowlisted origin
+ *  using the REAL Meta wire shape: data is a JSON string, `event` UPPERCASE. */
+function dispatchEmbeddedSignup(event: string, inner?: unknown) {
   window.dispatchEvent(
     new MessageEvent('message', {
       origin: 'https://www.facebook.com',
-      data: { type: 'WA_EMBEDDED_SIGNUP', data: { type: subtype, data: inner ?? null } },
+      data: JSON.stringify({ type: 'WA_EMBEDDED_SIGNUP', event, data: inner ?? null }),
     }),
   );
 }
@@ -407,6 +408,45 @@ describe('ChatClient WhatsApp connect modal', () => {
     // The modal's error-retry state is driven by connectionStatus='failed'.
     expect(await screen.findByText('No se pudo completar la vinculación')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
+  });
+
+  it('treats a contradictory connected+failed poll as failed (failed wins)', async () => {
+    enableFbEnvs();
+    stubFetch({
+      'POST /api/seller/whatsapp/connect/complete': {
+        body: {
+          phoneNumberId: 'pn-2002',
+          wabaId: 'waba-9',
+          status: 'pending',
+          connectionStatus: 'pending',
+          displayPhoneNumber: null,
+        },
+      },
+      // Contradictory payload (W1 backend bug fixed in slice 2): status says
+      // connected while connectionStatus says failed. This is the client-side
+      // last line of defense — a failed channel must NEVER render success.
+      'POST /api/seller/whatsapp/connect/status': {
+        status: 200,
+        body: { status: 'connected', connectionStatus: 'failed', isActive: false },
+      },
+    });
+
+    renderChatClient();
+    fireEvent.click(await goToWhatsAppTab());
+    await screen.findByRole('button', { name: 'Continuar con Meta' });
+
+    await act(async () => {
+      dispatchEmbeddedSignup('FINISH', {
+        business_id: 'meta-biz-1',
+        waba_id: 'waba-9',
+        phone_number_id: 'pn-2002',
+      });
+    });
+
+    // The contradiction must surface the error-retry frame, NOT success.
+    expect(await screen.findByText('No se pudo completar la vinculación')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
+    expect(screen.queryByText('¡WhatsApp Conectado!')).not.toBeInTheDocument();
   });
 
   it('does not mount the coexistence modal when FB envs are absent', async () => {

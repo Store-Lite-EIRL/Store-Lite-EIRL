@@ -1301,10 +1301,13 @@ export function ChatClient({
 
         if (!response.ok) return;
 
-        if (data.connectionStatus === 'connected' || data.status === 'connected') {
-          setCoexistenceStatus('connected');
-        } else if (data.connectionStatus === 'failed') {
+        // failed must ALWAYS win: the W1 backend fix (slice 2) can return a
+        // coherent failed payload, but in-flight/legacy responses may still
+        // contradict — never render success for a failed channel.
+        if (data.connectionStatus === 'failed') {
           setCoexistenceStatus('failed');
+        } else if (data.connectionStatus === 'connected' || data.status === 'connected') {
+          setCoexistenceStatus('connected');
         }
       } catch (err) {
         // Transient error — keep polling; the next tick will retry.
