@@ -449,6 +449,95 @@ describe('ChatClient WhatsApp connect modal', () => {
     expect(screen.queryByText('¡WhatsApp Conectado!')).not.toBeInTheDocument();
   });
 
+  it('surfaces the YCloud bind error text in the coexistence modal', async () => {
+    enableFbEnvs();
+    stubFetch({
+      'POST /api/seller/whatsapp/connect/complete': {
+        status: 409,
+        body: {
+          error: 'PAYMENT_METHOD_REQUIRED: Agrega un método de pago para habilitar WhatsApp',
+        },
+      },
+    });
+
+    renderChatClient();
+    fireEvent.click(await goToWhatsAppTab());
+    await screen.findByRole('button', { name: 'Continuar con Meta' });
+
+    await act(async () => {
+      dispatchEmbeddedSignup('FINISH', {
+        business_id: 'meta-biz-1',
+        waba_id: 'waba-9',
+        phone_number_id: 'pn-2002',
+      });
+    });
+
+    // The real YCloud message must be visible in the error frame, not just
+    // the generic title — the seller needs to know WHY the bind failed.
+    expect(await screen.findByText(/PAYMENT_METHOD_REQUIRED/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
+  });
+
+  it('re-launches the popup and re-posts complete when retrying after a bind failure', async () => {
+    enableFbEnvs();
+    let completeCalls = 0;
+    stubFetch({
+      'POST /api/seller/whatsapp/connect/complete': () => {
+        completeCalls += 1;
+        return completeCalls === 1
+          ? { status: 409, body: { error: 'WABA_NOT_FOUND: The WABA does not exist' } }
+          : {
+              status: 200,
+              body: {
+                phoneNumberId: 'pn-2002',
+                wabaId: 'waba-9',
+                status: 'pending',
+                connectionStatus: 'pending',
+                displayPhoneNumber: null,
+              },
+            };
+      },
+      'POST /api/seller/whatsapp/connect/status': {
+        body: { status: 'connected', connectionStatus: 'connected' },
+      },
+    });
+
+    // Stub the FB SDK so the popup launch inside the retry click resolves.
+    const fbLogin = vi.fn();
+    (window as { FB?: { init: unknown; login: unknown } }).FB = { init: vi.fn(), login: fbLogin };
+
+    renderChatClient();
+    fireEvent.click(await goToWhatsAppTab());
+    await screen.findByRole('button', { name: 'Continuar con Meta' });
+
+    await act(async () => {
+      dispatchEmbeddedSignup('FINISH', {
+        business_id: 'meta-biz-1',
+        waba_id: 'waba-9',
+        phone_number_id: 'pn-2002',
+      });
+    });
+    await screen.findByText('No se pudo completar la vinculación');
+
+    // Retry must clear the parent-driven 'failed' state (otherwise the modal
+    // stays locked in error-retry forever) and re-open the popup.
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+    await waitFor(() => expect(fbLogin).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText('Conectando con Meta…')).toBeInTheDocument();
+
+    await act(async () => {
+      dispatchEmbeddedSignup('FINISH', {
+        business_id: 'meta-biz-1',
+        waba_id: 'waba-9',
+        phone_number_id: 'pn-2002',
+      });
+    });
+
+    // Second FINISH → complete re-POSTed → pending → poll → connected.
+    await waitFor(() => expect(completeCalls).toBe(2));
+    expect(await screen.findByText('¡WhatsApp Conectado!')).toBeInTheDocument();
+  });
+
   it('does not mount the coexistence modal when FB envs are absent', async () => {
     stubFetch({
       'POST /api/seller/whatsapp/connect/init': {

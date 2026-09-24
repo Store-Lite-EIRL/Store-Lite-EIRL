@@ -192,6 +192,10 @@ export function ChatClient({
     'pending' | 'connected' | 'failed' | undefined
   >(undefined);
   const [coexistencePhoneNumberId, setCoexistencePhoneNumberId] = useState<string | null>(null);
+  // The bind error surfaced by /connect/complete (e.g. YCloud 409) — passed
+  // to the modal so the seller sees WHY the linking failed, not just the
+  // generic error-retry frame.
+  const [coexistenceError, setCoexistenceError] = useState<string | null>(null);
   const [isTemplateManagerOpen, setIsTemplateManagerOpen] = useState(false);
 
   // ─── Pin / Reorder state (localStorage-backed) ─────────────────────
@@ -1189,6 +1193,7 @@ export function ChatClient({
     if (env.ycloudFbAppId && env.ycloudFbConfigId && env.ycloudFbSolutionId) {
       setCoexistenceStatus(undefined);
       setCoexistencePhoneNumberId(null);
+      setCoexistenceError(null);
       setShowCoexistenceModal(true);
       return;
     }
@@ -1263,14 +1268,19 @@ export function ChatClient({
         const data = await response.json();
 
         if (!response.ok) {
+          // The YCloud bind error (e.g. 409 with a business-specific reason)
+          // must reach the seller — it explains WHY the linking failed.
+          setCoexistenceError(data.error || null);
           setCoexistenceStatus('failed');
           return;
         }
 
         // 'connected' can come back immediately if the number was already
         // linked to this business; otherwise keep polling 'pending'.
+        setCoexistenceError(null);
         setCoexistenceStatus(data.connectionStatus ?? 'pending');
       } catch (err) {
+        setCoexistenceError(null);
         setCoexistenceStatus('failed');
       }
     },
@@ -1281,6 +1291,7 @@ export function ChatClient({
     setShowCoexistenceModal(false);
     setCoexistenceStatus(undefined);
     setCoexistencePhoneNumberId(null);
+    setCoexistenceError(null);
   }, []);
 
   // Poll the connection status while the coexistence modal is in 'pending'.
@@ -1426,6 +1437,13 @@ export function ChatClient({
           onClose={handleCoexistenceModalClose}
           onFinish={handleCoexistenceFinish}
           connectionStatus={coexistenceStatus}
+          errorMessage={coexistenceError}
+          onRetry={() => {
+            // Clear the parent-driven 'failed' state so the modal can leave
+            // the error-retry frame and re-run the popup flow.
+            setCoexistenceStatus(undefined);
+            setCoexistenceError(null);
+          }}
         />
       )}
       <AlertSnackbar

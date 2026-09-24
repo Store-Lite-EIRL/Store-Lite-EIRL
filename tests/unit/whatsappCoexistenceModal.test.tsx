@@ -27,7 +27,11 @@ const FB_ORIGIN = 'https://www.facebook.com';
 const BUSINESS_ID = 'biz-77';
 
 function renderModal(
-  overrides: Partial<{ connectionStatus: 'pending' | 'connected' | 'failed' }> = {},
+  overrides: Partial<{
+    connectionStatus: 'pending' | 'connected' | 'failed';
+    errorMessage?: string | null;
+    onRetry?: () => void;
+  }> = {},
 ) {
   return render(
     <WhatsAppCoexistenceModal
@@ -193,6 +197,17 @@ describe('WhatsAppCoexistenceModal', () => {
     renderModal({ connectionStatus: 'failed' });
 
     expect(screen.getByText('No se pudo completar la vinculación')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
+  });
+
+  it('prefers the parent-provided bind error over the local message', () => {
+    renderModal({
+      connectionStatus: 'failed',
+      errorMessage: 'PAYMENT_METHOD_REQUIRED: Agrega un método de pago',
+    });
+
+    expect(screen.getByText('No se pudo completar la vinculación')).toBeInTheDocument();
+    expect(screen.getByText(/PAYMENT_METHOD_REQUIRED/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
   });
 });
